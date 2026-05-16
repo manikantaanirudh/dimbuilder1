@@ -54,7 +54,7 @@ export async function exportWorkbook(
       .filter((relationship) => relationship.dimensionId === dimension.id)
       .forEach((relationship, relationshipIndex) => {
         const row = sheet.getRow(relationshipHeaderRow + 1 + relationshipIndex);
-        const values = { ...relationship.properties, Parent: relationship.parentKey, Child: relationship.childKey };
+        const values: Record<string, unknown> = { ...relationship.properties, Parent: relationship.parentKey, Child: relationship.childKey };
         schema.relationshipFields.forEach((field, fieldIndex) => {
           row.getCell(fieldIndex + 1).value = String(values[field.name] ?? "");
         });
@@ -69,4 +69,3 @@ export async function exportWorkbook(
 function safeSheetName(name: string): string {
   return name.replace(/[\\/*?:[\]]/g, " ").slice(0, 31) || "Dimension";
 }
-

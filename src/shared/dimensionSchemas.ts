@@ -45,7 +45,7 @@ const udMemberFields = [
 
 const weightedRelationshipFields = [text("Parent", true), text("Child", true), num("Aggregation Weight")];
 
-function createUdSchema(dimensionType: DimensionType, sheetNames = [dimensionType]): DimensionSchema {
+function createUdSchema(dimensionType: DimensionType, sheetNames: string[] = [dimensionType]): DimensionSchema {
   return {
     dimensionType,
     sheetNames,
@@ -324,4 +324,3 @@ export function getSchemaByDimensionTypeText(typeText: string): DimensionSchema 
 export function getFieldNames(fields: FieldDefinition[]): string[] {
   return fields.flatMap((field) => [field.name, ...(field.aliases ?? [])]);
 }
-

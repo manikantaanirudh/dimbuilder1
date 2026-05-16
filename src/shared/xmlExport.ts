@@ -85,7 +85,7 @@ function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord)
 
 function renderRelationship(dimension: DimensionRecord, relationship: DimensionRelationshipRecord): string {
   const schema = getDimensionSchema(dimension.dimensionType);
-  const properties = {
+  const properties: Record<string, unknown> = {
     ...relationship.properties,
     Parent: relationship.parentKey,
     Child: relationship.childKey,
@@ -111,4 +111,3 @@ export function toXmlAttributeName(fieldName: string): string {
     .replace(/[^A-Za-z0-9]/g, "");
   return cleaned ? cleaned.charAt(0).toLowerCase() + cleaned.slice(1) : "value";
 }
-
