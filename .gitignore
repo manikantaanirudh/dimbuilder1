@@ -3,6 +3,7 @@ dist/
 data/app.db
 data/uploads/*
 data/exports/*
+data/logs/
 !.gitkeep
 .env
 .superpowers/
@@ -11,4 +12,3 @@ playwright-report/
 test-results/
 *.xlsx
 ~$*
-
