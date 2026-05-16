@@ -1,0 +1,14 @@
+node_modules/
+dist/
+data/app.db
+data/uploads/*
+data/exports/*
+!.gitkeep
+.env
+.superpowers/
+coverage/
+playwright-report/
+test-results/
+*.xlsx
+~$*
+
