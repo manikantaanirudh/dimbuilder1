@@ -4,15 +4,16 @@ import { join } from "node:path";
 import { exportMembersCsv, exportRelationshipsCsv, exportJsonBackup } from "../../shared/csvJsonExport";
 import { exportProjectXml } from "../../shared/xmlExport";
 import { exportWorkbook } from "../../shared/xlsxExport";
+import type { AppConfig } from "../../shared/appConfigTypes";
 import type { ParsedProject } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
 
-mkdirSync("data/exports", { recursive: true });
-
-export function createExportRouter(repos: Repositories): Router {
+export function createExportRouter(repos: Repositories, config: AppConfig): Router {
+  mkdirSync(config.paths.exportsDirectory, { recursive: true });
   const router = Router();
 
   router.get("/:projectId/xml", (req, res) => {
+    if (!config.export.xml.enabled) return disabledFormat(res, "XML");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     const xml = exportProjectXml(snapshot);
@@ -21,18 +22,21 @@ export function createExportRouter(repos: Repositories): Router {
   });
 
   router.get("/:projectId/json", (req, res) => {
+    if (!config.export.json.enabled) return disabledFormat(res, "JSON");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     res.type("application/json").send(exportJsonBackup({ ...snapshot, importSummary: emptyImportSummary() }));
   });
 
   router.get("/:projectId/members.csv", (req, res) => {
+    if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     res.type("text/csv").send(exportMembersCsv(snapshot.members));
   });
 
   router.get("/:projectId/relationships.csv", (req, res) => {
+    if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     res.type("text/csv").send(exportRelationshipsCsv(snapshot.relationships));
@@ -40,9 +44,10 @@ export function createExportRouter(repos: Repositories): Router {
 
   router.get("/:projectId/xlsx", async (req, res, next) => {
     try {
+      if (!config.export.xlsx.enabled) return disabledFormat(res, "XLSX");
       const snapshot = readSnapshot(repos, req.params.projectId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
-      const filePath = join("data", "exports", `${snapshot.project.id}.xlsx`);
+      const filePath = join(config.paths.exportsDirectory, `${snapshot.project.id}.xlsx`);
       await exportWorkbook(filePath, snapshot.dimensions, snapshot.members, snapshot.relationships);
       const buffer = readFileSync(filePath);
       res
@@ -63,11 +68,15 @@ export function createExportRouter(repos: Repositories): Router {
       description: req.body.description || "",
       snapshot
     });
-    writeFileSync(join("data", "exports", `${id}.json`), JSON.stringify(snapshot, null, 2));
+    writeFileSync(join(config.paths.exportsDirectory, `${id}.json`), JSON.stringify(snapshot, null, 2));
     res.json({ id });
   });
 
   return router;
+}
+
+function disabledFormat(res: import("express").Response, format: string) {
+  return res.status(404).json({ error: `${format} export is disabled` });
 }
 
 function readSnapshot(repos: Repositories, projectId: string) {
@@ -92,4 +101,3 @@ function emptyImportSummary(): ParsedProject["importSummary"] {
     errors: []
   };
 }
-

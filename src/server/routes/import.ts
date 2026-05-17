@@ -1,21 +1,26 @@
 import { Router } from "express";
 import multer from "multer";
 import { mkdirSync } from "node:fs";
+import type { AppConfig } from "../../shared/appConfigTypes";
 import { parseWorkbook } from "../../shared/workbookParser";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
 
-mkdirSync("data/uploads", { recursive: true });
-const upload = multer({ dest: "data/uploads" });
-
-export function createImportRouter(repos: Repositories): Router {
+export function createImportRouter(repos: Repositories, config: AppConfig): Router {
+  mkdirSync(config.paths.uploadsDirectory, { recursive: true });
+  const upload = multer({ dest: config.paths.uploadsDirectory });
   const router = Router();
 
   router.post("/workbook", upload.single("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
-      const metadataReferencePath = findDefaultMetadataReferencePath();
+      const metadataReferencePath = config.import.metadataReference.enabled
+        ? findDefaultMetadataReferencePath({
+            directory: config.paths.metadataDirectory,
+            defaultFile: config.paths.defaultMetadataFile
+          })
+        : null;
       const metadataReference = metadataReferencePath ? await parseMetadataReference(metadataReferencePath) : undefined;
       const parsed = await parseWorkbook(req.file.path, {
         projectName: req.body.projectName || req.file.originalname,

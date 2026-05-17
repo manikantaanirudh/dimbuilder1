@@ -1,8 +1,10 @@
 import { createApp } from "./app";
+import { loadAppConfig } from "./config/loadAppConfig";
+import { createDatabase } from "./db/database";
 
-const port = Number(process.env.PORT ?? 8787);
+const config = loadAppConfig();
+const db = createDatabase(config.paths.databaseFile);
 
-createApp().listen(port, "127.0.0.1", () => {
-  console.log(`OneStream XF Dimension Builder API listening on http://127.0.0.1:${port}`);
+createApp(db, config).listen(config.server.port, config.server.host, () => {
+  console.log(`${config.application.productName} API listening on http://${config.server.host}:${config.server.port}`);
 });
-

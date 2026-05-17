@@ -21,8 +21,8 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/projects", createProjectRouter(repos));
-  app.use("/api/import", createImportRouter(repos));
-  app.use("/api/export", createExportRouter(repos));
+  app.use("/api/import", createImportRouter(repos, config));
+  app.use("/api/export", createExportRouter(repos, config));
   app.use("/api/validation", createValidationRouter(repos));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

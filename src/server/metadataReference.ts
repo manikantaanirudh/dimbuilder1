@@ -18,8 +18,18 @@ const supportedDimensionTypes = new Set([
   "UD8"
 ]);
 
-export function findDefaultMetadataReferencePath(directory = "metadata"): string | null {
+interface FindDefaultMetadataReferencePathOptions {
+  directory?: string;
+  defaultFile?: string;
+}
+
+export function findDefaultMetadataReferencePath(options: FindDefaultMetadataReferencePathOptions = {}): string | null {
+  const directory = options.directory ?? "metadata";
   if (!existsSync(directory)) return null;
+  if (options.defaultFile) {
+    const defaultPath = join(directory, options.defaultFile);
+    if (existsSync(defaultPath)) return defaultPath;
+  }
   const files = readdirSync(directory)
     .filter((fileName) => fileName.toLowerCase().endsWith(".xml"))
     .sort()

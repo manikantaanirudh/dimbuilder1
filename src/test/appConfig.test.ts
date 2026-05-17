@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadAppConfig } from "../server/config/loadAppConfig";
+import { findDefaultMetadataReferencePath } from "../server/metadataReference";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import {
   buildClientAppConfig,
@@ -121,5 +122,21 @@ describe("server app config loader", () => {
     const config = loadAppConfig({ configFilePath: "missing-config-file.yaml" });
 
     expect(config.application.title).toBe(defaultAppConfig.application.title);
+  });
+});
+
+describe("metadata reference config", () => {
+  it("prefers configured default metadata file when present", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-metadata-"));
+    const firstPath = join(directory, "first.xml");
+    const preferredPath = join(directory, "preferred.xml");
+    writeFileSync(firstPath, "<OneStreamXF />", "utf8");
+    writeFileSync(preferredPath, "<OneStreamXF />", "utf8");
+
+    try {
+      expect(findDefaultMetadataReferencePath({ directory, defaultFile: "preferred.xml" })).toBe(preferredPath);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
