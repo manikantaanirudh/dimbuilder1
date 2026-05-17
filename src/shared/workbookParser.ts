@@ -86,7 +86,7 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       warnings.push(`Aligned sheet '${sheet.name}' dimension '${schema.dimensionType} / ${workbookDimensionName}' to metadata reference '${metadataReference.type} / ${metadataReference.name}'.`);
     }
     const logicalKey = getDimensionLogicalKey(schema.dimensionType, dimensionName, sheet.name);
-    let dimension = dimensionsByLogicalKey.get(logicalKey);
+    let dimension = config.import.workbook.mergeDuplicateDimensionSheets ? dimensionsByLogicalKey.get(logicalKey) : undefined;
     if (dimension) {
       dimension.sheetName = getPreferredSheetName(dimension.sheetName, sheet.name);
       dimension.metadata = {
@@ -129,12 +129,16 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
     }
 
     const relationshipHeaderRow = findRelationshipHeaderRow(sheet);
-    const memberHeaders = readHeaders(sheet, memberHeaderRow, schema.memberFields);
+    const memberHeaders = readHeaders(sheet, memberHeaderRow, schema.memberFields, {
+      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns
+    });
     const memberEndRow = relationshipHeaderRow ? relationshipHeaderRow - 1 : sheet.rowCount;
     let memberRowOrder = memberRowOrders.get(dimension.id) ?? 1;
 
     for (let rowNumber = memberHeaderRow + 1; rowNumber <= memberEndRow; rowNumber += 1) {
-      const rowValues = readRow(sheet, rowNumber, memberHeaders);
+      const rowValues = readRow(sheet, rowNumber, memberHeaders, {
+        ignoreFormulaErrors: config.import.workbook.ignoreFormulaErrors
+      });
       const memberKey = normalizeCellValue(rowValues[schema.memberKeyField]);
       const meaningful = hasMeaningfulValues(rowValues);
 
@@ -144,7 +148,12 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       }
 
       if (!memberKey && meaningful) {
-        warnings.push(`Sheet '${sheet.name}' row ${rowNumber} has default values but no member key.`);
+        appendSkippedDefaultRowMessage(
+          `Sheet '${sheet.name}' row ${rowNumber} has default values but no member key.`,
+          config,
+          warnings,
+          errors
+        );
         skippedBlankRows += 1;
         continue;
       }
@@ -167,11 +176,15 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
 
     if (!relationshipHeaderRow) return;
 
-    const relationshipHeaders = readHeaders(sheet, relationshipHeaderRow, schema.relationshipFields);
+    const relationshipHeaders = readHeaders(sheet, relationshipHeaderRow, schema.relationshipFields, {
+      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns
+    });
     let relationshipRowOrder = relationshipRowOrders.get(dimension.id) ?? 1;
 
     for (let rowNumber = relationshipHeaderRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
-      const rowValues = readRow(sheet, rowNumber, relationshipHeaders);
+      const rowValues = readRow(sheet, rowNumber, relationshipHeaders, {
+        ignoreFormulaErrors: config.import.workbook.ignoreFormulaErrors
+      });
       const parentKey = normalizeCellValue(rowValues.Parent);
       const childKey = normalizeCellValue(rowValues.Child);
       const meaningful = hasMeaningfulValues(rowValues);
@@ -411,7 +424,12 @@ function findRelationshipHeaderRow(sheet: ExcelJS.Worksheet): number | null {
   return null;
 }
 
-function readHeaders(sheet: ExcelJS.Worksheet, rowNumber: number, fields: FieldDefinition[]): HeaderInfo[] {
+function readHeaders(
+  sheet: ExcelJS.Worksheet,
+  rowNumber: number,
+  fields: FieldDefinition[],
+  options: { ignoreGeneratedXmlColumns: boolean }
+): HeaderInfo[] {
   const headerToField = new Map<string, string>();
   for (const field of fields) {
     headerToField.set(normalizeHeader(field.name), field.name);
@@ -422,25 +440,43 @@ function readHeaders(sheet: ExcelJS.Worksheet, rowNumber: number, fields: FieldD
   const row = sheet.getRow(rowNumber);
   for (let column = 1; column <= Math.max(sheet.columnCount, row.cellCount); column += 1) {
     const rawHeader = normalizeHeader(row.getCell(column).value);
-    if (isGeneratedHeader(rawHeader)) continue;
+    if (!rawHeader) continue;
+    if (options.ignoreGeneratedXmlColumns && isGeneratedHeader(rawHeader)) continue;
     const fieldName = headerToField.get(rawHeader);
-    if (fieldName) headers.push({ column, fieldName });
+    if (fieldName) {
+      headers.push({ column, fieldName });
+    } else if (!options.ignoreGeneratedXmlColumns) {
+      headers.push({ column, fieldName: rawHeader });
+    }
   }
   return headers;
 }
 
-function readRow(sheet: ExcelJS.Worksheet, rowNumber: number, headers: HeaderInfo[]): Record<string, string> {
+function readRow(
+  sheet: ExcelJS.Worksheet,
+  rowNumber: number,
+  headers: HeaderInfo[],
+  options: { ignoreFormulaErrors: boolean }
+): Record<string, string> {
   const row = sheet.getRow(rowNumber);
   const values: Record<string, string> = {};
   for (const header of headers) {
     const value = normalizeCellValue(row.getCell(header.column).value);
-    values[header.fieldName] = isFormulaError(value) ? "" : value;
+    values[header.fieldName] = options.ignoreFormulaErrors && isFormulaError(value) ? "" : value;
   }
   return values;
 }
 
 function isGeneratedHeader(header: string): boolean {
   return !header || header.startsWith("=") || header === "Begin Members" || header === "Begin Relationships";
+}
+
+function appendSkippedDefaultRowMessage(message: string, config: AppConfig, warnings: string[], errors: string[]): void {
+  if (config.import.workbook.skippedDefaultRowSeverity === "error") {
+    errors.push(message);
+  } else {
+    warnings.push(message);
+  }
 }
 
 function hasMeaningfulValues(values: Record<string, string>): boolean {

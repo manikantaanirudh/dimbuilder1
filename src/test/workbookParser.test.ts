@@ -23,6 +23,8 @@ async function createMinimalWorkbook(
     dimensionName: string;
     memberKeyField: string;
     memberKey: string;
+    description?: string;
+    extraMemberColumns?: Array<{ header: string; value: string }>;
   }>
 ): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "dimbuilder-parser-"));
@@ -37,7 +39,12 @@ async function createMinimalWorkbook(
     sheet.getCell("A8").value = sheetFixture.memberKeyField;
     sheet.getCell("B8").value = "Description";
     sheet.getCell("A9").value = sheetFixture.memberKey;
-    sheet.getCell("B9").value = `${sheetFixture.memberKey} description`;
+    sheet.getCell("B9").value = sheetFixture.description ?? `${sheetFixture.memberKey} description`;
+    sheetFixture.extraMemberColumns?.forEach((column, index) => {
+      const columnNumber = index + 3;
+      sheet.getRow(8).getCell(columnNumber).value = column.header;
+      sheet.getRow(9).getCell(columnNumber).value = column.value;
+    });
   }
 
   await workbook.xlsx.writeFile(filePath);
@@ -244,5 +251,117 @@ describe("workbook parser", () => {
     expect(parsed.dimensions.map((dimension) => dimension.dimensionType)).toEqual(["Account"]);
     expect(parsed.dimensions[0]?.sheetName).toBe("Plan Account Sheet");
     expect(parsed.dimensions[0]?.dimensionName).toBe("AliasAccounts");
+  });
+
+  it("keeps duplicate logical dimensions separate when configured", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Accounts",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "Cash"
+      },
+      {
+        sheetName: "Accounts Copy",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "Revenue"
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      import: { workbook: { mergeDuplicateDimensionSheets: false } }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config duplicate dimensions",
+      createdBy: "local-admin",
+      config
+    });
+
+    expect(parsed.dimensions.filter((dimension) => dimension.dimensionType === "Account")).toHaveLength(2);
+    expect(parsed.dimensions.map((dimension) => dimension.sheetName)).toEqual(["Accounts", "Accounts Copy"]);
+    expect(new Set(parsed.members.map((member) => member.dimensionId))).toHaveLength(2);
+  });
+
+  it("preserves generated and unmatched member columns when configured", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Accounts",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "Cash",
+        extraMemberColumns: [
+          { header: "Begin Members", value: "generated marker" },
+          { header: "Custom Upload Column", value: "custom value" }
+        ]
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      import: { workbook: { ignoreGeneratedXmlColumns: false } }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config generated columns",
+      createdBy: "local-admin",
+      config
+    });
+
+    expect(parsed.members[0]?.memberKey).toBe("Cash");
+    expect(parsed.members[0]?.properties).toMatchObject({
+      "Begin Members": "generated marker",
+      "Custom Upload Column": "custom value"
+    });
+  });
+
+  it("preserves formula error values when configured", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Scenarios",
+        dimensionTypeText: "Scenario",
+        dimensionName: "Scenarios",
+        memberKeyField: "Entity",
+        memberKey: "Actual",
+        extraMemberColumns: [{ header: "Text1", value: "#NAME?" }]
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      import: { workbook: { ignoreFormulaErrors: false } }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config formula errors",
+      createdBy: "local-admin",
+      config
+    });
+
+    expect(parsed.members[0]?.properties.Text1).toBe("#NAME?");
+  });
+
+  it("routes skipped default row messages as errors when configured", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Accounts",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "",
+        description: "Default row without key"
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      import: { workbook: { skippedDefaultRowSeverity: "error" } }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config skipped row severity",
+      createdBy: "local-admin",
+      config
+    });
+
+    expect(parsed.importSummary.errors).toContain("Sheet 'Accounts' row 9 has default values but no member key.");
+    expect(parsed.importSummary.warnings).not.toContain("Sheet 'Accounts' row 9 has default values but no member key.");
   });
 });

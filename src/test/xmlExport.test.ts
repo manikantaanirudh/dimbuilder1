@@ -100,4 +100,56 @@ describe("xml export", () => {
 
     expect(xml).toContain('<OneStreamXF version="10.0.0.1">');
   });
+
+  it("writes compact XML and omits dimension source attributes when configured", () => {
+    const xml = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [
+          {
+            ...sampleScenarioDimension,
+            metadata: {
+              dimMemberSourceType: "Delimited",
+              dimMemberSourcePath: "/imports/scenarios.csv",
+              dimMemberSourceNVPairs: "Delimiter=,"
+            }
+          }
+        ],
+        members: [memberFixture()],
+        relationships: []
+      },
+      { prettyPrint: false, includeDimensionSourceAttributes: false }
+    );
+
+    expect(xml).not.toContain("\n");
+    expect(xml).toContain("?><OneStreamXF");
+    expect(xml).not.toContain("dimMemberSourceType");
+    expect(xml).not.toContain("dimMemberSourcePath");
+    expect(xml).not.toContain("dimMemberSourceNVPairs");
+  });
+
+  it("includes formula errors and blank member rows when configured", () => {
+    const xml = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [sampleScenarioDimension],
+        members: [
+          memberFixture({
+            memberKey: "",
+            description: "#NAME?",
+            properties: {
+              Entity: "",
+              Description: "#NAME?",
+              Text1: "#VALUE?"
+            }
+          })
+        ],
+        relationships: []
+      },
+      { skipBlankMemberRows: false, skipFormulaErrors: false }
+    );
+
+    expect(xml).toContain('<member name="" alias="" description="#NAME?">');
+    expect(xml).toContain('<property name="Text1" value="#VALUE?" />');
+  });
 });

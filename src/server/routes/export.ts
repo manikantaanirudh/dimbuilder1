@@ -16,7 +16,13 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     if (!config.export.xml.enabled) return disabledFormat(res, "XML");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    const xml = exportProjectXml(snapshot, { oneStreamVersionFallback: config.application.oneStreamVersionFallback });
+    const xml = exportProjectXml(snapshot, {
+      oneStreamVersionFallback: config.application.oneStreamVersionFallback,
+      prettyPrint: config.export.xml.prettyPrint,
+      skipBlankMemberRows: config.export.xml.skipBlankMemberRows,
+      skipFormulaErrors: config.export.xml.skipFormulaErrors,
+      includeDimensionSourceAttributes: config.export.xml.includeDimensionSourceAttributes
+    });
     repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id });
     res.type("application/xml").send(xml);
   });

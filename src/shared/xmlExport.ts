@@ -17,9 +17,19 @@ interface ExportProjectXmlInput {
 
 export interface ExportProjectXmlOptions {
   oneStreamVersionFallback?: string;
+  prettyPrint?: boolean;
+  skipBlankMemberRows?: boolean;
+  skipFormulaErrors?: boolean;
+  includeDimensionSourceAttributes?: boolean;
 }
 
 const DEFAULT_ONESTREAM_VERSION = "9.2.0.18004";
+const defaultExportOptions = {
+  prettyPrint: true,
+  skipBlankMemberRows: true,
+  skipFormulaErrors: true,
+  includeDimensionSourceAttributes: true
+};
 
 const fieldNameOverrides: Record<string, string> = {
   "# of No Input Periods": "WorkflowNumNoInputTimePeriods",
@@ -90,6 +100,7 @@ const memberAttributeFieldsByType: Record<string, Record<string, string>> = {
 };
 
 export function exportProjectXml(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string {
+  const exportOptions = { ...defaultExportOptions, ...options };
   const oneStreamVersion = getOneStreamVersion(input.dimensions, options.oneStreamVersionFallback);
   const lines: string[] = [
     '<?xml version="1.0" encoding="utf-8"?>',
@@ -99,22 +110,23 @@ export function exportProjectXml(input: ExportProjectXmlInput, options: ExportPr
   ];
 
   for (const dimension of input.dimensions) {
-    lines.push(renderDimensionStart(dimension));
+    lines.push(renderDimensionStart(dimension, exportOptions));
     lines.push("        <members>");
-    for (const member of input.members.filter((candidate) => candidate.dimensionId === dimension.id && candidate.memberKey)) {
-      lines.push(renderMember(dimension, member));
+    for (const member of input.members.filter((candidate) => candidate.dimensionId === dimension.id && (!exportOptions.skipBlankMemberRows || candidate.memberKey))) {
+      lines.push(renderMember(dimension, member, exportOptions));
     }
     lines.push("        </members>");
     lines.push("        <relationships>");
     for (const relationship of input.relationships.filter((candidate) => candidate.dimensionId === dimension.id && candidate.parentKey && candidate.childKey)) {
-      lines.push(renderRelationship(dimension, relationship));
+      lines.push(renderRelationship(dimension, relationship, exportOptions));
     }
     lines.push("        </relationships>");
     lines.push("      </dimension>");
   }
 
   lines.push("    </dimensions>", "  </metadataRoot>", "</OneStreamXF>");
-  return lines.join("\n");
+  const xml = lines.join("\n");
+  return exportOptions.prettyPrint ? xml : xml.replace(/>\s+</g, "><");
 }
 
 function getOneStreamVersion(dimensions: DimensionRecord[], fallback = DEFAULT_ONESTREAM_VERSION): string {
@@ -123,7 +135,7 @@ function getOneStreamVersion(dimensions: DimensionRecord[], fallback = DEFAULT_O
     .find(Boolean) ?? fallback;
 }
 
-function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord): string {
+function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord, options: typeof defaultExportOptions): string {
   const schema = getDimensionSchema(dimension.dimensionType);
   const attributeFieldMap = memberAttributeFieldsByType[dimension.dimensionType] ?? {};
   const attributes: Record<string, unknown> = {
@@ -139,12 +151,13 @@ function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord)
   const propertyLines = renderPropertyLines(
     schema.memberFields.filter((field) => field.name !== schema.memberKeyField && field.name !== "Description" && !attributeFieldMap[field.name]),
     member.properties,
-    12
+    12,
+    options
   );
 
-  if (propertyLines.length === 0) return `          <member ${renderAttributes(attributes)} />`;
+  if (propertyLines.length === 0) return `          <member ${renderAttributes(attributes, options)} />`;
   return [
-    `          <member ${renderAttributes(attributes)}>`,
+    `          <member ${renderAttributes(attributes, options)}>`,
     "            <properties>",
     ...propertyLines,
     "            </properties>",
@@ -152,7 +165,7 @@ function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord)
   ].join("\n");
 }
 
-function renderRelationship(dimension: DimensionRecord, relationship: DimensionRelationshipRecord): string {
+function renderRelationship(dimension: DimensionRecord, relationship: DimensionRelationshipRecord, options: typeof defaultExportOptions): string {
   const schema = getDimensionSchema(dimension.dimensionType);
   const properties: Record<string, unknown> = {
     ...relationship.properties,
@@ -175,11 +188,11 @@ function renderRelationship(dimension: DimensionRecord, relationship: DimensionR
   const propertyFields = dimension.dimensionType === "Entity"
     ? schema.relationshipFields.filter((field) => field.name !== "Parent" && field.name !== "Child")
     : [];
-  const propertyLines = renderPropertyLines(propertyFields, properties, 12);
+  const propertyLines = renderPropertyLines(propertyFields, properties, 12, options);
 
-  if (propertyLines.length === 0) return `          <relationship ${renderAttributes(relationshipAttributes)} />`;
+  if (propertyLines.length === 0) return `          <relationship ${renderAttributes(relationshipAttributes, options)} />`;
   return [
-    `          <relationship ${renderAttributes(relationshipAttributes)}>`,
+    `          <relationship ${renderAttributes(relationshipAttributes, options)}>`,
     "            <properties>",
     ...propertyLines,
     "            </properties>",
@@ -187,32 +200,39 @@ function renderRelationship(dimension: DimensionRecord, relationship: DimensionR
   ].join("\n");
 }
 
-function renderDimensionStart(dimension: DimensionRecord): string {
+function renderDimensionStart(dimension: DimensionRecord, options: typeof defaultExportOptions): string {
   const attributes: Record<string, unknown> = {
     type: dimension.dimensionType,
     name: dimension.dimensionName,
     accessGroup: dimension.accessGroup,
     maintenanceGroup: dimension.maintenanceGroup,
     description: dimension.description,
-    inheritedDim: dimension.inheritedDimension,
-    dimMemberSourceType: dimension.metadata.dimMemberSourceType ?? "Standard",
-    dimMemberSourcePath: dimension.metadata.dimMemberSourcePath ?? "",
-    dimMemberSourceNVPairs: dimension.metadata.dimMemberSourceNVPairs ?? ""
+    inheritedDim: dimension.inheritedDimension
   };
-  return `      <dimension ${renderAttributes(attributes)}>`;
+  if (options.includeDimensionSourceAttributes) {
+    attributes.dimMemberSourceType = dimension.metadata.dimMemberSourceType ?? "Standard";
+    attributes.dimMemberSourcePath = dimension.metadata.dimMemberSourcePath ?? "";
+    attributes.dimMemberSourceNVPairs = dimension.metadata.dimMemberSourceNVPairs ?? "";
+  }
+  return `      <dimension ${renderAttributes(attributes, options)}>`;
 }
 
-function renderPropertyLines(fields: FieldDefinition[], properties: Record<string, unknown>, indent: number): string[] {
+function renderPropertyLines(
+  fields: FieldDefinition[],
+  properties: Record<string, unknown>,
+  indent: number,
+  options: typeof defaultExportOptions
+): string[] {
   const prefix = " ".repeat(indent);
   return fields
     .map((field) => [toOneStreamPropertyName(field.name), normalizeCellValue(properties[field.name])] as const)
-    .filter(([, value]) => value && !isFormulaError(value))
+    .filter(([, value]) => value && (!options.skipFormulaErrors || !isFormulaError(value)))
     .map(([name, value]) => `${prefix}<property name="${escapeXml(name)}" value="${escapeXml(value)}" />`);
 }
 
-function renderAttributes(attributes: Record<string, unknown>): string {
+function renderAttributes(attributes: Record<string, unknown>, options: typeof defaultExportOptions): string {
   return Object.entries(attributes)
-    .filter(([, value]) => value !== null && value !== undefined && !isFormulaError(value))
+    .filter(([, value]) => value !== null && value !== undefined && (!options.skipFormulaErrors || !isFormulaError(value)))
     .map(([name, value]) => `${name}="${escapeXml(normalizeCellValue(value))}"`)
     .join(" ");
 }
