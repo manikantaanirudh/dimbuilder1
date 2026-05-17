@@ -1,14 +1,17 @@
 import cors from "cors";
 import express from "express";
+import { defaultAppConfig } from "../shared/appConfigDefaults";
+import type { AppConfig } from "../shared/appConfigTypes";
 import type { AppDatabase } from "./db/database";
 import { createDatabase } from "./db/database";
 import { createRepositories } from "./db/repositories";
+import { createConfigRouter } from "./routes/config";
 import { createExportRouter } from "./routes/export";
 import { createImportRouter } from "./routes/import";
 import { createProjectRouter } from "./routes/projects";
 import { createValidationRouter } from "./routes/validation";
 
-export function createApp(db: AppDatabase = createDatabase()) {
+export function createApp(db: AppDatabase = createDatabase(), config: AppConfig = defaultAppConfig) {
   const app = express();
   const repos = createRepositories(db);
 
@@ -16,6 +19,7 @@ export function createApp(db: AppDatabase = createDatabase()) {
   app.use(express.json({ limit: "25mb" }));
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
+  app.use("/api/config", createConfigRouter(config));
   app.use("/api/projects", createProjectRouter(repos));
   app.use("/api/import", createImportRouter(repos));
   app.use("/api/export", createExportRouter(repos));
@@ -29,4 +33,3 @@ export function createApp(db: AppDatabase = createDatabase()) {
 
   return app;
 }
-
