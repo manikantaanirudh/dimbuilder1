@@ -14,17 +14,33 @@ import { validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
-import { ExportModal, ImportModal } from "./ImportExportModals";
+import { ExportModal, hasEnabledExportFormat, ImportModal } from "./ImportExportModals";
 
-export function AppShell({ appConfig }: { appConfig: ClientAppConfig }) {
+export function AppShell({
+  appConfig,
+  configError = null
+}: {
+  appConfig: ClientAppConfig;
+  configError?: string | null;
+}) {
   const store = useProjectStore();
   const [activeDimensionId, setActiveDimensionId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
-  const exportDisabled = !store.selectedProjectId
-    || store.issues.some((issue) => appConfig.validation.exportBlockedBySeverities.includes(issue.severity));
+  const hasEnabledExportFormats = hasEnabledExportFormat(appConfig.export);
+  const hasExportBlockingIssues = store.issues.some((issue) => (
+    appConfig.validation.exportBlockedBySeverities.includes(issue.severity)
+  ));
+  const exportDisabled = !store.selectedProjectId || !hasEnabledExportFormats || hasExportBlockingIssues;
+  const exportTitle = !hasEnabledExportFormats
+    ? "Exports are disabled by configuration"
+    : !store.selectedProjectId
+      ? "Import a project before exporting"
+      : hasExportBlockingIssues
+        ? "Resolve blocking validation issues before exporting"
+        : "Export metadata";
 
   const activeDimension = useMemo(
     () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? store.dimensions[0],
@@ -70,13 +86,18 @@ export function AppShell({ appConfig }: { appConfig: ClientAppConfig }) {
           <div className="toolbar-actions">
             {toolbar.showImport && <button onClick={() => setImportOpen(true)}><FileUp size={16} /> Import</button>}
             {toolbar.showValidate && <button disabled={!store.selectedProjectId} onClick={runValidation}><ShieldCheck size={16} /> Validate</button>}
-            {toolbar.showExport && <button disabled={exportDisabled} onClick={() => setExportOpen(true)}><Download size={16} /> Export</button>}
+            {toolbar.showExport && (
+              <button disabled={exportDisabled} title={exportTitle} onClick={() => setExportOpen(true)}>
+                <Download size={16} /> Export
+              </button>
+            )}
             {toolbar.showSave && <button disabled><Save size={16} /> Save</button>}
             {toolbar.showUndoRedo && <button disabled title="Undo"><Undo2 size={16} /></button>}
             {toolbar.showUndoRedo && <button disabled title="Redo"><RotateCcw size={16} /></button>}
           </div>
         </header>
 
+        {configError && <div className="banner error">Configuration failed to load. Using defaults: {configError}</div>}
         {store.error && <div className="banner error">{store.error}</div>}
         {status && <div className="banner">{status}</div>}
 

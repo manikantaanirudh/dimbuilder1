@@ -2,6 +2,13 @@ import { useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { uploadWorkbook } from "../api/client";
 
+export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
+  return exportConfig.xml.enabled
+    || exportConfig.xlsx.enabled
+    || exportConfig.csv.enabled
+    || exportConfig.json.enabled;
+}
+
 export function ImportModal({
   open,
   onClose,
@@ -56,18 +63,23 @@ export function ExportModal({
   const disabled = !projectId;
   const prefix = projectId ? `/api/export/${projectId}` : "#";
   const exportConfig = appConfig.export;
+  const hasEnabledFormat = hasEnabledExportFormat(exportConfig);
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
         <h2>Export Metadata</h2>
-        <div className="export-list">
-          {exportConfig.xml.enabled && <a aria-disabled={disabled} href={`${prefix}/xml`} target="_blank" rel="noreferrer">OneStream XML</a>}
-          {exportConfig.xlsx.enabled && <a aria-disabled={disabled} href={`${prefix}/xlsx`} target="_blank" rel="noreferrer">Workbook XLSX</a>}
-          {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/members.csv`} target="_blank" rel="noreferrer">Members CSV</a>}
-          {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/relationships.csv`} target="_blank" rel="noreferrer">Relationships CSV</a>}
-          {exportConfig.json.enabled && <a aria-disabled={disabled} href={`${prefix}/json`} target="_blank" rel="noreferrer">JSON Backup</a>}
-        </div>
+        {hasEnabledFormat ? (
+          <div className="export-list">
+            {exportConfig.xml.enabled && <a aria-disabled={disabled} href={`${prefix}/xml`} target="_blank" rel="noreferrer">OneStream XML</a>}
+            {exportConfig.xlsx.enabled && <a aria-disabled={disabled} href={`${prefix}/xlsx`} target="_blank" rel="noreferrer">Workbook XLSX</a>}
+            {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/members.csv`} target="_blank" rel="noreferrer">Members CSV</a>}
+            {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/relationships.csv`} target="_blank" rel="noreferrer">Relationships CSV</a>}
+            {exportConfig.json.enabled && <a aria-disabled={disabled} href={`${prefix}/json`} target="_blank" rel="noreferrer">JSON Backup</a>}
+          </div>
+        ) : (
+          <div className="empty-state">Exports are disabled by configuration.</div>
+        )}
         <div className="modal-actions">
           <button onClick={onClose}>Close</button>
         </div>
