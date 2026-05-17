@@ -1,8 +1,9 @@
 import { Router } from "express";
+import type { AppConfig } from "../../shared/appConfigTypes";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 
-export function createValidationRouter(repos: Repositories): Router {
+export function createValidationRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
   router.post("/:projectId/run", (req, res) => {
@@ -18,7 +19,11 @@ export function createValidationRouter(repos: Repositories): Router {
         dimension,
         members: members.filter((member) => member.dimensionId === dimension.id),
         relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
-        duplicateSeverity: req.body.duplicateSeverity
+        severities: {
+          ...config.validation,
+          duplicateMemberSeverity: req.body?.duplicateSeverity ?? config.validation.duplicateMemberSeverity
+        },
+        duplicateSeverity: req.body?.duplicateSeverity
       })
     );
 
@@ -29,4 +34,3 @@ export function createValidationRouter(repos: Repositories): Router {
 
   return router;
 }
-

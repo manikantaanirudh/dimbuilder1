@@ -23,7 +23,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api/projects", createProjectRouter(repos));
   app.use("/api/import", createImportRouter(repos, config));
   app.use("/api/export", createExportRouter(repos, config));
-  app.use("/api/validation", createValidationRouter(repos));
+  app.use("/api/validation", createValidationRouter(repos, config));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";

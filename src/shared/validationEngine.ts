@@ -15,19 +15,36 @@ import {
   normalizeCellValue
 } from "./text";
 
-interface ValidateDimensionInput {
+export interface ValidationSeverityOptions {
+  duplicateMemberSeverity: Severity;
+  duplicateRelationshipSeverity: Severity;
+  unknownRelationshipMemberSeverity: Severity;
+  missingRequiredFieldSeverity: Severity;
+  circularHierarchySeverity: Severity;
+  relationshipsWithNoLocalMembersSeverity: Severity;
+}
+
+export interface ValidateDimensionInput {
   project: ProjectRecord;
   dimension: DimensionRecord;
   members: DimensionMemberRecord[];
   relationships: DimensionRelationshipRecord[];
   duplicateSeverity?: Severity;
+  severities?: ValidationSeverityOptions;
 }
 
 export function validateDimension(input: ValidateDimensionInput): ValidationIssue[] {
   const schema = getDimensionSchema(input.dimension.dimensionType);
   const issues: ValidationIssue[] = [];
   const createdAt = new Date().toISOString();
-  const duplicateSeverity = input.duplicateSeverity ?? schema.duplicateSeverity;
+  const severities: ValidationSeverityOptions = {
+    duplicateMemberSeverity: input.severities?.duplicateMemberSeverity ?? input.duplicateSeverity ?? schema.duplicateSeverity,
+    duplicateRelationshipSeverity: input.severities?.duplicateRelationshipSeverity ?? "warning",
+    unknownRelationshipMemberSeverity: input.severities?.unknownRelationshipMemberSeverity ?? "warning",
+    missingRequiredFieldSeverity: input.severities?.missingRequiredFieldSeverity ?? "error",
+    circularHierarchySeverity: input.severities?.circularHierarchySeverity ?? "error",
+    relationshipsWithNoLocalMembersSeverity: input.severities?.relationshipsWithNoLocalMembersSeverity ?? "warning"
+  };
 
   function addIssue(params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">): void {
     issues.push({
@@ -43,7 +60,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     addIssue({
       entityType: "dimension",
       entityId: input.dimension.id,
-      severity: "error",
+      severity: severities.missingRequiredFieldSeverity,
       code: "DIMENSION_TYPE_REQUIRED",
       message: "Dimension Type is required.",
       fieldName: "Dimension Type",
@@ -55,7 +72,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     addIssue({
       entityType: "dimension",
       entityId: input.dimension.id,
-      severity: "error",
+      severity: severities.missingRequiredFieldSeverity,
       code: "DIMENSION_NAME_REQUIRED",
       message: "Dimension Name is required.",
       fieldName: "Dimension Name",
@@ -63,12 +80,13 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     });
   }
 
-  validateMembers(input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, duplicateSeverity, addIssue);
+  validateMembers(input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, severities, addIssue);
   validateRelationships(
     input.dimension,
     input.members,
     input.relationships,
     schema.relationshipFields.filter((field) => field.kind === "number").map((field) => field.name),
+    severities,
     addIssue
   );
 
@@ -77,7 +95,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     addIssue({
       entityType: "dimension",
       entityId: input.dimension.id,
-      severity: "error",
+      severity: severities.circularHierarchySeverity,
       code: "CIRCULAR_HIERARCHY",
       message: "Hierarchy contains a circular parent-child reference.",
       fieldName: "Relationships",
@@ -89,7 +107,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     addIssue({
       entityType: "relationship",
       entityId: relationshipId,
-      severity: "warning",
+      severity: severities.duplicateRelationshipSeverity,
       code: "DUPLICATE_RELATIONSHIP",
       message: "Duplicate parent-child relationship.",
       fieldName: "Parent/Child",
@@ -115,7 +133,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     addIssue({
       entityType: "dimension",
       entityId: input.dimension.id,
-      severity: "warning",
+      severity: severities.relationshipsWithNoLocalMembersSeverity,
       code: "RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS",
       message: "Dimension has relationships but no local members. This can be valid for inherited dimensions.",
       fieldName: "Relationships",
@@ -131,7 +149,7 @@ function validateMembers(
   memberKeyField: string,
   booleanFields: string[],
   numericFields: string[],
-  duplicateSeverity: Severity,
+  severities: ValidationSeverityOptions,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   const byKey = new Map<string, DimensionMemberRecord[]>();
@@ -141,7 +159,7 @@ function validateMembers(
       addIssue({
         entityType: "member",
         entityId: member.id,
-        severity: "error",
+        severity: severities.missingRequiredFieldSeverity,
         code: "MEMBER_KEY_REQUIRED",
         message: "Member key is required.",
         fieldName: memberKeyField,
@@ -162,7 +180,7 @@ function validateMembers(
       addIssue({
         entityType: "member",
         entityId: member.id,
-        severity: duplicateSeverity,
+        severity: severities.duplicateMemberSeverity,
         code: "DUPLICATE_MEMBER",
         message: `Member '${memberKey}' appears more than once in this dimension.`,
         fieldName: memberKeyField,
@@ -177,6 +195,7 @@ function validateRelationships(
   members: DimensionMemberRecord[],
   relationships: DimensionRelationshipRecord[],
   numericFields: string[],
+  severities: ValidationSeverityOptions,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   const memberKeys = new Set(members.map((member) => member.memberKey).filter(Boolean));
@@ -186,7 +205,7 @@ function validateRelationships(
       addIssue({
         entityType: "relationship",
         entityId: relationship.id,
-        severity: "error",
+        severity: severities.missingRequiredFieldSeverity,
         code: "RELATIONSHIP_PARENT_REQUIRED",
         message: "Relationship Parent is required.",
         fieldName: "Parent",
@@ -198,7 +217,7 @@ function validateRelationships(
       addIssue({
         entityType: "relationship",
         entityId: relationship.id,
-        severity: "error",
+        severity: severities.missingRequiredFieldSeverity,
         code: "RELATIONSHIP_CHILD_REQUIRED",
         message: "Relationship Child is required.",
         fieldName: "Child",
@@ -210,7 +229,7 @@ function validateRelationships(
       addIssue({
         entityType: "relationship",
         entityId: relationship.id,
-        severity: "warning",
+        severity: severities.unknownRelationshipMemberSeverity,
         code: "UNKNOWN_RELATIONSHIP_CHILD",
         message: `Relationship child '${relationship.childKey}' does not exist in local members.`,
         fieldName: "Child",

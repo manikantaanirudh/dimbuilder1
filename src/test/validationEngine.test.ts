@@ -8,6 +8,34 @@ import {
 } from "./fixtures";
 
 describe("validation engine", () => {
+  it("uses configured severities for rule-specific validation issues", () => {
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: { ...sampleScenarioDimension, dimensionName: "" },
+      members: [
+        memberFixture({ id: "m1", memberKey: "Actual", sourceRowNumber: 9 }),
+        memberFixture({ id: "m2", memberKey: "Actual", sourceRowNumber: 10 })
+      ],
+      relationships: [
+        relationshipFixture({ id: "r1", parentKey: "Root", childKey: "Forecast", sourceRowNumber: 16 }),
+        relationshipFixture({ id: "r2", parentKey: "Root", childKey: "Forecast", sourceRowNumber: 17 })
+      ],
+      severities: {
+        duplicateMemberSeverity: "error",
+        duplicateRelationshipSeverity: "info",
+        unknownRelationshipMemberSeverity: "error",
+        missingRequiredFieldSeverity: "warning",
+        circularHierarchySeverity: "info",
+        relationshipsWithNoLocalMembersSeverity: "error"
+      }
+    });
+
+    expect(issues.filter((issue) => issue.code === "DUPLICATE_MEMBER").map((issue) => issue.severity)).toEqual(["error", "error"]);
+    expect(issues.find((issue) => issue.code === "DUPLICATE_RELATIONSHIP")?.severity).toBe("info");
+    expect(issues.find((issue) => issue.code === "DIMENSION_NAME_REQUIRED")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "UNKNOWN_RELATIONSHIP_CHILD")?.severity).toBe("error");
+  });
+
   it("detects duplicate members and missing relationship children", () => {
     const issues = validateDimension({
       project: sampleProject,

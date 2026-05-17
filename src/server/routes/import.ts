@@ -53,7 +53,8 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
           project,
           dimension,
           members: members.filter((member) => member.dimensionId === dimension.id),
-          relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id)
+          relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
+          severities: config.validation
         })
       );
       repos.issues.replaceForProject(project.id, issues);
