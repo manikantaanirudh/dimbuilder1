@@ -23,11 +23,12 @@ interface FindDefaultMetadataReferencePathOptions {
   defaultFile?: string;
 }
 
-export function findDefaultMetadataReferencePath(options: FindDefaultMetadataReferencePathOptions = {}): string | null {
-  const directory = options.directory ?? "metadata";
+export function findDefaultMetadataReferencePath(options: string | FindDefaultMetadataReferencePathOptions = {}): string | null {
+  const normalizedOptions = typeof options === "string" ? { directory: options } : options;
+  const { directory = "metadata", defaultFile } = normalizedOptions;
   if (!existsSync(directory)) return null;
-  if (options.defaultFile) {
-    const defaultPath = join(directory, options.defaultFile);
+  if (defaultFile) {
+    const defaultPath = join(directory, defaultFile);
     if (existsSync(defaultPath)) return defaultPath;
   }
   const files = readdirSync(directory)

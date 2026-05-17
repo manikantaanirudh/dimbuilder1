@@ -126,6 +126,18 @@ describe("server app config loader", () => {
 });
 
 describe("metadata reference config", () => {
+  it("accepts a legacy metadata directory string argument", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-metadata-"));
+    const referencePath = join(directory, "reference.xml");
+    writeFileSync(referencePath, "<OneStreamXF />", "utf8");
+
+    try {
+      expect(findDefaultMetadataReferencePath(directory)).toBe(referencePath);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("prefers configured default metadata file when present", () => {
     const directory = mkdtempSync(join(tmpdir(), "dimbuilder-metadata-"));
     const firstPath = join(directory, "first.xml");
