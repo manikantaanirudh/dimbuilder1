@@ -1,4 +1,8 @@
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { loadAppConfig } from "../server/config/loadAppConfig";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import {
   buildClientAppConfig,
@@ -88,5 +92,34 @@ describe("app config", () => {
     expect(clientConfig.application.title).toBe(defaultAppConfig.application.title);
     expect("paths" in clientConfig).toBe(false);
     expect("server" in clientConfig).toBe(false);
+  });
+});
+
+describe("server app config loader", () => {
+  it("loads config from yaml and applies environment overrides", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-config-"));
+    const filePath = join(directory, "dimbuilder.yaml");
+    writeFileSync(filePath, "application:\n  title: YAML Title\nserver:\n  port: 9001\n", "utf8");
+    const previousPort = process.env.PORT;
+    process.env.PORT = "9002";
+
+    try {
+      const config = loadAppConfig({ configFilePath: filePath });
+      expect(config.application.title).toBe("YAML Title");
+      expect(config.server.port).toBe(9002);
+    } finally {
+      if (previousPort === undefined) {
+        delete process.env.PORT;
+      } else {
+        process.env.PORT = previousPort;
+      }
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("uses defaults when config file is missing", () => {
+    const config = loadAppConfig({ configFilePath: "missing-config-file.yaml" });
+
+    expect(config.application.title).toBe(defaultAppConfig.application.title);
   });
 });
