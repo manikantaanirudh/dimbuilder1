@@ -86,4 +86,18 @@ describe("xml export", () => {
 
     expect(xml).toContain('<OneStreamXF version="9.3.1.0">');
   });
+
+  it("uses the configured OneStream fallback version when metadata has no version", () => {
+    const xml = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [sampleScenarioDimension],
+        members: [],
+        relationships: []
+      },
+      { oneStreamVersionFallback: "10.0.0.1" }
+    );
+
+    expect(xml).toContain('<OneStreamXF version="10.0.0.1">');
+  });
 });

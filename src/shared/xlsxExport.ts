@@ -6,14 +6,19 @@ import type {
   DimensionRelationshipRecord
 } from "./types";
 
+export interface ExportWorkbookOptions {
+  creator?: string;
+}
+
 export async function exportWorkbook(
   filePath: string,
   dimensions: DimensionRecord[],
   members: DimensionMemberRecord[],
-  relationships: DimensionRelationshipRecord[]
+  relationships: DimensionRelationshipRecord[],
+  options: ExportWorkbookOptions = {}
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "OneStream XF Dimension Builder";
+  workbook.creator = options.creator ?? "OneStream XF Dimension Builder";
   workbook.created = new Date();
 
   for (const dimension of dimensions) {

@@ -15,6 +15,10 @@ interface ExportProjectXmlInput {
   relationships: DimensionRelationshipRecord[];
 }
 
+export interface ExportProjectXmlOptions {
+  oneStreamVersionFallback?: string;
+}
+
 const DEFAULT_ONESTREAM_VERSION = "9.2.0.18004";
 
 const fieldNameOverrides: Record<string, string> = {
@@ -85,8 +89,8 @@ const memberAttributeFieldsByType: Record<string, Record<string, string>> = {
   UD8: { "Display Group": "displayMemberGroup" }
 };
 
-export function exportProjectXml(input: ExportProjectXmlInput): string {
-  const oneStreamVersion = getOneStreamVersion(input.dimensions);
+export function exportProjectXml(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string {
+  const oneStreamVersion = getOneStreamVersion(input.dimensions, options.oneStreamVersionFallback);
   const lines: string[] = [
     '<?xml version="1.0" encoding="utf-8"?>',
     `<OneStreamXF version="${escapeXml(oneStreamVersion)}">`,
@@ -113,10 +117,10 @@ export function exportProjectXml(input: ExportProjectXmlInput): string {
   return lines.join("\n");
 }
 
-function getOneStreamVersion(dimensions: DimensionRecord[]): string {
+function getOneStreamVersion(dimensions: DimensionRecord[], fallback = DEFAULT_ONESTREAM_VERSION): string {
   return dimensions
     .map((dimension) => normalizeCellValue(dimension.metadata.oneStreamVersion))
-    .find(Boolean) ?? DEFAULT_ONESTREAM_VERSION;
+    .find(Boolean) ?? fallback;
 }
 
 function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord): string {

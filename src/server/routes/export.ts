@@ -16,7 +16,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     if (!config.export.xml.enabled) return disabledFormat(res, "XML");
     const snapshot = readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    const xml = exportProjectXml(snapshot);
+    const xml = exportProjectXml(snapshot, { oneStreamVersionFallback: config.application.oneStreamVersionFallback });
     repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id });
     res.type("application/xml").send(xml);
   });
@@ -48,7 +48,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
       const snapshot = readSnapshot(repos, req.params.projectId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
       const filePath = join(config.paths.exportsDirectory, `${snapshot.project.id}.xlsx`);
-      await exportWorkbook(filePath, snapshot.dimensions, snapshot.members, snapshot.relationships);
+      await exportWorkbook(filePath, snapshot.dimensions, snapshot.members, snapshot.relationships, { creator: config.export.xlsx.creator });
       const buffer = readFileSync(filePath);
       res
         .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
