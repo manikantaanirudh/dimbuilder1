@@ -37,6 +37,7 @@ interface ParseOptions {
 interface HeaderInfo {
   column: number;
   fieldName: string;
+  originalFieldName?: string;
 }
 
 export async function parseWorkbook(filePath: string, options: ParseOptions): Promise<ParsedProject> {
@@ -130,7 +131,8 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
 
     const relationshipHeaderRow = findRelationshipHeaderRow(sheet);
     const memberHeaders = readHeaders(sheet, memberHeaderRow, schema.memberFields, {
-      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns
+      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns,
+      preserveOriginalColumnNames: config.import.workbook.preserveOriginalColumnNames
     });
     const memberEndRow = relationshipHeaderRow ? relationshipHeaderRow - 1 : sheet.rowCount;
     let memberRowOrder = memberRowOrders.get(dimension.id) ?? 1;
@@ -177,7 +179,8 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
     if (!relationshipHeaderRow) return;
 
     const relationshipHeaders = readHeaders(sheet, relationshipHeaderRow, schema.relationshipFields, {
-      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns
+      ignoreGeneratedXmlColumns: config.import.workbook.ignoreGeneratedXmlColumns,
+      preserveOriginalColumnNames: config.import.workbook.preserveOriginalColumnNames
     });
     let relationshipRowOrder = relationshipRowOrders.get(dimension.id) ?? 1;
 
@@ -428,7 +431,7 @@ function readHeaders(
   sheet: ExcelJS.Worksheet,
   rowNumber: number,
   fields: FieldDefinition[],
-  options: { ignoreGeneratedXmlColumns: boolean }
+  options: { ignoreGeneratedXmlColumns: boolean; preserveOriginalColumnNames: boolean }
 ): HeaderInfo[] {
   const headerToField = new Map<string, string>();
   for (const field of fields) {
@@ -444,7 +447,11 @@ function readHeaders(
     if (options.ignoreGeneratedXmlColumns && isGeneratedHeader(rawHeader)) continue;
     const fieldName = headerToField.get(rawHeader);
     if (fieldName) {
-      headers.push({ column, fieldName });
+      headers.push({
+        column,
+        fieldName,
+        originalFieldName: options.preserveOriginalColumnNames && rawHeader !== fieldName ? rawHeader : undefined
+      });
     } else if (!options.ignoreGeneratedXmlColumns) {
       headers.push({ column, fieldName: rawHeader });
     }
@@ -463,6 +470,9 @@ function readRow(
   for (const header of headers) {
     const value = normalizeCellValue(row.getCell(header.column).value);
     values[header.fieldName] = options.ignoreFormulaErrors && isFormulaError(value) ? "" : value;
+    if (header.originalFieldName) {
+      values[header.originalFieldName] = values[header.fieldName];
+    }
   }
   return values;
 }

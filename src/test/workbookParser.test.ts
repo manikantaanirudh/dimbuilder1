@@ -316,6 +316,41 @@ describe("workbook parser", () => {
     });
   });
 
+  it("preserves original alias member column names only when configured", async () => {
+    const originalHeader = "Source Member For Alternanate Input Currency";
+    const canonicalHeader = "Source Member For Alternate Input Currency";
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Flow",
+        dimensionTypeText: "Flow",
+        dimensionName: "Flows",
+        memberKeyField: "Flow Member",
+        memberKey: "Movement",
+        extraMemberColumns: [{ header: originalHeader, value: "OpeningBalance" }]
+      }
+    ]);
+
+    const preservingParsed = await parseWorkbook(filePath, {
+      projectName: "Preserve alias columns",
+      createdBy: "local-admin",
+      config: mergeAppConfig(defaultAppConfig, {
+        import: { workbook: { preserveOriginalColumnNames: true } }
+      })
+    });
+    const canonicalOnlyParsed = await parseWorkbook(filePath, {
+      projectName: "Canonical alias columns",
+      createdBy: "local-admin",
+      config: mergeAppConfig(defaultAppConfig, {
+        import: { workbook: { preserveOriginalColumnNames: false } }
+      })
+    });
+
+    expect(preservingParsed.members[0]?.properties[canonicalHeader]).toBe("OpeningBalance");
+    expect(preservingParsed.members[0]?.properties[originalHeader]).toBe("OpeningBalance");
+    expect(canonicalOnlyParsed.members[0]?.properties[canonicalHeader]).toBe("OpeningBalance");
+    expect(canonicalOnlyParsed.members[0]?.properties).not.toHaveProperty(originalHeader);
+  });
+
   it("preserves formula error values when configured", async () => {
     const filePath = await createMinimalWorkbook([
       {
