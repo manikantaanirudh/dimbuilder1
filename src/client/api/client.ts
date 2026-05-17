@@ -6,6 +6,7 @@ import type {
   ProjectRecord,
   ValidationIssue
 } from "../../shared/types";
+import type { ClientAppConfig } from "../../shared/appConfigTypes";
 
 export interface GridResponse<T> {
   rows: T[];
@@ -50,6 +51,10 @@ export async function apiDelete(path: string): Promise<void> {
 
 export function fetchProjects() {
   return apiGet<ProjectRecord[]>("/projects");
+}
+
+export function fetchAppConfig() {
+  return apiGet<ClientAppConfig>("/config");
 }
 
 export function fetchSummary(projectId: string) {
@@ -110,4 +115,3 @@ export function patchRelationship(projectId: string, relationshipId: string, bod
 export function deleteRelationship(projectId: string, relationshipId: string) {
   return apiDelete(`/projects/${projectId}/relationships/${relationshipId}`);
 }
-
