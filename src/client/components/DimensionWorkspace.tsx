@@ -47,6 +47,7 @@ export function DimensionWorkspace({
   const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
   const blockingErrors = dimensionIssues.filter((issue) => issue.severity === "error").length;
+  const dimensionDisplayConfig = appConfig.dimensions.display;
 
   useEffect(() => {
     if (tab === activeTab) return;
@@ -57,8 +58,8 @@ export function DimensionWorkspace({
     <section className="workspace">
       <div className="workspace-header">
         <div>
-          <h1>{getDimensionDisplayLabel(dimension)}</h1>
-          <span>{getDimensionDisplaySubtitle(dimension)}</span>
+          <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
+          <span>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</span>
         </div>
         <div className={blockingErrors ? "status-strip error" : "status-strip"}>
           <b>{blockingErrors}</b> blocking errors

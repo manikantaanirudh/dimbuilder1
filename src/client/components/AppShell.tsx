@@ -29,6 +29,7 @@ export function AppShell({
   const [exportOpen, setExportOpen] = useState(false);
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
+  const dimensionDisplayConfig = appConfig.dimensions.display;
   const hasEnabledExportFormats = hasEnabledExportFormat(appConfig.export);
   const hasExportBlockingIssues = store.issues.some((issue) => (
     appConfig.validation.exportBlockedBySeverities.includes(issue.severity)
@@ -69,10 +70,10 @@ export function AppShell({
             key={dimension.id}
             className={`nav-item ${activeDimension?.id === dimension.id ? "selected" : ""}`}
             onClick={() => setActiveDimensionId(dimension.id)}
-            title={getDimensionDisplaySubtitle(dimension)}
+            title={getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}
           >
-            <span>{getDimensionDisplayLabel(dimension)}</span>
-            <small>{getDimensionDisplaySubtitle(dimension)}</small>
+            <span>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</span>
+            <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
           </button>
         ))}
       </aside>

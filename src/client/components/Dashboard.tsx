@@ -15,6 +15,7 @@ export function Dashboard({
   appConfig: ClientAppConfig;
 }) {
   const cards = appConfig.dashboard.cards;
+  const dimensionDisplayConfig = appConfig.dimensions.display;
   const metrics = [
     { key: "totalDimensions", label: "Dimensions", value: summary?.totalDimensions ?? dimensions.length, enabled: cards.totalDimensions },
     { key: "totalMembers", label: "Members", value: summary?.totalMembers ?? 0, enabled: cards.totalMembers },
@@ -46,8 +47,8 @@ export function Dashboard({
           {summary?.recentDimensions.length ? (
             summary.recentDimensions.map((dimension) => (
               <div className="recent-row" key={dimension.id}>
-                <b>{getDimensionDisplayLabel(dimension)}</b>
-                <span>{getDimensionDisplaySubtitle(dimension)}</span>
+                <b>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</b>
+                <span>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</span>
               </div>
             ))
           ) : (
