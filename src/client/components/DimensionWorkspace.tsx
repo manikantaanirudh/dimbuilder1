@@ -44,13 +44,14 @@ export function DimensionWorkspace({
   const defaultWorkspaceTab = appConfig.ui.defaultWorkspaceTab;
   const availableTabs = getAvailableTabs(xmlPreviewEnabled);
   const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
+  const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
   const blockingErrors = dimensionIssues.filter((issue) => issue.severity === "error").length;
 
   useEffect(() => {
-    if (availableTabs.includes(tab)) return;
-    setTab(getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
-  }, [defaultWorkspaceTab, tab, xmlPreviewEnabled]);
+    if (tab === activeTab) return;
+    setTab(activeTab);
+  }, [activeTab, tab]);
 
   return (
     <section className="workspace">
@@ -65,18 +66,18 @@ export function DimensionWorkspace({
       </div>
       <nav className="tabs">
         {availableTabs.map((item) => (
-          <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>
+          <button key={item} className={activeTab === item ? "active" : ""} onClick={() => setTab(item)}>
             {item}
           </button>
         ))}
       </nav>
       <div className="workspace-grid">
         <div className="workspace-main">
-          {tab === "Overview" && <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />}
-          {tab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
-          {tab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
-          {tab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
-          {tab === "XML Preview" && (
+          {activeTab === "Overview" && <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />}
+          {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
+          {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
+          {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
+          {activeTab === "XML Preview" && xmlPreviewEnabled && (
             <XmlPreview
               projectId={projectId}
               dimension={dimension}
@@ -84,7 +85,7 @@ export function DimensionWorkspace({
               allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
             />
           )}
-          {tab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} expanded />}
+          {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} expanded />}
         </div>
         <IssuePanel dimension={dimension} issues={dimensionIssues} />
       </div>
