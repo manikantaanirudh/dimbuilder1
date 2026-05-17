@@ -64,7 +64,13 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
   }
 
   validateMembers(input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, duplicateSeverity, addIssue);
-  validateRelationships(input.dimension, input.members, input.relationships, addIssue);
+  validateRelationships(
+    input.dimension,
+    input.members,
+    input.relationships,
+    schema.relationshipFields.filter((field) => field.kind === "number").map((field) => field.name),
+    addIssue
+  );
 
   const hierarchy = analyzeHierarchy(input.relationships, input.members.map((member) => member.memberKey));
   if (hierarchy.hasCycle) {
@@ -170,6 +176,7 @@ function validateRelationships(
   dimension: DimensionRecord,
   members: DimensionMemberRecord[],
   relationships: DimensionRelationshipRecord[],
+  numericFields: string[],
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   const memberKeys = new Set(members.map((member) => member.memberKey).filter(Boolean));
@@ -211,6 +218,8 @@ function validateRelationships(
       });
     }
 
+    for (const fieldName of numericFields) validateNumericField(relationship, fieldName, addIssue);
+
     for (const [fieldName, value] of Object.entries(relationship.properties)) {
       validateTextValue(relationship, fieldName, value, addIssue);
     }
@@ -238,21 +247,21 @@ function validateBooleanField(
 }
 
 function validateNumericField(
-  member: DimensionMemberRecord,
+  entity: DimensionMemberRecord | DimensionRelationshipRecord,
   fieldName: string,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
-  const value = normalizeCellValue(member.properties[fieldName]);
+  const value = normalizeCellValue(entity.properties[fieldName]);
   if (!value) return;
   if (!Number.isFinite(Number(value))) {
     addIssue({
-      entityType: "member",
-      entityId: member.id,
+      entityType: "memberKey" in entity ? "member" : "relationship",
+      entityId: entity.id,
       severity: "error",
       code: "INVALID_NUMBER",
       message: `${fieldName} must be numeric.`,
       fieldName,
-      rowNumber: member.sourceRowNumber
+      rowNumber: entity.sourceRowNumber
     });
   }
 }
@@ -288,4 +297,3 @@ function validateTextValue(
     });
   }
 }
-

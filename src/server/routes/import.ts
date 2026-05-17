@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { parseWorkbook } from "../../shared/workbookParser";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
+import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
 
 mkdirSync("data/uploads", { recursive: true });
 const upload = multer({ dest: "data/uploads" });
@@ -14,9 +15,12 @@ export function createImportRouter(repos: Repositories): Router {
   router.post("/workbook", upload.single("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
+      const metadataReferencePath = findDefaultMetadataReferencePath();
+      const metadataReference = metadataReferencePath ? await parseMetadataReference(metadataReferencePath) : undefined;
       const parsed = await parseWorkbook(req.file.path, {
         projectName: req.body.projectName || req.file.originalname,
-        createdBy: "local-admin"
+        createdBy: "local-admin",
+        metadataReference
       });
 
       const project = repos.projects.create({
@@ -63,4 +67,3 @@ export function createImportRouter(repos: Repositories): Router {
 
   return router;
 }
-

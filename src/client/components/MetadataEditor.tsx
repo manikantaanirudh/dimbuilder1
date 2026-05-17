@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DimensionRecord } from "../../shared/types";
 import { patchDimension } from "../api/client";
 
@@ -13,6 +13,11 @@ export function MetadataEditor({
 }) {
   const [draft, setDraft] = useState(dimension);
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    setDraft(dimension);
+    setStatus("");
+  }, [dimension.id]);
   const fields: Array<[keyof DimensionRecord, string, boolean]> = [
     ["dimensionType", "Dimension Type", true],
     ["dimensionName", "Dimension Name", true],
@@ -46,4 +51,3 @@ export function MetadataEditor({
     </div>
   );
 }
-

@@ -8,6 +8,7 @@ describe("dimension schemas", () => {
       "Entity",
       "Account",
       "Flow",
+      "UD1",
       "UD2",
       "UD3",
       "UD4",
@@ -34,8 +35,8 @@ describe("dimension schemas", () => {
   });
 
   it("detects the duplicate UD3 sheet names from the supplied workbook", () => {
+    expect(getDimensionSchema("UD1").memberKeyField).toBe("Member");
     expect(getSchemaBySheetName("UD3 OUC")?.dimensionType).toBe("UD3");
     expect(getSchemaBySheetName("UD3 OUC (2)")?.dimensionType).toBe("UD3");
   });
 });
-

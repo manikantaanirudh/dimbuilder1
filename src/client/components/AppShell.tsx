@@ -8,6 +8,7 @@ import {
   Undo2
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import { validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
@@ -48,10 +49,10 @@ export function AppShell() {
             key={dimension.id}
             className={`nav-item ${activeDimension?.id === dimension.id ? "selected" : ""}`}
             onClick={() => setActiveDimensionId(dimension.id)}
-            title={dimension.sheetName}
+            title={getDimensionDisplaySubtitle(dimension)}
           >
-            <span>{dimension.sheetName}</span>
-            <small>{dimension.dimensionType}</small>
+            <span>{getDimensionDisplayLabel(dimension)}</span>
+            <small>{getDimensionDisplaySubtitle(dimension)}</small>
           </button>
         ))}
       </aside>
@@ -108,4 +109,3 @@ export function AppShell() {
     </div>
   );
 }
-

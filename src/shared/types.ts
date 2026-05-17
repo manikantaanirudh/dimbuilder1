@@ -3,6 +3,7 @@ export type DimensionType =
   | "Entity"
   | "Account"
   | "Flow"
+  | "UD1"
   | "UD2"
   | "UD3"
   | "UD4"
@@ -89,6 +90,25 @@ export interface DimensionSchema {
   duplicateSeverity: Severity;
 }
 
+export interface MetadataDimensionReference {
+  type: DimensionType;
+  name: string;
+  description?: string;
+  accessGroup?: string;
+  maintenanceGroup?: string;
+  inheritedDim?: string | null;
+  dimMemberSourceType?: string;
+  dimMemberSourcePath?: string;
+  dimMemberSourceNVPairs?: string;
+  memberCount?: number;
+  relationshipCount?: number;
+}
+
+export interface MetadataReference {
+  version?: string;
+  dimensions: MetadataDimensionReference[];
+}
+
 export interface ParsedProject {
   project: ProjectRecord;
   dimensions: DimensionRecord[];
@@ -129,4 +149,3 @@ export interface DashboardSummary {
   validationWarnings: number;
   recentDimensions: DimensionRecord[];
 }
-

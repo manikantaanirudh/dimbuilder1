@@ -1,4 +1,5 @@
 import { FileUp } from "lucide-react";
+import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord } from "../../shared/types";
 
 export function Dashboard({
@@ -43,8 +44,8 @@ export function Dashboard({
         {summary?.recentDimensions.length ? (
           summary.recentDimensions.map((dimension) => (
             <div className="recent-row" key={dimension.id}>
-              <b>{dimension.sheetName}</b>
-              <span>{dimension.dimensionType} / {dimension.dimensionName}</span>
+              <b>{getDimensionDisplayLabel(dimension)}</b>
+              <span>{getDimensionDisplaySubtitle(dimension)}</span>
             </div>
           ))
         ) : (
@@ -54,4 +55,3 @@ export function Dashboard({
     </section>
   );
 }
-

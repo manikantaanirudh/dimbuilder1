@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
 import { EditableGrid } from "./EditableGrid";
 import { HierarchyTree } from "./HierarchyTree";
@@ -27,8 +28,8 @@ export function DimensionWorkspace({
     <section className="workspace">
       <div className="workspace-header">
         <div>
-          <h1>{dimension.sheetName}</h1>
-          <span>{dimension.dimensionType} / {dimension.dimensionName}</span>
+          <h1>{getDimensionDisplayLabel(dimension)}</h1>
+          <span>{getDimensionDisplaySubtitle(dimension)}</span>
         </div>
         <div className={blockingErrors ? "status-strip error" : "status-strip"}>
           <b>{blockingErrors}</b> blocking errors
@@ -55,4 +56,3 @@ export function DimensionWorkspace({
     </section>
   );
 }
-

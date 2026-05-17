@@ -11,6 +11,8 @@ import type {
   DimensionRelationshipRecord,
   DimensionSchema,
   FieldDefinition,
+  MetadataDimensionReference,
+  MetadataReference,
   ParsedProject,
   ProjectRecord
 } from "./types";
@@ -25,6 +27,7 @@ import {
 interface ParseOptions {
   projectName: string;
   createdBy: string;
+  metadataReference?: MetadataReference;
 }
 
 interface HeaderInfo {
@@ -50,6 +53,9 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
   const dimensions: DimensionRecord[] = [];
   const members: DimensionMemberRecord[] = [];
   const relationships: DimensionRelationshipRecord[] = [];
+  const dimensionsByLogicalKey = new Map<string, DimensionRecord>();
+  const memberRowOrders = new Map<string, number>();
+  const relationshipRowOrders = new Map<string, number>();
   const warnings: string[] = [];
   const errors: string[] = [];
   let skippedBlankRows = 0;
@@ -62,24 +68,48 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       return;
     }
 
-    const dimension: DimensionRecord = {
-      id: nanoid(),
-      projectId: project.id,
-      sheetName: sheet.name,
-      dimensionType: schema.dimensionType,
-      dimensionName: normalizeCellValue(sheet.getCell("B2").value),
-      description: normalizeCellValue(sheet.getCell("B3").value),
-      accessGroup: normalizeCellValue(sheet.getCell("B4").value),
-      maintenanceGroup: normalizeCellValue(sheet.getCell("B5").value),
-      inheritedDimension: normalizeCellValue(sheet.getCell("B6").value),
-      sortOrder: sheetIndex + 1,
-      metadata: {
-        workbookDimensionType: dimensionTypeText
-      },
-      createdAt,
-      updatedAt: createdAt
-    };
-    dimensions.push(dimension);
+    const workbookDimensionName = normalizeCellValue(sheet.getCell("B2").value);
+    const metadataReference = findMetadataReference(options.metadataReference, schema.dimensionType, workbookDimensionName);
+    const dimensionName = metadataReference?.name ?? workbookDimensionName;
+    if (metadataReference && metadataReference.name !== workbookDimensionName) {
+      warnings.push(`Aligned sheet '${sheet.name}' dimension '${schema.dimensionType} / ${workbookDimensionName}' to metadata reference '${metadataReference.type} / ${metadataReference.name}'.`);
+    }
+    const logicalKey = getDimensionLogicalKey(schema.dimensionType, dimensionName, sheet.name);
+    let dimension = dimensionsByLogicalKey.get(logicalKey);
+    if (dimension) {
+      dimension.sheetName = getPreferredSheetName(dimension.sheetName, sheet.name);
+      dimension.metadata = {
+        ...dimension.metadata,
+        sourceSheetNames: appendSourceSheetName(dimension.metadata.sourceSheetNames, sheet.name)
+      };
+      warnings.push(`Merged duplicate dimension sheet '${sheet.name}' into '${dimension.dimensionType} / ${dimension.dimensionName}'.`);
+    } else {
+      dimension = {
+        id: nanoid(),
+        projectId: project.id,
+        sheetName: sheet.name,
+        dimensionType: schema.dimensionType,
+        dimensionName,
+        description: normalizeReferenceValue(metadataReference?.description, normalizeCellValue(sheet.getCell("B3").value)),
+        accessGroup: normalizeReferenceValue(metadataReference?.accessGroup, normalizeCellValue(sheet.getCell("B4").value)),
+        maintenanceGroup: normalizeReferenceValue(metadataReference?.maintenanceGroup, normalizeCellValue(sheet.getCell("B5").value)),
+        inheritedDimension: normalizeReferenceValue(metadataReference?.inheritedDim, normalizeCellValue(sheet.getCell("B6").value)),
+        sortOrder: sheetIndex + 1,
+        metadata: {
+          workbookDimensionType: dimensionTypeText,
+          workbookDimensionName,
+          oneStreamVersion: options.metadataReference?.version,
+          dimMemberSourceType: metadataReference?.dimMemberSourceType ?? "Standard",
+          dimMemberSourcePath: metadataReference?.dimMemberSourcePath ?? "",
+          dimMemberSourceNVPairs: metadataReference?.dimMemberSourceNVPairs ?? "",
+          sourceSheetNames: [sheet.name]
+        },
+        createdAt,
+        updatedAt: createdAt
+      };
+      dimensionsByLogicalKey.set(logicalKey, dimension);
+      dimensions.push(dimension);
+    }
 
     const memberHeaderRow = findMemberHeaderRow(sheet, schema);
     if (!memberHeaderRow) {
@@ -90,7 +120,7 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
     const relationshipHeaderRow = findRelationshipHeaderRow(sheet);
     const memberHeaders = readHeaders(sheet, memberHeaderRow, schema.memberFields);
     const memberEndRow = relationshipHeaderRow ? relationshipHeaderRow - 1 : sheet.rowCount;
-    let memberRowOrder = 1;
+    let memberRowOrder = memberRowOrders.get(dimension.id) ?? 1;
 
     for (let rowNumber = memberHeaderRow + 1; rowNumber <= memberEndRow; rowNumber += 1) {
       const rowValues = readRow(sheet, rowNumber, memberHeaders);
@@ -122,11 +152,12 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       });
       memberRowOrder += 1;
     }
+    memberRowOrders.set(dimension.id, memberRowOrder);
 
     if (!relationshipHeaderRow) return;
 
     const relationshipHeaders = readHeaders(sheet, relationshipHeaderRow, schema.relationshipFields);
-    let relationshipRowOrder = 1;
+    let relationshipRowOrder = relationshipRowOrders.get(dimension.id) ?? 1;
 
     for (let rowNumber = relationshipHeaderRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
       const rowValues = readRow(sheet, rowNumber, relationshipHeaders);
@@ -162,7 +193,18 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       });
       relationshipRowOrder += 1;
     }
+    relationshipRowOrders.set(dimension.id, relationshipRowOrder);
   });
+
+  appendMetadataOnlyDimensions({
+    projectId: project.id,
+    metadataReference: options.metadataReference,
+    dimensions,
+    dimensionsByLogicalKey,
+    warnings,
+    createdAt
+  });
+  applyCanonicalSortOrder(dimensions);
 
   return {
     project,
@@ -179,6 +221,130 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
       errors
     }
   };
+}
+
+function appendMetadataOnlyDimensions({
+  projectId,
+  metadataReference,
+  dimensions,
+  dimensionsByLogicalKey,
+  warnings,
+  createdAt
+}: {
+  projectId: string;
+  metadataReference: MetadataReference | undefined;
+  dimensions: DimensionRecord[];
+  dimensionsByLogicalKey: Map<string, DimensionRecord>;
+  warnings: string[];
+  createdAt: string;
+}): void {
+  if (!metadataReference) return;
+  const importedTypes = new Set(dimensions.map((dimension) => dimension.dimensionType));
+  for (const reference of metadataReference.dimensions) {
+    if (importedTypes.has(reference.type) || !isApplicationMetadataDimension(reference)) continue;
+    const logicalKey = getDimensionLogicalKey(reference.type, reference.name, reference.name);
+    if (dimensionsByLogicalKey.has(logicalKey)) continue;
+
+    const dimension: DimensionRecord = {
+      id: nanoid(),
+      projectId,
+      sheetName: `${reference.type} - ${reference.name}`,
+      dimensionType: reference.type,
+      dimensionName: reference.name,
+      description: normalizeCellValue(reference.description),
+      accessGroup: normalizeCellValue(reference.accessGroup),
+      maintenanceGroup: normalizeCellValue(reference.maintenanceGroup),
+      inheritedDimension: normalizeReferenceValue(reference.inheritedDim, ""),
+      sortOrder: dimensions.length + 1,
+      metadata: {
+        metadataOnly: true,
+        oneStreamVersion: metadataReference.version,
+        metadataMemberCount: reference.memberCount ?? 0,
+        metadataRelationshipCount: reference.relationshipCount ?? 0,
+        dimMemberSourceType: reference.dimMemberSourceType ?? "Standard",
+        dimMemberSourcePath: reference.dimMemberSourcePath ?? "",
+        dimMemberSourceNVPairs: reference.dimMemberSourceNVPairs ?? "",
+        sourceSheetNames: []
+      },
+      createdAt,
+      updatedAt: createdAt
+    };
+    dimensionsByLogicalKey.set(logicalKey, dimension);
+    dimensions.push(dimension);
+    warnings.push(`Added metadata-only dimension '${reference.type} / ${reference.name}' because no workbook sheet exists for dimension type '${reference.type}'.`);
+  }
+}
+
+function isApplicationMetadataDimension(reference: MetadataDimensionReference): boolean {
+  return Boolean(reference.name) && !/^FVA_/i.test(reference.name) && !/^Root/i.test(reference.name);
+}
+
+function applyCanonicalSortOrder(dimensions: DimensionRecord[]): void {
+  dimensions.sort((left, right) => {
+    const leftRank = getDimensionTypeRank(left.dimensionType);
+    const rightRank = getDimensionTypeRank(right.dimensionType);
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+    return left.dimensionName.localeCompare(right.dimensionName);
+  });
+
+  const countersByType = new Map<string, number>();
+  for (const dimension of dimensions) {
+    const count = (countersByType.get(dimension.dimensionType) ?? 0) + 1;
+    countersByType.set(dimension.dimensionType, count);
+    dimension.sortOrder = getDimensionTypeRank(dimension.dimensionType) * 100 + count;
+  }
+}
+
+function getDimensionTypeRank(dimensionType: string): number {
+  const order = ["Scenario", "Entity", "Account", "Flow", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7", "UD8"];
+  const index = order.indexOf(dimensionType);
+  return index === -1 ? order.length + 1 : index + 1;
+}
+
+function getDimensionLogicalKey(dimensionType: string, dimensionName: string, sheetName: string): string {
+  return `${dimensionType}\u0000${dimensionName || sheetName}`;
+}
+
+function getPreferredSheetName(current: string, candidate: string): string {
+  return removeExcelDuplicateSuffix(current) === candidate ? candidate : current;
+}
+
+function removeExcelDuplicateSuffix(value: string): string {
+  return value.replace(/\s+\(\d+\)$/, "");
+}
+
+function appendSourceSheetName(value: unknown, sheetName: string): string[] {
+  const sourceSheetNames = Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+  return sourceSheetNames.includes(sheetName) ? sourceSheetNames : [...sourceSheetNames, sheetName];
+}
+
+function normalizeReferenceValue(value: string | null | undefined, fallback: string): string {
+  return value === null || value === undefined ? fallback : normalizeCellValue(value);
+}
+
+function findMetadataReference(
+  metadataReference: MetadataReference | undefined,
+  dimensionType: string,
+  dimensionName: string
+): MetadataDimensionReference | undefined {
+  if (!metadataReference) return undefined;
+  const candidates = metadataReference.dimensions.filter((dimension) => dimension.type === dimensionType);
+  if (candidates.length === 0) return undefined;
+
+  const exact = candidates.find((dimension) => dimension.name.toLowerCase() === dimensionName.toLowerCase());
+  if (exact) return exact;
+
+  const applicationCandidates = candidates.filter((dimension) => !/^FVA_/i.test(dimension.name) && !/^Root/i.test(dimension.name));
+  const populatedCandidates = applicationCandidates.filter((dimension) => (dimension.memberCount ?? 0) > 0 || (dimension.relationshipCount ?? 0) > 0);
+  const bestCandidates = populatedCandidates.length > 0 ? populatedCandidates : applicationCandidates;
+  if (bestCandidates.length === 0) return undefined;
+
+  return [...bestCandidates].sort((left, right) => {
+    const rightSize = (right.memberCount ?? 0) + (right.relationshipCount ?? 0);
+    const leftSize = (left.memberCount ?? 0) + (left.relationshipCount ?? 0);
+    return rightSize - leftSize;
+  })[0];
 }
 
 function findMemberHeaderRow(sheet: ExcelJS.Worksheet, schema: DimensionSchema): number | null {
@@ -243,4 +409,3 @@ function hasMeaningfulValues(values: Record<string, string>): boolean {
     return !["(Not Used)", "(Use Default)", "True", "False", "Conditional"].includes(value);
   });
 }
-
