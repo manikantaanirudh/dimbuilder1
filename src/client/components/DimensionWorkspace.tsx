@@ -40,7 +40,7 @@ export function DimensionWorkspace({
   onRefresh: () => void;
   appConfig: ClientAppConfig;
 }) {
-  const xmlPreviewEnabled = appConfig.features.enableXmlPreview;
+  const xmlPreviewEnabled = appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
   const defaultWorkspaceTab = appConfig.ui.defaultWorkspaceTab;
   const availableTabs = getAvailableTabs(xmlPreviewEnabled);
   const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
@@ -83,6 +83,7 @@ export function DimensionWorkspace({
               dimension={dimension}
               defaultScope={appConfig.ui.xmlPreview.defaultScope}
               allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
+              xmlExportEnabled={appConfig.export.xml.enabled}
             />
           )}
           {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} expanded />}

@@ -14,20 +14,44 @@ export function XmlPreview({
   projectId,
   dimension,
   defaultScope = "allDimensions",
-  allowAllDimensions = true
+  allowAllDimensions = true,
+  xmlExportEnabled = true
 }: {
   projectId: string;
   dimension: DimensionRecord;
   defaultScope?: "currentDimension" | "allDimensions";
   allowAllDimensions?: boolean;
+  xmlExportEnabled?: boolean;
 }) {
   const [xml, setXml] = useState("");
   const [scope, setScope] = useState<XmlPreviewScope>(() => mapDefaultScope(defaultScope, allowAllDimensions));
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    void apiText(`/export/${projectId}/xml`).then(setXml);
-  }, [projectId]);
+    if (!xmlExportEnabled) {
+      setXml("");
+      setStatus("XML export is disabled.");
+      return;
+    }
+
+    let cancelled = false;
+    setStatus("Loading XML preview...");
+    void apiText(`/export/${projectId}/xml`)
+      .then((nextXml) => {
+        if (cancelled) return;
+        setXml(nextXml);
+        setStatus("");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setXml("");
+        setStatus("XML preview unavailable.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, xmlExportEnabled]);
 
   useEffect(() => {
     setScope(mapDefaultScope(defaultScope, allowAllDimensions));
@@ -48,7 +72,9 @@ export function XmlPreview({
           <option value="dimension">Current dimension</option>
         </select>
         <button onClick={() => void copy()}><Copy size={15} /> Copy</button>
-        <a className="button-link" href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</a>
+        {xmlExportEnabled && (
+          <a className="button-link" href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</a>
+        )}
         <span className="grid-status">{status}</span>
       </div>
       <pre className="xml-preview">{preview || "XML preview will appear after import."}</pre>
