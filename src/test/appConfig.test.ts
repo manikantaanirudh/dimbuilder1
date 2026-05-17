@@ -19,12 +19,30 @@ describe("app config", () => {
     expect(config.features.enableXmlPreview).toBe(true);
   });
 
+  it("treats null yaml config as no override", () => {
+    const config = mergeAppConfig(defaultAppConfig, null);
+
+    expect(config).toEqual(defaultAppConfig);
+  });
+
   it("rejects unknown dimension types", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       dimensions: { enabledTypes: ["Scenario", "BadDim"] }
     });
 
     expect(() => validateAppConfig(config)).toThrow("Unknown dimension type 'BadDim'");
+  });
+
+  it("rejects unknown dimension types in dimension maps", () => {
+    const sheetAliasesConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: { sheetAliases: { BadDim: ["BadDim"] } }
+    });
+    const preferredMetadataNamesConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: { preferredMetadataNames: { BadDim: "BadDim" } }
+    });
+
+    expect(() => validateAppConfig(sheetAliasesConfig)).toThrow("Unknown dimension type 'BadDim'");
+    expect(() => validateAppConfig(preferredMetadataNamesConfig)).toThrow("Unknown dimension type 'BadDim'");
   });
 
   it("rejects invalid severities", () => {
@@ -46,6 +64,22 @@ describe("app config", () => {
     });
 
     expect(() => validateAppConfig(config)).toThrow("Invalid excludeNamePatterns regex");
+  });
+
+  it("rejects invalid numeric bounds", () => {
+    const invalidPortConfig = mergeAppConfig(defaultAppConfig, {
+      server: { port: 65536 }
+    });
+    const invalidClientDevPortConfig = mergeAppConfig(defaultAppConfig, {
+      server: { clientDevPort: 65536 }
+    });
+    const invalidGridPageSizeConfig = mergeAppConfig(defaultAppConfig, {
+      ui: { gridPageSize: 0 }
+    });
+
+    expect(() => validateAppConfig(invalidPortConfig)).toThrow("server.port must be an integer from 1 to 65535.");
+    expect(() => validateAppConfig(invalidClientDevPortConfig)).toThrow("server.clientDevPort must be an integer from 1 to 65535.");
+    expect(() => validateAppConfig(invalidGridPageSizeConfig)).toThrow("ui.gridPageSize must be a positive integer.");
   });
 
   it("removes server-only paths from client-safe config", () => {

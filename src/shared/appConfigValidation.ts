@@ -10,7 +10,15 @@ export function mergeAppConfig(defaults: AppConfig, override: unknown): AppConfi
 
 export function validateAppConfig(config: AppConfig): AppConfig {
   for (const type of [...config.dimensions.enabledTypes, ...config.dimensions.displayOrder]) {
-    if (!supportedDimensionTypes.includes(type)) {
+    if (!isSupportedDimensionType(type)) {
+      throw new Error(`Unknown dimension type '${type}' in configuration.`);
+    }
+  }
+  for (const type of [
+    ...Object.keys(config.dimensions.sheetAliases),
+    ...Object.keys(config.dimensions.preferredMetadataNames)
+  ]) {
+    if (!isSupportedDimensionType(type)) {
       throw new Error(`Unknown dimension type '${type}' in configuration.`);
     }
   }
@@ -30,11 +38,11 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     }
   }
 
-  if (!Number.isInteger(config.server.port) || config.server.port <= 0) {
-    throw new Error("server.port must be a positive integer.");
+  if (!isValidTcpPort(config.server.port)) {
+    throw new Error("server.port must be an integer from 1 to 65535.");
   }
-  if (!Number.isInteger(config.server.clientDevPort) || config.server.clientDevPort <= 0) {
-    throw new Error("server.clientDevPort must be a positive integer.");
+  if (!isValidTcpPort(config.server.clientDevPort)) {
+    throw new Error("server.clientDevPort must be an integer from 1 to 65535.");
   }
   if (!Number.isInteger(config.ui.gridPageSize) || config.ui.gridPageSize <= 0) {
     throw new Error("ui.gridPageSize must be a positive integer.");
@@ -57,6 +65,10 @@ export function buildClientAppConfig(config: AppConfig): ClientAppConfig {
 }
 
 function deepMerge<T>(base: T, override: unknown): T {
+  if (override === null) {
+    return base;
+  }
+
   if (!isRecord(base) || !isRecord(override)) {
     return override === undefined ? base : (override as T);
   }
@@ -70,4 +82,12 @@ function deepMerge<T>(base: T, override: unknown): T {
 
 function isRecord(value: unknown): value is UnknownRecord {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidTcpPort(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 65535;
+}
+
+function isSupportedDimensionType(value: string): boolean {
+  return (supportedDimensionTypes as readonly string[]).includes(value);
 }
