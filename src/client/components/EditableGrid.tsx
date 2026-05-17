@@ -21,6 +21,13 @@ import {
 
 type GridRecord = DimensionMemberRecord | DimensionRelationshipRecord;
 
+const MAX_GRID_PAGE_SIZE = 1000;
+
+function clampGridPageSize(pageSize: number) {
+  const integerPageSize = Number.isFinite(pageSize) ? Math.trunc(pageSize) : 1;
+  return Math.min(MAX_GRID_PAGE_SIZE, Math.max(1, integerPageSize));
+}
+
 export function EditableGrid({
   projectId,
   kind,
@@ -35,6 +42,7 @@ export function EditableGrid({
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
   const columns = kind === "members" ? schema.memberFields : schema.relationshipFields;
+  const effectivePageSize = useMemo(() => clampGridPageSize(pageSize), [pageSize]);
   const [records, setRecords] = useState<GridRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -60,13 +68,13 @@ export function EditableGrid({
   const loadPage = useCallback(async (nextOffset: number) => {
     setStatus("Loading rows...");
     const result = kind === "members"
-      ? await fetchMembers(projectId, dimension.id, nextOffset, pageSize)
-      : await fetchRelationships(projectId, dimension.id, nextOffset, pageSize);
+      ? await fetchMembers(projectId, dimension.id, nextOffset, effectivePageSize)
+      : await fetchRelationships(projectId, dimension.id, nextOffset, effectivePageSize);
     setRecords(result.rows);
     setTotal(result.total);
     setOffset(nextOffset);
     setStatus(`${result.rows.length} of ${result.total} rows loaded`);
-  }, [dimension.id, kind, pageSize, projectId]);
+  }, [dimension.id, effectivePageSize, kind, projectId]);
 
   useEffect(() => {
     void loadPage(0);
@@ -196,9 +204,9 @@ export function EditableGrid({
         </div>
       </div>
       <div className="pager">
-        <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - pageSize))}>Previous</button>
+        <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - effectivePageSize))}>Previous</button>
         <span>Rows {total === 0 ? 0 : offset + 1}-{Math.min(offset + records.length, total)} of {total}</span>
-        <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + pageSize)}>Next</button>
+        <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + effectivePageSize)}>Next</button>
       </div>
     </div>
   );
