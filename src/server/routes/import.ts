@@ -25,6 +25,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const parsed = await parseWorkbook(req.file.path, {
         projectName: req.body.projectName || req.file.originalname,
         createdBy: "local-admin",
+        config,
         metadataReference
       });
 

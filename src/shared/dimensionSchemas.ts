@@ -315,8 +315,13 @@ export function getDimensionSchema(type: DimensionType): DimensionSchema {
   return dimensionSchemas[type];
 }
 
-export function getSchemaBySheetName(sheetName: string): DimensionSchema | undefined {
-  return supportedDimensionTypes.map(getDimensionSchema).find((schema) => schema.sheetNames.includes(sheetName));
+export function getSchemaBySheetName(
+  sheetName: string,
+  sheetAliases: Partial<Record<DimensionType, string[]>> = {}
+): DimensionSchema | undefined {
+  return supportedDimensionTypes
+    .map(getDimensionSchema)
+    .find((schema) => [...schema.sheetNames, ...(sheetAliases[schema.dimensionType] ?? [])].includes(sheetName));
 }
 
 export function getSchemaByDimensionTypeText(typeText: string): DimensionSchema | undefined {

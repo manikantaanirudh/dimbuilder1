@@ -1,9 +1,48 @@
-import { describe, expect, it } from "vitest";
+import ExcelJS from "exceljs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { defaultAppConfig } from "../shared/appConfigDefaults";
+import { mergeAppConfig } from "../shared/appConfigValidation";
 import { validateDimension } from "../shared/validationEngine";
 import { parseWorkbook } from "../shared/workbookParser";
 import { exportProjectXml } from "../shared/xmlExport";
 
 const workbookPath = "XF Dimensions Template - 29.04.2026.xlsx";
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+async function createMinimalWorkbook(
+  sheets: Array<{
+    sheetName: string;
+    dimensionTypeText?: string;
+    dimensionName: string;
+    memberKeyField: string;
+    memberKey: string;
+  }>
+): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "dimbuilder-parser-"));
+  tempDirs.push(dir);
+  const filePath = join(dir, "workbook.xlsx");
+  const workbook = new ExcelJS.Workbook();
+
+  for (const sheetFixture of sheets) {
+    const sheet = workbook.addWorksheet(sheetFixture.sheetName);
+    sheet.getCell("B1").value = sheetFixture.dimensionTypeText ?? "";
+    sheet.getCell("B2").value = sheetFixture.dimensionName;
+    sheet.getCell("A8").value = sheetFixture.memberKeyField;
+    sheet.getCell("B8").value = "Description";
+    sheet.getCell("A9").value = sheetFixture.memberKey;
+    sheet.getCell("B9").value = `${sheetFixture.memberKey} description`;
+  }
+
+  await workbook.xlsx.writeFile(filePath);
+  return filePath;
+}
 
 describe("workbook parser", () => {
   it("imports all supported sheets from the supplied template", async () => {
@@ -104,4 +143,106 @@ describe("workbook parser", () => {
     expect(ud1Dimensions.find((dimension) => dimension.dimensionName === "T_OUC")?.metadata.metadataMemberCount).toBe(32858);
     expect(parsed.importSummary.warnings).toContain("Added metadata-only dimension 'UD1 / Region' because no workbook sheet exists for dimension type 'UD1'.");
   }, 120000);
+
+  it("does not add metadata-only dimensions when config disables them", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Accounts",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "Cash"
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      features: { includeMetadataOnlyDimensions: false },
+      import: { metadataReference: { includeMetadataOnlyDimensions: false } },
+      dimensions: { metadataOnly: { includeWhenWorkbookSheetMissing: false } }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config metadata-only disabled",
+      createdBy: "local-admin",
+      config,
+      metadataReference: {
+        version: "9.2.0.18004",
+        dimensions: [
+          { type: "UD1", name: "Region", inheritedDim: "RootUD1Dim", memberCount: 6, relationshipCount: 7 }
+        ]
+      }
+    });
+
+    expect(parsed.dimensions.some((dimension) => dimension.dimensionType === "UD1")).toBe(false);
+  });
+
+  it("uses configured preferred metadata names before largest populated fallback", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Accounts",
+        dimensionTypeText: "Account",
+        dimensionName: "MainAccounts",
+        memberKeyField: "Account",
+        memberKey: "Cash"
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        preferredMetadataNames: {
+          Account: "PlanAccounts_L2"
+        }
+      }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config preferred metadata",
+      createdBy: "local-admin",
+      config,
+      metadataReference: {
+        version: "9.2.0.18004",
+        dimensions: [
+          { type: "Account", name: "GLAccounts", inheritedDim: "RootAccountDim", memberCount: 100, relationshipCount: 100 },
+          { type: "Account", name: "PlanAccounts_L2", inheritedDim: "RootAccountDim", memberCount: 2, relationshipCount: 2 }
+        ]
+      }
+    });
+
+    expect(parsed.dimensions.find((dimension) => dimension.dimensionType === "Account")?.dimensionName).toBe("PlanAccounts_L2");
+  });
+
+  it("imports configured sheet aliases and ignores disabled dimension types", async () => {
+    const filePath = await createMinimalWorkbook([
+      {
+        sheetName: "Plan Account Sheet",
+        dimensionName: "AliasAccounts",
+        memberKeyField: "Account",
+        memberKey: "Cash"
+      },
+      {
+        sheetName: "Entities",
+        dimensionTypeText: "Entity",
+        dimensionName: "LegalEntities",
+        memberKeyField: "Entity",
+        memberKey: "Corp"
+      }
+    ]);
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        enabledTypes: ["Account"],
+        displayOrder: ["Account"],
+        sheetAliases: {
+          Account: ["Plan Account Sheet"]
+        }
+      }
+    });
+
+    const parsed = await parseWorkbook(filePath, {
+      projectName: "Config alias",
+      createdBy: "local-admin",
+      config
+    });
+
+    expect(parsed.dimensions.map((dimension) => dimension.dimensionType)).toEqual(["Account"]);
+    expect(parsed.dimensions[0]?.sheetName).toBe("Plan Account Sheet");
+    expect(parsed.dimensions[0]?.dimensionName).toBe("AliasAccounts");
+  });
 });

@@ -5,11 +5,14 @@ import {
   getSchemaByDimensionTypeText,
   getSchemaBySheetName
 } from "./dimensionSchemas";
+import { defaultAppConfig } from "./appConfigDefaults";
+import type { AppConfig } from "./appConfigTypes";
 import type {
   DimensionMemberRecord,
   DimensionRecord,
   DimensionRelationshipRecord,
   DimensionSchema,
+  DimensionType,
   FieldDefinition,
   MetadataDimensionReference,
   MetadataReference,
@@ -27,6 +30,7 @@ import {
 interface ParseOptions {
   projectName: string;
   createdBy: string;
+  config?: AppConfig;
   metadataReference?: MetadataReference;
 }
 
@@ -36,6 +40,7 @@ interface HeaderInfo {
 }
 
 export async function parseWorkbook(filePath: string, options: ParseOptions): Promise<ParsedProject> {
+  const config = options.config ?? defaultAppConfig;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
@@ -62,14 +67,20 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
 
   workbook.worksheets.forEach((sheet, sheetIndex) => {
     const dimensionTypeText = normalizeCellValue(sheet.getCell("B1").value);
-    const schema = getSchemaBySheetName(sheet.name) ?? getSchemaByDimensionTypeText(dimensionTypeText);
+    const schema = getSchemaBySheetName(sheet.name, config.dimensions.sheetAliases) ?? getSchemaByDimensionTypeText(dimensionTypeText);
     if (!schema) {
       warnings.push(`Skipped unsupported sheet '${sheet.name}'.`);
       return;
     }
+    if (!config.dimensions.enabledTypes.includes(schema.dimensionType)) {
+      warnings.push(`Skipped disabled sheet '${sheet.name}' for dimension type '${schema.dimensionType}'.`);
+      return;
+    }
 
     const workbookDimensionName = normalizeCellValue(sheet.getCell("B2").value);
-    const metadataReference = findMetadataReference(options.metadataReference, schema.dimensionType, workbookDimensionName);
+    const metadataReference = config.features.enableMetadataReferenceAlignment
+      ? findMetadataReference(options.metadataReference, schema.dimensionType, workbookDimensionName, config)
+      : undefined;
     const dimensionName = metadataReference?.name ?? workbookDimensionName;
     if (metadataReference && metadataReference.name !== workbookDimensionName) {
       warnings.push(`Aligned sheet '${sheet.name}' dimension '${schema.dimensionType} / ${workbookDimensionName}' to metadata reference '${metadataReference.type} / ${metadataReference.name}'.`);
@@ -199,12 +210,13 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
   appendMetadataOnlyDimensions({
     projectId: project.id,
     metadataReference: options.metadataReference,
+    config,
     dimensions,
     dimensionsByLogicalKey,
     warnings,
     createdAt
   });
-  applyCanonicalSortOrder(dimensions);
+  applyCanonicalSortOrder(dimensions, config);
 
   return {
     project,
@@ -226,6 +238,7 @@ export async function parseWorkbook(filePath: string, options: ParseOptions): Pr
 function appendMetadataOnlyDimensions({
   projectId,
   metadataReference,
+  config,
   dimensions,
   dimensionsByLogicalKey,
   warnings,
@@ -233,15 +246,29 @@ function appendMetadataOnlyDimensions({
 }: {
   projectId: string;
   metadataReference: MetadataReference | undefined;
+  config: AppConfig;
   dimensions: DimensionRecord[];
   dimensionsByLogicalKey: Map<string, DimensionRecord>;
   warnings: string[];
   createdAt: string;
 }): void {
+  if (
+    !config.features.includeMetadataOnlyDimensions ||
+    !config.import.metadataReference.includeMetadataOnlyDimensions ||
+    !config.dimensions.metadataOnly.includeWhenWorkbookSheetMissing
+  ) {
+    return;
+  }
   if (!metadataReference) return;
   const importedTypes = new Set(dimensions.map((dimension) => dimension.dimensionType));
   for (const reference of metadataReference.dimensions) {
-    if (importedTypes.has(reference.type) || !isApplicationMetadataDimension(reference)) continue;
+    if (
+      importedTypes.has(reference.type) ||
+      !config.dimensions.enabledTypes.includes(reference.type) ||
+      !isApplicationMetadataDimension(reference, config)
+    ) {
+      continue;
+    }
     const logicalKey = getDimensionLogicalKey(reference.type, reference.name, reference.name);
     if (dimensionsByLogicalKey.has(logicalKey)) continue;
 
@@ -275,14 +302,14 @@ function appendMetadataOnlyDimensions({
   }
 }
 
-function isApplicationMetadataDimension(reference: MetadataDimensionReference): boolean {
-  return Boolean(reference.name) && !/^FVA_/i.test(reference.name) && !/^Root/i.test(reference.name);
+function isApplicationMetadataDimension(reference: MetadataDimensionReference, config: AppConfig): boolean {
+  return Boolean(reference.name) && !matchesAnyPattern(reference.name, config.dimensions.metadataOnly.excludeNamePatterns);
 }
 
-function applyCanonicalSortOrder(dimensions: DimensionRecord[]): void {
+function applyCanonicalSortOrder(dimensions: DimensionRecord[], config: AppConfig): void {
   dimensions.sort((left, right) => {
-    const leftRank = getDimensionTypeRank(left.dimensionType);
-    const rightRank = getDimensionTypeRank(right.dimensionType);
+    const leftRank = getDimensionTypeRank(left.dimensionType, config);
+    const rightRank = getDimensionTypeRank(right.dimensionType, config);
     if (leftRank !== rightRank) return leftRank - rightRank;
     if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
     return left.dimensionName.localeCompare(right.dimensionName);
@@ -292,14 +319,13 @@ function applyCanonicalSortOrder(dimensions: DimensionRecord[]): void {
   for (const dimension of dimensions) {
     const count = (countersByType.get(dimension.dimensionType) ?? 0) + 1;
     countersByType.set(dimension.dimensionType, count);
-    dimension.sortOrder = getDimensionTypeRank(dimension.dimensionType) * 100 + count;
+    dimension.sortOrder = getDimensionTypeRank(dimension.dimensionType, config) * 100 + count;
   }
 }
 
-function getDimensionTypeRank(dimensionType: string): number {
-  const order = ["Scenario", "Entity", "Account", "Flow", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7", "UD8"];
-  const index = order.indexOf(dimensionType);
-  return index === -1 ? order.length + 1 : index + 1;
+function getDimensionTypeRank(dimensionType: DimensionType, config: AppConfig): number {
+  const index = config.dimensions.displayOrder.indexOf(dimensionType);
+  return index === -1 ? config.dimensions.displayOrder.length + 1 : index + 1;
 }
 
 function getDimensionLogicalKey(dimensionType: string, dimensionName: string, sheetName: string): string {
@@ -325,17 +351,28 @@ function normalizeReferenceValue(value: string | null | undefined, fallback: str
 
 function findMetadataReference(
   metadataReference: MetadataReference | undefined,
-  dimensionType: string,
-  dimensionName: string
+  dimensionType: DimensionType,
+  dimensionName: string,
+  config: AppConfig
 ): MetadataDimensionReference | undefined {
   if (!metadataReference) return undefined;
   const candidates = metadataReference.dimensions.filter((dimension) => dimension.type === dimensionType);
   if (candidates.length === 0) return undefined;
 
-  const exact = candidates.find((dimension) => dimension.name.toLowerCase() === dimensionName.toLowerCase());
-  if (exact) return exact;
+  if (config.import.metadataReference.preferExactDimensionNameMatch) {
+    const exact = candidates.find((dimension) => dimension.name.toLowerCase() === dimensionName.toLowerCase());
+    if (exact) return exact;
+  }
 
-  const applicationCandidates = candidates.filter((dimension) => !/^FVA_/i.test(dimension.name) && !/^Root/i.test(dimension.name));
+  const preferredName = config.dimensions.preferredMetadataNames[dimensionType];
+  if (preferredName) {
+    const preferred = candidates.find((dimension) => dimension.name.toLowerCase() === preferredName.toLowerCase());
+    if (preferred) return preferred;
+  }
+
+  if (!config.import.metadataReference.fallbackToLargestPopulatedDimension) return undefined;
+
+  const applicationCandidates = candidates.filter((dimension) => isApplicationMetadataDimension(dimension, config));
   const populatedCandidates = applicationCandidates.filter((dimension) => (dimension.memberCount ?? 0) > 0 || (dimension.relationshipCount ?? 0) > 0);
   const bestCandidates = populatedCandidates.length > 0 ? populatedCandidates : applicationCandidates;
   if (bestCandidates.length === 0) return undefined;
@@ -345,6 +382,10 @@ function findMetadataReference(
     const leftSize = (left.memberCount ?? 0) + (left.relationshipCount ?? 0);
     return rightSize - leftSize;
   })[0];
+}
+
+function matchesAnyPattern(value: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => new RegExp(pattern, "i").test(value));
 }
 
 function findMemberHeaderRow(sheet: ExcelJS.Worksheet, schema: DimensionSchema): number | null {
