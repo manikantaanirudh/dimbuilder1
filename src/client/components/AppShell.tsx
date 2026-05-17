@@ -8,6 +8,7 @@ import {
   Undo2
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import { validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
@@ -15,12 +16,15 @@ import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
 import { ExportModal, ImportModal } from "./ImportExportModals";
 
-export function AppShell() {
+export function AppShell({ appConfig }: { appConfig: ClientAppConfig }) {
   const store = useProjectStore();
   const [activeDimensionId, setActiveDimensionId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [status, setStatus] = useState("");
+  const toolbar = appConfig.ui.toolbar;
+  const exportDisabled = !store.selectedProjectId
+    || store.issues.some((issue) => appConfig.validation.exportBlockedBySeverities.includes(issue.severity));
 
   const activeDimension = useMemo(
     () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? store.dimensions[0],
@@ -30,7 +34,7 @@ export function AppShell() {
   async function runValidation() {
     if (!store.selectedProjectId) return;
     setStatus("Validating metadata...");
-    const result = await validateProject(store.selectedProjectId);
+    const result = await validateProject(store.selectedProjectId, appConfig.validation.duplicateMemberSeverity);
     setStatus(`${result.issues.length} validation issue${result.issues.length === 1 ? "" : "s"} found`);
     await store.refresh(store.selectedProjectId);
   }
@@ -40,7 +44,7 @@ export function AppShell() {
       <aside className="sidebar">
         <div className="brand">
           <Database size={18} />
-          <span>OneStream XF</span>
+          <span>{appConfig.application.productName}</span>
         </div>
         <div className="sidebar-label">Dimensions</div>
         {store.dimensions.length === 0 && <div className="empty-sidebar">Import a workbook to begin.</div>}
@@ -60,16 +64,16 @@ export function AppShell() {
       <main className="main">
         <header className="toolbar">
           <div className="toolbar-title">
-            <strong>OneStream XF Dimension Builder</strong>
+            <strong>{appConfig.application.title}</strong>
             <span>{store.loading ? "Loading..." : store.projects[0]?.name ?? "No project imported"}</span>
           </div>
           <div className="toolbar-actions">
-            <button onClick={() => setImportOpen(true)}><FileUp size={16} /> Import</button>
-            <button disabled={!store.selectedProjectId} onClick={runValidation}><ShieldCheck size={16} /> Validate</button>
-            <button disabled={!store.selectedProjectId} onClick={() => setExportOpen(true)}><Download size={16} /> Export</button>
-            <button disabled><Save size={16} /> Save</button>
-            <button disabled title="Undo"><Undo2 size={16} /></button>
-            <button disabled title="Redo"><RotateCcw size={16} /></button>
+            {toolbar.showImport && <button onClick={() => setImportOpen(true)}><FileUp size={16} /> Import</button>}
+            {toolbar.showValidate && <button disabled={!store.selectedProjectId} onClick={runValidation}><ShieldCheck size={16} /> Validate</button>}
+            {toolbar.showExport && <button disabled={exportDisabled} onClick={() => setExportOpen(true)}><Download size={16} /> Export</button>}
+            {toolbar.showSave && <button disabled><Save size={16} /> Save</button>}
+            {toolbar.showUndoRedo && <button disabled title="Undo"><Undo2 size={16} /></button>}
+            {toolbar.showUndoRedo && <button disabled title="Redo"><RotateCcw size={16} /></button>}
           </div>
         </header>
 
@@ -82,13 +86,14 @@ export function AppShell() {
             dimension={activeDimension}
             issues={store.issues}
             onRefresh={() => store.refresh(store.selectedProjectId ?? undefined)}
+            appConfig={appConfig}
           />
         ) : (
           <Dashboard
-            projects={store.projects}
             dimensions={store.dimensions}
             summary={store.summary}
             onImport={() => setImportOpen(true)}
+            appConfig={appConfig}
           />
         )}
       </main>
@@ -105,6 +110,7 @@ export function AppShell() {
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         projectId={store.selectedProjectId}
+        appConfig={appConfig}
       />
     </div>
   );

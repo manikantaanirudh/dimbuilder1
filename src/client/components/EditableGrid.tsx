@@ -1,6 +1,6 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Copy, EyeOff, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
 import type {
   DimensionMemberRecord,
@@ -24,11 +24,13 @@ type GridRecord = DimensionMemberRecord | DimensionRelationshipRecord;
 export function EditableGrid({
   projectId,
   kind,
-  dimension
+  dimension,
+  pageSize = 600
 }: {
   projectId: string;
   kind: "members" | "relationships";
   dimension: DimensionRecord;
+  pageSize?: number;
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
@@ -55,20 +57,20 @@ export function EditableGrid({
     overscan: 12
   });
 
-  useEffect(() => {
-    void loadPage(0);
-  }, [projectId, dimension.id, kind]);
-
-  async function loadPage(nextOffset: number) {
+  const loadPage = useCallback(async (nextOffset: number) => {
     setStatus("Loading rows...");
     const result = kind === "members"
-      ? await fetchMembers(projectId, dimension.id, nextOffset, 600)
-      : await fetchRelationships(projectId, dimension.id, nextOffset, 600);
+      ? await fetchMembers(projectId, dimension.id, nextOffset, pageSize)
+      : await fetchRelationships(projectId, dimension.id, nextOffset, pageSize);
     setRecords(result.rows);
     setTotal(result.total);
     setOffset(nextOffset);
     setStatus(`${result.rows.length} of ${result.total} rows loaded`);
-  }
+  }, [dimension.id, kind, pageSize, projectId]);
+
+  useEffect(() => {
+    void loadPage(0);
+  }, [loadPage]);
 
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
     const properties = { ...record.properties, [field.name]: value };
@@ -194,9 +196,9 @@ export function EditableGrid({
         </div>
       </div>
       <div className="pager">
-        <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - 600))}>Previous</button>
+        <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - pageSize))}>Previous</button>
         <span>Rows {total === 0 ? 0 : offset + 1}-{Math.min(offset + records.length, total)} of {total}</span>
-        <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + 600)}>Next</button>
+        <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + pageSize)}>Next</button>
       </div>
     </div>
   );
@@ -229,4 +231,3 @@ function GridCell({
     />
   );
 }
-

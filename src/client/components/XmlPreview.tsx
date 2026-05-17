@@ -3,14 +3,35 @@ import { useEffect, useState } from "react";
 import type { DimensionRecord } from "../../shared/types";
 import { apiText } from "../api/client";
 
-export function XmlPreview({ projectId, dimension }: { projectId: string; dimension: DimensionRecord }) {
+type XmlPreviewScope = "all" | "dimension";
+
+function mapDefaultScope(defaultScope: "currentDimension" | "allDimensions", allowAllDimensions: boolean): XmlPreviewScope {
+  if (!allowAllDimensions) return "dimension";
+  return defaultScope === "allDimensions" ? "all" : "dimension";
+}
+
+export function XmlPreview({
+  projectId,
+  dimension,
+  defaultScope = "allDimensions",
+  allowAllDimensions = true
+}: {
+  projectId: string;
+  dimension: DimensionRecord;
+  defaultScope?: "currentDimension" | "allDimensions";
+  allowAllDimensions?: boolean;
+}) {
   const [xml, setXml] = useState("");
-  const [scope, setScope] = useState<"all" | "dimension">("all");
+  const [scope, setScope] = useState<XmlPreviewScope>(() => mapDefaultScope(defaultScope, allowAllDimensions));
   const [status, setStatus] = useState("");
 
   useEffect(() => {
     void apiText(`/export/${projectId}/xml`).then(setXml);
   }, [projectId]);
+
+  useEffect(() => {
+    setScope(mapDefaultScope(defaultScope, allowAllDimensions));
+  }, [allowAllDimensions, defaultScope]);
 
   const preview = scope === "all" ? xml : extractDimensionXml(xml, dimension.dimensionName);
 
@@ -22,8 +43,8 @@ export function XmlPreview({ projectId, dimension }: { projectId: string; dimens
   return (
     <div className="panel xml-panel">
       <div className="grid-toolbar">
-        <select value={scope} onChange={(event) => setScope(event.target.value as "all" | "dimension")}>
-          <option value="all">All dimensions</option>
+        <select value={scope} onChange={(event) => setScope(event.target.value as XmlPreviewScope)}>
+          {allowAllDimensions && <option value="all">All dimensions</option>}
           <option value="dimension">Current dimension</option>
         </select>
         <button onClick={() => void copy()}><Copy size={15} /> Copy</button>
@@ -43,4 +64,3 @@ function extractDimensionXml(xml: string, dimensionName: string): string {
   if (dimensionStart === -1 || dimensionEnd === -1) return xml;
   return xml.slice(dimensionStart, dimensionEnd + "</dimension>".length);
 }
-

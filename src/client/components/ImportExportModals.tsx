@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { uploadWorkbook } from "../api/client";
 
 export function ImportModal({
@@ -43,26 +44,29 @@ export function ImportModal({
 export function ExportModal({
   open,
   onClose,
-  projectId
+  projectId,
+  appConfig
 }: {
   open: boolean;
   onClose: () => void;
   projectId: string | null;
+  appConfig: ClientAppConfig;
 }) {
   if (!open) return null;
   const disabled = !projectId;
   const prefix = projectId ? `/api/export/${projectId}` : "#";
+  const exportConfig = appConfig.export;
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
         <h2>Export Metadata</h2>
         <div className="export-list">
-          <a aria-disabled={disabled} href={`${prefix}/xml`} target="_blank" rel="noreferrer">OneStream XML</a>
-          <a aria-disabled={disabled} href={`${prefix}/xlsx`} target="_blank" rel="noreferrer">Workbook XLSX</a>
-          <a aria-disabled={disabled} href={`${prefix}/members.csv`} target="_blank" rel="noreferrer">Members CSV</a>
-          <a aria-disabled={disabled} href={`${prefix}/relationships.csv`} target="_blank" rel="noreferrer">Relationships CSV</a>
-          <a aria-disabled={disabled} href={`${prefix}/json`} target="_blank" rel="noreferrer">JSON Backup</a>
+          {exportConfig.xml.enabled && <a aria-disabled={disabled} href={`${prefix}/xml`} target="_blank" rel="noreferrer">OneStream XML</a>}
+          {exportConfig.xlsx.enabled && <a aria-disabled={disabled} href={`${prefix}/xlsx`} target="_blank" rel="noreferrer">Workbook XLSX</a>}
+          {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/members.csv`} target="_blank" rel="noreferrer">Members CSV</a>}
+          {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/relationships.csv`} target="_blank" rel="noreferrer">Relationships CSV</a>}
+          {exportConfig.json.enabled && <a aria-disabled={disabled} href={`${prefix}/json`} target="_blank" rel="noreferrer">JSON Backup</a>}
         </div>
         <div className="modal-actions">
           <button onClick={onClose}>Close</button>
@@ -71,4 +75,3 @@ export function ExportModal({
     </div>
   );
 }
-
