@@ -41,26 +41,6 @@ export function SeverityPill({ severity }: { severity: Severity }) {
   return <StatusBadge tone={tone}>{label}</StatusBadge>;
 }
 
-export function MetricTile({
-  label,
-  value,
-  tone = "neutral",
-  detail
-}: {
-  label: string;
-  value: ReactNode;
-  tone?: Tone;
-  detail?: ReactNode;
-}) {
-  return (
-    <div className={`metric-tile ${tone}`}>
-      <strong>{value}</strong>
-      <span>{label}</span>
-      {detail != null ? <small>{detail}</small> : null}
-    </div>
-  );
-}
-
 export function EmptyState({
   title,
   children,

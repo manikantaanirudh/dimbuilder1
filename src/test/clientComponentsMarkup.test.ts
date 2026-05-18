@@ -21,6 +21,15 @@ const blockedExportAvailability = {
   reason: "Blocking validation issues"
 };
 
+const summaryWithValidationCounts: DashboardSummary = {
+  totalDimensions: 7,
+  totalMembers: 1200,
+  totalRelationships: 4500,
+  validationErrors: 2,
+  validationWarnings: 3,
+  recentDimensions: []
+};
+
 function render(element: Parameters<typeof renderToStaticMarkup>[0]) {
   return renderToStaticMarkup(element);
 }
@@ -54,6 +63,30 @@ describe("client component markup", () => {
     expect(markup).not.toContain("Import XLSX");
     expect(markup).not.toMatch(/<button[\s\S]*>Validate<\/button>/);
     expect(markup).not.toMatch(/<button[\s\S]*>Export<\/button>/);
+  });
+
+  it("renders compact dashboard facts from the provided summary", () => {
+    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject);
+
+    expect(markup).toContain('<span class="fact-item neutral"><span>Dimensions</span><b>7</b></span>');
+    expect(markup).toContain('<span class="fact-item neutral"><span>Members</span><b>1.2k</b></span>');
+    expect(markup).toContain('<span class="fact-item neutral"><span>Relationships</span><b>4.5k</b></span>');
+    expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
+    expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
+  });
+
+  it("uses summary validation counts for dashboard fact tones when issues are empty", () => {
+    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject);
+
+    expect(markup).toContain('<span class="status-badge danger">Export blocked</span>');
+    expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
+    expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
+  });
+
+  it("renders top-command-bar import guidance in the no-project empty state", () => {
+    const markup = dashboardMarkup(defaultAppConfig);
+
+    expect(markup).toContain("Use the Import button in the top command bar to load an XF metadata workbook.");
   });
 
   it("does not expose an XML preview download href when export is blocked", () => {

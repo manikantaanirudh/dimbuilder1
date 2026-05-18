@@ -22,6 +22,10 @@ export function Dashboard({
 }) {
   const dimensionDisplayConfig = appConfig.dimensions.display;
   const issueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
+  const summaryErrors = summary?.validationErrors ?? issueSummary.errors;
+  const summaryWarnings = summary?.validationWarnings ?? issueSummary.warnings;
+  const blocksExport = summaryErrors > 0 || issueSummary.blocksExport;
+  const needsReview = blocksExport || summaryWarnings > 0;
 
   return (
     <section className="dashboard project-overview">
@@ -31,8 +35,8 @@ export function Dashboard({
           <h1>{project?.name ?? "No project imported"}</h1>
           <p>{project?.sourceFileName ?? "Import a OneStream XF metadata workbook from the top command bar."}</p>
         </div>
-        <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
-          {issueSummary.blocksExport ? "Export blocked" : issueSummary.total ? "Needs review" : "Ready"}
+        <StatusBadge tone={blocksExport ? "danger" : needsReview ? "warning" : "success"}>
+          {blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready"}
         </StatusBadge>
       </div>
 
@@ -40,8 +44,8 @@ export function Dashboard({
         <FactItem label="Dimensions" value={formatCount(summary?.totalDimensions ?? dimensions.length)} />
         <FactItem label="Members" value={formatCount(summary?.totalMembers ?? 0)} />
         <FactItem label="Relationships" value={formatCount(summary?.totalRelationships ?? 0)} />
-        <FactItem label="Errors" value={formatCount(summary?.validationErrors ?? issueSummary.errors)} tone={issueSummary.errors ? "danger" : "neutral"} />
-        <FactItem label="Warnings" value={formatCount(summary?.validationWarnings ?? issueSummary.warnings)} tone={issueSummary.warnings ? "warning" : "neutral"} />
+        <FactItem label="Errors" value={formatCount(summaryErrors)} tone={summaryErrors ? "danger" : "neutral"} />
+        <FactItem label="Warnings" value={formatCount(summaryWarnings)} tone={summaryWarnings ? "warning" : "neutral"} />
       </FactStrip>
 
       <section className="overview-dimensions">
