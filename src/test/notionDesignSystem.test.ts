@@ -20,4 +20,12 @@ describe("Notion-inspired design system CSS", () => {
     expect(css).toContain(".project-context");
     expect(css).toContain(".sidebar-heading");
   });
+
+  it("keeps the metadata workspace dense without card-like detail rows", () => {
+    expect(css).toContain(".rail-facts .fact-item");
+    expect(css).toContain(".rail-facts .fact-item:last-child");
+    expect(css).toContain(".details-rail .empty-state-block");
+    expect(css).toContain(".workbench-grid-toolbar");
+    expect(css).toContain(".workbench-data-grid");
+  });
 });

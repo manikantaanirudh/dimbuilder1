@@ -1024,6 +1024,7 @@ svg {
 .workbench-grid-toolbar {
   min-height: 48px;
   border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-subtle) 100%);
 }
 
 .grid-toolbar-primary,
@@ -1127,6 +1128,7 @@ svg {
 .workbench-data-grid {
   max-width: 100%;
   overflow: auto;
+  border-top: 0;
 }
 
 .grid-header,
@@ -1238,6 +1240,15 @@ svg {
   top: 72px;
 }
 
+.details-rail .panel-heading {
+  margin-bottom: 10px;
+}
+
+.details-rail .empty-state-block {
+  border-radius: var(--radius-sm);
+  padding: 18px 14px;
+}
+
 .issue-panel.expanded {
   position: static;
 }
@@ -1278,6 +1289,29 @@ svg {
 
 .rail-facts {
   display: grid;
+}
+
+.rail-facts .fact-item {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 0;
+  color: var(--muted);
+}
+
+.rail-facts .fact-item:last-child {
+  border-bottom: 0;
+}
+
+.rail-facts .fact-item b {
+  max-width: 150px;
+  text-align: right;
 }
 
 .issue-list {
