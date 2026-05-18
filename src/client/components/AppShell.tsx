@@ -9,12 +9,17 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
-import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
+import {
+  buildDimensionNavItems,
+  buildIssueSummary,
+  getExportAvailability
+} from "../ui/viewModel";
 import { validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
-import { ExportModal, hasEnabledExportFormat, ImportModal } from "./ImportExportModals";
+import { ExportModal, ImportModal } from "./ImportExportModals";
+import { ActionButton, StatusBadge } from "./ui";
 
 export function AppShell({
   appConfig,
@@ -30,18 +35,22 @@ export function AppShell({
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
-  const hasEnabledExportFormats = hasEnabledExportFormat(appConfig.export);
-  const hasExportBlockingIssues = store.issues.some((issue) => (
-    appConfig.validation.exportBlockedBySeverities.includes(issue.severity)
-  ));
-  const exportDisabled = !store.selectedProjectId || !hasEnabledExportFormats || hasExportBlockingIssues;
-  const exportTitle = !hasEnabledExportFormats
-    ? "Exports are disabled by configuration"
-    : !store.selectedProjectId
-      ? "Import a project before exporting"
-      : hasExportBlockingIssues
-        ? "Resolve blocking validation issues before exporting"
-        : "Export metadata";
+  const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
+  const exportAvailability = getExportAvailability({
+    projectId: store.selectedProjectId,
+    exportConfig: appConfig.export,
+    issues: store.issues,
+    blockedSeverities: appConfig.validation.exportBlockedBySeverities
+  });
+  const dimensionNavItems = useMemo(
+    () => buildDimensionNavItems(
+      store.dimensions,
+      store.issues,
+      dimensionDisplayConfig,
+      appConfig.validation.exportBlockedBySeverities
+    ),
+    [appConfig.validation.exportBlockedBySeverities, dimensionDisplayConfig, store.dimensions, store.issues]
+  );
 
   const activeDimension = useMemo(
     () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? store.dimensions[0],
@@ -60,20 +69,35 @@ export function AppShell({
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <Database size={18} />
+          <span className="brand-mark"><Database size={18} /></span>
           <span>{appConfig.application.productName}</span>
         </div>
-        <div className="sidebar-label">Dimensions</div>
-        {store.dimensions.length === 0 && <div className="empty-sidebar">Import a workbook to begin.</div>}
-        {store.dimensions.map((dimension) => (
+
+        <div className="sidebar-project">
+          <span className="sidebar-label">Project</span>
+          <strong>{store.projects[0]?.name ?? "No project imported"}</strong>
+          <small>{store.projects[0]?.sourceFileName ?? appConfig.application.supportText}</small>
+        </div>
+
+        <div className="sidebar-section-header">
+          <span className="sidebar-label">Dimensions</span>
+          <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
+            {issueSummary.total ? `${issueSummary.total} issues` : "Ready"}
+          </StatusBadge>
+        </div>
+
+        {dimensionNavItems.length === 0 && <div className="empty-sidebar">Import a workbook to begin.</div>}
+        {dimensionNavItems.map((item) => (
           <button
-            key={dimension.id}
-            className={`nav-item ${activeDimension?.id === dimension.id ? "selected" : ""}`}
-            onClick={() => setActiveDimensionId(dimension.id)}
-            title={getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}
+            key={item.id}
+            className={`nav-item ${activeDimension?.id === item.id ? "selected" : ""}`}
+            onClick={() => setActiveDimensionId(item.id)}
+            title={item.subtitle}
           >
-            <span>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</span>
-            <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
+            <span>{item.label}</span>
+            <small>{item.subtitle}</small>
+            {item.issueSummary.errors > 0 && <b className="nav-issue error">{item.issueSummary.errors}</b>}
+            {item.issueSummary.errors === 0 && item.issueSummary.warnings > 0 && <b className="nav-issue warning">{item.issueSummary.warnings}</b>}
           </button>
         ))}
       </aside>
@@ -85,16 +109,28 @@ export function AppShell({
             <span>{store.loading ? "Loading..." : store.projects[0]?.name ?? "No project imported"}</span>
           </div>
           <div className="toolbar-actions">
-            {toolbar.showImport && <button onClick={() => setImportOpen(true)}><FileUp size={16} /> Import</button>}
-            {toolbar.showValidate && <button disabled={!store.selectedProjectId} onClick={runValidation}><ShieldCheck size={16} /> Validate</button>}
-            {toolbar.showExport && (
-              <button disabled={exportDisabled} title={exportTitle} onClick={() => setExportOpen(true)}>
-                <Download size={16} /> Export
-              </button>
+            {toolbar.showImport && (
+              <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
+                <FileUp size={16} /> Import
+              </ActionButton>
             )}
-            {toolbar.showSave && <button disabled><Save size={16} /> Save</button>}
-            {toolbar.showUndoRedo && <button disabled title="Undo"><Undo2 size={16} /></button>}
-            {toolbar.showUndoRedo && <button disabled title="Redo"><RotateCcw size={16} /></button>}
+            {toolbar.showValidate && (
+              <ActionButton disabled={!store.selectedProjectId} onClick={runValidation}>
+                <ShieldCheck size={16} /> Validate
+              </ActionButton>
+            )}
+            {toolbar.showExport && (
+              <ActionButton
+                disabled={exportAvailability.disabled}
+                title={exportAvailability.title}
+                onClick={() => setExportOpen(true)}
+              >
+                <Download size={16} /> Export
+              </ActionButton>
+            )}
+            {toolbar.showSave && <ActionButton disabled><Save size={16} /> Save</ActionButton>}
+            {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
+            {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
           </div>
         </header>
 
@@ -114,7 +150,14 @@ export function AppShell({
           <Dashboard
             dimensions={store.dimensions}
             summary={store.summary}
+            project={store.projects[0] ?? null}
+            issues={store.issues}
             onImport={() => setImportOpen(true)}
+            onValidate={() => void runValidation()}
+            validateDisabled={!store.selectedProjectId}
+            onExport={() => setExportOpen(true)}
+            exportAvailability={exportAvailability}
+            onOpenDimension={setActiveDimensionId}
             appConfig={appConfig}
           />
         )}
