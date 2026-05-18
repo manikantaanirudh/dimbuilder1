@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { AppShell } from "../client/components/AppShell";
 import { Dashboard } from "../client/components/Dashboard";
 import { DimensionWorkspace } from "../client/components/DimensionWorkspace";
 import { ExportModal, ImportModal } from "../client/components/ImportExportModals";
@@ -77,12 +78,31 @@ describe("client component markup", () => {
     expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
   });
 
-  it("uses summary validation counts for dashboard fact tones when issues are empty", () => {
-    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject);
+  it("keeps dashboard readiness aligned with configured blocking severities", () => {
+    const config = {
+      ...defaultAppConfig,
+      validation: {
+        ...defaultAppConfig.validation,
+        exportBlockedBySeverities: ["warning" as const]
+      }
+    };
+    const summaryWithNonBlockingErrors: DashboardSummary = {
+      ...summaryWithValidationCounts,
+      validationErrors: 2,
+      validationWarnings: 0
+    };
+    const markup = dashboardMarkup(config, summaryWithNonBlockingErrors, sampleProject);
 
-    expect(markup).toContain('<span class="status-badge danger">Export blocked</span>');
+    expect(markup).toContain('<span class="status-badge warning">Needs review</span>');
     expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
-    expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
+    expect(markup).toContain('<span class="fact-item neutral"><span>Warnings</span><b>0</b></span>');
+    expect(markup).not.toContain("Export blocked");
+  });
+
+  it("explains why validation is disabled before a project is imported", () => {
+    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+
+    expect(markup).toMatch(/<button[^>]*title="Import a project before validating"[^>]*disabled=""[^>]*>[\s\S]*Validate<\/button>/);
   });
 
   it("renders clean workbench workspace facts and the short XML tab label", () => {

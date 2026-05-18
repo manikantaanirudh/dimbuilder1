@@ -192,7 +192,11 @@ export function AppShell({
               </ActionButton>
             )}
             {toolbar.showValidate && (
-              <ActionButton disabled={!store.selectedProjectId} onClick={runValidation}>
+              <ActionButton
+                title={store.selectedProjectId ? "Validate metadata" : "Import a project before validating"}
+                disabled={!store.selectedProjectId}
+                onClick={runValidation}
+              >
                 <ShieldCheck size={16} /> Validate
               </ActionButton>
             )}

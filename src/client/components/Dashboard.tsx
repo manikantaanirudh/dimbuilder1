@@ -24,8 +24,8 @@ export function Dashboard({
   const issueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const summaryErrors = summary?.validationErrors ?? issueSummary.errors;
   const summaryWarnings = summary?.validationWarnings ?? issueSummary.warnings;
-  const blocksExport = summaryErrors > 0 || issueSummary.blocksExport;
-  const needsReview = blocksExport || summaryWarnings > 0;
+  const blocksExport = issueSummary.blocksExport;
+  const needsReview = blocksExport || summaryErrors > 0 || summaryWarnings > 0 || issueSummary.total > 0;
   const statusTone = !project ? "neutral" : blocksExport ? "danger" : needsReview ? "warning" : "success";
   const statusLabel = !project ? "No project" : blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready";
 
