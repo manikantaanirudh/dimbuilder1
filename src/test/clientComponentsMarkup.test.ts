@@ -25,27 +25,12 @@ function render(element: Parameters<typeof renderToStaticMarkup>[0]) {
   return renderToStaticMarkup(element);
 }
 
-function configWithToolbar(toolbar: Partial<ClientAppConfig["ui"]["toolbar"]>): ClientAppConfig {
-  return {
-    ...defaultAppConfig,
-    ui: {
-      ...defaultAppConfig.ui,
-      toolbar: {
-        ...defaultAppConfig.ui.toolbar,
-        ...toolbar
-      }
-    }
-  };
-}
-
 function dashboardMarkup(appConfig: ClientAppConfig, summary: DashboardSummary | null = null, project: ProjectRecord | null = null) {
   return render(createElement(Dashboard, {
     dimensions: [],
     summary,
     project,
     issues: [],
-    onImport: () => undefined,
-    exportAvailability: readyExportAvailability,
     onOpenDimension: () => undefined,
     appConfig
   }));
@@ -61,18 +46,14 @@ describe("client component markup", () => {
     expect(markup).not.toMatch(/<button[\s\S]*>Export<\/button>/);
   });
 
-  it("hides dashboard command and empty-state import actions when import is hidden", () => {
-    const markup = dashboardMarkup(configWithToolbar({ showImport: false }));
+  it("keeps dashboard overview copy compact and does not render lifecycle buttons there", () => {
+    const markup = dashboardMarkup(defaultAppConfig, null, sampleProject);
 
+    expect(markup).not.toContain("Project command center");
+    expect(markup).not.toContain("dashboard-command");
     expect(markup).not.toContain("Import XLSX");
-    expect(markup).not.toMatch(/dashboard-command-actions">[\s\S]*FileUp/);
-  });
-
-  it("hides dashboard validate and export command actions when toolbar flags hide them", () => {
-    const markup = dashboardMarkup(configWithToolbar({ showValidate: false, showExport: false }));
-
-    expect(markup).not.toMatch(/dashboard-command-actions">[\s\S]*Validate/);
-    expect(markup).not.toMatch(/dashboard-command-actions">[\s\S]*>Export<\/button>/);
+    expect(markup).not.toMatch(/<button[\s\S]*>Validate<\/button>/);
+    expect(markup).not.toMatch(/<button[\s\S]*>Export<\/button>/);
   });
 
   it("does not expose an XML preview download href when export is blocked", () => {

@@ -230,8 +230,6 @@ export function AppShell({
             summary={store.summary}
             project={store.projects[0] ?? null}
             issues={store.issues}
-            onImport={() => setImportOpen(true)}
-            exportAvailability={exportAvailability}
             onOpenDimension={setActiveWorkspace}
             appConfig={appConfig}
           />
