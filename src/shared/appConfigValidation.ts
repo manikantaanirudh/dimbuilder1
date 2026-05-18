@@ -1,6 +1,7 @@
 import type { AppConfig, ClientAppConfig } from "./appConfigTypes";
 import { supportedConfigSeverities } from "./appConfigTypes";
-import { supportedDimensionTypes } from "./dimensionSchemas";
+import { getDimensionSchema, supportedDimensionTypes } from "./dimensionSchemas";
+import type { DimensionType } from "./types";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -16,10 +17,39 @@ export function validateAppConfig(config: AppConfig): AppConfig {
   }
   for (const type of [
     ...Object.keys(config.dimensions.sheetAliases),
-    ...Object.keys(config.dimensions.preferredMetadataNames)
+    ...Object.keys(config.dimensions.preferredMetadataNames),
+    ...Object.keys(config.dimensions.blueprints)
   ]) {
     if (!isSupportedDimensionType(type)) {
       throw new Error(`Unknown dimension type '${type}' in configuration.`);
+    }
+  }
+
+  const supportedRelationshipDefaultKeys = new Set([
+    "aggregationWeight",
+    "percentConsol",
+    "percentOwnership",
+    "ownershipType"
+  ]);
+
+  for (const [type, blueprint] of Object.entries(config.dimensions.blueprints)) {
+    if (!isSupportedDimensionType(type)) continue;
+    const schema = getDimensionSchema(type as DimensionType);
+    const supportedMemberFields = new Set(schema.memberFields.map((field) => field.name));
+
+    if (!blueprint.defaultDimensionName.trim()) {
+      throw new Error(`Blueprint for '${type}' must define defaultDimensionName.`);
+    }
+    if (!Array.isArray(blueprint.rootMembers) || blueprint.rootMembers.some((member) => !member.trim())) {
+      throw new Error(`Blueprint for '${type}' must define non-empty rootMembers.`);
+    }
+    if (!supportedMemberFields.has(blueprint.memberKeyField)) {
+      throw new Error(`Blueprint for '${type}' uses unsupported memberKeyField '${blueprint.memberKeyField}'.`);
+    }
+    for (const key of Object.keys(blueprint.relationshipDefaults)) {
+      if (!supportedRelationshipDefaultKeys.has(key)) {
+        throw new Error(`Blueprint for '${type}' uses unsupported relationship default '${key}'.`);
+      }
     }
   }
 

@@ -12,6 +12,73 @@ import {
 } from "../shared/appConfigValidation";
 
 describe("app config", () => {
+  it("defaults to the SR Onestream builder identity", () => {
+    expect(defaultAppConfig.application.productName).toBe("SR Onestream Dim Builder");
+    expect(defaultAppConfig.application.title).toBe("SR Onestream Dim Builder");
+    expect(defaultAppConfig.export.xlsx.creator).toBe("SR Onestream Dim Builder");
+    expect(defaultAppConfig.ui.defaultWorkspaceTab).toBe("Members");
+  });
+
+  it("loads dimension blueprint configuration", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Corporate Accounts",
+            rootMembers: ["Root", "Net Income"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(validateAppConfig(config).dimensions.blueprints.Account).toEqual({
+      defaultDimensionName: "Corporate Accounts",
+      rootMembers: ["Root", "Net Income"],
+      memberKeyField: "Account",
+      relationshipDefaults: { aggregationWeight: 1 },
+      allowMultipleParents: true
+    });
+  });
+
+  it("rejects unknown dimension types in blueprints", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          BadDim: {
+            defaultDimensionName: "Bad",
+            rootMembers: ["Root"],
+            memberKeyField: "Member",
+            relationshipDefaults: {},
+            allowMultipleParents: false
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Unknown dimension type 'BadDim'");
+  });
+
+  it("rejects blueprint member key fields outside the dimension schema", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Bad Field",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' uses unsupported memberKeyField 'Bad Field'.");
+  });
+
   it("deep merges partial yaml config onto defaults", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       application: { title: "Custom Builder" },
@@ -19,7 +86,7 @@ describe("app config", () => {
     });
 
     expect(config.application.title).toBe("Custom Builder");
-    expect(config.application.productName).toBe("OneStream XF Dimension Builder");
+    expect(config.application.productName).toBe("SR Onestream Dim Builder");
     expect(config.ui.gridPageSize).toBe(250);
     expect(config.features.enableXmlPreview).toBe(true);
   });

@@ -50,6 +50,19 @@ export interface DashboardConfig {
   };
 }
 
+export interface DimensionBlueprintConfig {
+  defaultDimensionName: string;
+  rootMembers: string[];
+  memberKeyField: string;
+  relationshipDefaults: {
+    aggregationWeight?: number;
+    percentConsol?: number;
+    percentOwnership?: number;
+    ownershipType?: string;
+  };
+  allowMultipleParents: boolean;
+}
+
 export interface DimensionsConfig {
   expectedDimensionCount: number;
   enabledTypes: DimensionType[];
@@ -65,6 +78,7 @@ export interface DimensionsConfig {
   };
   sheetAliases: Partial<Record<DimensionType, string[]>>;
   preferredMetadataNames: Partial<Record<DimensionType, string>>;
+  blueprints: Partial<Record<DimensionType, DimensionBlueprintConfig>>;
 }
 
 export interface ImportConfig {

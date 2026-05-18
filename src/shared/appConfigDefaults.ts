@@ -2,13 +2,13 @@ import type { AppConfig } from "./appConfigTypes";
 
 export const defaultAppConfig: AppConfig = {
   application: {
-    productName: "OneStream XF Dimension Builder",
-    applicationName: "Dev",
-    title: "OneStream XF Dimension Builder",
-    description: "Import the metadata template, manage dimensions in controlled grids, validate hierarchy issues, and export OneStream-compatible files.",
+    productName: "SR Onestream Dim Builder",
+    applicationName: "Local",
+    title: "SR Onestream Dim Builder",
+    description: "Build, validate, preview, and export OneStream dimension metadata.",
     environmentName: "Local",
     oneStreamVersionFallback: "9.2.0.18004",
-    supportText: "Local metadata workspace"
+    supportText: "Create or seed a metadata project"
   },
   paths: {
     metadataDirectory: "metadata",
@@ -66,6 +66,96 @@ export const defaultAppConfig: AppConfig = {
       UD4: "ChannelPartner",
       UD5: "CustomerType",
       UD8: "Reporting"
+    },
+    blueprints: {
+      Scenario: {
+        defaultDimensionName: "Scenarios",
+        rootMembers: ["Root"],
+        memberKeyField: "Entity",
+        relationshipDefaults: {},
+        allowMultipleParents: true
+      },
+      Entity: {
+        defaultDimensionName: "Entities",
+        rootMembers: ["Root"],
+        memberKeyField: "Entity",
+        relationshipDefaults: {
+          percentConsol: 100,
+          percentOwnership: 100,
+          ownershipType: "FullConsolidation"
+        },
+        allowMultipleParents: true
+      },
+      Account: {
+        defaultDimensionName: "Accounts",
+        rootMembers: ["Root"],
+        memberKeyField: "Account",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      Flow: {
+        defaultDimensionName: "Flow",
+        rootMembers: ["Root"],
+        memberKeyField: "Flow Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD1: {
+        defaultDimensionName: "UD1",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD2: {
+        defaultDimensionName: "UD2",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD3: {
+        defaultDimensionName: "UD3",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD4: {
+        defaultDimensionName: "UD4",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD5: {
+        defaultDimensionName: "UD5",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD6: {
+        defaultDimensionName: "UD6",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD7: {
+        defaultDimensionName: "UD7",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      },
+      UD8: {
+        defaultDimensionName: "UD8",
+        rootMembers: ["Root"],
+        memberKeyField: "Member",
+        relationshipDefaults: { aggregationWeight: 1 },
+        allowMultipleParents: true
+      }
     }
   },
   import: {
@@ -102,7 +192,7 @@ export const defaultAppConfig: AppConfig = {
     },
     xlsx: {
       enabled: true,
-      creator: "OneStream XF Dimension Builder"
+      creator: "SR Onestream Dim Builder"
     },
     csv: {
       enabled: true
@@ -112,7 +202,7 @@ export const defaultAppConfig: AppConfig = {
     }
   },
   ui: {
-    defaultWorkspaceTab: "Overview",
+    defaultWorkspaceTab: "Members",
     gridPageSize: 600,
     toolbar: {
       showImport: true,
