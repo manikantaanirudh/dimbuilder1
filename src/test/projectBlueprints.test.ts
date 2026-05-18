@@ -7,6 +7,14 @@ import { defaultAppConfig } from "../shared/appConfigDefaults";
 import { exportProjectXml } from "../shared/xmlExport";
 
 describe("project blueprints", () => {
+  if (false) {
+    const db = createDatabase(":memory:");
+    const repos = createRepositories(db);
+    // @ts-expect-error repository transactions only support synchronous callbacks
+    repos.transaction(async () => "async result");
+    db.close();
+  }
+
   it("creates a metadata project from configured dimension blueprints", () => {
     const db = createDatabase(":memory:");
     try {
@@ -120,9 +128,10 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
+      const transaction = repos.transaction as (action: () => unknown) => unknown;
 
       expect(() =>
-        repos.transaction(() => {
+        transaction(() => {
           repos.projects.create({
             name: "Async Boundary",
             description: "",
@@ -143,28 +152,34 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const { Entity: _entityBlueprint, ...blueprintsWithoutEntity } = defaultAppConfig.dimensions.blueprints;
-      const configWithoutEntityBlueprint: AppConfig = {
+      const {
+        Account: _accountBlueprint,
+        Entity: _entityBlueprint,
+        ...blueprintsWithoutAccountAndEntity
+      } = defaultAppConfig.dimensions.blueprints;
+      const configWithoutAccountAndEntityBlueprints: AppConfig = {
         ...defaultAppConfig,
         dimensions: {
           ...defaultAppConfig.dimensions,
-          enabledTypes: ["Entity"],
-          displayOrder: ["Entity"],
-          blueprints: blueprintsWithoutEntity
+          enabledTypes: ["Entity", "Account"],
+          displayOrder: ["Entity", "Account"],
+          blueprints: blueprintsWithoutAccountAndEntity
         }
       };
 
-      const project = createProjectFromBlueprints(repos, configWithoutEntityBlueprint, {
+      const project = createProjectFromBlueprints(repos, configWithoutAccountAndEntityBlueprints, {
         name: "Fallback Build",
         description: "",
         createdBy: "local-admin"
       });
 
       const dimensions = repos.dimensions.listByProject(project.id);
-      const entity = dimensions[0];
+      const entity = dimensions.find((dimension) => dimension.dimensionType === "Entity");
+      const account = dimensions.find((dimension) => dimension.dimensionType === "Account");
+      if (!entity || !account) throw new Error("Fallback dimensions were not created");
       const members = repos.members.listByDimension(entity.id);
 
-      expect(dimensions).toHaveLength(1);
+      expect(dimensions).toHaveLength(2);
       expect(entity).toMatchObject({
         dimensionType: "Entity",
         dimensionName: "Entities"
@@ -173,7 +188,12 @@ describe("project blueprints", () => {
         source: "blueprint",
         allowMultipleParents: true
       });
-      expect(entity.metadata.relationshipDefaults).toEqual({});
+      expect(entity.metadata.relationshipDefaults).toEqual({
+        percentConsol: 100,
+        percentOwnership: 100,
+        ownershipType: "FullConsolidation"
+      });
+      expect(account.metadata.relationshipDefaults).toEqual({ aggregationWeight: 1 });
       expect(members).toHaveLength(1);
       expect(members[0]).toMatchObject({
         memberKey: "Root",

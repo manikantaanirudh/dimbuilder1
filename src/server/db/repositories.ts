@@ -35,7 +35,7 @@ let transactionCounter = 0;
 export function createRepositories(db: AppDatabase) {
   return {
     // Keep repository transactions synchronous; async callbacks would release the savepoint before awaited writes finish.
-    transaction<T>(action: () => T): T {
+    transaction<T>(action: () => T, ..._guard: T extends PromiseLike<unknown> ? [never] : []): T {
       return runInTransaction(db, action);
     },
     projects: {

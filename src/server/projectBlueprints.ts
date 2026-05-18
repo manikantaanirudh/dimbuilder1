@@ -85,7 +85,17 @@ function resolveBlueprint(config: AppConfig, dimensionType: DimensionType): Dime
     defaultDimensionName: config.dimensions.preferredMetadataNames[dimensionType] ?? schema.sheetNames[0] ?? dimensionType,
     rootMembers: ["Root"],
     memberKeyField: schema.memberKeyField,
-    relationshipDefaults: schema.relationshipFields.some((field) => field.name === "Aggregation Weight") ? { aggregationWeight: 1 } : {},
+    relationshipDefaults: resolveFallbackRelationshipDefaults(schema.relationshipFields.map((field) => field.name)),
     allowMultipleParents: true
+  };
+}
+
+function resolveFallbackRelationshipDefaults(fieldNames: string[]): DimensionBlueprintConfig["relationshipDefaults"] {
+  const fields = new Set(fieldNames);
+  return {
+    ...(fields.has("Aggregation Weight") ? { aggregationWeight: 1 } : {}),
+    ...(fields.has("Percent Consol") ? { percentConsol: 100 } : {}),
+    ...(fields.has("Percent Ownership") ? { percentOwnership: 100 } : {}),
+    ...(fields.has("Ownership Type") ? { ownershipType: "FullConsolidation" } : {})
   };
 }
