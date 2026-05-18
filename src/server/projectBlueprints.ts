@@ -85,7 +85,7 @@ function resolveBlueprint(config: AppConfig, dimensionType: DimensionType): Dime
     defaultDimensionName: config.dimensions.preferredMetadataNames[dimensionType] ?? schema.sheetNames[0] ?? dimensionType,
     rootMembers: ["Root"],
     memberKeyField: schema.memberKeyField,
-    relationshipDefaults: dimensionType === "Scenario" ? {} : { aggregationWeight: 1 },
+    relationshipDefaults: schema.relationshipFields.some((field) => field.name === "Aggregation Weight") ? { aggregationWeight: 1 } : {},
     allowMultipleParents: true
   };
 }

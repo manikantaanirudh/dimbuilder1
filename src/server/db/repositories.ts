@@ -342,6 +342,9 @@ function runInTransaction<T>(db: AppDatabase, action: () => T): T {
   db.exec(`SAVEPOINT ${savepointName}`);
   try {
     const result = action();
+    if (isThenable(result)) {
+      throw new Error("Repository transactions only support synchronous callbacks.");
+    }
     db.exec(`RELEASE ${savepointName}`);
     return result;
   } catch (error) {
@@ -357,6 +360,11 @@ function runInTransaction<T>(db: AppDatabase, action: () => T): T {
     }
     throw error;
   }
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  if ((typeof value !== "object" && typeof value !== "function") || value === null) return false;
+  return typeof (value as { then?: unknown }).then === "function";
 }
 
 function mapProject(row: Record<string, unknown>): ProjectRecord {

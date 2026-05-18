@@ -108,6 +108,32 @@ describe("project blueprints", () => {
         action: "project.create",
         userId: "finance-builder"
       });
+      expect(db.prepare("SELECT user_id FROM audit_logs").get()).toMatchObject({
+        user_id: "finance-builder"
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it("rejects thenable repository transactions and rolls back pre-return writes", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+
+      expect(() =>
+        repos.transaction(() => {
+          repos.projects.create({
+            name: "Async Boundary",
+            description: "",
+            sourceFileName: "",
+            createdBy: "local-admin"
+          });
+          return Promise.resolve("later");
+        })
+      ).toThrow("Repository transactions only support synchronous callbacks.");
+
+      expect(repos.projects.list()).toEqual([]);
     } finally {
       db.close();
     }
@@ -117,41 +143,41 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const { UD4: _ud4Blueprint, ...blueprintsWithoutUd4 } = defaultAppConfig.dimensions.blueprints;
-      const configWithoutUd4Blueprint: AppConfig = {
+      const { Entity: _entityBlueprint, ...blueprintsWithoutEntity } = defaultAppConfig.dimensions.blueprints;
+      const configWithoutEntityBlueprint: AppConfig = {
         ...defaultAppConfig,
         dimensions: {
           ...defaultAppConfig.dimensions,
-          enabledTypes: ["UD4"],
-          displayOrder: ["UD4"],
-          blueprints: blueprintsWithoutUd4
+          enabledTypes: ["Entity"],
+          displayOrder: ["Entity"],
+          blueprints: blueprintsWithoutEntity
         }
       };
 
-      const project = createProjectFromBlueprints(repos, configWithoutUd4Blueprint, {
+      const project = createProjectFromBlueprints(repos, configWithoutEntityBlueprint, {
         name: "Fallback Build",
         description: "",
         createdBy: "local-admin"
       });
 
       const dimensions = repos.dimensions.listByProject(project.id);
-      const ud4 = dimensions[0];
-      const members = repos.members.listByDimension(ud4.id);
+      const entity = dimensions[0];
+      const members = repos.members.listByDimension(entity.id);
 
       expect(dimensions).toHaveLength(1);
-      expect(ud4).toMatchObject({
-        dimensionType: "UD4",
-        dimensionName: "ChannelPartner"
+      expect(entity).toMatchObject({
+        dimensionType: "Entity",
+        dimensionName: "Entities"
       });
-      expect(ud4.metadata).toMatchObject({
+      expect(entity.metadata).toMatchObject({
         source: "blueprint",
-        allowMultipleParents: true,
-        relationshipDefaults: { aggregationWeight: 1 }
+        allowMultipleParents: true
       });
+      expect(entity.metadata.relationshipDefaults).toEqual({});
       expect(members).toHaveLength(1);
       expect(members[0]).toMatchObject({
         memberKey: "Root",
-        properties: { Member: "Root", Description: "" }
+        properties: { Entity: "Root", Description: "" }
       });
     } finally {
       db.close();
