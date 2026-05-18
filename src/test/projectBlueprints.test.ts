@@ -148,6 +148,32 @@ describe("project blueprints", () => {
     }
   });
 
+  it("rejects native async transaction callbacks before post-await writes run", async () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      const transaction = repos.transaction as unknown as (action: () => unknown) => unknown;
+
+      expect(() =>
+        transaction(async () => {
+          await Promise.resolve();
+          repos.projects.create({
+            name: "Post Await Write",
+            description: "",
+            sourceFileName: "",
+            createdBy: "local-admin"
+          });
+        })
+      ).toThrow("Repository transactions only support synchronous callbacks.");
+
+      await Promise.resolve();
+
+      expect(repos.projects.list()).toEqual([]);
+    } finally {
+      db.close();
+    }
+  });
+
   it("uses schema fallback values when a configured dimension blueprint is missing", () => {
     const db = createDatabase(":memory:");
     try {

@@ -338,6 +338,10 @@ export function createRepositories(db: AppDatabase) {
 export type Repositories = ReturnType<typeof createRepositories>;
 
 function runInTransaction<T>(db: AppDatabase, action: () => T): T {
+  if (isAsyncFunction(action)) {
+    throw new Error("Repository transactions only support synchronous callbacks.");
+  }
+
   const savepointName = `repository_tx_${++transactionCounter}`;
   db.exec(`SAVEPOINT ${savepointName}`);
   try {
@@ -360,6 +364,10 @@ function runInTransaction<T>(db: AppDatabase, action: () => T): T {
     }
     throw error;
   }
+}
+
+function isAsyncFunction(action: unknown): boolean {
+  return typeof action === "function" && action.constructor.name === "AsyncFunction";
 }
 
 function isThenable(value: unknown): value is PromiseLike<unknown> {
