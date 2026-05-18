@@ -48,6 +48,10 @@ export function AppShell({
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
+  const projectName = store.projects[0]?.name ?? "No project imported";
+  const projectSource = store.loading
+    ? "Loading metadata workspace..."
+    : store.projects[0]?.sourceFileName ?? appConfig.application.supportText;
   const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
@@ -90,17 +94,66 @@ export function AppShell({
   }
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar workbench-nav">
-        <div className="brand">
+    <div className="app-shell notion-workbench">
+      <header className="toolbar global-toolbar">
+        <div className="brand global-brand">
           <span className="brand-mark"><Database size={17} /></span>
-          <span>{appConfig.application.productName}</span>
+          <span className="brand-wordmark">DimBuilder</span>
         </div>
 
-        <div className="nav-project">
-          <span className="sidebar-label">Project</span>
-          <strong>{store.projects[0]?.name ?? "No project imported"}</strong>
-          <small>{store.projects[0]?.sourceFileName ?? appConfig.application.supportText}</small>
+        <div className="project-context">
+          <strong>{projectName}</strong>
+          <span>{projectSource}</span>
+        </div>
+
+        <label className="mobile-nav">
+          <span>Workspace</span>
+          <select
+            aria-label="Mobile workspace navigation"
+            value={showProjectOverview ? PROJECT_OVERVIEW_VALUE : activeDimension?.id ?? PROJECT_OVERVIEW_VALUE}
+            onChange={(event) => setActiveWorkspace(event.currentTarget.value === PROJECT_OVERVIEW_VALUE ? PROJECT_OVERVIEW_VALUE : event.currentTarget.value)}
+          >
+            <option value={PROJECT_OVERVIEW_VALUE}>Project overview</option>
+            {dimensionNavItems.map((item) => (
+              <option key={item.id} value={item.id}>{mobileNavLabel(item)}</option>
+            ))}
+          </select>
+        </label>
+
+        <ToolbarGroup className="toolbar-actions">
+          {toolbar.showImport && (
+            <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
+              <FileUp size={16} /> Import
+            </ActionButton>
+          )}
+          {toolbar.showValidate && (
+            <ActionButton
+              title={store.selectedProjectId ? "Validate metadata" : "Import a project before validating"}
+              disabled={!store.selectedProjectId}
+              onClick={runValidation}
+            >
+              <ShieldCheck size={16} /> Validate
+            </ActionButton>
+          )}
+          {toolbar.showExport && (
+            <ActionButton
+              disabled={exportAvailability.disabled}
+              title={exportAvailability.title}
+              onClick={() => setExportOpen(true)}
+            >
+              <Download size={16} /> Export
+            </ActionButton>
+          )}
+          {toolbar.showSave && <ActionButton disabled><Save size={16} /> Save</ActionButton>}
+          {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
+          {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
+        </ToolbarGroup>
+      </header>
+
+      <aside className="sidebar workbench-nav">
+        <div className="sidebar-heading">
+          <strong>Dimensions</strong>
+          <span>{dimensionNavItems.length} total</span>
         </div>
 
         <button
@@ -167,54 +220,6 @@ export function AppShell({
       </aside>
 
       <main className="main">
-        <header className="toolbar">
-          <div className="toolbar-title">
-            <strong>{appConfig.application.title}</strong>
-            <span>{store.loading ? "Loading..." : store.projects[0]?.name ?? "No project imported"}</span>
-          </div>
-          <label className="mobile-nav">
-            <span>Workspace</span>
-            <select
-              aria-label="Mobile workspace navigation"
-              value={showProjectOverview ? PROJECT_OVERVIEW_VALUE : activeDimension?.id ?? PROJECT_OVERVIEW_VALUE}
-              onChange={(event) => setActiveWorkspace(event.currentTarget.value === PROJECT_OVERVIEW_VALUE ? PROJECT_OVERVIEW_VALUE : event.currentTarget.value)}
-            >
-              <option value={PROJECT_OVERVIEW_VALUE}>Project overview</option>
-              {dimensionNavItems.map((item) => (
-                <option key={item.id} value={item.id}>{mobileNavLabel(item)}</option>
-              ))}
-            </select>
-          </label>
-          <ToolbarGroup className="toolbar-actions">
-            {toolbar.showImport && (
-              <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
-                <FileUp size={16} /> Import
-              </ActionButton>
-            )}
-            {toolbar.showValidate && (
-              <ActionButton
-                title={store.selectedProjectId ? "Validate metadata" : "Import a project before validating"}
-                disabled={!store.selectedProjectId}
-                onClick={runValidation}
-              >
-                <ShieldCheck size={16} /> Validate
-              </ActionButton>
-            )}
-            {toolbar.showExport && (
-              <ActionButton
-                disabled={exportAvailability.disabled}
-                title={exportAvailability.title}
-                onClick={() => setExportOpen(true)}
-              >
-                <Download size={16} /> Export
-              </ActionButton>
-            )}
-            {toolbar.showSave && <ActionButton disabled><Save size={16} /> Save</ActionButton>}
-            {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
-            {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
-          </ToolbarGroup>
-        </header>
-
         {configError && <div className="banner error">Configuration failed to load. Using defaults: {configError}</div>}
         {store.error && <div className="banner error">{store.error}</div>}
         {status && <div className="banner">{status}</div>}

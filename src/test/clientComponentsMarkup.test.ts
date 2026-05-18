@@ -105,6 +105,24 @@ describe("client component markup", () => {
     expect(markup).toMatch(/<button[^>]*title="Import a project before validating"[^>]*disabled=""[^>]*>[\s\S]*Validate<\/button>/);
   });
 
+  it("renders the Notion-inspired global workbench toolbar", () => {
+    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+
+    expect(markup).toContain("global-toolbar");
+    expect(markup).toContain("brand-wordmark");
+    expect(markup).toContain(">DimBuilder<");
+    expect(markup).toContain("project-context");
+    expect(markup).not.toContain("nav-project");
+  });
+
+  it("keeps the left rail focused on searchable dimensions", () => {
+    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+
+    expect(markup).toContain("sidebar-heading");
+    expect(markup).toContain("Search dimensions");
+    expect(markup).not.toContain("OneStream XF Dimension Builder</span></div><div class=\"nav-project\"");
+  });
+
   it("renders clean workbench workspace facts and the short XML tab label", () => {
     const markup = render(createElement(DimensionWorkspace, {
       projectId: sampleProject.id,
