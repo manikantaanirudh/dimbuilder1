@@ -3,6 +3,10 @@ import type { Severity } from "../../shared/types";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info";
 
+type IconButtonAccessibility =
+  | { "aria-label": string; title?: string }
+  | { title: string; "aria-label"?: string };
+
 const severityConfig: Record<Severity, { label: string; tone: Tone }> = {
   error: { label: "Error", tone: "danger" },
   warning: { label: "Warning", tone: "warning" },
@@ -111,7 +115,7 @@ export function IconButton({
   type = "button",
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+}: ButtonHTMLAttributes<HTMLButtonElement> & IconButtonAccessibility & {
   children: ReactNode;
 }) {
   return (

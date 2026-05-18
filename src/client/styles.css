@@ -291,6 +291,124 @@ svg {
   background: #f4c152;
 }
 
+.workbench-nav {
+  color: var(--text);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  gap: 12px;
+  padding: 14px 10px;
+}
+
+.workbench-nav .brand {
+  color: var(--text);
+  padding: 0;
+}
+
+.workbench-nav .brand-mark {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: #cfe0ff;
+}
+
+.nav-project {
+  display: grid;
+  gap: 3px;
+  padding: 9px 0 10px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-project strong,
+.nav-project small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-project strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.nav-project small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workbench-nav .sidebar-label {
+  color: var(--muted);
+}
+
+.nav-overview {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label issue"
+    "meta issue";
+  align-items: center;
+  gap: 2px 8px;
+  padding: 8px 9px;
+  text-align: left;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.nav-overview span,
+.nav-overview small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-overview span {
+  grid-area: label;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nav-overview small {
+  grid-area: meta;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.workbench-nav .nav-item {
+  min-height: 44px;
+  color: var(--text);
+  padding: 8px 9px;
+}
+
+.workbench-nav .nav-item small {
+  color: var(--muted);
+}
+
+.nav-overview:hover,
+.workbench-nav .nav-item:hover {
+  color: var(--text);
+  background: var(--surface-subtle);
+  border-color: var(--border);
+}
+
+.nav-overview.selected,
+.workbench-nav .nav-item.selected {
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+  border-color: #bfd3ff;
+}
+
+.workbench-nav .empty-sidebar {
+  color: var(--muted);
+  border-color: var(--border-strong);
+}
+
 .main {
   min-width: 0;
   display: flex;
@@ -336,6 +454,7 @@ svg {
   display: none;
 }
 
+.toolbar-group,
 .toolbar-actions,
 .dashboard-command-actions,
 .metadata-actions,
@@ -438,6 +557,81 @@ svg {
   color: var(--primary);
   background: var(--surface);
   border-color: var(--border-strong);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.icon-button:hover {
+  border-color: #98a8bd;
+  background: var(--surface-subtle);
+}
+
+.fact-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.fact-item b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.fact-item.success {
+  color: var(--success);
+  border-color: #b7e4ca;
+  background: var(--success-soft);
+}
+
+.fact-item.warning {
+  color: var(--warning);
+  border-color: #f2d59a;
+  background: var(--warning-soft);
+}
+
+.fact-item.danger {
+  color: var(--danger);
+  border-color: #f1b8b3;
+  background: var(--danger-soft);
+}
+
+.fact-item.info {
+  color: var(--info);
+  border-color: #bddff8;
+  background: var(--info-soft);
 }
 
 .status-badge {

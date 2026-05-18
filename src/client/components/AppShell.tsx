@@ -136,7 +136,10 @@ export function AppShell({
           <button
             key={item.id}
             className={`nav-item ${activeDimension?.id === item.id ? "selected" : ""}`}
-            onClick={() => setActiveWorkspace(item.id)}
+            onClick={() => {
+              setActiveWorkspace(item.id);
+              setNavSearch("");
+            }}
             title={item.subtitle}
           >
             <span>{item.label}</span>
