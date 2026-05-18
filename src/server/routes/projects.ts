@@ -1,12 +1,27 @@
 import { Router } from "express";
+import type { AppConfig } from "../../shared/appConfigTypes";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
 import type { Repositories } from "../db/repositories";
+import { createProjectFromBlueprints } from "../projectBlueprints";
 
-export function createProjectRouter(repos: Repositories): Router {
+export function createProjectRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
   router.get("/", (_req, res) => {
     res.json(repos.projects.list());
+  });
+
+  router.post("/", (req, res, next) => {
+    try {
+      const project = createProjectFromBlueprints(repos, config, {
+        name: String(req.body.name ?? "").trim() || "New Metadata Project",
+        description: String(req.body.description ?? ""),
+        createdBy: "local-admin"
+      });
+      res.status(201).json(project);
+    } catch (error) {
+      next(error);
+    }
   });
 
   router.get("/:projectId/summary", (req, res) => {
@@ -136,4 +151,3 @@ export function createProjectRouter(repos: Repositories): Router {
 
   return router;
 }
-
