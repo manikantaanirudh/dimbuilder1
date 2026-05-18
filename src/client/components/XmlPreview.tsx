@@ -2,6 +2,7 @@ import { Copy, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DimensionRecord } from "../../shared/types";
 import { apiText } from "../api/client";
+import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 type XmlPreviewScope = "all" | "dimension";
 
@@ -71,11 +72,11 @@ export function XmlPreview({
           {allowAllDimensions && <option value="all">All dimensions</option>}
           <option value="dimension">Current dimension</option>
         </select>
-        <button onClick={() => void copy()}><Copy size={15} /> Copy</button>
+        <ActionButton onClick={() => void copy()}><Copy size={15} /> Copy</ActionButton>
         {xmlExportEnabled && (
-          <a className="button-link" href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</a>
+          <ActionLink href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</ActionLink>
         )}
-        <span className="grid-status">{status}</span>
+        <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
       </div>
       <pre className="xml-preview">{preview || "XML preview will appear after import."}</pre>
     </div>

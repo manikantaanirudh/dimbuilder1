@@ -199,6 +199,7 @@ export function AppShell({
         onClose={() => setExportOpen(false)}
         projectId={store.selectedProjectId}
         appConfig={appConfig}
+        exportAvailability={exportAvailability}
       />
     </div>
   );

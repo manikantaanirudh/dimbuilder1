@@ -1,6 +1,10 @@
+import { CheckCircle2, Download, FileUp, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
+import type { ProjectRecord } from "../../shared/types";
+import { getEnabledExportFormats, type ExportAvailability } from "../ui/viewModel";
 import { uploadWorkbook } from "../api/client";
+import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
   return exportConfig.xml.enabled
@@ -20,28 +24,45 @@ export function ImportModal({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
+  const [importedProject, setImportedProject] = useState<ProjectRecord | null>(null);
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
 
   if (!open) return null;
 
   async function importWorkbook() {
     if (!file) return;
     setStatus("Importing workbook. Large UD3 sheets can take a few seconds...");
-    const result = await uploadWorkbook(file, file.name.replace(/\.xlsx$/i, ""));
-    setStatus(`Imported ${String(result.importSummary.dimensionsImported)} dimensions`);
-    onImported(result.project.id);
-    onClose();
+    try {
+      const result = await uploadWorkbook(file, file.name.replace(/\.xlsx$/i, ""));
+      setImportedProject(result.project);
+      setSummary(result.importSummary);
+      setStatus(`Imported ${String(result.importSummary.dimensionsImported)} dimensions`);
+      onImported(result.project.id);
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Import failed");
+    }
   }
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>Import XLSX Template</h2>
+        <div className="modal-heading">
+          <h2>Import XLSX Template</h2>
+          {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Imported</StatusBadge> : null}
+        </div>
         <p>Select the OneStream XF metadata workbook. Generated XML/formula columns are ignored.</p>
-        <input type="file" accept=".xlsx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+        {!importedProject && <input type="file" accept=".xlsx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />}
+        {summary && (
+          <div className="import-summary">
+            <span><b>{String(summary.dimensionsImported ?? 0)}</b> dimensions</span>
+            <span><b>{String(summary.membersImported ?? 0)}</b> members</span>
+            <span><b>{String(summary.relationshipsImported ?? 0)}</b> relationships</span>
+          </div>
+        )}
         {status && <div className="modal-status">{status}</div>}
         <div className="modal-actions">
-          <button onClick={onClose}>Cancel</button>
-          <button disabled={!file} onClick={() => void importWorkbook()}>Import</button>
+          <ActionButton onClick={onClose}>{importedProject ? "Done" : "Cancel"}</ActionButton>
+          {!importedProject && <ActionButton variant="primary" disabled={!file} onClick={() => void importWorkbook()}><FileUp size={15} /> Import</ActionButton>}
         </div>
       </div>
     </div>
@@ -52,36 +73,50 @@ export function ExportModal({
   open,
   onClose,
   projectId,
-  appConfig
+  appConfig,
+  exportAvailability
 }: {
   open: boolean;
   onClose: () => void;
   projectId: string | null;
   appConfig: ClientAppConfig;
+  exportAvailability: ExportAvailability;
 }) {
   if (!open) return null;
-  const disabled = !projectId;
   const prefix = projectId ? `/api/export/${projectId}` : "#";
-  const exportConfig = appConfig.export;
-  const hasEnabledFormat = hasEnabledExportFormat(exportConfig);
+  const formats = getEnabledExportFormats(appConfig.export);
+  const disabled = exportAvailability.disabled;
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>Export Metadata</h2>
-        {hasEnabledFormat ? (
+        <div className="modal-heading">
+          <h2>Export Metadata</h2>
+          <StatusBadge tone={disabled ? "warning" : "success"}>
+            {disabled ? <TriangleAlert size={14} /> : <CheckCircle2 size={14} />}
+            {exportAvailability.reason}
+          </StatusBadge>
+        </div>
+        {formats.length ? (
           <div className="export-list">
-            {exportConfig.xml.enabled && <a aria-disabled={disabled} href={`${prefix}/xml`} target="_blank" rel="noreferrer">OneStream XML</a>}
-            {exportConfig.xlsx.enabled && <a aria-disabled={disabled} href={`${prefix}/xlsx`} target="_blank" rel="noreferrer">Workbook XLSX</a>}
-            {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/members.csv`} target="_blank" rel="noreferrer">Members CSV</a>}
-            {exportConfig.csv.enabled && <a aria-disabled={disabled} href={`${prefix}/relationships.csv`} target="_blank" rel="noreferrer">Relationships CSV</a>}
-            {exportConfig.json.enabled && <a aria-disabled={disabled} href={`${prefix}/json`} target="_blank" rel="noreferrer">JSON Backup</a>}
+            {formats.map((format) => (
+              <ActionLink
+                key={format.key}
+                aria-disabled={disabled}
+                href={disabled ? "#" : `${prefix}/${format.hrefSuffix}`}
+                target={disabled ? undefined : "_blank"}
+                rel={disabled ? undefined : "noreferrer"}
+              >
+                <Download size={15} /> {format.label}
+              </ActionLink>
+            ))}
           </div>
         ) : (
           <div className="empty-state">Exports are disabled by configuration.</div>
         )}
+        {disabled && <p className="modal-status">{exportAvailability.title}</p>}
         <div className="modal-actions">
-          <button onClick={onClose}>Close</button>
+          <ActionButton onClick={onClose}>Close</ActionButton>
         </div>
       </div>
     </div>

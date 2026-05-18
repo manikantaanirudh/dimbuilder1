@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { buildHierarchyTree, type HierarchyNode } from "../../shared/hierarchy";
 import type { DimensionRecord, DimensionRelationshipRecord } from "../../shared/types";
@@ -15,7 +16,10 @@ export function HierarchyTree({ projectId, dimension }: { projectId: string; dim
 
   return (
     <div className="panel hierarchy-panel">
-      <input className="wide-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${dimension.sheetName} hierarchy`} />
+      <div className="search-box hierarchy-search">
+        <Search size={15} />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${dimension.sheetName} hierarchy`} />
+      </div>
       <div className="tree">
         {tree.length === 0 ? <div className="empty-state">No local relationships found.</div> : tree.map((node) => <TreeNode key={node.key} node={node} search={search.toLowerCase()} />)}
       </div>
@@ -29,7 +33,7 @@ function TreeNode({ node, search }: { node: HierarchyNode; search: string }) {
   return (
     <div className="tree-node">
       <button className={match ? "match" : ""} onClick={() => setOpen((current) => !current)}>
-        {node.children.length ? (open ? "-" : "+") : ""}
+        {node.children.length ? (open ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span className="tree-spacer" />}
         <span>{node.key}</span>
         {node.issueCodes.map((issue) => <em key={issue}>{issue}</em>)}
       </button>
