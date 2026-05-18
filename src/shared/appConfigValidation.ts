@@ -37,18 +37,21 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     const schema = getDimensionSchema(type as DimensionType);
     const supportedMemberFields = new Set(schema.memberFields.map((field) => field.name));
 
-    if (!blueprint.defaultDimensionName.trim()) {
+    if (typeof blueprint.defaultDimensionName !== "string" || !blueprint.defaultDimensionName.trim()) {
       throw new Error(`Blueprint for '${type}' must define defaultDimensionName.`);
     }
     if (
       !Array.isArray(blueprint.rootMembers) ||
       blueprint.rootMembers.length === 0 ||
-      blueprint.rootMembers.some((member) => !member.trim())
+      blueprint.rootMembers.some((member) => typeof member !== "string" || !member.trim())
     ) {
       throw new Error(`Blueprint for '${type}' must define non-empty rootMembers.`);
     }
     if (!supportedMemberFields.has(blueprint.memberKeyField)) {
       throw new Error(`Blueprint for '${type}' uses unsupported memberKeyField '${blueprint.memberKeyField}'.`);
+    }
+    if (!isRecord(blueprint.relationshipDefaults)) {
+      throw new Error(`Blueprint for '${type}' must define relationshipDefaults as an object.`);
     }
     for (const key of Object.keys(blueprint.relationshipDefaults)) {
       if (!supportedRelationshipDefaultKeys.has(key)) {
@@ -98,9 +101,9 @@ export function buildClientAppConfig(config: AppConfig): ClientAppConfig {
   return clientConfig;
 }
 
-function deepMerge<T>(base: T, override: unknown): T {
+function deepMerge<T>(base: T, override: unknown, isRoot = true): T {
   if (override === null) {
-    return base;
+    return isRoot ? base : (override as T);
   }
 
   if (!isRecord(base) || !isRecord(override)) {
@@ -109,7 +112,7 @@ function deepMerge<T>(base: T, override: unknown): T {
 
   const result: UnknownRecord = { ...base };
   for (const [key, value] of Object.entries(override)) {
-    result[key] = key in result ? deepMerge(result[key], value) : value;
+    result[key] = key in result ? deepMerge(result[key], value, false) : value;
   }
   return result as T;
 }

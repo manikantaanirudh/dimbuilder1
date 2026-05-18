@@ -97,6 +97,118 @@ describe("app config", () => {
     expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define non-empty rootMembers.");
   });
 
+  it("rejects blank blueprint default dimension names", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: " ",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define defaultDimensionName.");
+  });
+
+  it("rejects blueprint root member arrays with blank members", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root", " "],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define non-empty rootMembers.");
+  });
+
+  it("rejects non-string blueprint default dimension names with a validation error", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: 123,
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define defaultDimensionName.");
+  });
+
+  it("rejects non-string blueprint root members with a validation error", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root", 123],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define non-empty rootMembers.");
+  });
+
+  it("rejects null blueprint relationship defaults with a validation error", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: null,
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow(
+      "Blueprint for 'Account' must define relationshipDefaults as an object."
+    );
+  });
+
+  it("rejects unsupported blueprint relationship default keys", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { badDefault: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow(
+      "Blueprint for 'Account' uses unsupported relationship default 'badDefault'."
+    );
+  });
+
   it("deep merges partial yaml config onto defaults", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       application: { title: "Custom Builder" },
@@ -182,6 +294,19 @@ describe("app config", () => {
 });
 
 describe("server app config loader", () => {
+  it("loads the committed config with SR identity and Account blueprint", () => {
+    const config = loadAppConfig({ configFilePath: "config/dimbuilder.yaml" });
+
+    expect(config.application.title).toBe("SR Onestream Dim Builder");
+    expect(config.dimensions.blueprints.Account).toEqual({
+      defaultDimensionName: "Accounts",
+      rootMembers: ["Root"],
+      memberKeyField: "Account",
+      relationshipDefaults: { aggregationWeight: 1 },
+      allowMultipleParents: true
+    });
+  });
+
   it("loads config from yaml and applies environment overrides", () => {
     const directory = mkdtempSync(join(tmpdir(), "dimbuilder-config-"));
     const filePath = join(directory, "dimbuilder.yaml");
