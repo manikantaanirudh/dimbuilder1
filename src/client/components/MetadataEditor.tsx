@@ -82,8 +82,8 @@ export function MetadataEditor({
     <Panel className="metadata-panel">
       <div className="panel-heading">
         <div>
-          <span className="section-kicker">Overview</span>
-          <h2>Dimension metadata</h2>
+          <span className="section-kicker">Dimension details</span>
+          <h2>Metadata</h2>
         </div>
         <StatusBadge tone={status === "Saved" ? "success" : status ? "info" : "neutral"}>
           {status || "Idle"}
@@ -94,6 +94,7 @@ export function MetadataEditor({
           <label key={key}>
             <span>{label}{required ? " *" : ""}</span>
             <input
+              className={key === "dimensionType" ? "readonly-field" : undefined}
               value={String(draft[key] ?? "")}
               readOnly={key === "dimensionType"}
               onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))}
@@ -103,7 +104,7 @@ export function MetadataEditor({
         ))}
       </div>
       <div className="metadata-actions">
-        <ActionButton onClick={() => void save()}><Save size={15} /> Save metadata</ActionButton>
+        <ActionButton onClick={() => void save()}><Save size={15} /> Save</ActionButton>
       </div>
     </Panel>
   );

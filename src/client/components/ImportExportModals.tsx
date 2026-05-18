@@ -71,10 +71,10 @@ export function ImportModal({
     <div className="modal-backdrop">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
         <div className="modal-heading">
-          <h2 id="import-modal-title">Import XLSX Template</h2>
+          <h2 id="import-modal-title">Import workbook</h2>
           {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Imported</StatusBadge> : null}
         </div>
-        <p>Select the OneStream XF metadata workbook. Generated XML/formula columns are ignored.</p>
+        <p>Select an `.xlsx` OneStream XF metadata workbook. Generated XML and formula columns are ignored.</p>
         {!importedProject && <input type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)} />}
         {summary && (
           <div className="import-summary">
@@ -115,7 +115,7 @@ export function ExportModal({
     <div className="modal-backdrop">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
         <div className="modal-heading">
-          <h2 id="export-modal-title">Export Metadata</h2>
+          <h2 id="export-modal-title">Export metadata</h2>
           <StatusBadge tone={disabled ? "warning" : "success"}>
             {disabled ? <TriangleAlert size={14} /> : <CheckCircle2 size={14} />}
             {exportAvailability.reason}

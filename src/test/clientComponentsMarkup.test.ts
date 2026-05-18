@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Dashboard } from "../client/components/Dashboard";
 import { DimensionWorkspace } from "../client/components/DimensionWorkspace";
 import { ExportModal, ImportModal } from "../client/components/ImportExportModals";
+import { IssuePanel } from "../client/components/IssuePanel";
 import { XmlPreview } from "../client/components/XmlPreview";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { ClientAppConfig } from "../shared/appConfigTypes";
@@ -99,6 +100,19 @@ describe("client component markup", () => {
     expect(markup).toContain(">XML</button>");
     expect(markup).not.toContain("XML Preview</button>");
     expect(markup).not.toContain("section-kicker\">Scenario dimension");
+  });
+
+  it("renders the validation rail as a compact details surface", () => {
+    const markup = render(createElement(IssuePanel, {
+      dimension: sampleScenarioDimension,
+      issues: [],
+      appConfig: defaultAppConfig
+    }));
+
+    expect(markup).toContain("details-rail");
+    expect(markup).toContain("Readiness");
+    expect(markup).toContain("Dimension details");
+    expect(markup).not.toContain("Issue rail");
   });
 
   it("renders no-project status and top-command-bar import guidance in the empty state", () => {

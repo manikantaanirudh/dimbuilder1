@@ -16,6 +16,12 @@ export function HierarchyTree({ projectId, dimension }: { projectId: string; dim
 
   return (
     <div className="panel hierarchy-panel">
+      <div className="panel-heading compact">
+        <div>
+          <span className="section-kicker">Hierarchy</span>
+          <h2>Relationships</h2>
+        </div>
+      </div>
       <div className="search-box hierarchy-search">
         <Search size={15} />
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${dimension.sheetName} hierarchy`} />

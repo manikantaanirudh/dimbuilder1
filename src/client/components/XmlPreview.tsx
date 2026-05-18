@@ -71,7 +71,7 @@ export function XmlPreview({
 
   return (
     <div className="panel xml-panel">
-      <div className="grid-toolbar">
+      <div className="grid-toolbar xml-toolbar">
         <select value={scope} onChange={(event) => setScope(event.target.value as XmlPreviewScope)}>
           {allowAllDimensions && <option value="all">All dimensions</option>}
           <option value="dimension">Current dimension</option>
@@ -95,7 +95,7 @@ export function XmlPreview({
         )}
         <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
       </div>
-      <pre className="xml-preview">{preview || "XML preview will appear after import."}</pre>
+      <pre className="xml-preview">{preview || "XML preview appears after import."}</pre>
     </div>
   );
 }

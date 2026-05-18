@@ -1,8 +1,8 @@
 import { AlertTriangle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
-import { buildIssueSummary } from "../ui/viewModel";
-import { EmptyState, SeverityPill, StatusBadge } from "./ui";
+import { buildDimensionFacts, buildIssueSummary, getReadinessLabel } from "../ui/viewModel";
+import { EmptyState, FactItem, FactStrip, SeverityPill, StatusBadge } from "./ui";
 
 export function IssuePanel({
   dimension,
@@ -16,15 +16,17 @@ export function IssuePanel({
   expanded?: boolean;
 }) {
   const summary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
+  const readinessLabel = getReadinessLabel(summary);
+  const facts = buildDimensionFacts(dimension, summary);
   const visibleIssues = issues.slice(0, expanded ? 500 : 8);
   const Container = expanded ? "section" : "aside";
 
   return (
-    <Container className={expanded ? "panel issue-panel expanded" : "panel issue-panel"}>
+    <Container className={expanded ? "panel issue-panel expanded" : "panel issue-panel details-rail"}>
       <div className="panel-heading compact">
         <div>
-          <span className="section-kicker">Validation</span>
-          <h2>{expanded ? "Issues" : "Issue rail"}</h2>
+          <span className="section-kicker">{expanded ? "Validation" : "Readiness"}</span>
+          <h2>{expanded ? "Issues" : readinessLabel}</h2>
         </div>
         <StatusBadge tone={summary.blocksExport ? "danger" : summary.total ? "warning" : "success"}>
           {summary.blocksExport ? "Blocked" : summary.total ? "Review" : "Clean"}
@@ -35,6 +37,16 @@ export function IssuePanel({
         <span><b>{summary.warnings}</b> warnings</span>
         {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
       </div>
+      {!expanded && (
+        <div className="rail-section">
+          <h3>Dimension details</h3>
+          <FactStrip className="rail-facts">
+            {facts.map((fact) => (
+              <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
+            ))}
+          </FactStrip>
+        </div>
+      )}
       {visibleIssues.length === 0 ? (
         <EmptyState title="No issues recorded">
           {dimension.sheetName} has no recorded validation issues.
