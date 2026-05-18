@@ -190,6 +190,7 @@ export function AppShell({
             issues={store.issues}
             onRefresh={() => store.refresh(store.selectedProjectId ?? undefined)}
             appConfig={appConfig}
+            exportAvailability={exportAvailability}
           />
         ) : (
           <Dashboard

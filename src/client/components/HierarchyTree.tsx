@@ -30,14 +30,25 @@ export function HierarchyTree({ projectId, dimension }: { projectId: string; dim
 function TreeNode({ node, search }: { node: HierarchyNode; search: string }) {
   const [open, setOpen] = useState(true);
   const match = search && node.key.toLowerCase().includes(search);
+  const hasChildren = node.children.length > 0;
+  const toggleLabel = hasChildren ? `${open ? "Collapse" : "Expand"} ${node.key}` : `Hierarchy member ${node.key}`;
   return (
     <div className="tree-node">
-      <button className={match ? "match" : ""} onClick={() => setOpen((current) => !current)}>
-        {node.children.length ? (open ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span className="tree-spacer" />}
+      <button
+        type="button"
+        className={match ? "match" : ""}
+        onClick={() => {
+          if (hasChildren) setOpen((current) => !current);
+        }}
+        aria-expanded={hasChildren ? open : undefined}
+        aria-label={toggleLabel}
+        title={toggleLabel}
+      >
+        {hasChildren ? (open ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span className="tree-spacer" />}
         <span>{node.key}</span>
         {node.issueCodes.map((issue) => <em key={issue}>{issue}</em>)}
       </button>
-      {open && node.children.length > 0 && (
+      {open && hasChildren && (
         <div className="tree-children">
           {node.children.map((child) => <TreeNode key={`${node.key}-${child.key}`} node={child} search={search} />)}
         </div>

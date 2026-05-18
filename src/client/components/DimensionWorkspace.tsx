@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
-import { buildIssueSummary, getWorkspaceTabs } from "../ui/viewModel";
+import { buildIssueSummary, getWorkspaceTabs, type ExportAvailability } from "../ui/viewModel";
 import { EditableGrid } from "./EditableGrid";
 import { HierarchyTree } from "./HierarchyTree";
 import { IssuePanel } from "./IssuePanel";
@@ -23,13 +23,15 @@ export function DimensionWorkspace({
   dimension,
   issues,
   onRefresh,
-  appConfig
+  appConfig,
+  exportAvailability
 }: {
   projectId: string;
   dimension: DimensionRecord;
   issues: ValidationIssue[];
   onRefresh: () => void;
   appConfig: ClientAppConfig;
+  exportAvailability: ExportAvailability;
 }) {
   const xmlPreviewEnabled = appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
   const defaultWorkspaceTab = appConfig.ui.defaultWorkspaceTab;
@@ -87,6 +89,7 @@ export function DimensionWorkspace({
               defaultScope={appConfig.ui.xmlPreview.defaultScope}
               allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
               xmlExportEnabled={appConfig.export.xml.enabled}
+              exportAvailability={exportAvailability}
             />
           )}
           {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} expanded />}

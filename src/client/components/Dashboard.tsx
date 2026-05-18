@@ -31,6 +31,7 @@ export function Dashboard({
   appConfig: ClientAppConfig;
 }) {
   const cards = appConfig.dashboard.cards;
+  const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
   const issueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const exportTone = exportAvailability.disabled ? "warning" : "success";
@@ -58,9 +59,9 @@ export function Dashboard({
           </div>
         </div>
         <div className="dashboard-command-actions">
-          <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import</ActionButton>
-          <ActionButton disabled={validateDisabled} onClick={onValidate}><ShieldCheck size={16} /> Validate</ActionButton>
-          <ActionButton disabled={exportAvailability.disabled} title={exportAvailability.title} onClick={onExport}><Download size={16} /> Export</ActionButton>
+          {toolbar.showImport && <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import</ActionButton>}
+          {toolbar.showValidate && <ActionButton disabled={validateDisabled} onClick={onValidate}><ShieldCheck size={16} /> Validate</ActionButton>}
+          {toolbar.showExport && <ActionButton disabled={exportAvailability.disabled} title={exportAvailability.title} onClick={onExport}><Download size={16} /> Export</ActionButton>}
         </div>
       </Panel>
 
@@ -106,7 +107,7 @@ export function Dashboard({
           ) : (
             <EmptyState
               title={project ? "No dimensions available" : "No project imported"}
-              action={!project ? <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import XLSX</ActionButton> : undefined}
+              action={!project && toolbar.showImport ? <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import XLSX</ActionButton> : undefined}
             >
               {project
                 ? "This project has no imported dimensions to inspect."

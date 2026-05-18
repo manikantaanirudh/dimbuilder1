@@ -26,6 +26,7 @@ export function ImportModal({
   const [status, setStatus] = useState("");
   const [importedProject, setImportedProject] = useState<ProjectRecord | null>(null);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -33,19 +34,26 @@ export function ImportModal({
       setStatus("");
       setImportedProject(null);
       setSummary(null);
+      setIsImporting(false);
     }
   }, [open]);
 
   if (!open) return null;
 
   function handleFileChange(nextFile: File | null) {
+    if (isImporting) return;
     setFile(nextFile);
     setStatus("");
   }
 
+  function handleClose() {
+    if (!isImporting) onClose();
+  }
+
   async function importWorkbook() {
-    if (!file) return;
+    if (!file || isImporting) return;
     setStatus("Importing workbook. Large UD3 sheets can take a few seconds...");
+    setIsImporting(true);
     try {
       const result = await uploadWorkbook(file, file.name.replace(/\.xlsx$/i, ""));
       setImportedProject(result.project);
@@ -54,18 +62,20 @@ export function ImportModal({
       onImported(result.project.id);
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Import failed");
+    } finally {
+      setIsImporting(false);
     }
   }
 
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
         <div className="modal-heading">
-          <h2>Import XLSX Template</h2>
+          <h2 id="import-modal-title">Import XLSX Template</h2>
           {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Imported</StatusBadge> : null}
         </div>
         <p>Select the OneStream XF metadata workbook. Generated XML/formula columns are ignored.</p>
-        {!importedProject && <input type="file" accept=".xlsx" onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)} />}
+        {!importedProject && <input type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)} />}
         {summary && (
           <div className="import-summary">
             <span><b>{String(summary.dimensionsImported ?? 0)}</b> dimensions</span>
@@ -75,8 +85,8 @@ export function ImportModal({
         )}
         {status && <div className="modal-status">{status}</div>}
         <div className="modal-actions">
-          <ActionButton onClick={onClose}>{importedProject ? "Done" : "Cancel"}</ActionButton>
-          {!importedProject && <ActionButton variant="primary" disabled={!file} onClick={() => void importWorkbook()}><FileUp size={15} /> Import</ActionButton>}
+          <ActionButton disabled={isImporting} onClick={handleClose}>{importedProject ? "Done" : "Cancel"}</ActionButton>
+          {!importedProject && <ActionButton variant="primary" disabled={!file || isImporting} onClick={() => void importWorkbook()}><FileUp size={15} /> {isImporting ? "Importing..." : "Import"}</ActionButton>}
         </div>
       </div>
     </div>
@@ -103,9 +113,9 @@ export function ExportModal({
 
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
         <div className="modal-heading">
-          <h2>Export Metadata</h2>
+          <h2 id="export-modal-title">Export Metadata</h2>
           <StatusBadge tone={disabled ? "warning" : "success"}>
             {disabled ? <TriangleAlert size={14} /> : <CheckCircle2 size={14} />}
             {exportAvailability.reason}

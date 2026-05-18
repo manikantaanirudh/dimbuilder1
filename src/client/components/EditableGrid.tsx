@@ -284,9 +284,24 @@ function GridCell({
   value: string;
   onSave: (value: string) => void;
 }) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  function commit(nextValue: string) {
+    if (nextValue !== value) onSave(nextValue);
+  }
+
   if (column.kind === "boolean") {
     return (
-      <select defaultValue={value} aria-label={column.name} onBlur={(event) => onSave(event.currentTarget.value)}>
+      <select
+        value={draft}
+        aria-label={column.name}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        onBlur={(event) => commit(event.currentTarget.value)}
+      >
         <option value=""></option>
         <option value="True">True</option>
         <option value="False">False</option>
@@ -297,8 +312,9 @@ function GridCell({
     <input
       type={column.kind === "number" ? "number" : "text"}
       aria-label={column.name}
-      defaultValue={value}
-      onBlur={(event) => onSave(event.currentTarget.value)}
+      value={draft}
+      onChange={(event) => setDraft(event.currentTarget.value)}
+      onBlur={(event) => commit(event.currentTarget.value)}
     />
   );
 }

@@ -2,6 +2,7 @@ import { Copy, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DimensionRecord } from "../../shared/types";
 import { apiText } from "../api/client";
+import type { ExportAvailability } from "../ui/viewModel";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 type XmlPreviewScope = "all" | "dimension";
@@ -16,13 +17,15 @@ export function XmlPreview({
   dimension,
   defaultScope = "allDimensions",
   allowAllDimensions = true,
-  xmlExportEnabled = true
+  xmlExportEnabled = true,
+  exportAvailability
 }: {
   projectId: string;
   dimension: DimensionRecord;
   defaultScope?: "currentDimension" | "allDimensions";
   allowAllDimensions?: boolean;
   xmlExportEnabled?: boolean;
+  exportAvailability: ExportAvailability;
 }) {
   const [xml, setXml] = useState("");
   const [scope, setScope] = useState<XmlPreviewScope>(() => mapDefaultScope(defaultScope, allowAllDimensions));
@@ -59,6 +62,7 @@ export function XmlPreview({
   }, [allowAllDimensions, defaultScope]);
 
   const preview = scope === "all" ? xml : extractDimensionXml(xml, dimension.dimensionName);
+  const downloadDisabled = exportAvailability.disabled;
 
   async function copy() {
     await navigator.clipboard.writeText(preview);
@@ -74,7 +78,20 @@ export function XmlPreview({
         </select>
         <ActionButton onClick={() => void copy()}><Copy size={15} /> Copy</ActionButton>
         {xmlExportEnabled && (
-          <ActionLink className="button-link" href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</ActionLink>
+          <ActionLink
+            className="button-link"
+            aria-disabled={downloadDisabled}
+            href={downloadDisabled ? undefined : `/api/export/${projectId}/xml`}
+            onClick={(event) => {
+              if (downloadDisabled) event.preventDefault();
+            }}
+            tabIndex={downloadDisabled ? -1 : undefined}
+            target={downloadDisabled ? undefined : "_blank"}
+            rel={downloadDisabled ? undefined : "noreferrer"}
+            title={downloadDisabled ? exportAvailability.title : "Download XML"}
+          >
+            <Download size={15} /> Download XML
+          </ActionLink>
         )}
         <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
       </div>
