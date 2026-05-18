@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createDatabase } from "../server/db/database";
 import { createRepositories } from "../server/db/repositories";
 import { createProjectFromBlueprints } from "../server/projectBlueprints";
+import type { AppConfig } from "../shared/appConfigTypes";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import { exportProjectXml } from "../shared/xmlExport";
 
@@ -117,7 +118,7 @@ describe("project blueprints", () => {
     try {
       const repos = createRepositories(db);
       const { UD4: _ud4Blueprint, ...blueprintsWithoutUd4 } = defaultAppConfig.dimensions.blueprints;
-      const configWithoutUd4Blueprint = {
+      const configWithoutUd4Blueprint: AppConfig = {
         ...defaultAppConfig,
         dimensions: {
           ...defaultAppConfig.dimensions,
@@ -189,15 +190,12 @@ describe("project blueprints", () => {
     }
   });
 
-  it("preserves the original creation error when rollback cleanup would fail", () => {
+  it("preserves the original creation error under transaction rollback", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
       repos.audit.record = () => {
         throw new Error("audit insert failed");
-      };
-      repos.projects.delete = () => {
-        throw new Error("cleanup failed");
       };
 
       expect(() =>
