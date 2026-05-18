@@ -1,16 +1,23 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentPropsWithoutRef, ReactNode } from "react";
 import type { Severity } from "../../shared/types";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info";
 
+const severityConfig: Record<Severity, { label: string; tone: Tone }> = {
+  error: { label: "Error", tone: "danger" },
+  warning: { label: "Warning", tone: "warning" },
+  info: { label: "Info", tone: "info" }
+};
+
 export function Panel({
   children,
-  className = ""
-}: {
+  className = "",
+  ...props
+}: ComponentPropsWithoutRef<"section"> & {
   children: ReactNode;
   className?: string;
 }) {
-  return <section className={`panel ${className}`.trim()}>{children}</section>;
+  return <section {...props} className={`panel ${className}`.trim()}>{children}</section>;
 }
 
 export function StatusBadge({
@@ -26,8 +33,7 @@ export function StatusBadge({
 }
 
 export function SeverityPill({ severity }: { severity: Severity }) {
-  const label = severity === "error" ? "Error" : severity === "warning" ? "Warning" : "Info";
-  const tone = severity === "error" ? "danger" : severity === "warning" ? "warning" : "info";
+  const { label, tone } = severityConfig[severity];
   return <StatusBadge tone={tone}>{label}</StatusBadge>;
 }
 
@@ -46,7 +52,7 @@ export function MetricTile({
     <div className={`metric-tile ${tone}`}>
       <strong>{value}</strong>
       <span>{label}</span>
-      {detail ? <small>{detail}</small> : null}
+      {detail != null ? <small>{detail}</small> : null}
     </div>
   );
 }
@@ -63,7 +69,7 @@ export function EmptyState({
   return (
     <div className="empty-state-block">
       <strong>{title}</strong>
-      <p>{children}</p>
+      <div className="empty-state-description">{children}</div>
       {action ? <div className="empty-state-actions">{action}</div> : null}
     </div>
   );
@@ -72,13 +78,14 @@ export function EmptyState({
 export function ActionButton({
   variant = "secondary",
   className = "",
+  type = "button",
   children,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
 }) {
   return (
-    <button {...props} className={`action-button ${variant} ${className}`.trim()}>
+    <button {...props} type={type} className={`action-button ${variant} ${className}`.trim()}>
       {children}
     </button>
   );
