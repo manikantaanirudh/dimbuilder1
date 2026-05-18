@@ -3,12 +3,18 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
-import { buildIssueSummary, getWorkspaceTabs, type ExportAvailability } from "../ui/viewModel";
+import {
+  buildDimensionFacts,
+  buildIssueSummary,
+  getReadinessLabel,
+  getWorkspaceTabs,
+  type ExportAvailability
+} from "../ui/viewModel";
 import { EditableGrid } from "./EditableGrid";
 import { HierarchyTree } from "./HierarchyTree";
 import { IssuePanel } from "./IssuePanel";
 import { MetadataEditor } from "./MetadataEditor";
-import { StatusBadge } from "./ui";
+import { FactItem, FactStrip, StatusBadge } from "./ui";
 import { XmlPreview } from "./XmlPreview";
 
 type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML" | "Issues";
@@ -38,6 +44,8 @@ export function DimensionWorkspace({
   const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
   const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
   const issueSummary = buildIssueSummary(dimensionIssues, appConfig.validation.exportBlockedBySeverities);
+  const readinessLabel = getReadinessLabel(issueSummary);
+  const facts = buildDimensionFacts(dimension, issueSummary);
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
   const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionDisplayConfig = appConfig.dimensions.display;
@@ -50,20 +58,22 @@ export function DimensionWorkspace({
   return (
     <section className="workspace">
       <div className="workspace-header">
-        <div>
-          <span className="section-kicker">{dimension.dimensionType} dimension</span>
+        <div className="workspace-title-block">
           <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
           <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
         </div>
         <div className="workspace-health">
           <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
             {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
-            {issueSummary.blocksExport ? "Export blocked" : issueSummary.total ? "Needs review" : "Ready"}
+            {readinessLabel}
           </StatusBadge>
-          <span><b>{issueSummary.errors}</b> errors</span>
-          <span><b>{issueSummary.warnings}</b> warnings</span>
         </div>
       </div>
+      <FactStrip className="workspace-facts">
+        {facts.map((fact) => (
+          <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
+        ))}
+      </FactStrip>
       <nav className="tabs" aria-label="Dimension workspace tabs">
         {availableTabs.map((item) => (
           <button

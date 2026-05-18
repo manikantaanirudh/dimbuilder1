@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Dashboard } from "../client/components/Dashboard";
+import { DimensionWorkspace } from "../client/components/DimensionWorkspace";
 import { ExportModal, ImportModal } from "../client/components/ImportExportModals";
 import { XmlPreview } from "../client/components/XmlPreview";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
@@ -81,6 +82,23 @@ describe("client component markup", () => {
     expect(markup).toContain('<span class="status-badge danger">Export blocked</span>');
     expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
     expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
+  });
+
+  it("renders clean workbench workspace facts and the short XML tab label", () => {
+    const markup = render(createElement(DimensionWorkspace, {
+      projectId: sampleProject.id,
+      dimension: sampleScenarioDimension,
+      issues: [],
+      onRefresh: () => undefined,
+      appConfig: defaultAppConfig,
+      exportAvailability: readyExportAvailability
+    }));
+
+    expect(markup).toContain("workspace-facts");
+    expect(markup).toContain("Scenario - SampleScenario");
+    expect(markup).toContain(">XML</button>");
+    expect(markup).not.toContain("XML Preview</button>");
+    expect(markup).not.toContain("section-kicker\">Scenario dimension");
   });
 
   it("renders no-project status and top-command-bar import guidance in the empty state", () => {
