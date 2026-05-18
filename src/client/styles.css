@@ -657,6 +657,7 @@ svg {
 
 .project-overview {
   min-width: 0;
+  padding: 18px;
 }
 
 .overview-header,
@@ -1557,7 +1558,9 @@ svg {
 
 @media (max-width: 640px) {
   .toolbar,
-  .workspace-header {
+  .overview-header,
+  .workspace-header,
+  .grid-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
@@ -1582,7 +1585,7 @@ svg {
     flex: 1 1 auto;
   }
 
-  .dashboard,
+  .project-overview,
   .workspace {
     padding: 12px;
   }
@@ -1613,7 +1616,6 @@ svg {
     grid-template-columns: 1fr;
   }
 
-  .grid-toolbar,
   .grid-toolbar-primary,
   .grid-controls {
     align-items: flex-start;
