@@ -1576,6 +1576,12 @@ svg {
     padding: 12px;
   }
 
+  .mobile-nav {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 auto;
+  }
+
   .toolbar-actions,
   .workspace-health,
   .grid-toolbar-actions,
