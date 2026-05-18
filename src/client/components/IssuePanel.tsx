@@ -17,9 +17,10 @@ export function IssuePanel({
 }) {
   const summary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const visibleIssues = issues.slice(0, expanded ? 500 : 8);
+  const Container = expanded ? "section" : "aside";
 
   return (
-    <aside className={expanded ? "panel issue-panel expanded" : "panel issue-panel"}>
+    <Container className={expanded ? "panel issue-panel expanded" : "panel issue-panel"}>
       <div className="panel-heading compact">
         <div>
           <span className="section-kicker">Validation</span>
@@ -43,11 +44,13 @@ export function IssuePanel({
           {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} />)}
         </div>
       )}
-    </aside>
+    </Container>
   );
 }
 
 function IssueCard({ issue }: { issue: ValidationIssue }) {
+  const location = [issue.fieldName, issue.rowNumber ? `Row ${issue.rowNumber}` : ""].filter(Boolean).join(" | ");
+
   return (
     <div className={`issue ${issue.severity}`}>
       <div className="issue-icon">{iconForSeverity(issue.severity)}</div>
@@ -57,7 +60,7 @@ function IssueCard({ issue }: { issue: ValidationIssue }) {
           <SeverityPill severity={issue.severity} />
         </div>
         <span>{issue.message}</span>
-        <small>{[issue.fieldName, issue.rowNumber ? `Row ${issue.rowNumber}` : ""].filter(Boolean).join(" | ")}</small>
+        {location && <small>{location}</small>}
       </div>
     </div>
   );

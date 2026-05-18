@@ -64,7 +64,12 @@ export function DimensionWorkspace({
       </div>
       <nav className="tabs" aria-label="Dimension workspace tabs">
         {availableTabs.map((item) => (
-          <button key={item} className={activeTab === item ? "active" : ""} onClick={() => setTab(item)}>
+          <button
+            key={item}
+            className={activeTab === item ? "active" : ""}
+            aria-current={activeTab === item ? "page" : undefined}
+            onClick={() => setTab(item)}
+          >
             {item}
           </button>
         ))}
