@@ -21,12 +21,39 @@ import {
 import { ActionButton, StatusBadge } from "./ui";
 
 type GridRecord = DimensionMemberRecord | DimensionRelationshipRecord;
+type GridKind = "members" | "relationships";
 
 const MAX_GRID_PAGE_SIZE = 1000;
 
 export function clampGridPageSize(pageSize: number) {
   const integerPageSize = Number.isFinite(pageSize) ? Math.trunc(pageSize) : 1;
   return Math.min(MAX_GRID_PAGE_SIZE, Math.max(1, integerPageSize));
+}
+
+export function buildOptimisticGridRecord(
+  record: GridRecord,
+  kind: GridKind,
+  memberKeyField: string,
+  fieldName: string,
+  value: string
+): GridRecord {
+  const properties = { ...record.properties, [fieldName]: value };
+
+  if (kind === "members" && fieldName === memberKeyField) {
+    return { ...record, memberKey: value, properties } as DimensionMemberRecord;
+  }
+
+  if (kind === "relationships") {
+    const relationship = record as DimensionRelationshipRecord;
+    if (fieldName === "Parent") return { ...relationship, parentKey: value, properties };
+    if (fieldName === "Child") return { ...relationship, childKey: value, properties };
+  }
+
+  return { ...record, properties } as GridRecord;
+}
+
+export function shouldRollbackGridRecord(current: GridRecord, optimisticRecord: GridRecord) {
+  return JSON.stringify(current) === JSON.stringify(optimisticRecord);
 }
 
 export function EditableGrid({
@@ -52,6 +79,8 @@ export function EditableGrid({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [showColumns, setShowColumns] = useState(false);
   const [status, setStatus] = useState("");
+  const saveSequenceRef = useRef(0);
+  const columnMenuId = `${kind}-column-menu`;
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
@@ -82,24 +111,30 @@ export function EditableGrid({
   }, [loadPage]);
 
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
-    const properties = { ...record.properties, [field.name]: value };
-    setRecords((current) => current.map((candidate) => candidate.id === record.id ? { ...candidate, properties } as GridRecord : candidate));
+    const sequence = saveSequenceRef.current + 1;
+    saveSequenceRef.current = sequence;
+    const optimisticRecord = buildOptimisticGridRecord(record, kind, schema.memberKeyField, field.name, value);
+    const properties = optimisticRecord.properties;
+    setRecords((current) => current.map((candidate) => candidate.id === record.id ? optimisticRecord : candidate));
     setStatus("Saving...");
 
     try {
       if (kind === "members") {
-        const member = record as DimensionMemberRecord;
-        const memberKey = field.name === schema.memberKeyField ? value : member.memberKey;
+        const member = optimisticRecord as DimensionMemberRecord;
+        const memberKey = member.memberKey;
         await patchMember(projectId, member.id, { memberKey, properties });
       } else {
-        const relationship = record as DimensionRelationshipRecord;
-        const parentKey = field.name === "Parent" ? value : relationship.parentKey;
-        const childKey = field.name === "Child" ? value : relationship.childKey;
+        const relationship = optimisticRecord as DimensionRelationshipRecord;
+        const parentKey = relationship.parentKey;
+        const childKey = relationship.childKey;
         await patchRelationship(projectId, relationship.id, { parentKey, childKey, properties });
       }
-      setStatus("Saved");
+      if (sequence === saveSequenceRef.current) setStatus("Saved");
     } catch (caught) {
-      setStatus(caught instanceof Error ? caught.message : "Save failed");
+      setRecords((current) => current.map((candidate) => (
+        candidate.id === record.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? record : candidate
+      )));
+      if (sequence === saveSequenceRef.current) setStatus(caught instanceof Error ? caught.message : "Save failed");
     }
   }
 
@@ -169,11 +204,11 @@ export function EditableGrid({
           <ActionButton onClick={() => void addRow()}><Plus size={15} /> Add</ActionButton>
           <ActionButton disabled={!selectedId} title={selectedId ? "Duplicate selected row" : "Select a row to duplicate"} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</ActionButton>
           <ActionButton variant="danger" disabled={!selectedId} title={selectedId ? "Delete selected row" : "Select a row to delete"} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</ActionButton>
-          <ActionButton onClick={() => setShowColumns((current) => !current)}><EyeOff size={15} /> Columns</ActionButton>
+          <ActionButton aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}><EyeOff size={15} /> Columns</ActionButton>
         </div>
       </div>
       {showColumns && (
-        <div className="column-menu" aria-label="Column visibility">
+        <div id={columnMenuId} className="column-menu" aria-label="Column visibility">
           {columns.map((column) => (
             <label key={column.name}>
               <input

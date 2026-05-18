@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { clampGridPageSize } from "../client/components/EditableGrid";
+import { buildOptimisticGridRecord, clampGridPageSize, shouldRollbackGridRecord } from "../client/components/EditableGrid";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
-import type { ValidationIssue } from "../shared/types";
+import type { DimensionMemberRecord, DimensionRelationshipRecord, ValidationIssue } from "../shared/types";
 import {
   buildDimensionNavItems,
   buildIssueSummary,
@@ -35,6 +35,73 @@ describe("client UI view model", () => {
     expect(clampGridPageSize(600)).toBe(600);
     expect(clampGridPageSize(5000)).toBe(1000);
     expect(clampGridPageSize(Number.NaN)).toBe(1);
+  });
+
+  it("updates canonical member keys in optimistic grid records", () => {
+    const record = {
+      id: "member-1",
+      dimensionId: "dimension-1",
+      memberKey: "OldMember",
+      description: "",
+      properties: { Member: "OldMember", Text1: "A" },
+      rowOrder: 1,
+      sourceRowNumber: 2,
+      isActive: true,
+      createdAt: testTimestamp,
+      updatedAt: testTimestamp
+    } satisfies DimensionMemberRecord;
+
+    const next = buildOptimisticGridRecord(record, "members", "Member", "Member", "NewMember") as DimensionMemberRecord;
+
+    expect(next.memberKey).toBe("NewMember");
+    expect(next.properties.Member).toBe("NewMember");
+    expect(record.memberKey).toBe("OldMember");
+  });
+
+  it("updates canonical relationship keys in optimistic grid records", () => {
+    const record = {
+      id: "relationship-1",
+      dimensionId: "dimension-1",
+      parentKey: "OldParent",
+      childKey: "OldChild",
+      aggregationWeight: null,
+      percentConsol: null,
+      percentOwnership: null,
+      ownershipType: "",
+      properties: { Parent: "OldParent", Child: "OldChild" },
+      rowOrder: 1,
+      sourceRowNumber: 2,
+      createdAt: testTimestamp,
+      updatedAt: testTimestamp
+    } satisfies DimensionRelationshipRecord;
+
+    const parentNext = buildOptimisticGridRecord(record, "relationships", "Member", "Parent", "NewParent") as DimensionRelationshipRecord;
+    const childNext = buildOptimisticGridRecord(record, "relationships", "Member", "Child", "NewChild") as DimensionRelationshipRecord;
+
+    expect(parentNext.parentKey).toBe("NewParent");
+    expect(parentNext.properties.Parent).toBe("NewParent");
+    expect(childNext.childKey).toBe("NewChild");
+    expect(childNext.properties.Child).toBe("NewChild");
+  });
+
+  it("rolls back only when the failed optimistic record is still current", () => {
+    const previous = {
+      id: "member-1",
+      dimensionId: "dimension-1",
+      memberKey: "OldMember",
+      description: "",
+      properties: { Member: "OldMember", Text1: "A" },
+      rowOrder: 1,
+      sourceRowNumber: 2,
+      isActive: true,
+      createdAt: testTimestamp,
+      updatedAt: testTimestamp
+    } satisfies DimensionMemberRecord;
+    const failedOptimistic = buildOptimisticGridRecord(previous, "members", "Member", "Member", "FailedMember");
+    const newerEdit = buildOptimisticGridRecord(failedOptimistic, "members", "Member", "Text1", "B");
+
+    expect(shouldRollbackGridRecord(failedOptimistic, failedOptimistic)).toBe(true);
+    expect(shouldRollbackGridRecord(newerEdit, failedOptimistic)).toBe(false);
   });
 
   it("summarizes issues for all dimensions and one dimension", () => {
