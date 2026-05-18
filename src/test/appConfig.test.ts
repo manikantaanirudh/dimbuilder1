@@ -79,6 +79,24 @@ describe("app config", () => {
     expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' uses unsupported memberKeyField 'Bad Field'.");
   });
 
+  it("rejects blueprint root member arrays with no members", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: [],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must define non-empty rootMembers.");
+  });
+
   it("deep merges partial yaml config onto defaults", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       application: { title: "Custom Builder" },

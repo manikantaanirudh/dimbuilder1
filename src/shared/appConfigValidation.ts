@@ -40,7 +40,11 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     if (!blueprint.defaultDimensionName.trim()) {
       throw new Error(`Blueprint for '${type}' must define defaultDimensionName.`);
     }
-    if (!Array.isArray(blueprint.rootMembers) || blueprint.rootMembers.some((member) => !member.trim())) {
+    if (
+      !Array.isArray(blueprint.rootMembers) ||
+      blueprint.rootMembers.length === 0 ||
+      blueprint.rootMembers.some((member) => !member.trim())
+    ) {
       throw new Error(`Blueprint for '${type}' must define non-empty rootMembers.`);
     }
     if (!supportedMemberFields.has(blueprint.memberKeyField)) {
