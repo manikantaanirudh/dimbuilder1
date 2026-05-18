@@ -51,6 +51,7 @@ export function EditableGrid({
   const [status, setStatus] = useState("");
   const recordsRef = useRef<GridRecord[]>([]);
   const saveSequenceRef = useRef(0);
+  const rowSaveTokensRef = useRef(new Map<string, number>());
   const columnMenuId = `${kind}-column-menu`;
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
   const filteredRecords = useMemo(() => {
@@ -89,6 +90,8 @@ export function EditableGrid({
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
     const sequence = saveSequenceRef.current + 1;
     saveSequenceRef.current = sequence;
+    const rowSaveToken = (rowSaveTokensRef.current.get(record.id) ?? 0) + 1;
+    rowSaveTokensRef.current.set(record.id, rowSaveToken);
     const previousRecord = recordsRef.current.find((candidate) => candidate.id === record.id) ?? record;
     const optimisticRecord = buildOptimisticGridRecord(previousRecord, kind, schema.memberKeyField, field.name, value);
     const replaceOptimisticRecord = (candidate: GridRecord) => candidate.id === previousRecord.id ? optimisticRecord : candidate;
@@ -110,8 +113,9 @@ export function EditableGrid({
       }
       if (sequence === saveSequenceRef.current) setStatus("Saved");
     } catch (caught) {
+      const isLatestRowSave = rowSaveTokensRef.current.get(record.id) === rowSaveToken;
       const rollbackOptimisticRecord = (candidate: GridRecord) => (
-        candidate.id === previousRecord.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? previousRecord : candidate
+        isLatestRowSave && candidate.id === previousRecord.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? previousRecord : candidate
       );
       recordsRef.current = recordsRef.current.map(rollbackOptimisticRecord);
       setRecords((current) => current.map(rollbackOptimisticRecord));
@@ -137,7 +141,7 @@ export function EditableGrid({
   }
 
   async function duplicateRow() {
-    const source = records.find((record) => record.id === selectedId);
+    const source = recordsRef.current.find((record) => record.id === selectedId);
     if (!source) return;
     if (kind === "members") {
       const member = source as DimensionMemberRecord;
