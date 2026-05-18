@@ -22,8 +22,10 @@ export interface ExportFormatLink {
   hrefSuffix: string;
 }
 
+type FactTone = "neutral" | "success" | "warning" | "danger" | "info";
+
 export interface WorkspaceTabItem {
-  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML Preview" | "Issues";
+  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML" | "Issues";
 }
 
 export interface DimensionNavItem {
@@ -32,6 +34,12 @@ export interface DimensionNavItem {
   subtitle: string;
   dimension: DimensionRecord;
   issueSummary: IssueSummary;
+}
+
+export interface DimensionFact {
+  label: string;
+  value: string;
+  tone?: FactTone;
 }
 
 export function buildIssueSummary(
@@ -98,9 +106,55 @@ export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[]
     { label: "Relationships" },
     { label: "Hierarchy" }
   ];
-  if (xmlPreviewEnabled) tabs.push({ label: "XML Preview" });
+  if (xmlPreviewEnabled) tabs.push({ label: "XML" });
   tabs.push({ label: "Issues" });
   return tabs;
+}
+
+export function resolveActiveDimensionId(activeDimensionId: string | null, dimensions: DimensionRecord[]): string | null {
+  if (activeDimensionId && dimensions.some((dimension) => dimension.id === activeDimensionId)) {
+    return activeDimensionId;
+  }
+  return dimensions[0]?.id ?? null;
+}
+
+export function filterDimensionNavItems(items: DimensionNavItem[], query: string): DimensionNavItem[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return items;
+  return items.filter((item) => {
+    const dimension = item.dimension;
+    return [
+      item.label,
+      item.subtitle,
+      dimension.dimensionType,
+      dimension.dimensionName,
+      dimension.sheetName
+    ].some((value) => value.toLowerCase().includes(needle));
+  });
+}
+
+export function getReadinessLabel(summary: IssueSummary): "Ready" | "Needs review" | "Export blocked" {
+  if (summary.blocksExport) return "Export blocked";
+  if (summary.total > 0) return "Needs review";
+  return "Ready";
+}
+
+export function buildDimensionFacts(dimension: DimensionRecord, issueSummary: IssueSummary): DimensionFact[] {
+  const facts: DimensionFact[] = [
+    { label: "Type", value: dimension.dimensionType },
+    { label: "Sheet", value: dimension.sheetName }
+  ];
+
+  if (dimension.accessGroup) facts.push({ label: "Access", value: dimension.accessGroup });
+  if (dimension.maintenanceGroup) facts.push({ label: "Maintenance", value: dimension.maintenanceGroup });
+  if (dimension.inheritedDimension) facts.push({ label: "Inherits", value: dimension.inheritedDimension });
+
+  facts.push(
+    { label: "Errors", value: String(issueSummary.errors), tone: issueSummary.errors > 0 ? "danger" : "neutral" },
+    { label: "Warnings", value: String(issueSummary.warnings), tone: issueSummary.warnings > 0 ? "warning" : "neutral" }
+  );
+
+  return facts;
 }
 
 export function buildDimensionNavItems(

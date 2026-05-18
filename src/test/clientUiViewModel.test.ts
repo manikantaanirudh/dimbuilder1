@@ -3,12 +3,16 @@ import { buildOptimisticGridRecord, clampGridPageSize, shouldRollbackGridRecord 
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { DimensionMemberRecord, DimensionRelationshipRecord, ValidationIssue } from "../shared/types";
 import {
+  buildDimensionFacts,
   buildDimensionNavItems,
   buildIssueSummary,
+  filterDimensionNavItems,
   formatCount,
   getEnabledExportFormats,
   getExportAvailability,
-  getWorkspaceTabs
+  getReadinessLabel,
+  getWorkspaceTabs,
+  resolveActiveDimensionId
 } from "../client/ui/viewModel";
 import { sampleScenarioDimension, testTimestamp } from "./fixtures";
 
@@ -168,9 +172,52 @@ describe("client UI view model", () => {
     expect(getEnabledExportFormats(defaultAppConfig.export).map((format) => format.key)).toEqual(["xml", "xlsx", "csvMembers", "csvRelationships", "json"]);
   });
 
-  it("keeps XML Preview out of tabs when disabled", () => {
-    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "XML Preview", "Issues"]);
+  it("keeps XML out of tabs when disabled", () => {
+    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "XML", "Issues"]);
     expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
+  });
+
+  it("defaults to the first dimension when no active dimension is selected", () => {
+    expect(resolveActiveDimensionId(null, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
+    expect(resolveActiveDimensionId("missing", [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
+    expect(resolveActiveDimensionId(sampleScenarioDimension.id, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
+    expect(resolveActiveDimensionId(null, [])).toBeNull();
+  });
+
+  it("filters dimension nav items by label, subtitle, type, and sheet name", () => {
+    const items = buildDimensionNavItems(
+      [sampleScenarioDimension],
+      [],
+      defaultAppConfig.dimensions.display,
+      defaultAppConfig.validation.exportBlockedBySeverities
+    );
+
+    expect(filterDimensionNavItems(items, "sample")).toHaveLength(1);
+    expect(filterDimensionNavItems(items, "scenarios")).toHaveLength(1);
+    expect(filterDimensionNavItems(items, "scenario")).toHaveLength(1);
+    expect(filterDimensionNavItems(items, "nothing")).toHaveLength(0);
+  });
+
+  it("uses the shorter XML tab label for the clean workbench", () => {
+    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "XML", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
+  });
+
+  it("builds compact readiness labels and dimension facts", () => {
+    const cleanSummary = buildIssueSummary([], defaultAppConfig.validation.exportBlockedBySeverities);
+    const blockedSummary = buildIssueSummary([issue({ severity: "error" })], defaultAppConfig.validation.exportBlockedBySeverities);
+
+    expect(getReadinessLabel(cleanSummary)).toBe("Ready");
+    expect(getReadinessLabel(blockedSummary)).toBe("Export blocked");
+
+    expect(buildDimensionFacts(sampleScenarioDimension, blockedSummary)).toEqual([
+      { label: "Type", value: "Scenario" },
+      { label: "Sheet", value: "Scenarios" },
+      { label: "Access", value: "Everyone" },
+      { label: "Maintenance", value: "Everyone" },
+      { label: "Errors", value: "1", tone: "danger" },
+      { label: "Warnings", value: "0", tone: "neutral" }
+    ]);
   });
 
   it("builds nav items with issue summaries", () => {
