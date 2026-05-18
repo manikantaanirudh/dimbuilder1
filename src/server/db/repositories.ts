@@ -59,6 +59,9 @@ export function createRepositories(db: AppDatabase) {
         const row = db.prepare("SELECT * FROM projects WHERE id = ?").get(projectId);
         return row ? mapProject(row) : null;
       },
+      delete(projectId: string): void {
+        db.prepare("DELETE FROM projects WHERE id = ?").run(projectId);
+      },
       summary(projectId: string): DashboardSummary {
         const dimensions = this.getDimensions(projectId);
         return {
@@ -423,4 +426,3 @@ function nullableNumber(value: unknown): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
-
