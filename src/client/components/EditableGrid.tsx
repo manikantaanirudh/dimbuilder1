@@ -50,6 +50,8 @@ export function EditableGrid({
   const [showColumns, setShowColumns] = useState(false);
   const [status, setStatus] = useState("");
   const recordsRef = useRef<GridRecord[]>([]);
+  const confirmedRecordsRef = useRef(new Map<string, GridRecord>());
+  const rowSaveQueuesRef = useRef(new Map<string, Promise<void>>());
   const saveSequenceRef = useRef(0);
   const rowSaveTokensRef = useRef(new Map<string, number>());
   const columnMenuId = `${kind}-column-menu`;
@@ -73,6 +75,7 @@ export function EditableGrid({
       ? await fetchMembers(projectId, dimension.id, nextOffset, effectivePageSize)
       : await fetchRelationships(projectId, dimension.id, nextOffset, effectivePageSize);
     recordsRef.current = result.rows;
+    confirmedRecordsRef.current = new Map(result.rows.map((row) => [row.id, row]));
     setRecords(result.rows);
     setTotal(result.total);
     setOffset(nextOffset);
@@ -99,28 +102,41 @@ export function EditableGrid({
     setRecords((current) => current.map(replaceOptimisticRecord));
     setStatus("Saving...");
 
-    try {
+    const operation = async () => {
       const properties = optimisticRecord.properties;
-      if (kind === "members") {
-        const member = optimisticRecord as DimensionMemberRecord;
-        const memberKey = member.memberKey;
-        await patchMember(projectId, member.id, { memberKey, properties });
-      } else {
-        const relationship = optimisticRecord as DimensionRelationshipRecord;
-        const parentKey = relationship.parentKey;
-        const childKey = relationship.childKey;
-        await patchRelationship(projectId, relationship.id, { parentKey, childKey, properties });
+      try {
+        if (kind === "members") {
+          const member = optimisticRecord as DimensionMemberRecord;
+          const memberKey = member.memberKey;
+          await patchMember(projectId, member.id, { memberKey, properties });
+        } else {
+          const relationship = optimisticRecord as DimensionRelationshipRecord;
+          const parentKey = relationship.parentKey;
+          const childKey = relationship.childKey;
+          await patchRelationship(projectId, relationship.id, { parentKey, childKey, properties });
+        }
+        confirmedRecordsRef.current.set(previousRecord.id, optimisticRecord);
+        if (sequence === saveSequenceRef.current) setStatus("Saved");
+      } catch (caught) {
+        const isLatestRowSave = rowSaveTokensRef.current.get(record.id) === rowSaveToken;
+        const rollbackRecord = confirmedRecordsRef.current.get(previousRecord.id) ?? previousRecord;
+        const rollbackOptimisticRecord = (candidate: GridRecord) => (
+          isLatestRowSave && candidate.id === previousRecord.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? rollbackRecord : candidate
+        );
+        recordsRef.current = recordsRef.current.map(rollbackOptimisticRecord);
+        setRecords((current) => current.map(rollbackOptimisticRecord));
+        if (sequence === saveSequenceRef.current) setStatus(caught instanceof Error ? caught.message : "Save failed");
       }
-      if (sequence === saveSequenceRef.current) setStatus("Saved");
-    } catch (caught) {
-      const isLatestRowSave = rowSaveTokensRef.current.get(record.id) === rowSaveToken;
-      const rollbackOptimisticRecord = (candidate: GridRecord) => (
-        isLatestRowSave && candidate.id === previousRecord.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? previousRecord : candidate
-      );
-      recordsRef.current = recordsRef.current.map(rollbackOptimisticRecord);
-      setRecords((current) => current.map(rollbackOptimisticRecord));
-      if (sequence === saveSequenceRef.current) setStatus(caught instanceof Error ? caught.message : "Save failed");
-    }
+    };
+
+    const previousQueue = rowSaveQueuesRef.current.get(previousRecord.id) ?? Promise.resolve();
+    const queuedSave = previousQueue.catch(() => undefined).then(operation);
+    rowSaveQueuesRef.current.set(previousRecord.id, queuedSave);
+    await queuedSave.finally(() => {
+      if (rowSaveQueuesRef.current.get(previousRecord.id) === queuedSave) {
+        rowSaveQueuesRef.current.delete(previousRecord.id);
+      }
+    });
   }
 
   async function addRow() {
@@ -128,12 +144,14 @@ export function EditableGrid({
       const properties = Object.fromEntries(columns.map((column) => [column.name, ""]));
       const created = await createMember(projectId, dimension.id, { memberKey: "", properties });
       recordsRef.current = [...recordsRef.current, created];
+      confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     } else {
       const properties = Object.fromEntries(columns.map((column) => [column.name, ""]));
       const created = await createRelationship(projectId, dimension.id, { parentKey: "", childKey: "", properties });
       recordsRef.current = [...recordsRef.current, created];
+      confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     }
@@ -147,12 +165,14 @@ export function EditableGrid({
       const member = source as DimensionMemberRecord;
       const created = await createMember(projectId, dimension.id, { memberKey: `${member.memberKey}_Copy`, properties: { ...member.properties, [schema.memberKeyField]: `${member.memberKey}_Copy` } });
       recordsRef.current = [...recordsRef.current, created];
+      confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     } else {
       const relationship = source as DimensionRelationshipRecord;
       const created = await createRelationship(projectId, dimension.id, { parentKey: relationship.parentKey, childKey: relationship.childKey, properties: relationship.properties });
       recordsRef.current = [...recordsRef.current, created];
+      confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     }
@@ -163,6 +183,9 @@ export function EditableGrid({
     if (kind === "members") await deleteMember(projectId, selectedId);
     else await deleteRelationship(projectId, selectedId);
     recordsRef.current = recordsRef.current.filter((record) => record.id !== selectedId);
+    confirmedRecordsRef.current.delete(selectedId);
+    rowSaveQueuesRef.current.delete(selectedId);
+    rowSaveTokensRef.current.delete(selectedId);
     setRecords((current) => current.filter((record) => record.id !== selectedId));
     setSelectedId(null);
     setTotal((current) => Math.max(0, current - 1));
