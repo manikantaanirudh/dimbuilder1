@@ -199,9 +199,6 @@ export function AppShell({
             project={store.projects[0] ?? null}
             issues={store.issues}
             onImport={() => setImportOpen(true)}
-            onValidate={() => void runValidation()}
-            validateDisabled={!store.selectedProjectId}
-            onExport={() => setExportOpen(true)}
             exportAvailability={exportAvailability}
             onOpenDimension={setActiveDimensionId}
             appConfig={appConfig}

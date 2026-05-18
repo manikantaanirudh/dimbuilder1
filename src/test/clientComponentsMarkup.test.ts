@@ -6,7 +6,7 @@ import { ExportModal, ImportModal } from "../client/components/ImportExportModal
 import { XmlPreview } from "../client/components/XmlPreview";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { ClientAppConfig } from "../shared/appConfigTypes";
-import type { DashboardSummary } from "../shared/types";
+import type { DashboardSummary, ProjectRecord } from "../shared/types";
 import { sampleProject, sampleScenarioDimension } from "./fixtures";
 
 const readyExportAvailability = {
@@ -38,16 +38,13 @@ function configWithToolbar(toolbar: Partial<ClientAppConfig["ui"]["toolbar"]>): 
   };
 }
 
-function dashboardMarkup(appConfig: ClientAppConfig, summary: DashboardSummary | null = null) {
+function dashboardMarkup(appConfig: ClientAppConfig, summary: DashboardSummary | null = null, project: ProjectRecord | null = null) {
   return render(createElement(Dashboard, {
     dimensions: [],
     summary,
-    project: null,
+    project,
     issues: [],
     onImport: () => undefined,
-    onValidate: () => undefined,
-    validateDisabled: true,
-    onExport: () => undefined,
     exportAvailability: readyExportAvailability,
     onOpenDimension: () => undefined,
     appConfig
@@ -55,6 +52,15 @@ function dashboardMarkup(appConfig: ClientAppConfig, summary: DashboardSummary |
 }
 
 describe("client component markup", () => {
+  it("keeps primary workflow actions in the toolbar instead of duplicating them on the dashboard card", () => {
+    const markup = dashboardMarkup(defaultAppConfig, null, sampleProject);
+
+    expect(markup).not.toContain("dashboard-command-actions");
+    expect(markup).not.toMatch(/<button[\s\S]*>Import<\/button>/);
+    expect(markup).not.toMatch(/<button[\s\S]*>Validate<\/button>/);
+    expect(markup).not.toMatch(/<button[\s\S]*>Export<\/button>/);
+  });
+
   it("hides dashboard command and empty-state import actions when import is hidden", () => {
     const markup = dashboardMarkup(configWithToolbar({ showImport: false }));
 

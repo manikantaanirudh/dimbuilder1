@@ -1,4 +1,4 @@
-import { ArrowRight, Download, FileUp, ShieldCheck } from "lucide-react";
+import { ArrowRight, FileUp } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
@@ -11,9 +11,6 @@ export function Dashboard({
   project,
   issues,
   onImport,
-  onValidate,
-  validateDisabled,
-  onExport,
   exportAvailability,
   onOpenDimension,
   appConfig
@@ -23,9 +20,6 @@ export function Dashboard({
   project: ProjectRecord | null;
   issues: ValidationIssue[];
   onImport: () => void;
-  onValidate: () => void;
-  validateDisabled: boolean;
-  onExport: () => void;
   exportAvailability: ExportAvailability;
   onOpenDimension: (dimensionId: string) => void;
   appConfig: ClientAppConfig;
@@ -57,11 +51,6 @@ export function Dashboard({
             </StatusBadge>
             <span>{exportAvailability.reason}</span>
           </div>
-        </div>
-        <div className="dashboard-command-actions">
-          {toolbar.showImport && <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import</ActionButton>}
-          {toolbar.showValidate && <ActionButton disabled={validateDisabled} onClick={onValidate}><ShieldCheck size={16} /> Validate</ActionButton>}
-          {toolbar.showExport && <ActionButton disabled={exportAvailability.disabled} title={exportAvailability.title} onClick={onExport}><Download size={16} /> Export</ActionButton>}
         </div>
       </Panel>
 
