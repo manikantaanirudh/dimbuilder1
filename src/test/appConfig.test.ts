@@ -209,6 +209,28 @@ describe("app config", () => {
     );
   });
 
+  it("rejects non-object dimension blueprints with a validation error", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: null
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("dimensions.blueprints must be an object.");
+  });
+
+  it("rejects null dimension blueprint entries with a validation error", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: null
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow("Blueprint for 'Account' must be an object.");
+  });
+
   it("deep merges partial yaml config onto defaults", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       application: { title: "Custom Builder" },

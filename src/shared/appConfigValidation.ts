@@ -10,6 +10,10 @@ export function mergeAppConfig(defaults: AppConfig, override: unknown): AppConfi
 }
 
 export function validateAppConfig(config: AppConfig): AppConfig {
+  if (!isRecord(config.dimensions.blueprints)) {
+    throw new Error("dimensions.blueprints must be an object.");
+  }
+
   for (const type of [...config.dimensions.enabledTypes, ...config.dimensions.displayOrder]) {
     if (!isSupportedDimensionType(type)) {
       throw new Error(`Unknown dimension type '${type}' in configuration.`);
@@ -34,6 +38,9 @@ export function validateAppConfig(config: AppConfig): AppConfig {
 
   for (const [type, blueprint] of Object.entries(config.dimensions.blueprints)) {
     if (!isSupportedDimensionType(type)) continue;
+    if (!isRecord(blueprint)) {
+      throw new Error(`Blueprint for '${type}' must be an object.`);
+    }
     const schema = getDimensionSchema(type as DimensionType);
     const supportedMemberFields = new Set(schema.memberFields.map((field) => field.name));
 
