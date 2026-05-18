@@ -30,8 +30,13 @@ interface CreateProjectInput {
   createdBy: string;
 }
 
+let transactionCounter = 0;
+
 export function createRepositories(db: AppDatabase) {
   return {
+    transaction<T>(action: () => T): T {
+      return runInTransaction(db, action);
+    },
     projects: {
       create(input: CreateProjectInput): ProjectRecord {
         const createdAt = now();
@@ -331,13 +336,24 @@ export function createRepositories(db: AppDatabase) {
 
 export type Repositories = ReturnType<typeof createRepositories>;
 
-function runInTransaction(db: AppDatabase, action: () => void): void {
-  db.exec("BEGIN");
+function runInTransaction<T>(db: AppDatabase, action: () => T): T {
+  const savepointName = `repository_tx_${++transactionCounter}`;
+  db.exec(`SAVEPOINT ${savepointName}`);
   try {
-    action();
-    db.exec("COMMIT");
+    const result = action();
+    db.exec(`RELEASE ${savepointName}`);
+    return result;
   } catch (error) {
-    db.exec("ROLLBACK");
+    try {
+      db.exec(`ROLLBACK TO ${savepointName}`);
+    } catch {
+      // Preserve the original action error if rollback cleanup fails.
+    }
+    try {
+      db.exec(`RELEASE ${savepointName}`);
+    } catch {
+      // Preserve the original action error if savepoint cleanup fails.
+    }
     throw error;
   }
 }

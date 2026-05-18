@@ -112,10 +112,62 @@ describe("project blueprints", () => {
     }
   });
 
+  it("uses schema fallback values when a configured dimension blueprint is missing", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      const { UD4: _ud4Blueprint, ...blueprintsWithoutUd4 } = defaultAppConfig.dimensions.blueprints;
+      const configWithoutUd4Blueprint = {
+        ...defaultAppConfig,
+        dimensions: {
+          ...defaultAppConfig.dimensions,
+          enabledTypes: ["UD4"],
+          displayOrder: ["UD4"],
+          blueprints: blueprintsWithoutUd4
+        }
+      };
+
+      const project = createProjectFromBlueprints(repos, configWithoutUd4Blueprint, {
+        name: "Fallback Build",
+        description: "",
+        createdBy: "local-admin"
+      });
+
+      const dimensions = repos.dimensions.listByProject(project.id);
+      const ud4 = dimensions[0];
+      const members = repos.members.listByDimension(ud4.id);
+
+      expect(dimensions).toHaveLength(1);
+      expect(ud4).toMatchObject({
+        dimensionType: "UD4",
+        dimensionName: "ChannelPartner"
+      });
+      expect(ud4.metadata).toMatchObject({
+        source: "blueprint",
+        allowMultipleParents: true,
+        relationshipDefaults: { aggregationWeight: 1 }
+      });
+      expect(members).toHaveLength(1);
+      expect(members[0]).toMatchObject({
+        memberKey: "Root",
+        properties: { Member: "Root", Description: "" }
+      });
+    } finally {
+      db.close();
+    }
+  });
+
   it("rolls back the project when blueprint creation fails after project insert", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
+      let createdProjectId = "";
+      const createProject = repos.projects.create;
+      repos.projects.create = (input) => {
+        const project = createProject(input);
+        createdProjectId = project.id;
+        return project;
+      };
       repos.members.create = () => {
         throw new Error("member insert failed");
       };
@@ -129,6 +181,32 @@ describe("project blueprints", () => {
       ).toThrow("member insert failed");
 
       expect(repos.projects.list()).toEqual([]);
+      expect(repos.projects.get(createdProjectId)).toBeNull();
+      expect(repos.dimensions.listByProject(createdProjectId)).toEqual([]);
+      expect(repos.members.listByProject(createdProjectId)).toEqual([]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("preserves the original creation error when rollback cleanup would fail", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      repos.audit.record = () => {
+        throw new Error("audit insert failed");
+      };
+      repos.projects.delete = () => {
+        throw new Error("cleanup failed");
+      };
+
+      expect(() =>
+        createProjectFromBlueprints(repos, defaultAppConfig, {
+          name: "Audit Failure",
+          description: "",
+          createdBy: "local-admin"
+        })
+      ).toThrow("audit insert failed");
     } finally {
       db.close();
     }

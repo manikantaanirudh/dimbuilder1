@@ -14,14 +14,13 @@ export function createProjectFromBlueprints(
   config: AppConfig,
   input: CreateBlueprintProjectInput
 ): ProjectRecord {
-  const project = repos.projects.create({
-    name: input.name.trim() || "New Metadata Project",
-    description: input.description,
-    sourceFileName: "",
-    createdBy: input.createdBy
-  });
-
-  try {
+  return repos.transaction(() => {
+    const project = repos.projects.create({
+      name: input.name.trim() || "New Metadata Project",
+      description: input.description,
+      sourceFileName: "",
+      createdBy: input.createdBy
+    });
     const enabledTypes = new Set(config.dimensions.enabledTypes);
     const orderedTypes = config.dimensions.displayOrder.filter((type) => enabledTypes.has(type));
 
@@ -74,10 +73,7 @@ export function createProjectFromBlueprints(
     });
 
     return project;
-  } catch (error) {
-    repos.projects.delete(project.id);
-    throw error;
-  }
+  });
 }
 
 function resolveBlueprint(config: AppConfig, dimensionType: DimensionType): DimensionBlueprintConfig {
