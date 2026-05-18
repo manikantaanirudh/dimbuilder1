@@ -1,5 +1,5 @@
 import { CheckCircle2, Download, FileUp, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { ProjectRecord } from "../../shared/types";
 import { getEnabledExportFormats, type ExportAvailability } from "../ui/viewModel";
@@ -27,7 +27,21 @@ export function ImportModal({
   const [importedProject, setImportedProject] = useState<ProjectRecord | null>(null);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
 
+  useEffect(() => {
+    if (!open) {
+      setFile(null);
+      setStatus("");
+      setImportedProject(null);
+      setSummary(null);
+    }
+  }, [open]);
+
   if (!open) return null;
+
+  function handleFileChange(nextFile: File | null) {
+    setFile(nextFile);
+    setStatus("");
+  }
 
   async function importWorkbook() {
     if (!file) return;
@@ -51,7 +65,7 @@ export function ImportModal({
           {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Imported</StatusBadge> : null}
         </div>
         <p>Select the OneStream XF metadata workbook. Generated XML/formula columns are ignored.</p>
-        {!importedProject && <input type="file" accept=".xlsx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />}
+        {!importedProject && <input type="file" accept=".xlsx" onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)} />}
         {summary && (
           <div className="import-summary">
             <span><b>{String(summary.dimensionsImported ?? 0)}</b> dimensions</span>
@@ -103,7 +117,11 @@ export function ExportModal({
               <ActionLink
                 key={format.key}
                 aria-disabled={disabled}
-                href={disabled ? "#" : `${prefix}/${format.hrefSuffix}`}
+                href={disabled ? undefined : `${prefix}/${format.hrefSuffix}`}
+                onClick={(event) => {
+                  if (disabled) event.preventDefault();
+                }}
+                tabIndex={disabled ? -1 : undefined}
                 target={disabled ? undefined : "_blank"}
                 rel={disabled ? undefined : "noreferrer"}
               >

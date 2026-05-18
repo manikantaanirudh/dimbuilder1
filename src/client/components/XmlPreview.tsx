@@ -74,7 +74,7 @@ export function XmlPreview({
         </select>
         <ActionButton onClick={() => void copy()}><Copy size={15} /> Copy</ActionButton>
         {xmlExportEnabled && (
-          <ActionLink href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</ActionLink>
+          <ActionLink className="button-link" href={`/api/export/${projectId}/xml`} target="_blank" rel="noreferrer"><Download size={15} /> Download XML</ActionLink>
         )}
         <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
       </div>
