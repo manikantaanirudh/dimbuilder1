@@ -49,6 +49,7 @@ export function EditableGrid({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [showColumns, setShowColumns] = useState(false);
   const [status, setStatus] = useState("");
+  const recordsRef = useRef<GridRecord[]>([]);
   const saveSequenceRef = useRef(0);
   const columnMenuId = `${kind}-column-menu`;
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
@@ -70,6 +71,7 @@ export function EditableGrid({
     const result = kind === "members"
       ? await fetchMembers(projectId, dimension.id, nextOffset, effectivePageSize)
       : await fetchRelationships(projectId, dimension.id, nextOffset, effectivePageSize);
+    recordsRef.current = result.rows;
     setRecords(result.rows);
     setTotal(result.total);
     setOffset(nextOffset);
@@ -80,15 +82,18 @@ export function EditableGrid({
     void loadPage(0);
   }, [loadPage]);
 
+  useEffect(() => {
+    recordsRef.current = records;
+  }, [records]);
+
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
     const sequence = saveSequenceRef.current + 1;
     saveSequenceRef.current = sequence;
-    let optimisticRecord = buildOptimisticGridRecord(record, kind, schema.memberKeyField, field.name, value);
-    setRecords((current) => current.map((candidate) => {
-      if (candidate.id !== record.id) return candidate;
-      optimisticRecord = buildOptimisticGridRecord(candidate, kind, schema.memberKeyField, field.name, value);
-      return optimisticRecord;
-    }));
+    const previousRecord = recordsRef.current.find((candidate) => candidate.id === record.id) ?? record;
+    const optimisticRecord = buildOptimisticGridRecord(previousRecord, kind, schema.memberKeyField, field.name, value);
+    const replaceOptimisticRecord = (candidate: GridRecord) => candidate.id === previousRecord.id ? optimisticRecord : candidate;
+    recordsRef.current = recordsRef.current.map(replaceOptimisticRecord);
+    setRecords((current) => current.map(replaceOptimisticRecord));
     setStatus("Saving...");
 
     try {
@@ -105,9 +110,11 @@ export function EditableGrid({
       }
       if (sequence === saveSequenceRef.current) setStatus("Saved");
     } catch (caught) {
-      setRecords((current) => current.map((candidate) => (
-        candidate.id === record.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? record : candidate
-      )));
+      const rollbackOptimisticRecord = (candidate: GridRecord) => (
+        candidate.id === previousRecord.id && shouldRollbackGridRecord(candidate, optimisticRecord) ? previousRecord : candidate
+      );
+      recordsRef.current = recordsRef.current.map(rollbackOptimisticRecord);
+      setRecords((current) => current.map(rollbackOptimisticRecord));
       if (sequence === saveSequenceRef.current) setStatus(caught instanceof Error ? caught.message : "Save failed");
     }
   }
@@ -116,11 +123,13 @@ export function EditableGrid({
     if (kind === "members") {
       const properties = Object.fromEntries(columns.map((column) => [column.name, ""]));
       const created = await createMember(projectId, dimension.id, { memberKey: "", properties });
+      recordsRef.current = [...recordsRef.current, created];
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     } else {
       const properties = Object.fromEntries(columns.map((column) => [column.name, ""]));
       const created = await createRelationship(projectId, dimension.id, { parentKey: "", childKey: "", properties });
+      recordsRef.current = [...recordsRef.current, created];
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     }
@@ -133,11 +142,13 @@ export function EditableGrid({
     if (kind === "members") {
       const member = source as DimensionMemberRecord;
       const created = await createMember(projectId, dimension.id, { memberKey: `${member.memberKey}_Copy`, properties: { ...member.properties, [schema.memberKeyField]: `${member.memberKey}_Copy` } });
+      recordsRef.current = [...recordsRef.current, created];
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     } else {
       const relationship = source as DimensionRelationshipRecord;
       const created = await createRelationship(projectId, dimension.id, { parentKey: relationship.parentKey, childKey: relationship.childKey, properties: relationship.properties });
+      recordsRef.current = [...recordsRef.current, created];
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
     }
@@ -147,6 +158,7 @@ export function EditableGrid({
     if (!selectedId) return;
     if (kind === "members") await deleteMember(projectId, selectedId);
     else await deleteRelationship(projectId, selectedId);
+    recordsRef.current = recordsRef.current.filter((record) => record.id !== selectedId);
     setRecords((current) => current.filter((record) => record.id !== selectedId));
     setSelectedId(null);
     setTotal((current) => Math.max(0, current - 1));

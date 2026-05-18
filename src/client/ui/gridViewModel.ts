@@ -33,5 +33,42 @@ export function buildOptimisticGridRecord(
 }
 
 export function shouldRollbackGridRecord(current: GridRecord, optimisticRecord: GridRecord) {
-  return JSON.stringify(current) === JSON.stringify(optimisticRecord);
+  if (current.id !== optimisticRecord.id) return false;
+  if (!areGridPropertiesEqual(current.properties, optimisticRecord.properties)) return false;
+
+  if ("memberKey" in current && "memberKey" in optimisticRecord) {
+    return current.memberKey === optimisticRecord.memberKey;
+  }
+
+  if ("parentKey" in current && "parentKey" in optimisticRecord) {
+    return current.parentKey === optimisticRecord.parentKey && current.childKey === optimisticRecord.childKey;
+  }
+
+  return false;
+}
+
+function areGridPropertiesEqual(left: Record<string, unknown>, right: Record<string, unknown>) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+
+  return leftKeys.every((key) => Object.prototype.hasOwnProperty.call(right, key) && areGridValuesEqual(left[key], right[key]));
+}
+
+function areGridValuesEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return Array.isArray(left)
+      && Array.isArray(right)
+      && left.length === right.length
+      && left.every((value, index) => areGridValuesEqual(value, right[index]));
+  }
+  if (isGridObject(left) || isGridObject(right)) {
+    return isGridObject(left) && isGridObject(right) && areGridPropertiesEqual(left, right);
+  }
+  return false;
+}
+
+function isGridObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
