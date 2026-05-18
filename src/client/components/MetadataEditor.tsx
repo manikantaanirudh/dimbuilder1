@@ -28,29 +28,53 @@ export function MetadataEditor({
 }) {
   const [draft, setDraft] = useState(dimension);
   const [status, setStatus] = useState("");
+  const draftRef = useRef(dimension);
   const savingRef = useRef(false);
+  const inFlightSaveKeyRef = useRef<string | null>(null);
   const lastSavedRef = useRef(getDraftSaveKey(dimension));
+  const pendingSaveRef = useRef(false);
 
   useEffect(() => {
     setDraft(dimension);
+    draftRef.current = dimension;
     setStatus("");
     savingRef.current = false;
+    inFlightSaveKeyRef.current = null;
     lastSavedRef.current = getDraftSaveKey(dimension);
+    pendingSaveRef.current = false;
   }, [dimension.id]);
 
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
   async function save() {
-    const saveKey = getDraftSaveKey(draft);
-    if (savingRef.current || saveKey === lastSavedRef.current) return;
+    const draftToSave = draftRef.current;
+    const saveKey = getDraftSaveKey(draftToSave);
+    if (saveKey === lastSavedRef.current) return;
+
+    if (savingRef.current) {
+      if (saveKey !== inFlightSaveKeyRef.current) pendingSaveRef.current = true;
+      return;
+    }
 
     savingRef.current = true;
+    inFlightSaveKeyRef.current = saveKey;
     setStatus("Saving...");
     try {
-      await patchDimension(projectId, dimension.id, draft);
+      await patchDimension(projectId, dimension.id, draftToSave);
       lastSavedRef.current = saveKey;
       setStatus("Saved");
       onSaved();
     } finally {
       savingRef.current = false;
+      inFlightSaveKeyRef.current = null;
+      if (pendingSaveRef.current && getDraftSaveKey(draftRef.current) !== lastSavedRef.current) {
+        pendingSaveRef.current = false;
+        void save();
+      } else {
+        pendingSaveRef.current = false;
+      }
     }
   }
 
