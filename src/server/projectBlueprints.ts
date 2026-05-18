@@ -63,6 +63,7 @@ export function createProjectFromBlueprints(
 
     repos.audit.record({
       projectId: project.id,
+      userId: input.createdBy,
       action: "project.create",
       entityType: "project",
       entityId: project.id,
