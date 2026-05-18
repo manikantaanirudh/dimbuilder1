@@ -34,7 +34,10 @@ let transactionCounter = 0;
 
 export function createRepositories(db: AppDatabase) {
   return {
-    // Keep repository transactions synchronous; async callbacks would release the savepoint before awaited writes finish.
+    // Synchronous-only savepoint boundary. TypeScript rejects normal async/Promise-like
+    // callbacks, and runtime rejects native async callbacks plus returned thenables.
+    // Callers must not start async work inside the callback (async IIFEs, timers, etc.):
+    // JavaScript cannot cancel scheduled continuations after the transaction returns.
     transaction<T>(action: () => T, ..._guard: T extends PromiseLike<unknown> ? [never] : []): T {
       return runInTransaction(db, action);
     },

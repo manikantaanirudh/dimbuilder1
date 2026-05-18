@@ -7,6 +7,7 @@ import { defaultAppConfig } from "../shared/appConfigDefaults";
 import { exportProjectXml } from "../shared/xmlExport";
 
 describe("project blueprints", () => {
+  // This block is intentionally unreachable at runtime but still compiled by TypeScript.
   if (false) {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
@@ -148,7 +149,7 @@ describe("project blueprints", () => {
     }
   });
 
-  it("rejects native async transaction callbacks before post-await writes run", async () => {
+  it("rejects native async transaction callbacks before invoking them", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
