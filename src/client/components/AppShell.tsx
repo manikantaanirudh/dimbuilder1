@@ -53,7 +53,7 @@ export function AppShell({
   );
 
   const activeDimension = useMemo(
-    () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? store.dimensions[0],
+    () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? null,
     [activeDimensionId, store.dimensions]
   );
 
@@ -77,6 +77,13 @@ export function AppShell({
           <span className="sidebar-label">Project</span>
           <strong>{store.projects[0]?.name ?? "No project imported"}</strong>
           <small>{store.projects[0]?.sourceFileName ?? appConfig.application.supportText}</small>
+          <button
+            className={`nav-item ${activeDimensionId === null ? "selected" : ""}`}
+            onClick={() => setActiveDimensionId(null)}
+          >
+            <span>Command Dashboard</span>
+            <small>Project overview and readiness</small>
+          </button>
         </div>
 
         <div className="sidebar-section-header">
@@ -96,8 +103,24 @@ export function AppShell({
           >
             <span>{item.label}</span>
             <small>{item.subtitle}</small>
-            {item.issueSummary.errors > 0 && <b className="nav-issue error">{item.issueSummary.errors}</b>}
-            {item.issueSummary.errors === 0 && item.issueSummary.warnings > 0 && <b className="nav-issue warning">{item.issueSummary.warnings}</b>}
+            {item.issueSummary.errors > 0 && (
+              <b
+                className="nav-issue error"
+                title={`${item.issueSummary.errors} errors`}
+                aria-label={`${item.issueSummary.errors} errors`}
+              >
+                {item.issueSummary.errors}
+              </b>
+            )}
+            {item.issueSummary.errors === 0 && item.issueSummary.warnings > 0 && (
+              <b
+                className="nav-issue warning"
+                title={`${item.issueSummary.warnings} warnings`}
+                aria-label={`${item.issueSummary.warnings} warnings`}
+              >
+                {item.issueSummary.warnings}
+              </b>
+            )}
           </button>
         ))}
       </aside>

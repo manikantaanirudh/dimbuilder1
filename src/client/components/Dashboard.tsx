@@ -105,10 +105,12 @@ export function Dashboard({
             </div>
           ) : (
             <EmptyState
-              title="No project imported"
-              action={<ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import XLSX</ActionButton>}
+              title={project ? "No dimensions available" : "No project imported"}
+              action={!project ? <ActionButton variant="primary" onClick={onImport}><FileUp size={16} /> Import XLSX</ActionButton> : undefined}
             >
-              Import the OneStream XF metadata workbook to inspect dimensions, validate hierarchy issues, and export controlled metadata files.
+              {project
+                ? "This project has no imported dimensions to inspect."
+                : "Import the OneStream XF metadata workbook to inspect dimensions, validate hierarchy issues, and export controlled metadata files."}
             </EmptyState>
           )}
         </Panel>
