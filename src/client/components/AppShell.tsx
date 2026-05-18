@@ -4,6 +4,7 @@ import {
   FileUp,
   RotateCcw,
   Save,
+  Search,
   ShieldCheck,
   Undo2
 } from "lucide-react";
@@ -12,6 +13,8 @@ import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
   buildDimensionNavItems,
   buildIssueSummary,
+  filterDimensionNavItems,
+  resolveActiveDimensionId,
   type DimensionNavItem,
   getExportAvailability
 } from "../ui/viewModel";
@@ -20,9 +23,9 @@ import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
 import { ExportModal, ImportModal } from "./ImportExportModals";
-import { ActionButton, StatusBadge } from "./ui";
+import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
 
-const DASHBOARD_NAV_VALUE = "__dashboard__";
+const PROJECT_OVERVIEW_VALUE = "__project_overview__";
 
 function mobileNavLabel(item: DimensionNavItem) {
   if (item.issueSummary.errors > 0) return `${item.label} - ${item.issueSummary.errors} errors`;
@@ -38,7 +41,8 @@ export function AppShell({
   configError?: string | null;
 }) {
   const store = useProjectStore();
-  const [activeDimensionId, setActiveDimensionId] = useState<string | null>(null);
+  const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
+  const [navSearch, setNavSearch] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [status, setStatus] = useState("");
@@ -61,10 +65,21 @@ export function AppShell({
     [appConfig.validation.exportBlockedBySeverities, dimensionDisplayConfig, store.dimensions, store.issues]
   );
 
-  const activeDimension = useMemo(
-    () => store.dimensions.find((dimension) => dimension.id === activeDimensionId) ?? null,
-    [activeDimensionId, store.dimensions]
+  const resolvedActiveDimensionId = activeWorkspace === PROJECT_OVERVIEW_VALUE
+    ? null
+    : resolveActiveDimensionId(activeWorkspace, store.dimensions);
+
+  const filteredDimensionNavItems = useMemo(
+    () => filterDimensionNavItems(dimensionNavItems, navSearch),
+    [dimensionNavItems, navSearch]
   );
+
+  const activeDimension = useMemo(
+    () => store.dimensions.find((dimension) => dimension.id === resolvedActiveDimensionId) ?? null,
+    [resolvedActiveDimensionId, store.dimensions]
+  );
+
+  const showProjectOverview = activeWorkspace === PROJECT_OVERVIEW_VALUE || !activeDimension || !store.selectedProjectId;
 
   async function runValidation() {
     if (!store.selectedProjectId) return;
@@ -76,23 +91,34 @@ export function AppShell({
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className="sidebar workbench-nav">
         <div className="brand">
-          <span className="brand-mark"><Database size={18} /></span>
+          <span className="brand-mark"><Database size={17} /></span>
           <span>{appConfig.application.productName}</span>
         </div>
 
-        <div className="sidebar-project">
+        <div className="nav-project">
           <span className="sidebar-label">Project</span>
           <strong>{store.projects[0]?.name ?? "No project imported"}</strong>
           <small>{store.projects[0]?.sourceFileName ?? appConfig.application.supportText}</small>
-          <button
-            className={`nav-item ${activeDimensionId === null ? "selected" : ""}`}
-            onClick={() => setActiveDimensionId(null)}
-          >
-            <span>Command Dashboard</span>
-            <small>Project overview and readiness</small>
-          </button>
+        </div>
+
+        <button
+          className={`nav-overview ${activeWorkspace === PROJECT_OVERVIEW_VALUE ? "selected" : ""}`}
+          onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)}
+        >
+          <span>Project overview</span>
+          <small>{issueSummary.total ? `${issueSummary.total} issues` : "Ready"}</small>
+        </button>
+
+        <div className="nav-search search-box">
+          <Search size={14} />
+          <input
+            value={navSearch}
+            onChange={(event) => setNavSearch(event.target.value)}
+            placeholder="Search dimensions"
+            aria-label="Search dimensions"
+          />
         </div>
 
         <div className="sidebar-section-header">
@@ -103,11 +129,14 @@ export function AppShell({
         </div>
 
         {dimensionNavItems.length === 0 && <div className="empty-sidebar">Import a workbook to begin.</div>}
-        {dimensionNavItems.map((item) => (
+        {dimensionNavItems.length > 0 && filteredDimensionNavItems.length === 0 && (
+          <div className="empty-sidebar">No dimensions match this search.</div>
+        )}
+        {filteredDimensionNavItems.map((item) => (
           <button
             key={item.id}
             className={`nav-item ${activeDimension?.id === item.id ? "selected" : ""}`}
-            onClick={() => setActiveDimensionId(item.id)}
+            onClick={() => setActiveWorkspace(item.id)}
             title={item.subtitle}
           >
             <span>{item.label}</span>
@@ -144,16 +173,16 @@ export function AppShell({
             <span>Workspace</span>
             <select
               aria-label="Mobile workspace navigation"
-              value={activeDimension?.id ?? DASHBOARD_NAV_VALUE}
-              onChange={(event) => setActiveDimensionId(event.currentTarget.value === DASHBOARD_NAV_VALUE ? null : event.currentTarget.value)}
+              value={showProjectOverview ? PROJECT_OVERVIEW_VALUE : activeDimension?.id ?? PROJECT_OVERVIEW_VALUE}
+              onChange={(event) => setActiveWorkspace(event.currentTarget.value === PROJECT_OVERVIEW_VALUE ? PROJECT_OVERVIEW_VALUE : event.currentTarget.value)}
             >
-              <option value={DASHBOARD_NAV_VALUE}>Command Dashboard</option>
+              <option value={PROJECT_OVERVIEW_VALUE}>Project overview</option>
               {dimensionNavItems.map((item) => (
                 <option key={item.id} value={item.id}>{mobileNavLabel(item)}</option>
               ))}
             </select>
           </label>
-          <div className="toolbar-actions">
+          <ToolbarGroup className="toolbar-actions">
             {toolbar.showImport && (
               <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
                 <FileUp size={16} /> Import
@@ -176,14 +205,14 @@ export function AppShell({
             {toolbar.showSave && <ActionButton disabled><Save size={16} /> Save</ActionButton>}
             {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
             {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
-          </div>
+          </ToolbarGroup>
         </header>
 
         {configError && <div className="banner error">Configuration failed to load. Using defaults: {configError}</div>}
         {store.error && <div className="banner error">{store.error}</div>}
         {status && <div className="banner">{status}</div>}
 
-        {activeDimension && store.selectedProjectId ? (
+        {!showProjectOverview && activeDimension && store.selectedProjectId ? (
           <DimensionWorkspace
             projectId={store.selectedProjectId}
             dimension={activeDimension}
@@ -200,7 +229,7 @@ export function AppShell({
             issues={store.issues}
             onImport={() => setImportOpen(true)}
             exportAvailability={exportAvailability}
-            onOpenDimension={setActiveDimensionId}
+            onOpenDimension={setActiveWorkspace}
             appConfig={appConfig}
           />
         )}

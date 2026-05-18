@@ -105,3 +105,55 @@ export function ActionLink({
     </a>
   );
 }
+
+export function IconButton({
+  className = "",
+  type = "button",
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: ReactNode;
+}) {
+  return (
+    <button {...props} type={type} className={`icon-button ${className}`.trim()}>
+      {children}
+    </button>
+  );
+}
+
+export function ToolbarGroup({
+  children,
+  className = ""
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`toolbar-group ${className}`.trim()}>{children}</div>;
+}
+
+export function FactStrip({
+  children,
+  className = ""
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`fact-strip ${className}`.trim()}>{children}</div>;
+}
+
+export function FactItem({
+  label,
+  value,
+  tone = "neutral"
+}: {
+  label: string;
+  value: ReactNode;
+  tone?: Tone;
+}) {
+  return (
+    <span className={`fact-item ${tone}`}>
+      <span>{label}</span>
+      <b>{value}</b>
+    </span>
+  );
+}
