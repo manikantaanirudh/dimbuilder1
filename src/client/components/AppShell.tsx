@@ -12,6 +12,7 @@ import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
   buildDimensionNavItems,
   buildIssueSummary,
+  type DimensionNavItem,
   getExportAvailability
 } from "../ui/viewModel";
 import { validateProject } from "../api/client";
@@ -20,6 +21,14 @@ import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
 import { ExportModal, ImportModal } from "./ImportExportModals";
 import { ActionButton, StatusBadge } from "./ui";
+
+const DASHBOARD_NAV_VALUE = "__dashboard__";
+
+function mobileNavLabel(item: DimensionNavItem) {
+  if (item.issueSummary.errors > 0) return `${item.label} - ${item.issueSummary.errors} errors`;
+  if (item.issueSummary.warnings > 0) return `${item.label} - ${item.issueSummary.warnings} warnings`;
+  return `${item.label} - Clean`;
+}
 
 export function AppShell({
   appConfig,
@@ -131,6 +140,19 @@ export function AppShell({
             <strong>{appConfig.application.title}</strong>
             <span>{store.loading ? "Loading..." : store.projects[0]?.name ?? "No project imported"}</span>
           </div>
+          <label className="mobile-nav">
+            <span>Workspace</span>
+            <select
+              aria-label="Mobile workspace navigation"
+              value={activeDimension?.id ?? DASHBOARD_NAV_VALUE}
+              onChange={(event) => setActiveDimensionId(event.currentTarget.value === DASHBOARD_NAV_VALUE ? null : event.currentTarget.value)}
+            >
+              <option value={DASHBOARD_NAV_VALUE}>Command Dashboard</option>
+              {dimensionNavItems.map((item) => (
+                <option key={item.id} value={item.id}>{mobileNavLabel(item)}</option>
+              ))}
+            </select>
+          </label>
           <div className="toolbar-actions">
             {toolbar.showImport && (
               <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
