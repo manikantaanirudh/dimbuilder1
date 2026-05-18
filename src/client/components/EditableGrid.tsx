@@ -18,12 +18,13 @@ import {
   patchMember,
   patchRelationship
 } from "../api/client";
+import { ActionButton, StatusBadge } from "./ui";
 
 type GridRecord = DimensionMemberRecord | DimensionRelationshipRecord;
 
 const MAX_GRID_PAGE_SIZE = 1000;
 
-function clampGridPageSize(pageSize: number) {
+export function clampGridPageSize(pageSize: number) {
   const integerPageSize = Number.isFinite(pageSize) ? Math.trunc(pageSize) : 1;
   return Math.min(MAX_GRID_PAGE_SIZE, Math.max(1, integerPageSize));
 }
@@ -83,18 +84,23 @@ export function EditableGrid({
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
     const properties = { ...record.properties, [field.name]: value };
     setRecords((current) => current.map((candidate) => candidate.id === record.id ? { ...candidate, properties } as GridRecord : candidate));
+    setStatus("Saving...");
 
-    if (kind === "members") {
-      const member = record as DimensionMemberRecord;
-      const memberKey = field.name === schema.memberKeyField ? value : member.memberKey;
-      await patchMember(projectId, member.id, { memberKey, properties });
-    } else {
-      const relationship = record as DimensionRelationshipRecord;
-      const parentKey = field.name === "Parent" ? value : relationship.parentKey;
-      const childKey = field.name === "Child" ? value : relationship.childKey;
-      await patchRelationship(projectId, relationship.id, { parentKey, childKey, properties });
+    try {
+      if (kind === "members") {
+        const member = record as DimensionMemberRecord;
+        const memberKey = field.name === schema.memberKeyField ? value : member.memberKey;
+        await patchMember(projectId, member.id, { memberKey, properties });
+      } else {
+        const relationship = record as DimensionRelationshipRecord;
+        const parentKey = field.name === "Parent" ? value : relationship.parentKey;
+        const childKey = field.name === "Child" ? value : relationship.childKey;
+        await patchRelationship(projectId, relationship.id, { parentKey, childKey, properties });
+      }
+      setStatus("Saved");
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Save failed");
     }
-    setStatus("Saved");
   }
 
   async function addRow() {
@@ -150,15 +156,24 @@ export function EditableGrid({
   return (
     <div className="panel grid-panel">
       <div className="grid-toolbar">
-        <div className="search-box"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${kind}`} /></div>
-        <button onClick={() => void addRow()}><Plus size={15} /> Add</button>
-        <button disabled={!selectedId} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</button>
-        <button disabled={!selectedId} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</button>
-        <button onClick={() => setShowColumns((current) => !current)}><EyeOff size={15} /> Columns</button>
-        <span className="grid-status">{status}</span>
+        <div className="grid-toolbar-primary">
+          <div className="search-box">
+            <Search size={15} />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${kind}`} />
+          </div>
+          <StatusBadge tone={status === "Saved" ? "success" : status.startsWith("Loading") ? "info" : "neutral"}>
+            {status || `${total} rows`}
+          </StatusBadge>
+        </div>
+        <div className="grid-toolbar-actions">
+          <ActionButton onClick={() => void addRow()}><Plus size={15} /> Add</ActionButton>
+          <ActionButton disabled={!selectedId} title={selectedId ? "Duplicate selected row" : "Select a row to duplicate"} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</ActionButton>
+          <ActionButton variant="danger" disabled={!selectedId} title={selectedId ? "Delete selected row" : "Select a row to delete"} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</ActionButton>
+          <ActionButton onClick={() => setShowColumns((current) => !current)}><EyeOff size={15} /> Columns</ActionButton>
+        </div>
       </div>
       {showColumns && (
-        <div className="column-menu">
+        <div className="column-menu" aria-label="Column visibility">
           {columns.map((column) => (
             <label key={column.name}>
               <input
@@ -171,7 +186,7 @@ export function EditableGrid({
                   return next;
                 })}
               />
-              {column.name}
+              <span>{column.name}{column.required ? " *" : ""}</span>
             </label>
           ))}
         </div>

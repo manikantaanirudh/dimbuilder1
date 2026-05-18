@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { clampGridPageSize } from "../client/components/EditableGrid";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { ValidationIssue } from "../shared/types";
 import {
@@ -29,6 +30,13 @@ function issue(overrides: Partial<ValidationIssue>): ValidationIssue {
 }
 
 describe("client UI view model", () => {
+  it("clamps grid page size for stable paged editing", () => {
+    expect(clampGridPageSize(0)).toBe(1);
+    expect(clampGridPageSize(600)).toBe(600);
+    expect(clampGridPageSize(5000)).toBe(1000);
+    expect(clampGridPageSize(Number.NaN)).toBe(1);
+  });
+
   it("summarizes issues for all dimensions and one dimension", () => {
     const issues = [
       issue({ id: "error-1", severity: "error" }),
