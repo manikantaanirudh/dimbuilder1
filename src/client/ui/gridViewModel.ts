@@ -2,12 +2,27 @@ import type { DimensionMemberRecord, DimensionRelationshipRecord } from "../../s
 
 export type GridRecord = DimensionMemberRecord | DimensionRelationshipRecord;
 export type GridKind = "members" | "relationships";
+export type GridStatusTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 const MAX_GRID_PAGE_SIZE = 1000;
 
 export function clampGridPageSize(pageSize: number) {
   const integerPageSize = Number.isFinite(pageSize) ? Math.trunc(pageSize) : 1;
   return Math.min(MAX_GRID_PAGE_SIZE, Math.max(1, integerPageSize));
+}
+
+export function buildGridActionTitles(selectedId: string | null) {
+  return {
+    duplicateTitle: selectedId ? "Duplicate selected row" : "Select a row to duplicate",
+    deleteTitle: selectedId ? "Delete selected row" : "Select a row to delete"
+  };
+}
+
+export function buildGridStatusTone(status: string): GridStatusTone {
+  if (status === "Saved") return "success";
+  if (status.startsWith("Loading")) return "info";
+  if (status.toLowerCase().includes("failed") || status.toLowerCase().includes("error")) return "danger";
+  return "neutral";
 }
 
 export function buildOptimisticGridRecord(

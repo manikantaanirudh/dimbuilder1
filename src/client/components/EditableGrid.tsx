@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Copy, EyeOff, Plus, Search, Trash2 } from "lucide-react";
+import { Columns3, Copy, Plus, Search, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
 import type {
@@ -19,6 +19,8 @@ import {
   patchRelationship
 } from "../api/client";
 import {
+  buildGridActionTitles,
+  buildGridStatusTone,
   buildOptimisticGridRecord,
   clampGridPageSize,
   shouldRollbackGridRecord,
@@ -55,6 +57,8 @@ export function EditableGrid({
   const saveSequenceRef = useRef(0);
   const rowSaveTokensRef = useRef(new Map<string, number>());
   const columnMenuId = `${kind}-column-menu`;
+  const actionTitles = buildGridActionTitles(selectedId);
+  const statusTone = buildGridStatusTone(status);
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
@@ -203,25 +207,26 @@ export function EditableGrid({
 
   return (
     <div className="panel grid-panel">
-      <div className="grid-toolbar">
+      <div className="grid-toolbar workbench-grid-toolbar">
         <div className="grid-toolbar-primary">
+          <strong>{kind === "members" ? "Members" : "Relationships"}</strong>
           <div className="search-box">
             <Search size={15} />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${kind}`} />
           </div>
-          <StatusBadge tone={status === "Saved" ? "success" : status.startsWith("Loading") ? "info" : "neutral"}>
+          <StatusBadge tone={statusTone}>
             {status || `${total} rows`}
           </StatusBadge>
         </div>
         <div className="grid-toolbar-actions">
           <ActionButton onClick={() => void addRow()}><Plus size={15} /> Add</ActionButton>
-          <ActionButton disabled={!selectedId} title={selectedId ? "Duplicate selected row" : "Select a row to duplicate"} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</ActionButton>
-          <ActionButton variant="danger" disabled={!selectedId} title={selectedId ? "Delete selected row" : "Select a row to delete"} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</ActionButton>
-          <ActionButton aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}><EyeOff size={15} /> Columns</ActionButton>
+          <ActionButton disabled={!selectedId} title={actionTitles.duplicateTitle} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</ActionButton>
+          <ActionButton variant="danger" disabled={!selectedId} title={actionTitles.deleteTitle} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</ActionButton>
+          <ActionButton aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}><Columns3 size={15} /> Columns</ActionButton>
         </div>
       </div>
       {showColumns && (
-        <div id={columnMenuId} className="column-menu" aria-label="Column visibility">
+        <div id={columnMenuId} className="column-menu workbench-column-menu" aria-label="Column visibility">
           {columns.map((column) => (
             <label key={column.name}>
               <input
@@ -239,7 +244,7 @@ export function EditableGrid({
           ))}
         </div>
       )}
-      <div className="data-grid" ref={parentRef}>
+      <div className="data-grid workbench-data-grid" ref={parentRef}>
         <div className="grid-header" style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(160px, 1fr))` }}>
           {visibleColumns.map((column) => <div key={column.name}>{column.name}{column.required ? " *" : ""}</div>)}
         </div>

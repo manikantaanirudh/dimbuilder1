@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildOptimisticGridRecord, clampGridPageSize, shouldRollbackGridRecord } from "../client/ui/gridViewModel";
+import {
+  buildGridActionTitles,
+  buildGridStatusTone,
+  buildOptimisticGridRecord,
+  clampGridPageSize,
+  shouldRollbackGridRecord
+} from "../client/ui/gridViewModel";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { DimensionMemberRecord, DimensionRelationshipRecord, ValidationIssue } from "../shared/types";
 import {
@@ -39,6 +45,25 @@ describe("client UI view model", () => {
     expect(clampGridPageSize(600)).toBe(600);
     expect(clampGridPageSize(5000)).toBe(1000);
     expect(clampGridPageSize(Number.NaN)).toBe(1);
+  });
+
+  it("builds selected row action titles for the grid toolbar", () => {
+    expect(buildGridActionTitles(null)).toEqual({
+      duplicateTitle: "Select a row to duplicate",
+      deleteTitle: "Select a row to delete"
+    });
+
+    expect(buildGridActionTitles("row-1")).toEqual({
+      duplicateTitle: "Duplicate selected row",
+      deleteTitle: "Delete selected row"
+    });
+  });
+
+  it("maps grid status text to stable badge tones", () => {
+    expect(buildGridStatusTone("Saved")).toBe("success");
+    expect(buildGridStatusTone("Loading rows...")).toBe("info");
+    expect(buildGridStatusTone("Save failed")).toBe("danger");
+    expect(buildGridStatusTone("")).toBe("neutral");
   });
 
   it("updates canonical member keys in optimistic grid records", () => {
