@@ -1094,8 +1094,8 @@ svg {
 
 .grid-row.selected input,
 .grid-row.selected select {
-  background: var(--primary-soft);
-  box-shadow: inset 3px 0 0 var(--primary);
+  background: transparent;
+  box-shadow: none;
 }
 
 .grid-row.selected {
@@ -1515,9 +1515,15 @@ svg {
     display: none;
   }
 
+  .toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   .mobile-nav {
-    width: 100%;
+    width: auto;
     max-width: 520px;
+    flex: 1 1 320px;
     display: grid;
     gap: 5px;
     color: var(--muted-strong);
