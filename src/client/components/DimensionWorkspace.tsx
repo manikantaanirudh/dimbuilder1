@@ -1,30 +1,21 @@
 import { useEffect, useState } from "react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
+import { buildIssueSummary, getWorkspaceTabs } from "../ui/viewModel";
 import { EditableGrid } from "./EditableGrid";
 import { HierarchyTree } from "./HierarchyTree";
 import { IssuePanel } from "./IssuePanel";
 import { MetadataEditor } from "./MetadataEditor";
+import { StatusBadge } from "./ui";
 import { XmlPreview } from "./XmlPreview";
 
-const allTabs = ["Overview", "Members", "Relationships", "Hierarchy", "XML Preview", "Issues"] as const;
-type WorkspaceTab = (typeof allTabs)[number];
-const tabsWithoutXml: readonly WorkspaceTab[] = ["Overview", "Members", "Relationships", "Hierarchy", "Issues"];
-
-function isWorkspaceTab(value: string): value is WorkspaceTab {
-  return allTabs.includes(value as WorkspaceTab);
-}
-
-function getAvailableTabs(xmlPreviewEnabled: boolean): readonly WorkspaceTab[] {
-  return xmlPreviewEnabled ? allTabs : tabsWithoutXml;
-}
+type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML Preview" | "Issues";
 
 function getFallbackTab(defaultWorkspaceTab: string, xmlPreviewEnabled: boolean): WorkspaceTab {
-  const availableTabs = getAvailableTabs(xmlPreviewEnabled);
-  return isWorkspaceTab(defaultWorkspaceTab) && availableTabs.includes(defaultWorkspaceTab)
-    ? defaultWorkspaceTab
-    : "Overview";
+  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
+  return availableTabs.includes(defaultWorkspaceTab as WorkspaceTab) ? defaultWorkspaceTab as WorkspaceTab : "Overview";
 }
 
 export function DimensionWorkspace({
@@ -42,11 +33,11 @@ export function DimensionWorkspace({
 }) {
   const xmlPreviewEnabled = appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
   const defaultWorkspaceTab = appConfig.ui.defaultWorkspaceTab;
-  const availableTabs = getAvailableTabs(xmlPreviewEnabled);
   const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
-  const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
-  const blockingErrors = dimensionIssues.filter((issue) => issue.severity === "error").length;
+  const issueSummary = buildIssueSummary(dimensionIssues, appConfig.validation.exportBlockedBySeverities);
+  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
+  const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionDisplayConfig = appConfig.dimensions.display;
 
   useEffect(() => {
@@ -58,14 +49,20 @@ export function DimensionWorkspace({
     <section className="workspace">
       <div className="workspace-header">
         <div>
+          <span className="section-kicker">{dimension.dimensionType} dimension</span>
           <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
-          <span>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</span>
+          <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
         </div>
-        <div className={blockingErrors ? "status-strip error" : "status-strip"}>
-          <b>{blockingErrors}</b> blocking errors
+        <div className="workspace-health">
+          <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
+            {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+            {issueSummary.blocksExport ? "Export blocked" : issueSummary.total ? "Needs review" : "Ready"}
+          </StatusBadge>
+          <span><b>{issueSummary.errors}</b> errors</span>
+          <span><b>{issueSummary.warnings}</b> warnings</span>
         </div>
       </div>
-      <nav className="tabs">
+      <nav className="tabs" aria-label="Dimension workspace tabs">
         {availableTabs.map((item) => (
           <button key={item} className={activeTab === item ? "active" : ""} onClick={() => setTab(item)}>
             {item}
@@ -87,9 +84,9 @@ export function DimensionWorkspace({
               xmlExportEnabled={appConfig.export.xml.enabled}
             />
           )}
-          {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} expanded />}
+          {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} expanded />}
         </div>
-        <IssuePanel dimension={dimension} issues={dimensionIssues} />
+        <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} />
       </div>
     </section>
   );

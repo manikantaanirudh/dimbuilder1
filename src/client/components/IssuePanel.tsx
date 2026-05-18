@@ -1,36 +1,71 @@
-import type { DimensionRecord, ValidationIssue } from "../../shared/types";
+import { AlertTriangle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
+import type { ClientAppConfig } from "../../shared/appConfigTypes";
+import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
+import { buildIssueSummary } from "../ui/viewModel";
+import { EmptyState, SeverityPill, StatusBadge } from "./ui";
 
 export function IssuePanel({
   dimension,
   issues,
+  appConfig,
   expanded = false
 }: {
   dimension: DimensionRecord;
   issues: ValidationIssue[];
+  appConfig: ClientAppConfig;
   expanded?: boolean;
 }) {
-  const errors = issues.filter((issue) => issue.severity === "error").length;
-  const warnings = issues.filter((issue) => issue.severity === "warning").length;
+  const summary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
+  const visibleIssues = issues.slice(0, expanded ? 500 : 8);
 
   return (
     <aside className={expanded ? "panel issue-panel expanded" : "panel issue-panel"}>
-      <h2>Validation</h2>
-      <div className="issue-summary">
-        <span><b>{errors}</b> errors</span>
-        <span><b>{warnings}</b> warnings</span>
+      <div className="panel-heading compact">
+        <div>
+          <span className="section-kicker">Validation</span>
+          <h2>{expanded ? "Issues" : "Issue rail"}</h2>
+        </div>
+        <StatusBadge tone={summary.blocksExport ? "danger" : summary.total ? "warning" : "success"}>
+          {summary.blocksExport ? "Blocked" : summary.total ? "Review" : "Clean"}
+        </StatusBadge>
       </div>
-      {issues.length === 0 ? (
-        <div className="empty-state">No issues recorded for {dimension.sheetName}.</div>
+      <div className="issue-summary">
+        <span><b>{summary.errors}</b> errors</span>
+        <span><b>{summary.warnings}</b> warnings</span>
+        {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
+      </div>
+      {visibleIssues.length === 0 ? (
+        <EmptyState title="No issues recorded">
+          {dimension.sheetName} has no recorded validation issues.
+        </EmptyState>
       ) : (
-        issues.slice(0, expanded ? 500 : 8).map((issue) => (
-          <div className={`issue ${issue.severity}`} key={issue.id}>
-            <b>{issue.code}</b>
-            <span>{issue.message}</span>
-            {issue.rowNumber ? <small>Row {issue.rowNumber}</small> : null}
-          </div>
-        ))
+        <div className="issue-list">
+          {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} />)}
+        </div>
       )}
     </aside>
   );
 }
 
+function IssueCard({ issue }: { issue: ValidationIssue }) {
+  return (
+    <div className={`issue ${issue.severity}`}>
+      <div className="issue-icon">{iconForSeverity(issue.severity)}</div>
+      <div>
+        <div className="issue-title">
+          <b>{issue.code}</b>
+          <SeverityPill severity={issue.severity} />
+        </div>
+        <span>{issue.message}</span>
+        <small>{[issue.fieldName, issue.rowNumber ? `Row ${issue.rowNumber}` : ""].filter(Boolean).join(" | ")}</small>
+      </div>
+    </div>
+  );
+}
+
+function iconForSeverity(severity: Severity) {
+  if (severity === "error") return <AlertTriangle size={16} />;
+  if (severity === "warning") return <TriangleAlert size={16} />;
+  if (severity === "info") return <Info size={16} />;
+  return <CheckCircle2 size={16} />;
+}
