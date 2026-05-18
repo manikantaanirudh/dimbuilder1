@@ -13,9 +13,12 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
 
   router.post("/", (req, res, next) => {
     try {
+      const body = req.body ?? {};
+      const name = String(body.name ?? "").trim() || "New Metadata Project";
+      const description = String(body.description ?? "");
       const project = createProjectFromBlueprints(repos, config, {
-        name: String(req.body.name ?? "").trim() || "New Metadata Project",
-        description: String(req.body.description ?? ""),
+        name,
+        description,
         createdBy: "local-admin"
       });
       res.status(201).json(project);

@@ -27,9 +27,20 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";
+    const status = resolveErrorStatus(error);
     console.error(error);
-    res.status(500).json({ error: message });
+    res.status(status).json({ error: message });
   });
 
   return app;
+}
+
+function resolveErrorStatus(error: unknown): number {
+  if (!error || typeof error !== "object") return 500;
+
+  const { status, statusCode } = error as { status?: unknown; statusCode?: unknown };
+  const candidate = typeof status === "number" ? status : statusCode;
+  if (typeof candidate !== "number" || !Number.isFinite(candidate)) return 500;
+
+  return Math.min(599, Math.max(400, Math.trunc(candidate)));
 }
