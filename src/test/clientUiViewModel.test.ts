@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildOptimisticGridRecord, clampGridPageSize, shouldRollbackGridRecord } from "../client/components/EditableGrid";
+import { buildOptimisticGridRecord, clampGridPageSize, shouldRollbackGridRecord } from "../client/ui/gridViewModel";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { DimensionMemberRecord, DimensionRelationshipRecord, ValidationIssue } from "../shared/types";
 import {
