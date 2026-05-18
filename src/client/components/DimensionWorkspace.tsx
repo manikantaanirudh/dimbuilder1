@@ -11,7 +11,7 @@ import { MetadataEditor } from "./MetadataEditor";
 import { StatusBadge } from "./ui";
 import { XmlPreview } from "./XmlPreview";
 
-type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML Preview" | "Issues";
+type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML" | "Issues";
 
 function getFallbackTab(defaultWorkspaceTab: string, xmlPreviewEnabled: boolean): WorkspaceTab {
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
@@ -82,7 +82,7 @@ export function DimensionWorkspace({
           {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
           {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
           {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
-          {activeTab === "XML Preview" && xmlPreviewEnabled && (
+          {activeTab === "XML" && xmlPreviewEnabled && (
             <XmlPreview
               projectId={projectId}
               dimension={dimension}

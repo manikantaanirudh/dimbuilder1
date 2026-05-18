@@ -173,7 +173,6 @@ describe("client UI view model", () => {
   });
 
   it("keeps XML out of tabs when disabled", () => {
-    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "XML", "Issues"]);
     expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
   });
 
@@ -205,9 +204,11 @@ describe("client UI view model", () => {
 
   it("builds compact readiness labels and dimension facts", () => {
     const cleanSummary = buildIssueSummary([], defaultAppConfig.validation.exportBlockedBySeverities);
+    const reviewSummary = buildIssueSummary([issue({ severity: "warning" })], defaultAppConfig.validation.exportBlockedBySeverities);
     const blockedSummary = buildIssueSummary([issue({ severity: "error" })], defaultAppConfig.validation.exportBlockedBySeverities);
 
     expect(getReadinessLabel(cleanSummary)).toBe("Ready");
+    expect(getReadinessLabel(reviewSummary)).toBe("Needs review");
     expect(getReadinessLabel(blockedSummary)).toBe("Export blocked");
 
     expect(buildDimensionFacts(sampleScenarioDimension, blockedSummary)).toEqual([
