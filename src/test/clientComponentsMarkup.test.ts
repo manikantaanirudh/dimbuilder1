@@ -83,9 +83,11 @@ describe("client component markup", () => {
     expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
   });
 
-  it("renders top-command-bar import guidance in the no-project empty state", () => {
+  it("renders no-project status and top-command-bar import guidance in the empty state", () => {
     const markup = dashboardMarkup(defaultAppConfig);
 
+    expect(markup).toContain('<span class="status-badge neutral">No project</span>');
+    expect(markup).not.toContain('<span class="status-badge success">Ready</span>');
     expect(markup).toContain("Use the Import button in the top command bar to load an XF metadata workbook.");
   });
 

@@ -26,6 +26,8 @@ export function Dashboard({
   const summaryWarnings = summary?.validationWarnings ?? issueSummary.warnings;
   const blocksExport = summaryErrors > 0 || issueSummary.blocksExport;
   const needsReview = blocksExport || summaryWarnings > 0;
+  const statusTone = !project ? "neutral" : blocksExport ? "danger" : needsReview ? "warning" : "success";
+  const statusLabel = !project ? "No project" : blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready";
 
   return (
     <section className="dashboard project-overview">
@@ -35,9 +37,7 @@ export function Dashboard({
           <h1>{project?.name ?? "No project imported"}</h1>
           <p>{project?.sourceFileName ?? "Import a OneStream XF metadata workbook from the top command bar."}</p>
         </div>
-        <StatusBadge tone={blocksExport ? "danger" : needsReview ? "warning" : "success"}>
-          {blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready"}
-        </StatusBadge>
+        <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
       </div>
 
       <FactStrip className="overview-facts">
