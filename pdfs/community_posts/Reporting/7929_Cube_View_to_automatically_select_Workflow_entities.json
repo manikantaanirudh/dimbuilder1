@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-to-automatically-select-workflow-entities/7929",
+  "title": "Cube View to automatically select Workflow entities",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2022-05-01",
+  "content": "How to automatically select workflow entities in a cube view?",
+  "has_solution": true,
+  "solution_author": "Cosimo",
+  "solution_text": "You can use E#Root.WFProfileEntities as a member filter, or create a dashboard parameter of type Member List, or create an XFBR rule that returns the entity assigned to workflow using BRApi.Workflow.Metadata.GetProfileEntities.",
+  "tags": [
+    "Cube View",
+    "Parameters"
+  ]
+}

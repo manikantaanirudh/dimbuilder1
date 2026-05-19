@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-management-extract-to-the-server-folder/35048",
+  "title": "Data management extract to the Server folder",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2024-06-01",
+  "content": "How do I specify in a data management task to extract the data to the cube/scenario/workflow step folder and not the user's folder under file share?",
+  "has_solution": true,
+  "solution_author": "Henning",
+  "solution_text": "Create a Data Mgmt Export Sequence under Application > Data Sources. Assign your Export Data DM step to this DM Export Sequence data source. Then assign this Export Sequence to your Import workflow step.",
+  "tags": [
+    "Data Integration"
+  ]
+}

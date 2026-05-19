@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/configure-access-to-different-applications/45050",
+  "title": "Configure access to different applications",
+  "forum": "AppBuild",
+  "author": "fc",
+  "date": "2025-08-01",
+  "content": "I'm currently using different applications within the same environment and I need to give some users access to specific applications. To configure who accesses what, I thought I had to assign a security group to the 'OpenApplication' setting within the Security Roles interface.",
+  "has_solution": true,
+  "tags": [
+    "Security"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/metadata-update-from-data-file-load/36509",
+  "title": "Metadata Update from Data file Load",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2024-07-01",
+  "content": "Our client provides a data file with Cost Center members including Parent/Child Relationship. They would like to Automatically update new Cost Centers when the data file is loaded. Any existing Cost center moves from one parent to another should also be handled.",
+  "has_solution": false,
+  "tags": [
+    "Metadata"
+  ]
+}

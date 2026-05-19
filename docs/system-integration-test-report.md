@@ -61,7 +61,7 @@ Not covered in this pass:
 - Authentication or authorization, because the current product is local-first and does not implement those flows.
 - Multi-user concurrency.
 - Production deployment smoke testing.
-- Snapshot restore, because restore is not currently implemented.
+- Browser-level snapshot restore and branch flows. Automated repository/API tests now cover snapshot restore and branch behavior.
 
 ## API And Persistence SIT
 
@@ -117,7 +117,7 @@ Screenshots:
 | SIT-CMD-001 | `python ... quick_validate.py .codex\skills\docs-maintainer` | Skill structure is valid. | `Skill is valid!` | PASS |
 | SIT-CMD-002 | `npm.cmd run docs:check` | Documentation pack and maintenance mechanism pass checks. | Documentation check passed for 23 required docs. | PASS |
 | SIT-CMD-003 | `npm.cmd test -- src/test/notionDesignSystem.test.ts` | Focused design-system test passes after stale expectation update. | 6 tests passed. | PASS |
-| SIT-CMD-004 | `npm.cmd test` | Full Vitest suite passes. | 16 files passed; 129 tests passed. | PASS |
+| SIT-CMD-004 | `npm.cmd test` | Full Vitest suite passes. | 26 files passed; 207 tests passed. | PASS |
 | SIT-CMD-005 | `npm.cmd run build` | TypeScript and Vite production build pass. | Build completed successfully. | PASS |
 
 ## Failure Register
@@ -138,7 +138,7 @@ Recommended follow-up hardening items:
 1. Add a dedicated automated SIT script so the API and UI checks can be rerun without pasting ad hoc Node commands.
 2. Add a project cleanup or archive endpoint for test data management, or run SIT against an isolated database and Vite proxy.
 3. Add a browser-based XLSX upload test using a known small fixture workbook.
-4. Add server-side export blocking for projects with blocking validation issues.
+4. Add end-to-end SIT coverage for server-side export blocking with blocking validation issues. Automated guard tests now cover the server behavior.
 5. Add production deployment smoke testing once deployment topology is decided.
 
 ## Evidence Commands
@@ -162,4 +162,3 @@ npm.cmd run docs:check
 npm.cmd test
 npm.cmd run build
 ```
-

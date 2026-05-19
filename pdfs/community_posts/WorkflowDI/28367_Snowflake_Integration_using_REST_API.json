@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/snowflake-integration-using-rest-api/28367",
+  "title": "Snowflake Integration using REST API",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2024-01-01",
+  "content": "I am trying to pull data into OneStream from Snowflake using REST API. Does anyone know how the entire process works?",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "REST API",
+    "Snowflake"
+  ]
+}

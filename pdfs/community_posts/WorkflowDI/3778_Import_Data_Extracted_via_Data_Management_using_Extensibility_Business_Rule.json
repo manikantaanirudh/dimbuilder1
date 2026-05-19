@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/import-data-extracted-via-data-management-using-extensibility-business-rule/3778",
+  "title": "Import Data Extracted via Data Management using Extensibility Business Rule",
+  "forum": "WorkflowDI",
+  "author": "Wei",
+  "date": "2021-12-21",
+  "content": "We would like to move specific Forms and Adj data from one application to another - data are extracted via Data Export in DM, does anyone have an example of the Extensibility Rule (BRApi.Finance.Data.SetDataCellsUsingUsingCsvFile)?",
+  "has_solution": true,
+  "solution_author": "NickKroppe",
+  "solution_text": "Below is an example snippet of using the SetDataCellsUsingCsvFile BRApi. Get file path from FileShareFolderHelper, define source origins list, set target origin, then call BRApi.Finance.Data.SetDataCellsUsingUsingCsvFile with the file path and parameters.",
+  "tags": [
+    "Data Integration",
+    "Extenders"
+  ]
+}

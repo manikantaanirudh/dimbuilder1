@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/data-management-sequence/35846",
+  "title": "Data management Sequence - steps not executing",
+  "forum": "Rules",
+  "author": "Unknown",
+  "date": "2024-06-01",
+  "content": "I am encountering an issue with a Data Management Sequence consisting of four steps. The first step is not executing as expected.",
+  "has_solution": true,
+  "solution_author": "Henning",
+  "solution_text": "You can trigger DM sequences by using BRApi.Utilities.StartDataMgmtSequence, BRApi.Utilities.ExecuteDataMgmtSequence, or BRApi.Utilities.QueueDataMgmtSequence. ExecuteDataMgmtSequence fully executes the first DM sequence before the next one.",
+  "tags": [
+    "Data Management"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/automation-of-workflow-that-is-using-data-management-export-sequence/20818",
+  "title": "Automation of Workflow using Data Management Export Sequence",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2023-05-01",
+  "content": "We have a workflow that uses Data Management Export Sequence to load the data. Manually we are loading the data fine but I'm looking for options to automate this process.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "Workflow"
+  ]
+}

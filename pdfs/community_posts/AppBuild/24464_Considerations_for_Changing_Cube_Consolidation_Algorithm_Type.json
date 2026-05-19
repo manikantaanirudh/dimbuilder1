@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/considerations-for-changing-cube-consolidation-algorithm-type/24464",
+  "title": "Considerations for Changing Cube Consolidation Algorithm Type",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2023-07-01",
+  "content": "Can anyone share their experience of the potential impacts of switching the Cube Consolidation Algorithm Type from Standard (Calc-on-the-fly share and hierarchy elimination) to Org-By-Period Elimination?",
+  "has_solution": false,
+  "tags": [
+    "Consolidation"
+  ]
+}

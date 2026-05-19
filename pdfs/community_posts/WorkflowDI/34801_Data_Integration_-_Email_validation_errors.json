@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dat-integration/34801",
+  "title": "Data Integration - Email validation errors",
+  "forum": "WorkflowDI",
+  "author": "NSHAIK2",
+  "date": "2024-05-31",
+  "content": "We currently have OneStream set up to load data files automatically over the fileshare API. I would want to compute the validation errors and email them to users about invalid intersections.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration"
+  ]
+}

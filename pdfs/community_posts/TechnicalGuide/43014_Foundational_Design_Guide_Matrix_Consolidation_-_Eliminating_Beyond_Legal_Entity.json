@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/kb/foundationaldesign/matrix-consolidation-eliminating-beyond-legal-entity/43014",
+  "title": "Foundational Design Guide: Matrix Consolidation - Eliminating Beyond Legal Entity",
+  "forum": "TechnicalGuide",
+  "author": "Unknown",
+  "date": "2025-02-01",
+  "content": "Detailed comparison of approaches for eliminating beyond legal entity in OneStream, including putting Profit Centres in Entity dimension vs using UD dimensions.",
+  "has_solution": false,
+  "tags": [
+    "Consolidation",
+    "Design Guide"
+  ]
+}

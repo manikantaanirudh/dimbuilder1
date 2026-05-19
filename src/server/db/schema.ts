@@ -50,8 +50,29 @@ CREATE TABLE IF NOT EXISTS dimension_relationships (
   percent_ownership REAL,
   ownership_type TEXT NOT NULL DEFAULT '',
   properties_json TEXT NOT NULL DEFAULT '{}',
+  operation TEXT,
+  operation_source TEXT,
+  operation_notes TEXT,
   row_order INTEGER NOT NULL,
   source_row_number INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS varying_property_values (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_id TEXT NOT NULL REFERENCES dimensions(id) ON DELETE CASCADE,
+  target_type TEXT NOT NULL CHECK (target_type IN ('dimension', 'member', 'relationship')),
+  target_id TEXT NOT NULL,
+  property_name TEXT NOT NULL,
+  value TEXT NOT NULL DEFAULT '',
+  cube_type TEXT NOT NULL DEFAULT '',
+  scenario_type TEXT NOT NULL DEFAULT '',
+  time_member TEXT NOT NULL DEFAULT '',
+  is_default INTEGER NOT NULL DEFAULT 0,
+  source TEXT NOT NULL DEFAULT '',
+  metadata_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -103,6 +124,117 @@ CREATE TABLE IF NOT EXISTS project_snapshots (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS project_baselines (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  source_type TEXT NOT NULL CHECK (source_type IN ('xml', 'snapshot', 'json', 'manual')),
+  source_file_name TEXT NOT NULL DEFAULT '',
+  baseline_json TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS metadata_diff_runs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  baseline_id TEXT NOT NULL REFERENCES project_baselines(id) ON DELETE CASCADE,
+  status TEXT NOT NULL,
+  summary_json TEXT NOT NULL DEFAULT '{}',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS metadata_diff_items (
+  id TEXT PRIMARY KEY,
+  diff_run_id TEXT NOT NULL REFERENCES metadata_diff_runs(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  dimension_name TEXT NOT NULL,
+  target_type TEXT NOT NULL CHECK (target_type IN ('dimension', 'member', 'relationship', 'property')),
+  change_type TEXT NOT NULL CHECK (change_type IN ('add', 'update', 'delete', 'move', 'copy', 'unchanged', 'warning')),
+  severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'error')),
+  object_key TEXT NOT NULL,
+  parent_key TEXT,
+  child_key TEXT,
+  property_name TEXT,
+  old_value TEXT,
+  new_value TEXT,
+  details_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS change_sets (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  baseline_id TEXT REFERENCES project_baselines(id) ON DELETE SET NULL,
+  diff_run_id TEXT REFERENCES metadata_diff_runs(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('draft', 'validated', 'approved', 'exported', 'rejected')),
+  target_environment TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS change_set_items (
+  id TEXT PRIMARY KEY,
+  change_set_id TEXT NOT NULL REFERENCES change_sets(id) ON DELETE CASCADE,
+  diff_item_id TEXT REFERENCES metadata_diff_items(id) ON DELETE SET NULL,
+  item_type TEXT NOT NULL,
+  change_type TEXT NOT NULL CHECK (change_type IN ('add', 'update', 'delete', 'move', 'copy', 'unchanged', 'warning')),
+  severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'error')),
+  dimension_type TEXT NOT NULL,
+  object_key TEXT NOT NULL,
+  property_name TEXT,
+  old_value TEXT,
+  new_value TEXT,
+  details_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS change_set_approvals (
+  id TEXT PRIMARY KEY,
+  change_set_id TEXT NOT NULL REFERENCES change_sets(id) ON DELETE CASCADE,
+  action TEXT NOT NULL CHECK (action IN ('approve', 'reject', 'comment')),
+  comment TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS release_packages (
+  id TEXT PRIMARY KEY,
+  change_set_id TEXT NOT NULL REFERENCES change_sets(id) ON DELETE CASCADE,
+  package_name TEXT NOT NULL,
+  package_path TEXT NOT NULL,
+  manifest_json TEXT NOT NULL DEFAULT '{}',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bulk_update_jobs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  target_type TEXT NOT NULL CHECK (target_type IN ('member', 'relationship')),
+  operation TEXT NOT NULL,
+  request_json TEXT NOT NULL DEFAULT '{}',
+  summary_json TEXT NOT NULL DEFAULT '{}',
+  rollback_json TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bulk_update_items (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES bulk_update_jobs(id) ON DELETE CASCADE,
+  target_id TEXT NOT NULL,
+  target_key TEXT NOT NULL,
+  property_name TEXT NOT NULL,
+  old_value TEXT NOT NULL DEFAULT '',
+  new_value TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
@@ -126,6 +258,25 @@ CREATE INDEX IF NOT EXISTS idx_members_dimension ON dimension_members(dimension_
 CREATE INDEX IF NOT EXISTS idx_members_key ON dimension_members(dimension_id, member_key);
 CREATE INDEX IF NOT EXISTS idx_relationships_dimension ON dimension_relationships(dimension_id, row_order);
 CREATE INDEX IF NOT EXISTS idx_relationships_parent_child ON dimension_relationships(dimension_id, parent_key, child_key);
+CREATE INDEX IF NOT EXISTS idx_varying_properties_project ON varying_property_values(project_id);
+CREATE INDEX IF NOT EXISTS idx_varying_properties_dimension ON varying_property_values(dimension_id);
+CREATE INDEX IF NOT EXISTS idx_varying_properties_target ON varying_property_values(target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_varying_properties_property_name ON varying_property_values(property_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_varying_properties_unique_context
+  ON varying_property_values(project_id, target_type, target_id, property_name, cube_type, scenario_type, time_member);
 CREATE INDEX IF NOT EXISTS idx_issues_project ON validation_issues(project_id, severity);
+CREATE INDEX IF NOT EXISTS idx_project_baselines_project ON project_baselines(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_metadata_diff_runs_project ON metadata_diff_runs(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_metadata_diff_runs_baseline ON metadata_diff_runs(baseline_id);
+CREATE INDEX IF NOT EXISTS idx_metadata_diff_items_run ON metadata_diff_items(diff_run_id);
+CREATE INDEX IF NOT EXISTS idx_metadata_diff_items_change ON metadata_diff_items(diff_run_id, change_type, target_type);
+CREATE INDEX IF NOT EXISTS idx_change_sets_project ON change_sets(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_change_sets_diff_run ON change_sets(diff_run_id);
+CREATE INDEX IF NOT EXISTS idx_change_set_items_change_set ON change_set_items(change_set_id);
+CREATE INDEX IF NOT EXISTS idx_change_set_approvals_change_set ON change_set_approvals(change_set_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_release_packages_change_set ON release_packages(change_set_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_bulk_update_jobs_project ON bulk_update_jobs(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_bulk_update_jobs_target ON bulk_update_jobs(project_id, target_type, operation);
+CREATE INDEX IF NOT EXISTS idx_bulk_update_items_job ON bulk_update_items(job_id);
+CREATE INDEX IF NOT EXISTS idx_bulk_update_items_target ON bulk_update_items(target_id, property_name);
 `;
-

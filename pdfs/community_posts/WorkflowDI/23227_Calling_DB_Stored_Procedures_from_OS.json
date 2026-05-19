@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/calling-db-stored-procedures-from-os/23227",
+  "title": "Calling DB Stored Procedures from OS",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2023-06-01",
+  "content": "I want to execute a list of DB Stored procedures after executing a DM step in OS. Is it possible to call a DB Stored Procedure from OS?",
+  "has_solution": true,
+  "solution_author": "Steven",
+  "solution_text": "Yes, you can call a stored procedure from OS: Using dbConnApp = BRApi.Database.CreateApplicationDbConnInfo(si) BRApi.Database.ExecuteActionQuery(dbConnApp, 'EXEC [StoredProc]', True, True) End Using",
+  "tags": [
+    "Extenders"
+  ]
+}

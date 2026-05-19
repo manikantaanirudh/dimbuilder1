@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/summary-unable-to-execute-business-rule/33263",
+  "title": "Summary: Unable to execute Business Rule - Object reference not set to an instance of an object",
+  "forum": "Reporting",
+  "author": "OS_Pizza",
+  "date": "2024-04-22",
+  "content": "I have a dashboard with a Label component that uses a Cube View as the data adapter. The Cube View employs an XFBR in the account POV. The error occurs when I open the dashboard - the Label value attempts to run the XFBR rule but fails to capture the default parameter value.",
+  "has_solution": false,
+  "tags": [
+    "XFBR",
+    "dashboards",
+    "Parameters"
+  ]
+}

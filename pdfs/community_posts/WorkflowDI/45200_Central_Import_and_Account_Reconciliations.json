@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/central-import-and-account-reconciliations/45200",
+  "title": "Central Import and Account Reconciliations",
+  "forum": "WorkflowDI",
+  "author": "mlopez",
+  "date": "2025-09-01",
+  "content": "I'm starting an Account Reconciliations implementation. The current process loads Actuals for all entities through a central import. For RCM, data is not flowing through individual workflow entities.",
+  "has_solution": true,
+  "tags": [
+    "Import",
+    "Workflow"
+  ]
+}

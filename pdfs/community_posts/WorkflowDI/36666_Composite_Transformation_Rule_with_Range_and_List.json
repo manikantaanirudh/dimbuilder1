@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/composite-transformation-rule-with-range-and-list/36666",
+  "title": "Composite Transformation Rule with Range and List",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2024-07-01",
+  "content": "I need to create a composite mapping: For UD2, If Account is in range of 6099* and 6999* and UD2 is [123 or 124], then UD2 is 100.",
+  "has_solution": true,
+  "tags": [
+    "Transformation"
+  ]
+}

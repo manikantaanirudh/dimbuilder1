@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
@@ -15,10 +16,21 @@ export function IssuePanel({
   appConfig: ClientAppConfig;
   expanded?: boolean;
 }) {
+  const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
+  const [codeFilter, setCodeFilter] = useState("");
   const summary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const readinessLabel = getReadinessLabel(summary);
   const facts = buildDimensionFacts(dimension, summary);
-  const visibleIssues = issues.slice(0, expanded ? 500 : 8);
+  const profileLabel = appConfig.validation.oneStreamProfile.enabled ? "OneStream" : "Default";
+  const filteredIssues = useMemo(() => {
+    const codeNeedle = codeFilter.trim().toLowerCase();
+    return issues.filter((issue) => {
+      if (severityFilter !== "all" && issue.severity !== severityFilter) return false;
+      if (codeNeedle && !issue.code.toLowerCase().includes(codeNeedle)) return false;
+      return true;
+    });
+  }, [codeFilter, issues, severityFilter]);
+  const visibleIssues = filteredIssues.slice(0, expanded ? 500 : 8);
   const Container = expanded ? "section" : "aside";
   const pageClassName = expanded ? "issue-panel-page" : "details-rail-page";
   const issueSummaryClassName = expanded ? "issue-summary" : "issue-summary rail-issue-summary";
@@ -41,7 +53,26 @@ export function IssuePanel({
           <span><b>{summary.errors}</b> errors</span>
           <span><b>{summary.warnings}</b> warnings</span>
           {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
+          <span><b>{profileLabel}</b> Validation profile</span>
         </div>
+
+        {expanded && (
+          <div className="issue-filters" aria-label="Validation issue filters">
+            <label>
+              <span>Filter by severity</span>
+              <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as Severity | "all")}>
+                <option value="all">All severities</option>
+                <option value="error">Errors</option>
+                <option value="warning">Warnings</option>
+                <option value="info">Info</option>
+              </select>
+            </label>
+            <label>
+              <span>Filter issue code</span>
+              <input value={codeFilter} onChange={(event) => setCodeFilter(event.target.value)} placeholder="UNKNOWN_PROPERTY" />
+            </label>
+          </div>
+        )}
 
         {!expanded && (
           <div className="rail-section rail-property-section">
@@ -57,7 +88,7 @@ export function IssuePanel({
         <div className={issuesSectionClassName}>
           {visibleIssues.length === 0 ? (
             <EmptyState title="No issues recorded">
-              {dimension.sheetName} has no recorded validation issues.
+              {issues.length === 0 ? `${dimension.sheetName} has no recorded validation issues.` : "No issues match the current filters."}
             </EmptyState>
           ) : (
             <div className="issue-list">

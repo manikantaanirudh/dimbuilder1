@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/how-does-quickview-decide-on-page-breaks/3380",
+  "title": "How does QuickView decide on page breaks?",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2021-11-01",
+  "content": "I just had a call from an Excel user who uses the OneStream addin. He has a number of reports that he's been using, but they're working differently today. Instead of retrieving all rows, there is a page break.",
+  "has_solution": true,
+  "tags": [
+    "Excel Add In"
+  ]
+}

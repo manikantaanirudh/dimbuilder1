@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-data-to-snowflake/42020",
+  "title": "Export data to Snowflake",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2025-01-01",
+  "content": "We are looking to export data from OneStream to Snowflake using APIs. We are using OneStream's cloud hosted environment with Reference Token authentication.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "Snowflake"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/lookup-transformational-rule-undo/44650",
+  "title": "Lookup Transformational rule UNDO",
+  "forum": "Rules",
+  "author": "IrinaDragusanu",
+  "date": "2025-08-01",
+  "content": "I loaded a mass upload for multiple lines of transformational rules through a trx file. Load completed with errors. Rules don't show but can't recreate them either.",
+  "has_solution": true,
+  "tags": [
+    "Admin",
+    "Transformation"
+  ]
+}

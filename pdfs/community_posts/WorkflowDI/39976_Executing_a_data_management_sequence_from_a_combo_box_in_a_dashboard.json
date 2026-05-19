@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/executing-a-data-management-sequence-that-we-chose-from-a-combo-box/39976",
+  "title": "Executing a data management sequence from a combo box in a dashboard",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2024-10-01",
+  "content": "I need to execute a data management sequence selected from a combo box in a dashboard using a button.",
+  "has_solution": true,
+  "solution_author": "db_pdx",
+  "solution_text": "In Button Settings under Action > Server Task, set Selection Changed Server Task to 'Execute Data Management Sequence' and use parameter substitution in the arguments: {|!YourParameterThatControlsTheDMSequence!|}{Param1=[|!DashboardParameter1!|]}",
+  "tags": [
+    "dashboards",
+    "Data Management"
+  ]
+}

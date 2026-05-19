@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/mapping-ic-based-if-account-is-ic/45100",
+  "title": "Mapping IC based if account is IC",
+  "forum": "WorkflowDI",
+  "author": "mgreenberg",
+  "date": "2025-08-01",
+  "content": "We want to set the IC value to none if an account is not IC. Problem: if they upload a new account, it hasn't been mapped yet so IC mapping fails.",
+  "has_solution": false,
+  "tags": [
+    "Transformation"
+  ]
+}

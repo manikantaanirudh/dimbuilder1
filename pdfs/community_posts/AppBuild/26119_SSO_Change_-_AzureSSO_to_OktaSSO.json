@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/sso-change/26119",
+  "title": "SSO Change - AzureSSO to OktaSSO",
+  "forum": "AppBuild",
+  "author": "aricgresko",
+  "date": "2023-09-01",
+  "content": "Has anyone switched External Authentication from AzureSSO to OktaSSO? How did that process go? Was it seamless or were there user login issues?",
+  "has_solution": false,
+  "tags": [
+    "Security",
+    "SSO"
+  ]
+}

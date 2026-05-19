@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/two-versions-of-onestream-desktop-and-excel/38563",
+  "title": "Two versions of OneStream desktop and excel",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2024-09-01",
+  "content": "Can we install two versions (8.2 and 8.4) of OneStream desktop client and OneStream excel add-in client in the same machine? Later on if I want to uninstall 8.2 does OneStream have an uninstaller?",
+  "has_solution": false,
+  "tags": [
+    "Infrastructure"
+  ]
+}

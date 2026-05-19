@@ -10,14 +10,18 @@ import {
   getWorkspaceTabs,
   type ExportAvailability
 } from "../ui/viewModel";
+import { BulkUpdatePanel } from "./BulkUpdatePanel";
 import { EditableGrid } from "./EditableGrid";
+import { ChangeSetsPanel } from "./ChangeSetsPanel";
 import { HierarchyTree } from "./HierarchyTree";
 import { IssuePanel } from "./IssuePanel";
 import { MetadataEditor } from "./MetadataEditor";
+import { MetadataDiffPanel } from "./MetadataDiffPanel";
 import { FactItem, FactStrip, StatusBadge } from "./ui";
+import { VaryingPropertiesPanel } from "./VaryingPropertiesPanel";
 import { XmlPreview } from "./XmlPreview";
 
-type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "XML" | "Issues";
+type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "XML" | "Issues";
 
 function getFallbackTab(defaultWorkspaceTab: string, xmlPreviewEnabled: boolean): WorkspaceTab {
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
@@ -44,6 +48,7 @@ export function DimensionWorkspace({
   const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
   const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
   const issueSummary = buildIssueSummary(dimensionIssues, appConfig.validation.exportBlockedBySeverities);
+  const projectIssueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const readinessLabel = getReadinessLabel(issueSummary);
   const facts = buildDimensionFacts(dimension, issueSummary);
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
@@ -98,6 +103,20 @@ export function DimensionWorkspace({
             {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
             {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
             {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
+            {activeTab === "Varying" && <VaryingPropertiesPanel projectId={projectId} dimension={dimension} />}
+            {activeTab === "Bulk Update" && <BulkUpdatePanel projectId={projectId} dimension={dimension} onApplied={onRefresh} />}
+            {activeTab === "Compare" && (
+              <MetadataDiffPanel
+                projectId={projectId}
+                hasBlockingIssues={projectIssueSummary.blocksExport}
+              />
+            )}
+            {activeTab === "Change Sets" && (
+              <ChangeSetsPanel
+                projectId={projectId}
+                hasBlockingIssues={projectIssueSummary.blocksExport}
+              />
+            )}
             {activeTab === "XML" && xmlPreviewEnabled && (
               <XmlPreview
                 projectId={projectId}

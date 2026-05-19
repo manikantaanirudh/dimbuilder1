@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/security---posting-an-auto-reversing-journal-entry/45350",
+  "title": "Security - Posting an auto-reversing journal entry",
+  "forum": "WorkflowDI",
+  "author": "WCHeceta",
+  "date": "2025-09-01",
+  "content": "A user approves an auto-reversing journal entry but is unable to post. However, in the subsequent period, the user can post the auto-generated reversal.",
+  "has_solution": false,
+  "tags": [
+    "Journals",
+    "Security"
+  ]
+}

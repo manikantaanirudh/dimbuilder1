@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/execute-stored-procedure-on-external-database/12612",
+  "title": "Execute Stored Procedure on External Database",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2022-10-01",
+  "content": "We created a connection to an external database. The issue is executing a stored procedure on it.",
+  "has_solution": true,
+  "solution_author": "JackLacava",
+  "solution_text": "You can try executing the command from a rule. For example, as a Dashboard DataSet: Using dbConnApp = BRApi.Database.CreateExternalDbConnInfo(si, 'OneStream BI Blend') then BRApi.Database.ExecuteSql(dbConnApp, sqlQ, False)",
+  "tags": [
+    "Extenders"
+  ]
+}

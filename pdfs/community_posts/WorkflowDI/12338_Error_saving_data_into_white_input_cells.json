@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/error-saving-data-into-white-input-cells/12338",
+  "title": "Error saving data into white input cells",
+  "forum": "WorkflowDI",
+  "author": "cdever",
+  "date": "2022-10-01",
+  "content": "Getting error 'Cannot execute step because the specified step classification doesn't exist for the workflow profile' when saving data in a particular workflow.",
+  "has_solution": true,
+  "tags": [
+    "Workflow"
+  ]
+}

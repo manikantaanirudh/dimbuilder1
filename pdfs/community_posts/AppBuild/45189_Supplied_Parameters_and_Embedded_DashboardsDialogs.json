@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/supplied-parameters-and-embedded-dashboardsdialogs/45189",
+  "title": "Supplied Parameters and Embedded Dashboards/Dialogs",
+  "forum": "AppBuild",
+  "author": "SteveK",
+  "date": "2025-09-03",
+  "content": "If I have a dashboard made up of several Embedded dashboards, all of which need to have access to a Supplied Parameter, do I need to include it as a component of the top dashboard only OR, do I have to include it for all embedded dashboards (that require the related parameter) also?",
+  "has_solution": true,
+  "solution_author": "sameburn",
+  "solution_text": "The best rule of thumb for using Supplied Parameters is if you are receiving a parameter prompt from the target (receiving) dashboard that contains the component or components that you are trying to pass the parameter value into, then you need a Supplied Parameter component in the dashboard that is causing the parameter prompt dialog window to appear. This is their purpose e.g. to facilitate parameter handshakes.",
+  "tags": [
+    "dashboards",
+    "Parameters"
+  ]
+}

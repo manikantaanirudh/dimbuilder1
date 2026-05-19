@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateDimension } from "../shared/validationEngine";
+import { UNKNOWN_XML_DATA_KEY } from "../shared/xmlImport";
 import {
   memberFixture,
   relationshipFixture,
@@ -168,6 +169,108 @@ describe("validation engine", () => {
     expect(issues.find((issue) => issue.code === "UNKNOWN_PROPERTY" && issue.fieldName === "Legacy Custom Property")?.severity).toBe("warning");
   });
 
+  it("runs the OneStream profile when configured and honors profile property severities", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          id: "member-revenue",
+          dimensionId: accountDimension.id,
+          memberKey: "Revenue",
+          properties: {
+            Account: "Revenue",
+            "Account Type": "Unsupported Type",
+            "Allow Input": "Sometimes",
+            "Legacy Custom Property": "Keep me"
+          }
+        })
+      ],
+      relationships: [],
+      severities: {
+        duplicateMemberSeverity: "warning",
+        duplicateRelationshipSeverity: "warning",
+        unknownRelationshipMemberSeverity: "warning",
+        missingRequiredFieldSeverity: "error",
+        circularHierarchySeverity: "error",
+        relationshipsWithNoLocalMembersSeverity: "warning",
+        oneStreamProfile: {
+          enabled: true,
+          memberNameMaxLength: 250,
+          warnOnMemberNameSpaces: true,
+          warnOnMemberNamePeriods: true,
+          reservedWords: ["Root", "None"],
+          restrictedCharacters: ["<"],
+          duplicateAliasSeverity: "warning",
+          invalidSortOrderSeverity: "warning",
+          sharedMemberSeverity: "info",
+          parentInputWarningSeverity: "warning",
+          unknownPropertySeverity: "info",
+          invalidEnumSeverity: "warning",
+          invalidPropertyTypeSeverity: "warning"
+        }
+      }
+    });
+
+    expect(issues.find((issue) => issue.code === "ACCOUNT_TYPE_MISSING")).toBeUndefined();
+    expect(issues.find((issue) => issue.code === "INVALID_ENUM_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "INVALID_PROPERTY_TYPE" && issue.fieldName === "Allow Input")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "UNKNOWN_PROPERTY" && issue.fieldName === "Legacy Custom Property")?.severity).toBe("info");
+  });
+
+  it("can run generic validation without OneStream profile design rules", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          id: "member-revenue",
+          dimensionId: accountDimension.id,
+          memberKey: "Revenue",
+          properties: { Account: "Revenue" }
+        })
+      ],
+      relationships: [],
+      severities: {
+        duplicateMemberSeverity: "warning",
+        duplicateRelationshipSeverity: "warning",
+        unknownRelationshipMemberSeverity: "warning",
+        missingRequiredFieldSeverity: "error",
+        circularHierarchySeverity: "error",
+        relationshipsWithNoLocalMembersSeverity: "warning",
+        oneStreamProfile: {
+          enabled: false,
+          memberNameMaxLength: 250,
+          warnOnMemberNameSpaces: true,
+          warnOnMemberNamePeriods: true,
+          reservedWords: ["Root", "None"],
+          restrictedCharacters: ["<"],
+          duplicateAliasSeverity: "warning",
+          invalidSortOrderSeverity: "warning",
+          sharedMemberSeverity: "info",
+          parentInputWarningSeverity: "warning",
+          unknownPropertySeverity: "warning",
+          invalidEnumSeverity: "error",
+          invalidPropertyTypeSeverity: "error"
+        }
+      }
+    });
+
+    expect(issues.map((issue) => issue.code)).not.toContain("ACCOUNT_TYPE_MISSING");
+  });
+
   it("validates Flow Switch Type as a True or False setting", () => {
     const issues = validateDimension({
       project: sampleProject,
@@ -185,5 +288,289 @@ describe("validation engine", () => {
     });
 
     expect(issues.filter((issue) => issue.code === "INVALID_BOOLEAN").map((issue) => issue.fieldName)).toContain("Switch Type");
+  });
+
+  it("validates varying property targets, dictionary support, duplicates, and values", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          id: "member-revenue",
+          dimensionId: accountDimension.id,
+          memberKey: "Revenue",
+          properties: { Account: "Revenue", Text1: "Base" }
+        })
+      ],
+      relationships: [],
+      varyingPropertyValues: [
+        {
+          id: "varying-1",
+          projectId: sampleProject.id,
+          dimensionId: accountDimension.id,
+          targetType: "member",
+          targetId: "member-revenue",
+          propertyName: "Text1",
+          value: "Finance actual note",
+          cubeType: "Finance",
+          scenarioType: "Actual",
+          timeMember: "2026M1",
+          isDefault: false,
+          source: "manual",
+          metadata: {},
+          createdAt: "2026-05-16T00:00:00.000Z",
+          updatedAt: "2026-05-16T00:00:00.000Z"
+        },
+        {
+          id: "varying-2",
+          projectId: sampleProject.id,
+          dimensionId: accountDimension.id,
+          targetType: "member",
+          targetId: "member-revenue",
+          propertyName: "Text1",
+          value: "Duplicate context",
+          cubeType: "Finance",
+          scenarioType: "Actual",
+          timeMember: "2026M1",
+          isDefault: false,
+          source: "manual",
+          metadata: {},
+          createdAt: "2026-05-16T00:00:00.000Z",
+          updatedAt: "2026-05-16T00:00:00.000Z"
+        },
+        {
+          id: "varying-3",
+          projectId: sampleProject.id,
+          dimensionId: accountDimension.id,
+          targetType: "member",
+          targetId: "member-revenue",
+          propertyName: "Account Type",
+          value: "Unsupported Type",
+          cubeType: "Finance",
+          scenarioType: "",
+          timeMember: "",
+          isDefault: false,
+          source: "manual",
+          metadata: {},
+          createdAt: "2026-05-16T00:00:00.000Z",
+          updatedAt: "2026-05-16T00:00:00.000Z"
+        },
+        {
+          id: "varying-4",
+          projectId: sampleProject.id,
+          dimensionId: accountDimension.id,
+          targetType: "member",
+          targetId: "missing-member",
+          propertyName: "Text2",
+          value: "Missing target",
+          cubeType: "",
+          scenarioType: "",
+          timeMember: "",
+          isDefault: true,
+          source: "manual",
+          metadata: {},
+          createdAt: "2026-05-16T00:00:00.000Z",
+          updatedAt: "2026-05-16T00:00:00.000Z"
+        },
+        {
+          id: "varying-5",
+          projectId: sampleProject.id,
+          dimensionId: accountDimension.id,
+          targetType: "member",
+          targetId: "member-revenue",
+          propertyName: "Legacy Varying Field",
+          value: "Preserve",
+          cubeType: "",
+          scenarioType: "",
+          timeMember: "2026M1",
+          isDefault: false,
+          source: "manual",
+          metadata: {},
+          createdAt: "2026-05-16T00:00:00.000Z",
+          updatedAt: "2026-05-16T00:00:00.000Z"
+        }
+      ]
+    });
+
+    expect(issues.map((issue) => issue.code)).toEqual(expect.arrayContaining([
+      "DUPLICATE_VARYING_PROPERTY",
+      "VARYING_PROPERTY_TARGET_NOT_FOUND",
+      "UNKNOWN_VARYING_PROPERTY",
+      "NON_VARYING_PROPERTY_OVERRIDE",
+      "INVALID_VARYING_PROPERTY_VALUE"
+    ]));
+    expect(issues.find((issue) => issue.code === "UNKNOWN_VARYING_PROPERTY")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "INVALID_VARYING_PROPERTY_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("error");
+  });
+
+  it("reports preserved unknown XML attributes and unsupported elements as non-blocking import notes", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts",
+      metadata: {
+        [UNKNOWN_XML_DATA_KEY]: {
+          unknownAttributes: { customDimAttr: "dim-custom" },
+          unknownElements: [
+            {
+              name: "unsupportedDimensionNode",
+              attributes: { code: "D1" },
+              text: "Hold",
+              sourceOrder: 1,
+              originalXmlPath: "/OneStreamXF/metadataRoot/dimensions/dimension/unsupportedDimensionNode"
+            }
+          ],
+          sourceOrder: 0
+        }
+      }
+    };
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          dimensionId: accountDimension.id,
+          memberKey: "Revenue",
+          properties: {
+            Account: "Revenue",
+            [UNKNOWN_XML_DATA_KEY]: {
+              unknownAttributes: { customMemberAttr: "member-custom" },
+              unknownElements: [
+                {
+                  name: "unsupportedMemberNode",
+                  attributes: { code: "M1" },
+                  text: "",
+                  sourceOrder: 1,
+                  originalXmlPath: "/OneStreamXF/metadataRoot/dimensions/dimension/members/member/unsupportedMemberNode"
+                }
+              ],
+              sourceOrder: 0
+            }
+          }
+        })
+      ],
+      relationships: [
+        relationshipFixture({
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "Revenue",
+          properties: {
+            Parent: "Root",
+            Child: "Revenue",
+            [UNKNOWN_XML_DATA_KEY]: {
+              unknownAttributes: { customRelationshipAttr: "relationship-custom" },
+              unknownElements: [
+                {
+                  name: "unsupportedRelationshipNode",
+                  attributes: { code: "R1" },
+                  text: "Rel",
+                  sourceOrder: 1,
+                  originalXmlPath: "/OneStreamXF/metadataRoot/dimensions/dimension/relationships/relationship/unsupportedRelationshipNode"
+                }
+              ],
+              sourceOrder: 0
+            }
+          }
+        })
+      ]
+    });
+
+    expect(issues.map((issue) => issue.code)).toEqual(expect.arrayContaining([
+      "XML_UNKNOWN_DIMENSION_ATTRIBUTE",
+      "XML_UNKNOWN_MEMBER_ATTRIBUTE",
+      "XML_UNKNOWN_RELATIONSHIP_ATTRIBUTE",
+      "XML_UNSUPPORTED_ELEMENT_PRESERVED"
+    ]));
+    expect(issues.filter((issue) => issue.code.startsWith("XML_")).map((issue) => issue.severity)).toEqual(
+      expect.arrayContaining(["info"])
+    );
+  });
+
+  it("warns for risky relationship operation planning metadata", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts",
+      metadata: { allowMultipleParents: false }
+    };
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({ id: "m-root", dimensionId: accountDimension.id, memberKey: "Root", properties: { Account: "Root" } }),
+        memberFixture({ id: "m-parent", dimensionId: accountDimension.id, memberKey: "Parent", properties: { Account: "Parent" } }),
+        memberFixture({ id: "m-leaf", dimensionId: accountDimension.id, memberKey: "Leaf", properties: { Account: "Leaf" } }),
+        memberFixture({ id: "m-copy", dimensionId: accountDimension.id, memberKey: "CopyTarget", properties: { Account: "CopyTarget" } }),
+        memberFixture({ id: "m-move", dimensionId: accountDimension.id, memberKey: "MoveTarget", properties: { Account: "MoveTarget" } })
+      ],
+      relationships: [
+        relationshipFixture({
+          id: "rel-root-parent",
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "Parent",
+          properties: { Parent: "Root", Child: "Parent" }
+        }),
+        relationshipFixture({
+          id: "rel-delete",
+          dimensionId: accountDimension.id,
+          parentKey: "Parent",
+          childKey: "Leaf",
+          operation: "delete",
+          properties: { Parent: "Parent", Child: "Leaf" }
+        }),
+        relationshipFixture({
+          id: "rel-copy",
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "CopyTarget",
+          operation: "copy",
+          properties: { Parent: "Root", Child: "CopyTarget" }
+        }),
+        relationshipFixture({
+          id: "rel-move",
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "MoveTarget",
+          operation: "move",
+          properties: { Parent: "Root", Child: "MoveTarget" }
+        }),
+        relationshipFixture({
+          id: "rel-break",
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "Leaf",
+          operation: "break",
+          operationSource: "manual",
+          properties: { Parent: "Root", Child: "Leaf" }
+        }),
+        relationshipFixture({
+          id: "rel-unsupported",
+          dimensionId: accountDimension.id,
+          parentKey: "Root",
+          childKey: "Unsupported",
+          operation: "unsupported" as never,
+          properties: { Parent: "Root", Child: "Unsupported" }
+        })
+      ]
+    });
+
+    expect(issues.map((issue) => issue.code)).toEqual(expect.arrayContaining([
+      "RELATIONSHIP_DELETE_CREATES_ORPHAN",
+      "COPY_CONFLICTS_WITH_SINGLE_PARENT_POLICY",
+      "MOVE_WITHOUT_OLD_PARENT",
+      "BREAK_BUILD_HAS_NO_BASELINE",
+      "RELATIONSHIP_OPERATION_UNSUPPORTED"
+    ]));
+    expect(issues.find((issue) => issue.code === "RELATIONSHIP_DELETE_CREATES_ORPHAN")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "RELATIONSHIP_OPERATION_UNSUPPORTED")?.severity).toBe("error");
   });
 });

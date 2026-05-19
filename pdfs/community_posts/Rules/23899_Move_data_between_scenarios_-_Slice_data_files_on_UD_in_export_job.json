@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/move-data-between-scenarios---slice-data-files-on-ud-in-export-job/23899",
+  "title": "Move data between scenarios - Slice data files on UD in export job",
+  "forum": "Rules",
+  "author": "Jones",
+  "date": "2023-07-01",
+  "content": "I have built a flow to push data from one scenario to another by pressing a dashboard button which starts a data management job. I need to replace data instead of append for a given UD1 set.",
+  "has_solution": true,
+  "solution_author": "Jones",
+  "solution_text": "I managed to accomplish this by setting SourceID on DataSource to UD1.",
+  "tags": [
+    "Data Integration",
+    "Data Management"
+  ]
+}

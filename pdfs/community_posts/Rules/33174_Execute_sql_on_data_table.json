@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/execute-sql-on-data-table/33174",
+  "title": "Execute sql on data table",
+  "forum": "Rules",
+  "author": "Unknown",
+  "date": "2024-04-01",
+  "content": "Can I execute an sql statement against a data table created in a business rule?",
+  "has_solution": true,
+  "solution_author": "AndreaF",
+  "solution_text": "The datatable exists within the data set business rule, so yes you can run a query against it within its limit of existence. You need to use the appropriate function of the BRApi.Database and pass the table and where/order by as parameters.",
+  "tags": [
+    "Extenders"
+  ]
+}

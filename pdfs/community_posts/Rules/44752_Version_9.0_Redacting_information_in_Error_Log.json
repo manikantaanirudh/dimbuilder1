@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/version-9-0-redacting-information-in-error-log/44752",
+  "title": "Version 9.0 Redacting information in Error Log",
+  "forum": "Rules",
+  "author": "WernerN",
+  "date": "2025-06-01",
+  "content": "Has anyone experienced information in the log being redacted? I see no pattern of what is considered sensitive. The decimal positions in data table dumps are redacted.",
+  "has_solution": false,
+  "tags": [
+    "Parsing",
+    "System"
+  ]
+}

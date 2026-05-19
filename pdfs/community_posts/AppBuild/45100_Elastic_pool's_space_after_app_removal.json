@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/elastic-pools-space-after-app-removal/45100",
+  "title": "Elastic pool's space after app removal",
+  "forum": "AppBuild",
+  "author": "DavidRH",
+  "date": "2025-08-01",
+  "content": "I have an environment with a couple of applications that I want to remove. My question is, if I remove them using the Application Management of the Cloud Administration Tool, would I immediately get back the space those apps were using?",
+  "has_solution": true,
+  "tags": [
+    "Application Properties"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/sic-not-available-in-9-1/45200",
+  "title": "SIC not available in 9.1",
+  "forum": "AppBuild",
+  "author": "alexmoreno",
+  "date": "2025-09-01",
+  "content": "We've installed a self-hosted 9.1 OS server, and now when trying to configure the SIC to connect to our datalake, I can't find the Smart Integration Connector in the Admin tab within OS Desktop.",
+  "has_solution": false,
+  "tags": [
+    "Infrastructure"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/dashboard-xfbr-string-rules---api-data-getdatacell/23843",
+  "title": "Dashboard XFBR String Rules - api.data.GetDataCell",
+  "forum": "Rules",
+  "author": "BSK",
+  "date": "2023-07-01",
+  "content": "We want to make some forecast periods read only in a Data submission cube view by referencing the period count submitted in another Cube View using Dashboard XFBR string.",
+  "has_solution": false,
+  "tags": [
+    "XFBR",
+    "Finance"
+  ]
+}

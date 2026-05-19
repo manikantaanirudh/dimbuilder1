@@ -69,17 +69,57 @@ The supported dimension types are defined in `src/shared/types.ts` and `src/shar
 - `Flow`
 - `UD1` through `UD8`
 
+Blueprint drafts can be authored with Blueprint Studio from the dashboard. The Studio validates drafts through `src/shared/blueprintStudio.ts` and returns YAML fragments, but it does not automatically mutate `config/dimbuilder.yaml`.
+
 ### `import`
 
 Controls XLSX parser behavior and metadata reference alignment.
 
 ### `validation`
 
-Controls severities and which severities block export.
+Controls generic validation severities, the OneStream-specific design-quality profile, and which severities block export.
+
+OneStream profile defaults:
+
+```yaml
+validation:
+  oneStreamProfile:
+    enabled: true
+    memberNameMaxLength: 250
+    warnOnMemberNameSpaces: true
+    warnOnMemberNamePeriods: true
+    reservedWords:
+      - Root
+      - None
+    restrictedCharacters:
+      - "<"
+      - ">"
+      - "\""
+      - "'"
+      - "&"
+      - "|"
+      - "["
+      - "]"
+    duplicateAliasSeverity: warning
+    invalidSortOrderSeverity: warning
+    sharedMemberSeverity: info
+    parentInputWarningSeverity: warning
+    unknownPropertySeverity: warning
+    invalidEnumSeverity: error
+    invalidPropertyTypeSeverity: error
+```
+
+The profile adds OneStream-aware warnings for naming conventions, aliases, Root/None casing, sort order, shared members, parent input, missing Account Type, missing Entity Currency, missing relationship weights, and invalid Entity ownership percentages.
 
 ### `export`
 
 Controls XML, XLSX, CSV, and JSON export availability and options.
+
+Validation gate fields:
+
+- `allowValidationBypass`: optional boolean, default `false`; allows explicit server-side export bypass when blocking validation issues exist.
+- `validationBypassRequiresReason`: optional boolean, default `true`; requires a bypass reason when bypass is enabled.
+- `requireValidationBeforeExport`: optional boolean, default `false`; when true, exports are blocked until validation has run at least once.
 
 ### `ui`
 
@@ -94,7 +134,10 @@ Controls default workspace tab, grid page size, toolbar visibility, and XML prev
 - unsupported blueprint member key fields
 - invalid blueprint member or relationship fields
 - invalid relationship default types
+- invalid Blueprint Studio drafts, because they are normalized and checked with the same blueprint validation rules before YAML is generated
 - invalid severities
+- invalid `validation.oneStreamProfile` booleans, positive integer limits, string arrays, or severities
+- non-boolean export validation gate fields
 - invalid TCP ports
 - non-positive grid page size
 - invalid metadata-only exclude regex patterns
@@ -111,4 +154,3 @@ PORT
 ```
 
 Environment overrides should remain small and operational. Functional behavior should stay in YAML so it can be reviewed and documented.
-

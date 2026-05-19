@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/xfbr-for-column-sharing/30211",
+  "title": "XFBR for Column Sharing",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2024-02-01",
+  "content": "I am using a cube view that has the same rows, but it needs different columns based on the UD8 member. I built multiple template columns cube views, and created a parameter for UD8 members.",
+  "has_solution": false,
+  "tags": [
+    "Cube View",
+    "XFBR"
+  ]
+}

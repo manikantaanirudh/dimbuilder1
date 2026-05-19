@@ -75,6 +75,8 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     validateBlueprintRelationships(type, blueprint.relationships, supportedRelationshipFields, supportedRelationshipDefaultKeySet);
   }
 
+  validateOneStreamProfileConfig(config.validation.oneStreamProfile);
+
   for (const severity of [
     config.import.workbook.skippedDefaultRowSeverity,
     config.validation.duplicateMemberSeverity,
@@ -83,6 +85,13 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     config.validation.missingRequiredFieldSeverity,
     config.validation.circularHierarchySeverity,
     config.validation.relationshipsWithNoLocalMembersSeverity,
+    config.validation.oneStreamProfile.duplicateAliasSeverity,
+    config.validation.oneStreamProfile.invalidSortOrderSeverity,
+    config.validation.oneStreamProfile.sharedMemberSeverity,
+    config.validation.oneStreamProfile.parentInputWarningSeverity,
+    config.validation.oneStreamProfile.unknownPropertySeverity,
+    config.validation.oneStreamProfile.invalidEnumSeverity,
+    config.validation.oneStreamProfile.invalidPropertyTypeSeverity,
     ...config.validation.exportBlockedBySeverities
   ]) {
     if (!supportedConfigSeverities.includes(severity)) {
@@ -99,6 +108,10 @@ export function validateAppConfig(config: AppConfig): AppConfig {
   if (!Number.isInteger(config.ui.gridPageSize) || config.ui.gridPageSize <= 0) {
     throw new Error("ui.gridPageSize must be a positive integer.");
   }
+
+  validateOptionalBoolean("export.allowValidationBypass", config.export.allowValidationBypass);
+  validateOptionalBoolean("export.validationBypassRequiresReason", config.export.validationBypassRequiresReason);
+  validateOptionalBoolean("export.requireValidationBeforeExport", config.export.requireValidationBeforeExport);
 
   for (const pattern of config.dimensions.metadataOnly.excludeNamePatterns) {
     try {
@@ -214,6 +227,37 @@ function validateRelationshipDefaultValue(label: string, key: string, value: unk
   }
 }
 
+function validateOptionalBoolean(label: string, value: unknown): void {
+  if (value !== undefined && typeof value !== "boolean") {
+    throw new Error(`${label} must be a boolean.`);
+  }
+}
+
+function validateOneStreamProfileConfig(profile: unknown): void {
+  if (!isRecord(profile)) {
+    throw new Error("validation.oneStreamProfile must be an object.");
+  }
+  if (typeof profile.enabled !== "boolean") {
+    throw new Error("validation.oneStreamProfile.enabled must be a boolean.");
+  }
+  const memberNameMaxLength = profile.memberNameMaxLength;
+  if (typeof memberNameMaxLength !== "number" || !Number.isInteger(memberNameMaxLength) || memberNameMaxLength <= 0) {
+    throw new Error("validation.oneStreamProfile.memberNameMaxLength must be a positive integer.");
+  }
+  if (typeof profile.warnOnMemberNameSpaces !== "boolean") {
+    throw new Error("validation.oneStreamProfile.warnOnMemberNameSpaces must be a boolean.");
+  }
+  if (typeof profile.warnOnMemberNamePeriods !== "boolean") {
+    throw new Error("validation.oneStreamProfile.warnOnMemberNamePeriods must be a boolean.");
+  }
+  if (!isNonEmptyStringArray(profile.reservedWords)) {
+    throw new Error("validation.oneStreamProfile.reservedWords must be an array of non-empty strings.");
+  }
+  if (!isNonEmptyStringArray(profile.restrictedCharacters)) {
+    throw new Error("validation.oneStreamProfile.restrictedCharacters must be an array of non-empty strings.");
+  }
+}
+
 export function buildClientAppConfig(config: AppConfig): ClientAppConfig {
   const { paths: _paths, server: _server, ...clientConfig } = config;
   return clientConfig;
@@ -237,6 +281,10 @@ function deepMerge<T>(base: T, override: unknown, isRoot = true): T {
 
 function isRecord(value: unknown): value is UnknownRecord {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && item.length > 0);
 }
 
 function isValidTcpPort(value: number): boolean {

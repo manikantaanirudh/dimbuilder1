@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/best-practice-for-filtering-vstagesourceandtargetdatawithattributes/45350",
+  "title": "Best practice for filtering vStageSourceAndTargetDataWithAttributes by Workflow",
+  "forum": "WorkflowDI",
+  "author": "jeffvdt",
+  "date": "2025-09-01",
+  "content": "I am building a query using vStageSourceAndTargetDataWithAttributes and want to ensure I am retrieving the latest figures for a specific Entity and Time period.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "Data Management"
+  ]
+}

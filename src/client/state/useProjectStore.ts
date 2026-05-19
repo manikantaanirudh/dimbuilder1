@@ -3,12 +3,14 @@ import type {
   DashboardSummary,
   DimensionRecord,
   ProjectRecord,
+  VaryingPropertyValueRecord,
   ValidationIssue
 } from "../../shared/types";
 import {
   fetchDimensions,
   fetchIssues,
   fetchProjects,
+  fetchVaryingPropertyValues,
   fetchSummary
 } from "../api/client";
 
@@ -18,6 +20,7 @@ export function useProjectStore() {
   const [dimensions, setDimensions] = useState<DimensionRecord[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
+  const [varyingPropertyValues, setVaryingPropertyValues] = useState<VaryingPropertyValueRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,18 +33,21 @@ export function useProjectStore() {
       const nextProjectId = projectIdOverride ?? selectedProjectId ?? loadedProjects[0]?.id ?? null;
       setSelectedProjectId(nextProjectId);
       if (nextProjectId) {
-        const [loadedDimensions, loadedSummary, loadedIssues] = await Promise.all([
+        const [loadedDimensions, loadedSummary, loadedIssues, loadedVaryingPropertyValues] = await Promise.all([
           fetchDimensions(nextProjectId),
           fetchSummary(nextProjectId),
-          fetchIssues(nextProjectId)
+          fetchIssues(nextProjectId),
+          fetchVaryingPropertyValues(nextProjectId)
         ]);
         setDimensions(loadedDimensions);
         setSummary(loadedSummary);
         setIssues(loadedIssues);
+        setVaryingPropertyValues(loadedVaryingPropertyValues);
       } else {
         setDimensions([]);
         setSummary(null);
         setIssues([]);
+        setVaryingPropertyValues([]);
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Failed to load project data");
@@ -61,9 +67,9 @@ export function useProjectStore() {
     dimensions,
     summary,
     issues,
+    varyingPropertyValues,
     loading,
     error,
     refresh
   };
 }
-

@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/onestream-integration/39894",
+  "title": "OneStream integration with Azure Data Warehouse",
+  "forum": "WorkflowDI",
+  "author": "basszo50",
+  "date": "2024-10-19",
+  "content": "Has anyone integrated Azure data warehouse into OneStream? Kindly walk me through the process.",
+  "has_solution": true,
+  "solution_author": "tschilling",
+  "solution_text": "Have you reviewed any of the documentation for Connector Data Source? There are also several examples in the sample apps. Azure Data Warehouse is just another source like any SQL database with some differences typically in the authorization required.",
+  "tags": [
+    "Data Integration"
+  ]
+}

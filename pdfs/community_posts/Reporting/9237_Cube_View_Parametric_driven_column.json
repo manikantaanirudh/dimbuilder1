@@ -1,0 +1,16 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-parametric-driven-column/9237",
+  "title": "Cube View Parametric driven column",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2022-07-01",
+  "content": "Need to display prior forecast scenario column based on current forecast parameter selection.",
+  "has_solution": true,
+  "solution_author": "t_kaplanis",
+  "solution_text": "Use an XFBR business rule with a Select Case to map current forecast to prior forecast scenario.",
+  "tags": [
+    "Cube View",
+    "Parameters",
+    "XFBR"
+  ]
+}

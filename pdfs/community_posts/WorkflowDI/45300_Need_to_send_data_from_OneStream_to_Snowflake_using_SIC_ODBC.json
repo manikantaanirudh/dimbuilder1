@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/need-to-send-data-from-onestream-to-snowflake-using-an-existing-sic-odbc-connection/45300",
+  "title": "Need to send data from OneStream to Snowflake using SIC ODBC",
+  "forum": "WorkflowDI",
+  "author": "TyeshaAdams",
+  "date": "2025-09-01",
+  "content": "What is the best way to send data from OneStream to Snowflake using an existing SIC ODBC connection? Currently using SIC ODBC to query data from Snowflake.",
+  "has_solution": false,
+  "tags": [
+    "SIC",
+    "Snowflake",
+    "Data Integration"
+  ]
+}

@@ -1,0 +1,1249 @@
+{
+  "https://community.onestreamsoftware.com/discussions/AppBuild/new-to-one-stream-need-some-help-on-learning-about-one-stream/41233": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/new-to-one-stream-need-some-help-on-learning-about-one-stream/41233",
+    "title": "New to One Stream Need some help on learning about one stream",
+    "forum": "AppBuild",
+    "author": "lsrinivas2k13",
+    "date": "2024-12-03",
+    "content": "Hi everyone, I am very much new to OneStream but i am not able to see any resources for learning about OneStream. Can someone guide my about finding the right sources for getting started and learn the basics of onestream",
+    "has_solution": true,
+    "solution_author": "DanielWillis",
+    "solution_text": "Welcome to the OneStream community. I think your best bet is to jump in and check out the free content in Navigator @ https://onestream.thoughtindustries.com/learn/dashboard. There is a bunch of content in there that doesn't require a subscription from courses to videos. There is also the OneCommunity Blog which has some good beginner content. Lastly I guess I need to mention the documentation if you haven't been there already. https://documentation.onestream.com/",
+    "tags": []
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/supplied-parameters-and-embedded-dashboardsdialogs/45189": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/supplied-parameters-and-embedded-dashboardsdialogs/45189",
+    "title": "Supplied Parameters and Embedded Dashboards/Dialogs",
+    "forum": "AppBuild",
+    "author": "SteveK",
+    "date": "2025-09-03",
+    "content": "If I have a dashboard made up of several Embedded dashboards, all of which need to have access to a Supplied Parameter, do I need to include it as a component of the top dashboard only OR, do I have to include it for all embedded dashboards (that require the related parameter) also?",
+    "has_solution": true,
+    "solution_author": "sameburn",
+    "solution_text": "The best rule of thumb for using Supplied Parameters is if you are receiving a parameter prompt from the target (receiving) dashboard that contains the component or components that you are trying to pass the parameter value into, then you need a Supplied Parameter component in the dashboard that is causing the parameter prompt dialog window to appear. This is their purpose e.g. to facilitate parameter handshakes.",
+    "tags": [
+      "dashboards",
+      "Parameters"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/v8-0-workspaces/29819": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/v8-0-workspaces/29819",
+    "title": "v8.0+ Workspaces",
+    "forum": "AppBuild",
+    "author": "miked",
+    "date": "2023-11-01",
+    "content": "Does anyone have any good advice on what Workspaces should be created in the application dashboards screen beyond Default? In reading the guide, workspaces seem to have a lot of focus on separating development activities or perhaps for partner place solutions. I am struggling a bit to understand at what level to offer a different workspace.",
+    "has_solution": true,
+    "solution_author": "Henning",
+    "solution_text": "The bigger picture is the building software on software part. This is to enable the community (partners and customers) to create their own solutions based on the OneStream platform. One important element is to isolate each component in a different Workspace. I recommend to create all new solutions in a dedicated Workspace and not using Default anymore.",
+    "tags": [
+      "Workspaces"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/application-error/7550": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/application-error/7550",
+    "title": "Application error - Application cannot be started",
+    "forum": "AppBuild",
+    "author": "Praveen",
+    "date": "2022-05-23",
+    "content": "I am unable to open the OneStream application and getting 'Application cannot be started' error after downloads.",
+    "has_solution": true,
+    "solution_author": "Sue_T",
+    "solution_text": "You can try to clear your Clickonce cache. Log out of OneStream, Delete the Settings folder in C:\\Users\\USERNAME\\AppData\\Roaming\\OneStream\\Desktop\\Settings, Delete the 2.0 folder in C:\\Users\\USERNAME\\AppData\\Local\\Apps\\2.0",
+    "tags": [
+      "Infrastructure"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/build-process-flow/26575": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/build-process-flow/26575",
+    "title": "Build process flow",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2023-08-01",
+    "content": "Building and maintaining an OneStream application can be done in many ways, but I would like to hear how you have approached the challenge of managing the build process, hereby testing, deployment etc.",
+    "has_solution": false,
+    "tags": [
+      "build",
+      "deployment"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/create-replication-hierarchy/40173": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/create-replication-hierarchy/40173",
+    "title": "Create replication Hierarchy",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2024-10-01",
+    "content": "I have an existing hierarchy called 'ControlMgt Hierarchy' which has several rollups underneath it. I need to recreate a new hierarchy named 'ControlMgt Hierarchy_ALTERNATE' where '_ALTERNATE' will be added to all the rollups. The base elements will remain the same.",
+    "has_solution": false,
+    "tags": [
+      "Metadata"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/7-3-workspaces-and-xfproj-file/15046": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/7-3-workspaces-and-xfproj-file/15046",
+    "title": "7.3 Workspaces and .xfproj file",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2022-12-01",
+    "content": "Has anyone worked yet with workspaces (loading/extracting) using a .xfproj file? I am trying to moved a dashboard maintenance unit (DMU) out of the default workspace into a new one.",
+    "has_solution": true,
+    "solution_author": "tledet",
+    "solution_text": "Examples of using Workspace with an .XFProj file: Everything in a Workspace, Everything in a DMU in a Workspace, Everything in the Default Workspace, Everything in the Default Workspace with the DMU specified.",
+    "tags": [
+      "Workspaces"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/two-versions-of-onestream-desktop-and-excel/38563": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/two-versions-of-onestream-desktop-and-excel/38563",
+    "title": "Two versions of OneStream desktop and excel",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2024-09-01",
+    "content": "Can we install two versions (8.2 and 8.4) of OneStream desktop client and OneStream excel add-in client in the same machine? Later on if I want to uninstall 8.2 does OneStream have an uninstaller?",
+    "has_solution": false,
+    "tags": [
+      "Infrastructure"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/onestream-administration-certification-guidance/22244": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/onestream-administration-certification-guidance/22244",
+    "title": "OneStream Administration Certification Guidance",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2023-06-01",
+    "content": "I would like to perform the certification on OCA and need your experience on how to prepare and what are the areas to focus on.",
+    "has_solution": false,
+    "tags": [
+      "Certification"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/metadata-update-from-data-file-load/36509": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/metadata-update-from-data-file-load/36509",
+    "title": "Metadata Update from Data file Load",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2024-07-01",
+    "content": "Our client provides a data file with Cost Center members including Parent/Child Relationship. They would like to Automatically update new Cost Centers when the data file is loaded. Any existing Cost center moves from one parent to another should also be handled.",
+    "has_solution": false,
+    "tags": [
+      "Metadata"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/elastic-pools-space-after-app-removal/45100": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/elastic-pools-space-after-app-removal/45100",
+    "title": "Elastic pool's space after app removal",
+    "forum": "AppBuild",
+    "author": "DavidRH",
+    "date": "2025-08-01",
+    "content": "I have an environment with a couple of applications that I want to remove. My question is, if I remove them using the Application Management of the Cloud Administration Tool, would I immediately get back the space those apps were using?",
+    "has_solution": true,
+    "tags": [
+      "Application Properties"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/configure-access-to-different-applications/45050": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/configure-access-to-different-applications/45050",
+    "title": "Configure access to different applications",
+    "forum": "AppBuild",
+    "author": "fc",
+    "date": "2025-08-01",
+    "content": "I'm currently using different applications within the same environment and I need to give some users access to specific applications. To configure who accesses what, I thought I had to assign a security group to the 'OpenApplication' setting within the Security Roles interface.",
+    "has_solution": true,
+    "tags": [
+      "Security"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/best-way-to-narrow-down-where-a-simple-account-name-is-used/45000": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/best-way-to-narrow-down-where-a-simple-account-name-is-used/45000",
+    "title": "Best way to narrow down where a simple account name is used (ex. AR)",
+    "forum": "AppBuild",
+    "author": "NicoleBruno",
+    "date": "2025-07-01",
+    "content": "We named an alternate hierarchy account parent AR and are now trying to find where that account was called/used because we want to remove it without impacting other things.",
+    "has_solution": false,
+    "tags": [
+      "Metadata"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/sic-not-available-in-9-1/45200": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/sic-not-available-in-9-1/45200",
+    "title": "SIC not available in 9.1",
+    "forum": "AppBuild",
+    "author": "alexmoreno",
+    "date": "2025-09-01",
+    "content": "We've installed a self-hosted 9.1 OS server, and now when trying to configure the SIC to connect to our datalake, I can't find the Smart Integration Connector in the Admin tab within OS Desktop.",
+    "has_solution": false,
+    "tags": [
+      "Infrastructure"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/add-users-to-view-application-and-system-pane/44900": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/add-users-to-view-application-and-system-pane/44900",
+    "title": "Add users to view Application and System pane",
+    "forum": "AppBuild",
+    "author": "SKVK",
+    "date": "2025-06-01",
+    "content": "I have list of users who have been added to a group under Security rules. But they are able to see only OnePlace pane, but not the Application and System. How to have them get the view of those 2 panes?",
+    "has_solution": true,
+    "tags": [
+      "Security"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/considerations-for-changing-cube-consolidation-algorithm-type/24464": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/considerations-for-changing-cube-consolidation-algorithm-type/24464",
+    "title": "Considerations for Changing Cube Consolidation Algorithm Type",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2023-07-01",
+    "content": "Can anyone share their experience of the potential impacts of switching the Cube Consolidation Algorithm Type from Standard (Calc-on-the-fly share and hierarchy elimination) to Org-By-Period Elimination?",
+    "has_solution": false,
+    "tags": [
+      "Consolidation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/commentary-on-a-dashboard/10254": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/commentary-on-a-dashboard/10254",
+    "title": "Commentary on a dashboard",
+    "forum": "Reporting",
+    "author": "Leytond",
+    "date": "2022-09-16",
+    "content": "I have created a dashboard for Flash reporting, and I'm trying to add a section for commentary. I've used the View member 'Annotation' in the cube view. This works fine for short comments but anything beyond that is not visible.",
+    "has_solution": false,
+    "tags": [
+      "Cube View",
+      "dashboards"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/table-view-numer-formatting/20840": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/table-view-numer-formatting/20840",
+    "title": "Table View Number Formatting",
+    "forum": "Reporting",
+    "author": "aprats",
+    "date": "2023-06-14",
+    "content": "I have an issue with table view number formatting. On my SQL query, I'm introducing the format: Select FORMAT(Sum(Year_01), 'N2', 'es-es') as Year_01. After populating table view with UseDataTypes=True, it introduces the value as Text.",
+    "has_solution": true,
+    "solution_author": "aprats",
+    "solution_text": "If you use FORMAT in SQL, the column is stored as Text. Solution: Define the text columns as Decimal, then when inserting rows, for number columns, replace ',' for '.' for decimal separator.",
+    "tags": [
+      "Table View"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/how-are-the-reports-created-by-default/39185": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/how-are-the-reports-created-by-default/39185",
+    "title": "How are the reports created by default and how did you solve the problem of comments?",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2024-09-01",
+    "content": "How are the reports created by default? How did you solve (usually) the problem of the comments? I have been working on creating reports and after trying different options I have some questions.",
+    "has_solution": true,
+    "tags": [
+      "Reports",
+      "Cube View"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/annotation---comments/6807": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/annotation---comments/6807",
+    "title": "Annotation - Comments",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2022-03-01",
+    "content": "The customer would like to explain a dollar variance between Budget and Actual by leveraging 4 columns of data: enter a dollar amount, a combo box to select a type of UD1 data timing (Perm/Temp) and another combo box to select UD8 driver type with the last column for a comment.",
+    "has_solution": false,
+    "tags": [
+      "Cube View"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/how-to-create-a-financial-report/39015": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/how-to-create-a-financial-report/39015",
+    "title": "How to create a financial report",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2024-09-01",
+    "content": "How to create a financial report? What tools do i need to create one in the platform?",
+    "has_solution": false,
+    "tags": [
+      "Reports"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/how-does-quickview-decide-on-page-breaks/3380": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/how-does-quickview-decide-on-page-breaks/3380",
+    "title": "How does QuickView decide on page breaks?",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2021-11-01",
+    "content": "I just had a call from an Excel user who uses the OneStream addin. He has a number of reports that he's been using, but they're working differently today. Instead of retrieving all rows, there is a page break.",
+    "has_solution": true,
+    "tags": [
+      "Excel Add In"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/usage-of-report-component/34798": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/usage-of-report-component/34798",
+    "title": "Usage of Report component",
+    "forum": "Reporting",
+    "author": "100Rub",
+    "date": "2024-05-01",
+    "content": "I am trying to use Cube View within the Report Designer of the Report component. However, I am unable to see the row-wise values for Entity and Account.",
+    "has_solution": true,
+    "solution_author": "KarlT",
+    "solution_text": "Check out the Dashboards course on Navigator. You can import the report layout from a cube view in the Report Designer. This requires a Cube View data adaptor rather than a Cube View MD.",
+    "tags": [
+      "Reports",
+      "dashboards"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/guided-reporting/45338": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/guided-reporting/45338",
+    "title": "Guided reporting - user doesn't see section",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2025-10-01",
+    "content": "Could you please advise why user doesn't see Guided reporting section in Dashboards (OnePlace). As administrator I see Guided reporting and user has been included in security group.",
+    "has_solution": false,
+    "tags": [
+      "dashboards"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-to-automatically-select-workflow-entities/7929": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-to-automatically-select-workflow-entities/7929",
+    "title": "Cube View to automatically select Workflow entities",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2022-05-01",
+    "content": "How to automatically select workflow entities in a cube view?",
+    "has_solution": true,
+    "solution_author": "Cosimo",
+    "solution_text": "You can use E#Root.WFProfileEntities as a member filter, or create a dashboard parameter of type Member List, or create an XFBR rule that returns the entity assigned to workflow using BRApi.Workflow.Metadata.GetProfileEntities.",
+    "tags": [
+      "Cube View",
+      "Parameters"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-parametric-driven-column/9237": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/cube-view-parametric-driven-column/9237",
+    "title": "Cube View Parametric driven column",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2022-07-01",
+    "content": "Need to display prior forecast scenario column based on current forecast parameter selection.",
+    "has_solution": true,
+    "solution_author": "t_kaplanis",
+    "solution_text": "Use an XFBR business rule with a Select Case to map current forecast to prior forecast scenario.",
+    "tags": [
+      "Cube View",
+      "Parameters",
+      "XFBR"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/xfbr-for-column-sharing/30211": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/xfbr-for-column-sharing/30211",
+    "title": "XFBR for Column Sharing",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2024-02-01",
+    "content": "I am using a cube view that has the same rows, but it needs different columns based on the UD8 member. I built multiple template columns cube views, and created a parameter for UD8 members.",
+    "has_solution": false,
+    "tags": [
+      "Cube View",
+      "XFBR"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/summary-unable-to-execute-business-rule/33263": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/summary-unable-to-execute-business-rule/33263",
+    "title": "Summary: Unable to execute Business Rule - Object reference not set to an instance of an object",
+    "forum": "Reporting",
+    "author": "OS_Pizza",
+    "date": "2024-04-22",
+    "content": "I have a dashboard with a Label component that uses a Cube View as the data adapter. The Cube View employs an XFBR in the account POV. The error occurs when I open the dashboard - the Label value attempts to run the XFBR rule but fails to capture the default parameter value.",
+    "has_solution": false,
+    "tags": [
+      "XFBR",
+      "dashboards",
+      "Parameters"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/quick-views-in-excel-add-in-disappearing/46234": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/quick-views-in-excel-add-in-disappearing/46234",
+    "title": "Quick Views in Excel add-in disappearing",
+    "forum": "Reporting",
+    "author": "Michael_Laroche",
+    "date": "2025-11-24",
+    "content": "Has anyone ever come across an issue where you've built out a quick view in excel and you open the workbook to refresh the quick views and they are all #refresh with the links broken?",
+    "has_solution": true,
+    "solution_author": "BobMarchese",
+    "solution_text": "It sounds as if you are converting your Quick View to XFGetCells format. Once you do that, you will see the #REFRESH and your Quick View definition is deleted. Best thing to do is to make a copy of your QV before converting.",
+    "tags": [
+      "Excel Add In"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/ic-matching-report-before-elimination/15780": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/ic-matching-report-before-elimination/15780",
+    "title": "IC Matching report before elimination",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2022-12-01",
+    "content": "We have a requirement to run IC Matching report including journal that may have been posted as parent adjustment.",
+    "has_solution": false,
+    "tags": [
+      "Reports"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/member-formulas---syntax-documentation/5689": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/member-formulas---syntax-documentation/5689",
+    "title": "Member Formulas - Syntax Documentation",
+    "forum": "Rules",
+    "author": "Beeswing",
+    "date": "2022-02-21",
+    "content": "I'm trying to set up some new Cash Flow accounts, and I'm struggling to make sense of some of the Syntax. Where can I find more info on Member Formula Syntax?",
+    "has_solution": false,
+    "tags": [
+      "Finance"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/business-rule-compile-error-and-warnings/4932": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/business-rule-compile-error-and-warnings/4932",
+    "title": "Business Rule Compile Error and Warnings",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2022-01-01",
+    "content": "OneStream Platform releases will periodically include an update to the Business Rules compiler. The enhancements typically make the compiler stricter in detecting syntax or other conditions.",
+    "has_solution": false,
+    "tags": [
+      "Admin"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/learning-vbnet/3361": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/learning-vbnet/3361",
+    "title": "Learning VB.NET",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2021-11-01",
+    "content": "How did you learn to code VB.NET? I've been trying to improve my skill to write tailored Business Rules. Any resources/guide to share?",
+    "has_solution": true,
+    "solution_author": "RachealCrowder",
+    "solution_text": "If you're just getting started with Rule Writing in OneStream, make sure you download and install the Snippet Editor from MarketPlace. Recommended sites: learnvisualstudio.net, tutorialspoint.com/vb.net, functionx.com/vb.",
+    "tags": []
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/execute-sql-on-data-table/33174": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/execute-sql-on-data-table/33174",
+    "title": "Execute sql on data table",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2024-04-01",
+    "content": "Can I execute an sql statement against a data table created in a business rule?",
+    "has_solution": true,
+    "solution_author": "AndreaF",
+    "solution_text": "The datatable exists within the data set business rule, so yes you can run a query against it within its limit of existence. You need to use the appropriate function of the BRApi.Database and pass the table and where/order by as parameters.",
+    "tags": [
+      "Extenders"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/composite-rule-all-site-but-one/35368": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/composite-rule-all-site-but-one/35368",
+    "title": "Composite Rule, All Site but One",
+    "forum": "Rules",
+    "author": "ejuszczak",
+    "date": "2024-06-01",
+    "content": "Is there a way to create a mapping rule for an account that looks at all entities but one? For example, A#123:E#* but E#456",
+    "has_solution": true,
+    "solution_author": "aformenti",
+    "solution_text": "Create a Composite rule that executes first with the Exception (A#123:E#456), then the second Composite rule would run for all entities regardless.",
+    "tags": [
+      "Transformation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/equity-method-of-consolidation/20451": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/equity-method-of-consolidation/20451",
+    "title": "Equity method of Consolidation",
+    "forum": "Rules",
+    "author": "BCG",
+    "date": "2023-05-01",
+    "content": "We have a requirement where we need to write only into C#Elimination of Share of Profit from A#NetIncome and Same to be written to A#Investment in Equity Account.",
+    "has_solution": true,
+    "solution_author": "ChrisLoran",
+    "solution_text": "If the Consolidation Algorithm is Standard then the PCON=0 will ensure nothing gets as far as the C#Elimination stage. You could have a calculate pass which reads directly from the child entity's C#Translated data unit. Another way is to simply have a member formula or Allocation Journal on the Holding Company's base entity.",
+    "tags": [
+      "Finance",
+      "Consolidation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/best-approach/31671": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/best-approach/31671",
+    "title": "Best Approach - Reclass balances during consolidation",
+    "forum": "Rules",
+    "author": "Oscar",
+    "date": "2024-03-19",
+    "content": "We use Standard (Calc On The Fly Share and Hierarchy Elimination). What type of Rule should we leverage to reclass balances from one account to another during consolidation?",
+    "has_solution": true,
+    "solution_author": "JackLacava",
+    "solution_text": "Generally speaking, for pure consolidation, member formulas do indeed fit better on individual members; and pulling data is better than pushing. I would probably put the formula on U4#ReclassThis.",
+    "tags": [
+      "Finance",
+      "Consolidation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/data-management-sequence/35846": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/data-management-sequence/35846",
+    "title": "Data management Sequence - steps not executing",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2024-06-01",
+    "content": "I am encountering an issue with a Data Management Sequence consisting of four steps. The first step is not executing as expected.",
+    "has_solution": true,
+    "solution_author": "Henning",
+    "solution_text": "You can trigger DM sequences by using BRApi.Utilities.StartDataMgmtSequence, BRApi.Utilities.ExecuteDataMgmtSequence, or BRApi.Utilities.QueueDataMgmtSequence. ExecuteDataMgmtSequence fully executes the first DM sequence before the next one.",
+    "tags": [
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/dashboard-xfbr-string-rules---api-data-getdatacell/23843": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/dashboard-xfbr-string-rules---api-data-getdatacell/23843",
+    "title": "Dashboard XFBR String Rules - api.data.GetDataCell",
+    "forum": "Rules",
+    "author": "BSK",
+    "date": "2023-07-01",
+    "content": "We want to make some forecast periods read only in a Data submission cube view by referencing the period count submitted in another Cube View using Dashboard XFBR string.",
+    "has_solution": false,
+    "tags": [
+      "XFBR",
+      "Finance"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/looking-for-debugging-advice/3365": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/looking-for-debugging-advice/3365",
+    "title": "Looking for debugging advice",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2021-11-01",
+    "content": "Getting an error with Business Rule during confirmation. How to debug?",
+    "has_solution": false,
+    "tags": [
+      "Admin"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/subsidiary-consolidation/19845": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/subsidiary-consolidation/19845",
+    "title": "Subsidiary Consolidation",
+    "forum": "Rules",
+    "author": "Unknown",
+    "date": "2023-04-01",
+    "content": "I have subsidiary entity where it needs to be consolidated 100% but with other line of adjustments for NCI calculation on equity portion.",
+    "has_solution": false,
+    "tags": [
+      "Finance",
+      "Consolidation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/group-overlays---looking-for-brilliant-solutions/32926": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/group-overlays---looking-for-brilliant-solutions/32926",
+    "title": "Group overlays - looking for brilliant solutions!",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-04-01",
+    "content": "I wanted to reach out to the community to see if others have a slicker way of dealing with head office overlays. Sites complete their year-end workflows, then group tax team reviews and decides on tax adjustments. The problem is having to manually un-certify and unlock all workflows.",
+    "has_solution": false,
+    "tags": [
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/calling-db-stored-procedures-from-os/23227": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/calling-db-stored-procedures-from-os/23227",
+    "title": "Calling DB Stored Procedures from OS",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2023-06-01",
+    "content": "I want to execute a list of DB Stored procedures after executing a DM step in OS. Is it possible to call a DB Stored Procedure from OS?",
+    "has_solution": true,
+    "solution_author": "Steven",
+    "solution_text": "Yes, you can call a stored procedure from OS: Using dbConnApp = BRApi.Database.CreateApplicationDbConnInfo(si) BRApi.Database.ExecuteActionQuery(dbConnApp, 'EXEC [StoredProc]', True, True) End Using",
+    "tags": [
+      "Extenders"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/security-access-error--get-parent-workflow-status/21099": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/security-access-error--get-parent-workflow-status/21099",
+    "title": "Security Access Error - GetParent Workflow Status",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2023-05-01",
+    "content": "I've got a business rule where I use BRApi.Workflow.Metadata.GetParent to look at the status of the parent workflow profile. However, if a user does not have access to the parent workflow profile, they get a Security Access Error.",
+    "has_solution": false,
+    "tags": [
+      "Workflow",
+      "Security"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/error-saving-data-into-white-input-cells/12338": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/error-saving-data-into-white-input-cells/12338",
+    "title": "Error saving data into white input cells",
+    "forum": "WorkflowDI",
+    "author": "cdever",
+    "date": "2022-10-01",
+    "content": "Getting error 'Cannot execute step because the specified step classification doesn't exist for the workflow profile' when saving data in a particular workflow.",
+    "has_solution": true,
+    "tags": [
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/import-data-extracted-via-data-management-using-extensibility-business-rule/3778": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/import-data-extracted-via-data-management-using-extensibility-business-rule/3778",
+    "title": "Import Data Extracted via Data Management using Extensibility Business Rule",
+    "forum": "WorkflowDI",
+    "author": "Wei",
+    "date": "2021-12-21",
+    "content": "We would like to move specific Forms and Adj data from one application to another - data are extracted via Data Export in DM, does anyone have an example of the Extensibility Rule (BRApi.Finance.Data.SetDataCellsUsingUsingCsvFile)?",
+    "has_solution": true,
+    "solution_author": "NickKroppe",
+    "solution_text": "Below is an example snippet of using the SetDataCellsUsingCsvFile BRApi. Get file path from FileShareFolderHelper, define source origins list, set target origin, then call BRApi.Finance.Data.SetDataCellsUsingUsingCsvFile with the file path and parameters.",
+    "tags": [
+      "Data Integration",
+      "Extenders"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/locking-workflows/10277": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/locking-workflows/10277",
+    "title": "Locking Workflows",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-08-01",
+    "content": "Would anyone be willing to share how they are locking data to end users, but still allowing consolidation users to make adjustments?",
+    "has_solution": false,
+    "tags": [
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/composite-transformation-rule-with-range-and-list/36666": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/composite-transformation-rule-with-range-and-list/36666",
+    "title": "Composite Transformation Rule with Range and List",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-07-01",
+    "content": "I need to create a composite mapping: For UD2, If Account is in range of 6099* and 6999* and UD2 is [123 or 124], then UD2 is 100.",
+    "has_solution": true,
+    "tags": [
+      "Transformation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/auto-complete-workflow/15302": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/auto-complete-workflow/15302",
+    "title": "Auto Complete Workflow",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-12-01",
+    "content": "I would like to be able to batch certify this node but I cannot because the system is expecting me to manually Complete the Workspace first.",
+    "has_solution": false,
+    "tags": [
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/dashboard/18905": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dashboard/18905",
+    "title": "Dashboard for Data Integration",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2023-03-01",
+    "content": "We are creating a Dashboard for data integration and to execute consolidations. Is there a Dashboard template out there for download?",
+    "has_solution": true,
+    "solution_author": "JackLacava",
+    "solution_text": "The GolfStream reference application contains a lot of Dashboards you can repurpose or learn from. Marketplace/PartnerPlace/OpenPlace applications contain lots of Dashboards. The CPM Blueprint package contains some Dashboard material.",
+    "tags": [
+      "dashboards"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/executing-a-data-management-sequence-that-we-chose-from-a-combo-box/39976": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/executing-a-data-management-sequence-that-we-chose-from-a-combo-box/39976",
+    "title": "Executing a data management sequence from a combo box in a dashboard",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-10-01",
+    "content": "I need to execute a data management sequence selected from a combo box in a dashboard using a button.",
+    "has_solution": true,
+    "solution_author": "db_pdx",
+    "solution_text": "In Button Settings under Action > Server Task, set Selection Changed Server Task to 'Execute Data Management Sequence' and use parameter substitution in the arguments: {|!YourParameterThatControlsTheDMSequence!|}{Param1=[|!DashboardParameter1!|]}",
+    "tags": [
+      "dashboards",
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-management-extract-to-the-server-folder/35048": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-management-extract-to-the-server-folder/35048",
+    "title": "Data management extract to the Server folder",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-06-01",
+    "content": "How do I specify in a data management task to extract the data to the cube/scenario/workflow step folder and not the user's folder under file share?",
+    "has_solution": true,
+    "solution_author": "Henning",
+    "solution_text": "Create a Data Mgmt Export Sequence under Application > Data Sources. Assign your Export Data DM step to this DM Export Sequence data source. Then assign this Export Sequence to your Import workflow step.",
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/dm-export-sequence-dmes/34644": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dm-export-sequence-dmes/34644",
+    "title": "DM Export Sequence: DMES",
+    "forum": "WorkflowDI",
+    "author": "KH1",
+    "date": "2024-05-26",
+    "content": "In Tech Talks for Data Movement, Nick Bolinger suggested to use DMES as a better way than a DM Copy Job to copy data between scenarios.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-stage-data/8099": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-stage-data/8099",
+    "title": "Export Stage Data",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-05-01",
+    "content": "I am attempting to export Stage Data through a Data Management Job using a Business Rule. The customer is hoping to remove some columns from the export.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/automation-of-workflow-that-is-using-data-management-export-sequence/20818": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/automation-of-workflow-that-is-using-data-management-export-sequence/20818",
+    "title": "Automation of Workflow using Data Management Export Sequence",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2023-05-01",
+    "content": "We have a workflow that uses Data Management Export Sequence to load the data. Manually we are loading the data fine but I'm looking for options to automate this process.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/onestream-integration/39894": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/onestream-integration/39894",
+    "title": "OneStream integration with Azure Data Warehouse",
+    "forum": "WorkflowDI",
+    "author": "basszo50",
+    "date": "2024-10-19",
+    "content": "Has anyone integrated Azure data warehouse into OneStream? Kindly walk me through the process.",
+    "has_solution": true,
+    "solution_author": "tschilling",
+    "solution_text": "Have you reviewed any of the documentation for Connector Data Source? There are also several examples in the sample apps. Azure Data Warehouse is just another source like any SQL database with some differences typically in the authorization required.",
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/dat-integration/34801": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dat-integration/34801",
+    "title": "Data Integration - Email validation errors",
+    "forum": "WorkflowDI",
+    "author": "NSHAIK2",
+    "date": "2024-05-31",
+    "content": "We currently have OneStream set up to load data files automatically over the fileshare API. I would want to compute the validation errors and email them to users about invalid intersections.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/move-data-between-scenarios---slice-data-files-on-ud-in-export-job/23899": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/move-data-between-scenarios---slice-data-files-on-ud-in-export-job/23899",
+    "title": "Move data between scenarios - Slice data files on UD in export job",
+    "forum": "Rules",
+    "author": "Jones",
+    "date": "2023-07-01",
+    "content": "I have built a flow to push data from one scenario to another by pressing a dashboard button which starts a data management job. I need to replace data instead of append for a given UD1 set.",
+    "has_solution": true,
+    "solution_author": "Jones",
+    "solution_text": "I managed to accomplish this by setting SourceID on DataSource to UD1.",
+    "tags": [
+      "Data Integration",
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/execute-stored-procedure-on-external-database/12612": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/execute-stored-procedure-on-external-database/12612",
+    "title": "Execute Stored Procedure on External Database",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-10-01",
+    "content": "We created a connection to an external database. The issue is executing a stored procedure on it.",
+    "has_solution": true,
+    "solution_author": "JackLacava",
+    "solution_text": "You can try executing the command from a rule. For example, as a Dashboard DataSet: Using dbConnApp = BRApi.Database.CreateExternalDbConnInfo(si, 'OneStream BI Blend') then BRApi.Database.ExecuteSql(dbConnApp, sqlQ, False)",
+    "tags": [
+      "Extenders"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/snowflake-integration-using-rest-api/28367": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/snowflake-integration-using-rest-api/28367",
+    "title": "Snowflake Integration using REST API",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-01-01",
+    "content": "I am trying to pull data into OneStream from Snowflake using REST API. Does anyone know how the entire process works?",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "REST API",
+      "Snowflake"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-data-to-snowflake/42020": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-data-to-snowflake/42020",
+    "title": "Export data to Snowflake",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2025-01-01",
+    "content": "We are looking to export data from OneStream to Snowflake using APIs. We are using OneStream's cloud hosted environment with Reference Token authentication.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "Snowflake"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/webapi-through-sic-/24230": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/webapi-through-sic-/24230",
+    "title": "WEBAPI through SIC",
+    "forum": "WorkflowDI",
+    "author": "Krishna",
+    "date": "2023-07-01",
+    "content": "Has anyone done WEBAPI through SIC? I followed the document and I am not successful connecting to the endpoint.",
+    "has_solution": true,
+    "solution_author": "Krishna",
+    "solution_text": "I was able to fix it. In the BR I have to provide the localhost:PortNumber which was specified in the SIC configuration screen.",
+    "tags": [
+      "SIC",
+      "REST API"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/rest-api-using-sic/37254": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/rest-api-using-sic/37254",
+    "title": "Rest API Using SIC",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2024-08-01",
+    "content": "Is it possible to use REST API in SIC? If so, could you please provide some examples?",
+    "has_solution": false,
+    "tags": [
+      "SIC",
+      "REST API"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/rest-api-use/3761": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/rest-api-use/3761",
+    "title": "REST API USE - Connector Rule example",
+    "forum": "WorkflowDI",
+    "author": "pvanerp",
+    "date": "2021-12-01",
+    "content": "I'm working on implementing a REST API in OS. Can anyone explain the steps? I started by downloading POSTMAN for tests.",
+    "has_solution": true,
+    "solution_author": "pvanerp",
+    "solution_text": "Got it to work using WebClient in VB.NET: Dim wc As New WebClient, set headers for cache-control, ContentType, Accept, Authorization as Basic, then DownloadString to get JSON and parse with JObject.",
+    "tags": [
+      "REST API",
+      "Connector"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/need-to-send-data-from-onestream-to-snowflake-using-an-existing-sic-odbc-connection/45300": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/need-to-send-data-from-onestream-to-snowflake-using-an-existing-sic-odbc-connection/45300",
+    "title": "Need to send data from OneStream to Snowflake using SIC ODBC",
+    "forum": "WorkflowDI",
+    "author": "TyeshaAdams",
+    "date": "2025-09-01",
+    "content": "What is the best way to send data from OneStream to Snowflake using an existing SIC ODBC connection? Currently using SIC ODBC to query data from Snowflake.",
+    "has_solution": false,
+    "tags": [
+      "SIC",
+      "Snowflake",
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/file-explorer-incoming-workflow-folders-missing/45250": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/file-explorer-incoming-workflow-folders-missing/45250",
+    "title": "File Explorer Incoming workflow folders missing in copied applications",
+    "forum": "WorkflowDI",
+    "author": "kchampion",
+    "date": "2025-09-01",
+    "content": "When an application is copied, the new application does not contain the folder structure. To fix, export Workflows and re-import them back into the copied application.",
+    "has_solution": true,
+    "tags": [
+      "FileSystem",
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/central-import-and-account-reconciliations/45200": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/central-import-and-account-reconciliations/45200",
+    "title": "Central Import and Account Reconciliations",
+    "forum": "WorkflowDI",
+    "author": "mlopez",
+    "date": "2025-09-01",
+    "content": "I'm starting an Account Reconciliations implementation. The current process loads Actuals for all entities through a central import. For RCM, data is not flowing through individual workflow entities.",
+    "has_solution": true,
+    "tags": [
+      "Import",
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/forecast-process/15455": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/forecast-process/15455",
+    "title": "Forecast process - how to seed from actual and budget",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-12-01",
+    "content": "I need to seed the forecast from actual and budget and then be able to visualize them through the workflow. How can I link the BR of copy with the workflow?",
+    "has_solution": false,
+    "tags": [
+      "planning",
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/forecasting-adjustments/12168": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/forecasting-adjustments/12168",
+    "title": "Forecasting Adjustments - best practices",
+    "forum": "AppBuild",
+    "author": "Unknown",
+    "date": "2022-10-01",
+    "content": "Question about customer experiences and best practices regarding forecasting adjustments. We have forecast scenarios set up and previously would copy the entire scenario.",
+    "has_solution": false,
+    "tags": [
+      "planning"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/okta-integration-for-onestream/7606": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/okta-integration-for-onestream/7606",
+    "title": "OKTA Integration for OneStream",
+    "forum": "WorkflowDI",
+    "author": "Unknown",
+    "date": "2022-05-01",
+    "content": "Has anyone integrated OneStream with OKTA to enable SSO login? Any leads/suggestions would be appreciated.",
+    "has_solution": true,
+    "solution_author": "Unknown",
+    "solution_text": "We used Okta to authenticate users - it was straightforward to configure and worked well. The OneStream Installation Guide has a section on Okta configuration.",
+    "tags": [
+      "Security",
+      "SSO"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/AppBuild/sso-change/26119": {
+    "url": "https://community.onestreamsoftware.com/discussions/AppBuild/sso-change/26119",
+    "title": "SSO Change - AzureSSO to OktaSSO",
+    "forum": "AppBuild",
+    "author": "aricgresko",
+    "date": "2023-09-01",
+    "content": "Has anyone switched External Authentication from AzureSSO to OktaSSO? How did that process go? Was it seamless or were there user login issues?",
+    "has_solution": false,
+    "tags": [
+      "Security",
+      "SSO"
+    ]
+  },
+  "https://community.onestreamsoftware.com/blog/blog/a-sneak-peek-into-dashboard-xfbr-business-rules/23176": {
+    "url": "https://community.onestreamsoftware.com/blog/blog/a-sneak-peek-into-dashboard-xfbr-business-rules/23176",
+    "title": "Blog: A sneak peek into Dashboard XFBR Business Rules",
+    "forum": "Blog",
+    "author": "plaabs25",
+    "date": "2023-08-21",
+    "content": "Dashboard XFBR Strings are rules that return a string based on the requirements or logic written in the rule. This blog explores how they can be used in Cube Views and Dashboards.",
+    "has_solution": false,
+    "tags": [
+      "XFBR",
+      "dashboards",
+      "Blog"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/technical-guides/the-consolidation-dimension/12991": {
+    "url": "https://community.onestreamsoftware.com/kb/technical-guides/the-consolidation-dimension/12991",
+    "title": "Technical Guide: The Consolidation Dimension",
+    "forum": "TechnicalGuide",
+    "author": "PFugereCSO",
+    "date": "2022-11-15",
+    "content": "Part 2 of 3 - In this series of blogs we discuss the Consolidation and Dimensions that drive the power of the Cube in OneStream. What does each member of the consolidation dimension do?",
+    "has_solution": false,
+    "tags": [
+      "Consolidation",
+      "Technical Guide"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/foundationaldesign/matrix-consolidation-eliminating-beyond-legal-entity/43014": {
+    "url": "https://community.onestreamsoftware.com/kb/foundationaldesign/matrix-consolidation-eliminating-beyond-legal-entity/43014",
+    "title": "Foundational Design Guide: Matrix Consolidation - Eliminating Beyond Legal Entity",
+    "forum": "TechnicalGuide",
+    "author": "Unknown",
+    "date": "2025-02-01",
+    "content": "Detailed comparison of approaches for eliminating beyond legal entity in OneStream, including putting Profit Centres in Entity dimension vs using UD dimensions.",
+    "has_solution": false,
+    "tags": [
+      "Consolidation",
+      "Design Guide"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/technical-guides/guiding-principles/28535": {
+    "url": "https://community.onestreamsoftware.com/kb/technical-guides/guiding-principles/28535",
+    "title": "Foundational Design Guide: Guiding Principles",
+    "forum": "TechnicalGuide",
+    "author": "Unknown",
+    "date": "2024-01-17",
+    "content": "Whether designing or building a OneStream application, it's vital to keep end-user experience, performance, and administration in balance.",
+    "has_solution": false,
+    "tags": [
+      "Design Guide",
+      "Best Practices"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/AcceptedCodeSample/dashboard-xfbr-string/6611": {
+    "url": "https://community.onestreamsoftware.com/kb/AcceptedCodeSample/dashboard-xfbr-string/6611",
+    "title": "Code Sample: Dashboard XFBR String",
+    "forum": "CodeSample",
+    "author": "OSAdmin",
+    "date": "2022-04-07",
+    "content": "Business rules written as Parameters that return a specific value based on defined inputs. Examples: GetCalcStatus, GetUserIsAdmin, EntityDesc.",
+    "has_solution": false,
+    "tags": [
+      "XFBR",
+      "Code Sample"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/platformupgradestkb-board/smart-integration-connector-sic-content/21568": {
+    "url": "https://community.onestreamsoftware.com/kb/platformupgradestkb-board/smart-integration-connector-sic-content/21568",
+    "title": "Smart Integration Connector (SIC) Content",
+    "forum": "TechnicalGuide",
+    "author": "djcorbett",
+    "date": "2023-07-05",
+    "content": "SIC is OneStream's new standard for local data source integration to OneStream's Cloud. A Local Gateway Service manages all credentials and files for local data source connectivity.",
+    "has_solution": false,
+    "tags": [
+      "SIC",
+      "Technical Guide"
+    ]
+  },
+  "https://community.onestreamsoftware.com/kb/technical-guides/enriching-embedded-dashboards-with-custom-controls/41807": {
+    "url": "https://community.onestreamsoftware.com/kb/technical-guides/enriching-embedded-dashboards-with-custom-controls/41807",
+    "title": "Technical Guide: Enriching Embedded Dashboards with Custom Controls",
+    "forum": "TechnicalGuide",
+    "author": "sameburn",
+    "date": "2025-01-10",
+    "content": "Introduction to Custom Controls in OneStream Workspaces. Custom Control is a new Dashboard Type that enriches what you can do with Embedded Dashboards.",
+    "has_solution": false,
+    "tags": [
+      "dashboards",
+      "Technical Guide",
+      "Workspaces"
+    ]
+  },
+  "https://community.onestreamsoftware.com/t5/Workflow-and-Data-Integration/Matrix-load-using-a-connector-data-surce/td-p/175": {
+    "url": "https://community.onestreamsoftware.com/t5/Workflow-and-Data-Integration/Matrix-load-using-a-connector-data-surce/td-p/175",
+    "title": "Matrix load using a connector data source (Snowflake)",
+    "forum": "WorkflowDI",
+    "author": "Vignesh Mohan",
+    "date": "2021-01-01",
+    "content": "I am trying to import data from Snowflake using JDBC/ODBC connection with Matrix data structure. Getting error: No valid DataKeys (Scenario/Time) found in data source.",
+    "has_solution": true,
+    "solution_author": "Vignesh Mohan",
+    "solution_text": "The issue was the format of workflow year and period sent as parameter to the query. Periods are setup as 2019M1 but source has 01. Minor tweaks in connector rule fixed formatting.",
+    "tags": [
+      "Data Integration",
+      "Snowflake",
+      "Connector"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/best-practice-for-filtering-vstagesourceandtargetdatawithattributes/45350": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/best-practice-for-filtering-vstagesourceandtargetdatawithattributes/45350",
+    "title": "Best practice for filtering vStageSourceAndTargetDataWithAttributes by Workflow",
+    "forum": "WorkflowDI",
+    "author": "jeffvdt",
+    "date": "2025-09-01",
+    "content": "I am building a query using vStageSourceAndTargetDataWithAttributes and want to ensure I am retrieving the latest figures for a specific Entity and Time period.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/manage-workflow-issues/45400": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/manage-workflow-issues/45400",
+    "title": "Manage Workflow Issues - special character in channel name",
+    "forum": "WorkflowDI",
+    "author": "ShivaPrasad",
+    "date": "2025-09-01",
+    "content": "In Manage Workflow initially faced an issue - Workflow channel name 'Whatif_R&O_Adj' contains special character &. After clicking OK, not showing unlock options.",
+    "has_solution": false,
+    "tags": [
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/unable-to-post-journals-to-locked-entity/45350": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/unable-to-post-journals-to-locked-entity/45350",
+    "title": "Unable to Post Journals to Locked Entity Despite Central Journal Input Step",
+    "forum": "WorkflowDI",
+    "author": "Hatim_Elhaouma",
+    "date": "2025-09-01",
+    "content": "Encountering an issue when trying to post a journal via central workflow to an entity whose workflow is locked. Central journal input steps should allow postings when locked.",
+    "has_solution": false,
+    "tags": [
+      "Journals",
+      "Workflow"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/security---posting-an-auto-reversing-journal-entry/45350": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/security---posting-an-auto-reversing-journal-entry/45350",
+    "title": "Security - Posting an auto-reversing journal entry",
+    "forum": "WorkflowDI",
+    "author": "WCHeceta",
+    "date": "2025-09-01",
+    "content": "A user approves an auto-reversing journal entry but is unable to post. However, in the subsequent period, the user can post the auto-generated reversal.",
+    "has_solution": false,
+    "tags": [
+      "Journals",
+      "Security"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/connect-ms-fabric-lakehouse/45100": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/connect-ms-fabric-lakehouse/45100",
+    "title": "Connect MS Fabric Lakehouse",
+    "forum": "WorkflowDI",
+    "author": "mireles",
+    "date": "2025-08-01",
+    "content": "I'm exploring ways to extract data from a Microsoft Fabric Lakehouse into OneStream. What would be the best authentication method?",
+    "has_solution": false,
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/errors-creating-new-task-in-data-import-schedule-manager/45000": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/errors-creating-new-task-in-data-import-schedule-manager/45000",
+    "title": "Errors creating New Task in Data Import Schedule Manager",
+    "forum": "WorkflowDI",
+    "author": "mjuenke",
+    "date": "2025-07-01",
+    "content": "Getting several errors when setting up a New Task in the Data Import Schedule Manager on OS version 9.01 with DSM 8.4.0_SV100. Suspect version compatibility issue.",
+    "has_solution": false,
+    "tags": [
+      "Data Integration",
+      "Data Management"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/no-valid-datakeys-scenario-time-found/45000": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/no-valid-datakeys-scenario-time-found/45000",
+    "title": "No valid DataKeys (Scenario / Time) found in data source",
+    "forum": "WorkflowDI",
+    "author": "JeremyRenard",
+    "date": "2025-08-01",
+    "content": "Trying to create first import from scratch. Always gives the same error about no valid DataKeys. All UD1 to UD8 are on None.",
+    "has_solution": true,
+    "tags": [
+      "Data Sources",
+      "Import"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/mapping-ic-based-if-account-is-ic/45100": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/mapping-ic-based-if-account-is-ic/45100",
+    "title": "Mapping IC based if account is IC",
+    "forum": "WorkflowDI",
+    "author": "mgreenberg",
+    "date": "2025-08-01",
+    "content": "We want to set the IC value to none if an account is not IC. Problem: if they upload a new account, it hasn't been mapped yet so IC mapping fails.",
+    "has_solution": false,
+    "tags": [
+      "Transformation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-import-step---load-validated-records/45050": {
+    "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-import-step---load-validated-records/45050",
+    "title": "Data Import Step - Load validated records",
+    "forum": "WorkflowDI",
+    "author": "juergzbinden",
+    "date": "2025-08-01",
+    "content": "We are looking for a load into a financial cube. Is there a way to load records that pass validation and write error records to an error protocol?",
+    "has_solution": false,
+    "tags": [
+      "Data Integration"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Reporting/changing-the-value-of-a-dashboard-component-property/35436": {
+    "url": "https://community.onestreamsoftware.com/discussions/Reporting/changing-the-value-of-a-dashboard-component-property/35436",
+    "title": "Changing the value of a Dashboard Component Property that doesn't accept an XFBR",
+    "forum": "Reporting",
+    "author": "Unknown",
+    "date": "2024-06-01",
+    "content": "I'd like to change the Show Header property of a Cube View component on a Dashboard from a button on that Dashboard.",
+    "has_solution": false,
+    "tags": [
+      "dashboards"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/version-9-0-redacting-information-in-error-log/44752": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/version-9-0-redacting-information-in-error-log/44752",
+    "title": "Version 9.0 Redacting information in Error Log",
+    "forum": "Rules",
+    "author": "WernerN",
+    "date": "2025-06-01",
+    "content": "Has anyone experienced information in the log being redacted? I see no pattern of what is considered sensitive. The decimal positions in data table dumps are redacted.",
+    "has_solution": false,
+    "tags": [
+      "Parsing",
+      "System"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/transformation-rule-mystery/44800": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/transformation-rule-mystery/44800",
+    "title": "Transformation Rule Mystery",
+    "forum": "Rules",
+    "author": "kivlind",
+    "date": "2025-08-01",
+    "content": "I have a field in my input dataset that I am tracing the mapping for and I can't figure out why OneStream is selecting the mapping rule it is using.",
+    "has_solution": true,
+    "tags": [
+      "Admin",
+      "Transformation"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/executeCustomCalculateBusinessRule-workspaces/44900": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/executeCustomCalculateBusinessRule-workspaces/44900",
+    "title": "ExecuteCustomCalculateBusinessRule in workspaces",
+    "forum": "Rules",
+    "author": "Sergey",
+    "date": "2025-09-01",
+    "content": "I came across an update function ExecuteCustomCalculateBusinessRule with a new workspaceID parameter. How do we execute a custom calculate service in workspace assembly services?",
+    "has_solution": true,
+    "tags": [
+      "Finance",
+      "Workspaces"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/creating-username-folder-in-data-management-export-folder/44700": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/creating-username-folder-in-data-management-export-folder/44700",
+    "title": "Creating username folder in Data management Export folder",
+    "forum": "Rules",
+    "author": "IrinaDragusanu",
+    "date": "2025-08-01",
+    "content": "Can anyone help with a way of creating username folder in Data management Export folder through a business rule?",
+    "has_solution": true,
+    "tags": [
+      "Admin",
+      "Extenders"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/subtle-bug-in-example-for-dynamic-dimensions/44850": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/subtle-bug-in-example-for-dynamic-dimensions/44850",
+    "title": "Subtle bug in Example for Dynamic Dimensions",
+    "forum": "Rules",
+    "author": "SteveK",
+    "date": "2025-09-01",
+    "content": "In the example code for the Dynamic Dimension Service, ReadDynamicDimensionInfo returns DateTime.Now but ReadDynamicDimensionContentTimestamp sets DateTime.UTCNow. This creates a refresh issue.",
+    "has_solution": false,
+    "tags": [
+      "Admin"
+    ]
+  },
+  "https://community.onestreamsoftware.com/discussions/Rules/lookup-transformational-rule-undo/44650": {
+    "url": "https://community.onestreamsoftware.com/discussions/Rules/lookup-transformational-rule-undo/44650",
+    "title": "Lookup Transformational rule UNDO",
+    "forum": "Rules",
+    "author": "IrinaDragusanu",
+    "date": "2025-08-01",
+    "content": "I loaded a mass upload for multiple lines of transformational rules through a trx file. Load completed with errors. Rules don't show but can't recreate them either.",
+    "has_solution": true,
+    "tags": [
+      "Admin",
+      "Transformation"
+    ]
+  }
+}

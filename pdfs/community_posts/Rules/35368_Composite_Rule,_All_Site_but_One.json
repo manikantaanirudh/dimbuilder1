@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/composite-rule-all-site-but-one/35368",
+  "title": "Composite Rule, All Site but One",
+  "forum": "Rules",
+  "author": "ejuszczak",
+  "date": "2024-06-01",
+  "content": "Is there a way to create a mapping rule for an account that looks at all entities but one? For example, A#123:E#* but E#456",
+  "has_solution": true,
+  "solution_author": "aformenti",
+  "solution_text": "Create a Composite rule that executes first with the Exception (A#123:E#456), then the second Composite rule would run for all entities regardless.",
+  "tags": [
+    "Transformation"
+  ]
+}

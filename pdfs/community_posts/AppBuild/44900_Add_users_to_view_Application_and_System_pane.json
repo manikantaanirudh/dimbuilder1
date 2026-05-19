@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/add-users-to-view-application-and-system-pane/44900",
+  "title": "Add users to view Application and System pane",
+  "forum": "AppBuild",
+  "author": "SKVK",
+  "date": "2025-06-01",
+  "content": "I have list of users who have been added to a group under Security rules. But they are able to see only OnePlace pane, but not the Application and System. How to have them get the view of those 2 panes?",
+  "has_solution": true,
+  "tags": [
+    "Security"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dm-export-sequence-dmes/34644",
+  "title": "DM Export Sequence: DMES",
+  "forum": "WorkflowDI",
+  "author": "KH1",
+  "date": "2024-05-26",
+  "content": "In Tech Talks for Data Movement, Nick Bolinger suggested to use DMES as a better way than a DM Copy Job to copy data between scenarios.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "Data Management"
+  ]
+}

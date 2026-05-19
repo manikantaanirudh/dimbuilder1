@@ -3,6 +3,8 @@ import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
 import { buildIssueSummary, formatCount } from "../ui/viewModel";
+import { BlueprintStudio } from "./BlueprintStudio";
+import { SnapshotManager } from "./SnapshotManager";
 import { EmptyState, FactItem, FactStrip, StatusBadge } from "./ui";
 
 export function Dashboard({
@@ -11,6 +13,7 @@ export function Dashboard({
   project,
   issues,
   onOpenDimension,
+  onProjectChanged,
   appConfig
 }: {
   dimensions: DimensionRecord[];
@@ -18,6 +21,7 @@ export function Dashboard({
   project: ProjectRecord | null;
   issues: ValidationIssue[];
   onOpenDimension: (dimensionId: string) => void;
+  onProjectChanged?: (projectId: string) => void;
   appConfig: ClientAppConfig;
 }) {
   const dimensionDisplayConfig = appConfig.dimensions.display;
@@ -89,6 +93,9 @@ export function Dashboard({
             </EmptyState>
           )}
         </section>
+
+        {project ? <SnapshotManager project={project} onProjectChanged={onProjectChanged} /> : null}
+        <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />
       </div>
     </section>
   );

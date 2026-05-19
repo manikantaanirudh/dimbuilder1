@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/build-process-flow/26575",
+  "title": "Build process flow",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2023-08-01",
+  "content": "Building and maintaining an OneStream application can be done in many ways, but I would like to hear how you have approached the challenge of managing the build process, hereby testing, deployment etc.",
+  "has_solution": false,
+  "tags": [
+    "build",
+    "deployment"
+  ]
+}

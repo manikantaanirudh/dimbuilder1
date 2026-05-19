@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/best-approach/31671",
+  "title": "Best Approach - Reclass balances during consolidation",
+  "forum": "Rules",
+  "author": "Oscar",
+  "date": "2024-03-19",
+  "content": "We use Standard (Calc On The Fly Share and Hierarchy Elimination). What type of Rule should we leverage to reclass balances from one account to another during consolidation?",
+  "has_solution": true,
+  "solution_author": "JackLacava",
+  "solution_text": "Generally speaking, for pure consolidation, member formulas do indeed fit better on individual members; and pulling data is better than pushing. I would probably put the formula on U4#ReclassThis.",
+  "tags": [
+    "Finance",
+    "Consolidation"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/security-access-error--get-parent-workflow-status/21099",
+  "title": "Security Access Error - GetParent Workflow Status",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2023-05-01",
+  "content": "I've got a business rule where I use BRApi.Workflow.Metadata.GetParent to look at the status of the parent workflow profile. However, if a user does not have access to the parent workflow profile, they get a Security Access Error.",
+  "has_solution": false,
+  "tags": [
+    "Workflow",
+    "Security"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/changing-the-value-of-a-dashboard-component-property/35436",
+  "title": "Changing the value of a Dashboard Component Property that doesn't accept an XFBR",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2024-06-01",
+  "content": "I'd like to change the Show Header property of a Cube View component on a Dashboard from a button on that Dashboard.",
+  "has_solution": false,
+  "tags": [
+    "dashboards"
+  ]
+}

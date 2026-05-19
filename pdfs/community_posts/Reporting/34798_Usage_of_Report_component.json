@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/usage-of-report-component/34798",
+  "title": "Usage of Report component",
+  "forum": "Reporting",
+  "author": "100Rub",
+  "date": "2024-05-01",
+  "content": "I am trying to use Cube View within the Report Designer of the Report component. However, I am unable to see the row-wise values for Entity and Account.",
+  "has_solution": true,
+  "solution_author": "KarlT",
+  "solution_text": "Check out the Dashboards course on Navigator. You can import the report layout from a cube view in the Report Designer. This requires a Cube View data adaptor rather than a Cube View MD.",
+  "tags": [
+    "Reports",
+    "dashboards"
+  ]
+}
