@@ -43,6 +43,37 @@ describe("app config", () => {
     });
   });
 
+  it("loads configured dimension blueprint members and relationships", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Corporate Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true,
+            members: [
+              { memberKey: "Revenue", description: "Revenue", properties: { "Account Type": "Revenue" } }
+            ],
+            relationships: [
+              { parentKey: "Root", childKey: "Revenue", properties: { "Aggregation Weight": 1 } }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(validateAppConfig(config).dimensions.blueprints.Account).toMatchObject({
+      members: [
+        { memberKey: "Revenue", description: "Revenue", properties: { "Account Type": "Revenue" } }
+      ],
+      relationships: [
+        { parentKey: "Root", childKey: "Revenue", properties: { "Aggregation Weight": 1 } }
+      ]
+    });
+  });
+
   it("rejects unknown dimension types in blueprints", () => {
     const config = mergeAppConfig(defaultAppConfig, {
       dimensions: {
@@ -206,6 +237,210 @@ describe("app config", () => {
 
     expect(() => validateAppConfig(config)).toThrow(
       "Blueprint for 'Account' uses unsupported relationship default 'badDefault'."
+    );
+  });
+
+  it("rejects invalid blueprint relationship default value types", () => {
+    const invalidAggregationWeightConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: "1" },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+    const invalidOwnershipTypeConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { ownershipType: 123 },
+            allowMultipleParents: true
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(invalidAggregationWeightConfig)).toThrow(
+      "Blueprint for 'Account' relationshipDefaults.aggregationWeight must be a number."
+    );
+    expect(() => validateAppConfig(invalidOwnershipTypeConfig)).toThrow(
+      "Blueprint for 'Entity' relationshipDefaults.ownershipType must be a string."
+    );
+  });
+
+  it("rejects unsupported configured blueprint member fields", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true,
+            members: [
+              { memberKey: "Revenue", properties: { "Bad Field": "x" } }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow(
+      "Blueprint for 'Account' member 'Revenue' uses unsupported field 'Bad Field'."
+    );
+  });
+
+  it("rejects unsupported configured blueprint relationship fields", () => {
+    const config = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "Revenue", properties: { "Bad Field": "x" } }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(config)).toThrow(
+      "Blueprint for 'Account' relationship 'Root -> Revenue' uses unsupported field 'Bad Field'."
+    );
+  });
+
+  it("rejects invalid configured blueprint relationship default value types", () => {
+    const invalidPercentOwnershipConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { percentConsol: 100 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "US", percentOwnership: "100" }
+            ]
+          }
+        }
+      }
+    });
+    const invalidOwnershipTypeConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { percentConsol: 100 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "US", ownershipType: 123 }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(invalidPercentOwnershipConfig)).toThrow(
+      "Blueprint for 'Entity' relationship 'Root -> US' percentOwnership must be a number."
+    );
+    expect(() => validateAppConfig(invalidOwnershipTypeConfig)).toThrow(
+      "Blueprint for 'Entity' relationship 'Root -> US' ownershipType must be a string."
+    );
+  });
+
+  it("rejects invalid configured blueprint relationship property default value types", () => {
+    const invalidAggregationWeightConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Account: {
+            defaultDimensionName: "Accounts",
+            rootMembers: ["Root"],
+            memberKeyField: "Account",
+            relationshipDefaults: { aggregationWeight: 1 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "Revenue", properties: { "Aggregation Weight": "heavy" } }
+            ]
+          }
+        }
+      }
+    });
+    const invalidPercentConsolConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { percentConsol: 100 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "US", properties: { "Percent Consol": "100" } }
+            ]
+          }
+        }
+      }
+    });
+    const invalidPercentOwnershipConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { percentConsol: 100 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "US", properties: { "Percent Ownership": "100" } }
+            ]
+          }
+        }
+      }
+    });
+    const invalidOwnershipTypeConfig = mergeAppConfig(defaultAppConfig, {
+      dimensions: {
+        blueprints: {
+          Entity: {
+            defaultDimensionName: "Entities",
+            rootMembers: ["Root"],
+            memberKeyField: "Entity",
+            relationshipDefaults: { percentConsol: 100 },
+            allowMultipleParents: true,
+            relationships: [
+              { parentKey: "Root", childKey: "US", properties: { "Ownership Type": 123 } }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(() => validateAppConfig(invalidAggregationWeightConfig)).toThrow(
+      "Blueprint for 'Account' relationship 'Root -> Revenue' property 'Aggregation Weight' must be a number."
+    );
+    expect(() => validateAppConfig(invalidPercentConsolConfig)).toThrow(
+      "Blueprint for 'Entity' relationship 'Root -> US' property 'Percent Consol' must be a number."
+    );
+    expect(() => validateAppConfig(invalidPercentOwnershipConfig)).toThrow(
+      "Blueprint for 'Entity' relationship 'Root -> US' property 'Percent Ownership' must be a number."
+    );
+    expect(() => validateAppConfig(invalidOwnershipTypeConfig)).toThrow(
+      "Blueprint for 'Entity' relationship 'Root -> US' property 'Ownership Type' must be a string."
     );
   });
 

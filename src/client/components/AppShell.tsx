@@ -2,6 +2,7 @@ import {
   Database,
   Download,
   FileUp,
+  PlusCircle,
   RotateCcw,
   Save,
   Search,
@@ -22,7 +23,7 @@ import { validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
-import { ExportModal, ImportModal } from "./ImportExportModals";
+import { CreateProjectModal, ExportModal, ImportModal } from "./ImportExportModals";
 import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
 
 const PROJECT_OVERVIEW_VALUE = "__project_overview__";
@@ -43,15 +44,16 @@ export function AppShell({
   const store = useProjectStore();
   const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
   const [navSearch, setNavSearch] = useState("");
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
-  const projectName = store.projects[0]?.name ?? "No project imported";
+  const projectName = store.projects[0]?.name ?? "No project open";
   const projectSource = store.loading
     ? "Loading metadata workspace..."
-    : store.projects[0]?.sourceFileName ?? appConfig.application.supportText;
+    : store.projects[0]?.sourceFileName || appConfig.application.supportText;
   const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
@@ -98,7 +100,7 @@ export function AppShell({
       <header className="toolbar global-toolbar">
         <div className="brand global-brand">
           <span className="brand-mark"><Database size={17} /></span>
-          <span className="brand-wordmark">DimBuilder</span>
+          <span className="brand-wordmark">{appConfig.application.productName}</span>
         </div>
 
         <div className="project-context">
@@ -121,14 +123,17 @@ export function AppShell({
         </label>
 
         <ToolbarGroup className="toolbar-actions">
+          <ActionButton variant="primary" onClick={() => setCreateProjectOpen(true)}>
+            <PlusCircle size={16} /> New Project
+          </ActionButton>
           {toolbar.showImport && (
-            <ActionButton variant="primary" onClick={() => setImportOpen(true)}>
-              <FileUp size={16} /> Import
+            <ActionButton onClick={() => setImportOpen(true)}>
+              <FileUp size={16} /> Seed from XLSX
             </ActionButton>
           )}
           {toolbar.showValidate && (
             <ActionButton
-              title={store.selectedProjectId ? "Validate metadata" : "Import a project before validating"}
+              title={store.selectedProjectId ? "Validate metadata" : "Create or open a project before validating"}
               disabled={!store.selectedProjectId}
               onClick={runValidation}
             >
@@ -181,7 +186,7 @@ export function AppShell({
           </StatusBadge>
         </div>
 
-        {dimensionNavItems.length === 0 && <div className="empty-sidebar">Import a workbook to begin.</div>}
+        {dimensionNavItems.length === 0 && <div className="empty-sidebar">Create or seed a project to begin.</div>}
         {dimensionNavItems.length > 0 && filteredDimensionNavItems.length === 0 && (
           <div className="empty-sidebar">No dimensions match this search.</div>
         )}
@@ -245,6 +250,14 @@ export function AppShell({
         )}
       </main>
 
+      <CreateProjectModal
+        open={createProjectOpen}
+        onClose={() => setCreateProjectOpen(false)}
+        onCreated={(projectId) => {
+          setStatus("Project created");
+          void store.refresh(projectId);
+        }}
+      />
       <ImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}

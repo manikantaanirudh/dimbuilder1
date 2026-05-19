@@ -171,7 +171,7 @@ describe("client UI view model", () => {
       exportConfig: defaultAppConfig.export,
       issues: [],
       blockedSeverities: ["error"]
-    })).toEqual({ disabled: true, title: "Import a project before exporting", reason: "No project imported" });
+    })).toEqual({ disabled: true, title: "Create or open a project before exporting", reason: "No project open" });
 
     expect(getExportAvailability({
       projectId: "project-1",
@@ -201,8 +201,8 @@ describe("client UI view model", () => {
     expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
   });
 
-  it("defaults to the first dimension when no active dimension is selected", () => {
-    expect(resolveActiveDimensionId(null, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
+  it("keeps null active dimension as project overview and falls back only for stale dimension ids", () => {
+    expect(resolveActiveDimensionId(null, [sampleScenarioDimension])).toBeNull();
     expect(resolveActiveDimensionId("missing", [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
     expect(resolveActiveDimensionId(sampleScenarioDimension.id, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
     expect(resolveActiveDimensionId(null, [])).toBeNull();

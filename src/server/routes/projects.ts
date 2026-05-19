@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
+import { relationshipDefaultsToProperties, relationshipPropertiesToDefaults } from "../../shared/relationshipDefaults";
 import type { Repositories } from "../db/repositories";
 import { createProjectFromBlueprints } from "../projectBlueprints";
 
@@ -109,16 +110,38 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
   });
 
   router.post("/:projectId/dimensions/:dimensionId/relationships", (req, res) => {
+    const dimension = repos.dimensions.get(req.params.dimensionId);
+    if (!dimension) return res.status(404).json({ error: "dimension not found" });
+    const schema = getDimensionSchema(dimension.dimensionType);
+    const supportedRelationshipFields = new Set(schema.relationshipFields.map((field) => field.name));
+    const relationshipDefaults = resolveRelationshipDefaults(dimension, config);
+    const relationshipPropertyValues = relationshipPropertiesToDefaults(req.body.properties ?? {}, supportedRelationshipFields);
+    const relationshipValues = {
+      ...relationshipDefaults,
+      ...relationshipPropertyValues,
+      aggregationWeight: req.body.aggregationWeight ?? relationshipPropertyValues.aggregationWeight ?? relationshipDefaults.aggregationWeight,
+      percentConsol: req.body.percentConsol ?? relationshipPropertyValues.percentConsol ?? relationshipDefaults.percentConsol,
+      percentOwnership: req.body.percentOwnership ?? relationshipPropertyValues.percentOwnership ?? relationshipDefaults.percentOwnership,
+      ownershipType: req.body.ownershipType ?? relationshipPropertyValues.ownershipType ?? relationshipDefaults.ownershipType
+    };
+    const parentKey = String(req.body.parentKey ?? req.body.properties?.Parent ?? "");
+    const childKey = String(req.body.childKey ?? req.body.properties?.Child ?? "");
+    const properties = {
+      ...(req.body.properties ?? {}),
+      ...relationshipDefaultsToProperties(relationshipValues, supportedRelationshipFields),
+      Parent: parentKey,
+      Child: childKey
+    };
     const relationship = repos.relationships.create({
-      dimensionId: req.params.dimensionId,
-      parentKey: String(req.body.parentKey ?? req.body.properties?.Parent ?? ""),
-      childKey: String(req.body.childKey ?? req.body.properties?.Child ?? ""),
-      aggregationWeight: req.body.aggregationWeight ?? null,
-      percentConsol: req.body.percentConsol ?? null,
-      percentOwnership: req.body.percentOwnership ?? null,
-      ownershipType: String(req.body.ownershipType ?? ""),
-      properties: req.body.properties ?? {},
-      rowOrder: repos.relationships.countByDimension(req.params.dimensionId) + 1,
+      dimensionId: dimension.id,
+      parentKey,
+      childKey,
+      aggregationWeight: relationshipValues.aggregationWeight ?? null,
+      percentConsol: relationshipValues.percentConsol ?? null,
+      percentOwnership: relationshipValues.percentOwnership ?? null,
+      ownershipType: String(relationshipValues.ownershipType ?? ""),
+      properties,
+      rowOrder: repos.relationships.countByDimension(dimension.id) + 1,
       sourceRowNumber: 0
     });
     repos.audit.record({ projectId: req.params.projectId, action: "relationship.create", entityType: "relationship", entityId: relationship.id, after: relationship });
@@ -153,4 +176,15 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
   });
 
   return router;
+}
+
+function resolveRelationshipDefaults(
+  dimension: { dimensionType: keyof AppConfig["dimensions"]["blueprints"]; metadata: Record<string, unknown> },
+  config: AppConfig
+) {
+  const metadataDefaults = dimension.metadata.relationshipDefaults;
+  if (metadataDefaults && typeof metadataDefaults === "object" && !Array.isArray(metadataDefaults)) {
+    return metadataDefaults as NonNullable<AppConfig["dimensions"]["blueprints"][typeof dimension.dimensionType]>["relationshipDefaults"];
+  }
+  return config.dimensions.blueprints[dimension.dimensionType]?.relationshipDefaults ?? {};
 }

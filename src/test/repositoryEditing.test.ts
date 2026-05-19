@@ -9,7 +9,7 @@ describe("grid editing repositories", () => {
     const project = repos.projects.create({
       name: "Test",
       description: "",
-      sourceFileName: "template.xlsx",
+      sourceFileName: "",
       createdBy: "local-admin"
     });
     const dimension = repos.dimensions.create({
@@ -61,4 +61,3 @@ describe("grid editing repositories", () => {
     db.close();
   });
 });
-

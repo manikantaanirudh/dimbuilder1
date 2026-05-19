@@ -9,9 +9,11 @@ describe("database", () => {
     const project = repos.projects.create({
       name: "Test",
       description: "Import test",
-      sourceFileName: "template.xlsx",
+      sourceFileName: "",
       createdBy: "local-admin"
     });
+
+    expect(project.sourceFileName).toBe("");
 
     const dimension = repos.dimensions.create({
       projectId: project.id,
@@ -30,4 +32,3 @@ describe("database", () => {
     db.close();
   });
 });
-

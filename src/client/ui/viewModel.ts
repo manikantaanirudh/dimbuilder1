@@ -85,7 +85,7 @@ export function getExportAvailability({
   blockedSeverities: Severity[];
 }): ExportAvailability {
   if (!projectId) {
-    return { disabled: true, title: "Import a project before exporting", reason: "No project imported" };
+    return { disabled: true, title: "Create or open a project before exporting", reason: "No project open" };
   }
 
   if (getEnabledExportFormats(exportConfig).length === 0) {
@@ -112,7 +112,8 @@ export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[]
 }
 
 export function resolveActiveDimensionId(activeDimensionId: string | null, dimensions: DimensionRecord[]): string | null {
-  if (activeDimensionId && dimensions.some((dimension) => dimension.id === activeDimensionId)) {
+  if (activeDimensionId === null) return null;
+  if (dimensions.some((dimension) => dimension.id === activeDimensionId)) {
     return activeDimensionId;
   }
   return dimensions[0]?.id ?? null;

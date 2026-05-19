@@ -26,7 +26,7 @@ import {
   shouldRollbackGridRecord,
   type GridRecord
 } from "../ui/gridViewModel";
-import { ActionButton, StatusBadge } from "./ui";
+import { IconButton, StatusBadge } from "./ui";
 
 export function EditableGrid({
   projectId,
@@ -60,11 +60,14 @@ export function EditableGrid({
   const actionTitles = buildGridActionTitles(selectedId);
   const statusTone = buildGridStatusTone(status);
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
+  const gridTitle = kind === "members" ? "Members" : "Relationships";
+  const rowNoun = kind === "members" ? "member" : "relationship";
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
     if (!needle) return records;
     return records.filter((record) => JSON.stringify(record).toLowerCase().includes(needle));
   }, [records, search]);
+  const rowSummary = search ? `${filteredRecords.length} shown of ${total}` : `${total} rows`;
 
   const virtualizer = useVirtualizer({
     count: filteredRecords.length,
@@ -209,24 +212,40 @@ export function EditableGrid({
     <div className="panel grid-panel">
       <div className="grid-toolbar workbench-grid-toolbar">
         <div className="grid-toolbar-primary">
-          <strong>{kind === "members" ? "Members" : "Relationships"}</strong>
+          <div className="grid-toolbar-title">
+            <strong>{gridTitle}</strong>
+            <span>{rowSummary}</span>
+          </div>
           <div className="search-box">
             <Search size={15} />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${kind}`} />
+            <input aria-label={`Search ${kind}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${kind}`} />
           </div>
           <StatusBadge tone={statusTone}>
             {status || `${total} rows`}
           </StatusBadge>
         </div>
-        <div className="grid-toolbar-actions">
-          <ActionButton onClick={() => void addRow()}><Plus size={15} /> Add</ActionButton>
-          <ActionButton disabled={!selectedId} title={actionTitles.duplicateTitle} onClick={() => void duplicateRow()}><Copy size={15} /> Duplicate</ActionButton>
-          <ActionButton variant="danger" disabled={!selectedId} title={actionTitles.deleteTitle} onClick={() => void deleteSelected()}><Trash2 size={15} /> Delete</ActionButton>
-          <ActionButton aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}><Columns3 size={15} /> Columns</ActionButton>
+        <div className="grid-toolbar-actions grid-toolbar-tools" role="toolbar" aria-label={`${gridTitle} table actions`}>
+          <span className="grid-selection-summary">{selectedId ? "1 row selected" : "No row selected"}</span>
+          <IconButton className="grid-icon-button primary" aria-label={`Add ${rowNoun}`} title={`Add ${rowNoun}`} onClick={() => void addRow()}>
+            <Plus size={15} />
+          </IconButton>
+          <IconButton className="grid-icon-button" aria-label="Duplicate selected row" disabled={!selectedId} title={actionTitles.duplicateTitle} onClick={() => void duplicateRow()}>
+            <Copy size={15} />
+          </IconButton>
+          <IconButton className="grid-icon-button danger" aria-label="Delete selected row" disabled={!selectedId} title={actionTitles.deleteTitle} onClick={() => void deleteSelected()}>
+            <Trash2 size={15} />
+          </IconButton>
+          <IconButton className="grid-icon-button" aria-label="Toggle columns" title="Toggle columns" aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}>
+            <Columns3 size={15} />
+          </IconButton>
         </div>
       </div>
       {showColumns && (
         <div id={columnMenuId} className="column-menu workbench-column-menu" aria-label="Column visibility">
+          <div className="grid-column-menu-title">
+            <strong>Visible columns</strong>
+            <span>{visibleColumns.length} of {columns.length}</span>
+          </div>
           {columns.map((column) => (
             <label key={column.name}>
               <input

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Docs Maintainer"
+  short_description: "Keep SR Onestream Dim Builder documentation current."
+  default_prompt: "Use this skill when source changes may require updates to docs."

@@ -1,9 +1,9 @@
-import { CheckCircle2, Download, FileUp, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Download, FileUp, PlusCircle, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { ProjectRecord } from "../../shared/types";
 import { getEnabledExportFormats, type ExportAvailability } from "../ui/viewModel";
-import { uploadWorkbook } from "../api/client";
+import { createProject, uploadWorkbook } from "../api/client";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
@@ -11,6 +11,74 @@ export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]):
     || exportConfig.xlsx.enabled
     || exportConfig.csv.enabled
     || exportConfig.json.enabled;
+}
+
+export function CreateProjectModal({
+  open,
+  onClose,
+  onCreated
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (projectId: string) => void;
+}) {
+  const [name, setName] = useState("New Metadata Project");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setName("New Metadata Project");
+      setDescription("");
+      setStatus("");
+      setIsCreating(false);
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  async function createBlankProject() {
+    if (isCreating) return;
+    setIsCreating(true);
+    setStatus("Creating project from configured dimension blueprints...");
+    try {
+      const project = await createProject({ name, description });
+      setStatus("Project created");
+      onCreated(project.id);
+      onClose();
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Project creation failed");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="create-project-modal-title">
+        <div className="modal-heading">
+          <h2 id="create-project-modal-title">New metadata project</h2>
+        </div>
+        <p>Create a blank project from the dimension blueprints in the central configuration.</p>
+        <label className="modal-field">
+          <span>Project name</span>
+          <input value={name} disabled={isCreating} onChange={(event) => setName(event.target.value)} />
+        </label>
+        <label className="modal-field">
+          <span>Description</span>
+          <textarea value={description} disabled={isCreating} onChange={(event) => setDescription(event.target.value)} />
+        </label>
+        {status && <div className="modal-status">{status}</div>}
+        <div className="modal-actions">
+          <ActionButton disabled={isCreating} onClick={onClose}>Cancel</ActionButton>
+          <ActionButton variant="primary" disabled={isCreating} onClick={() => void createBlankProject()}>
+            <PlusCircle size={15} /> {isCreating ? "Creating..." : "Create Project"}
+          </ActionButton>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ImportModal({
@@ -52,13 +120,13 @@ export function ImportModal({
 
   async function importWorkbook() {
     if (!file || isImporting) return;
-    setStatus("Importing workbook. Large UD3 sheets can take a few seconds...");
+    setStatus("Seeding project from XLSX...");
     setIsImporting(true);
     try {
       const result = await uploadWorkbook(file, file.name.replace(/\.xlsx$/i, ""));
       setImportedProject(result.project);
       setSummary(result.importSummary);
-      setStatus(`Imported ${String(result.importSummary.dimensionsImported)} dimensions`);
+      setStatus(`Seeded ${String(result.importSummary.dimensionsImported)} dimensions`);
       onImported(result.project.id);
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Import failed");
@@ -71,10 +139,10 @@ export function ImportModal({
     <div className="modal-backdrop">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
         <div className="modal-heading">
-          <h2 id="import-modal-title">Import workbook</h2>
-          {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Imported</StatusBadge> : null}
+          <h2 id="import-modal-title">Seed from XLSX</h2>
+          {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> Seeded</StatusBadge> : null}
         </div>
-        <p>Select an `.xlsx` OneStream XF metadata workbook. Generated XML and formula columns are ignored.</p>
+        <p>Select an optional .xlsx OneStream metadata workbook to seed a project. Generated XML and formula columns are ignored.</p>
         {!importedProject && <input type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)} />}
         {summary && (
           <div className="import-summary">
@@ -86,7 +154,7 @@ export function ImportModal({
         {status && <div className="modal-status">{status}</div>}
         <div className="modal-actions">
           <ActionButton disabled={isImporting} onClick={handleClose}>{importedProject ? "Done" : "Cancel"}</ActionButton>
-          {!importedProject && <ActionButton variant="primary" disabled={!file || isImporting} onClick={() => void importWorkbook()}><FileUp size={15} /> {isImporting ? "Importing..." : "Import"}</ActionButton>}
+          {!importedProject && <ActionButton variant="primary" disabled={!file || isImporting} onClick={() => void importWorkbook()}><FileUp size={15} /> {isImporting ? "Seeding..." : "Seed Project"}</ActionButton>}
         </div>
       </div>
     </div>

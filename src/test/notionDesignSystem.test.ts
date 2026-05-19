@@ -63,10 +63,10 @@ describe("Notion-inspired design system CSS", () => {
     expect(css).toContain(".workbench-data-grid");
   });
 
-  it("wraps workspace tabs on narrow screens instead of clipping tab labels", () => {
+  it("keeps workspace tabs horizontally scrollable on narrow screens", () => {
     expect(css).toContain("@media (max-width: 640px)");
-    expect(css).toContain(".workspace-tablist {\n    padding: 0;\n    overflow-x: visible;\n    flex-wrap: wrap;\n  }");
-    expect(css).toContain(".workspace-tablist button {\n    flex: 1 1 auto;\n    min-width: 76px;\n  }");
+    expect(css).toContain(".workspace-tablist {\n    padding: 0;\n    overflow-x: auto;\n    flex-wrap: nowrap;\n    scrollbar-width: thin;\n  }");
+    expect(css).toContain(".workspace-tablist button {\n    flex: 0 0 auto;\n    min-width: 76px;\n  }");
   });
 
   it("keeps phone command bars focused on available lifecycle actions", () => {

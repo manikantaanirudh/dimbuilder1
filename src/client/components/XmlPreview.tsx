@@ -71,31 +71,44 @@ export function XmlPreview({
 
   return (
     <div className="panel xml-panel">
-      <div className="grid-toolbar xml-toolbar">
-        <select value={scope} onChange={(event) => setScope(event.target.value as XmlPreviewScope)}>
-          {allowAllDimensions && <option value="all">All dimensions</option>}
-          <option value="dimension">Current dimension</option>
-        </select>
-        <ActionButton onClick={() => void copy()}><Copy size={15} /> Copy</ActionButton>
-        {xmlExportEnabled && (
-          <ActionLink
-            className="button-link"
-            aria-disabled={downloadDisabled}
-            href={downloadDisabled ? undefined : `/api/export/${projectId}/xml`}
-            onClick={(event) => {
-              if (downloadDisabled) event.preventDefault();
-            }}
-            tabIndex={downloadDisabled ? -1 : undefined}
-            target={downloadDisabled ? undefined : "_blank"}
-            rel={downloadDisabled ? undefined : "noreferrer"}
-            title={downloadDisabled ? exportAvailability.title : "Download XML"}
-          >
-            <Download size={15} /> Download XML
-          </ActionLink>
-        )}
-        <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
+      <div className="xml-document">
+        <div className="grid-toolbar xml-toolbar">
+          <div className="xml-toolbar-title">
+            <strong>OneStream XML</strong>
+            <span>{scope === "all" ? "All dimensions" : dimension.dimensionName}</span>
+          </div>
+          <div className="xml-actions">
+            <select
+              className="xml-scope-control"
+              aria-label="XML preview scope"
+              value={scope}
+              onChange={(event) => setScope(event.target.value as XmlPreviewScope)}
+            >
+              {allowAllDimensions && <option value="all">All dimensions</option>}
+              <option value="dimension">Current dimension</option>
+            </select>
+            <ActionButton aria-label="Copy XML preview" title="Copy XML preview" onClick={() => void copy()}><Copy size={15} /> Copy</ActionButton>
+            {xmlExportEnabled && (
+              <ActionLink
+                className="button-link"
+                aria-disabled={downloadDisabled}
+                href={downloadDisabled ? undefined : `/api/export/${projectId}/xml`}
+                onClick={(event) => {
+                  if (downloadDisabled) event.preventDefault();
+                }}
+                tabIndex={downloadDisabled ? -1 : undefined}
+                target={downloadDisabled ? undefined : "_blank"}
+                rel={downloadDisabled ? undefined : "noreferrer"}
+                title={downloadDisabled ? exportAvailability.title : "Download XML"}
+              >
+                <Download size={15} /> Download XML
+              </ActionLink>
+            )}
+            <StatusBadge tone={status ? "info" : "neutral"}>{status || "Preview ready"}</StatusBadge>
+          </div>
+        </div>
+        <pre className="xml-preview xml-code-frame">{preview || "XML preview appears after import."}</pre>
       </div>
-      <pre className="xml-preview">{preview || "XML preview appears after import."}</pre>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export async function exportWorkbook(
   options: ExportWorkbookOptions = {}
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = options.creator ?? "OneStream XF Dimension Builder";
+  workbook.creator = options.creator ?? "SR Onestream Dim Builder";
   workbook.created = new Date();
 
   for (const dimension of dimensions) {

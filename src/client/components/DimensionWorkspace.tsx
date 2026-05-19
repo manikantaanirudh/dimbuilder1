@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
@@ -57,16 +57,21 @@ export function DimensionWorkspace({
 
   return (
     <section className="workspace">
-      <div className="workspace-header">
-        <div className="workspace-title-block">
-          <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
-          <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
-        </div>
-        <div className="workspace-health">
-          <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
-            {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
-            {readinessLabel}
-          </StatusBadge>
+      <div className="workspace-page">
+        <span className="workspace-page-icon" aria-hidden="true">
+          <Database size={24} />
+        </span>
+        <div className="workspace-header">
+          <div className="workspace-title-block">
+            <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
+            <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
+          </div>
+          <div className="workspace-health">
+            <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
+              {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+              {readinessLabel}
+            </StatusBadge>
+          </div>
         </div>
       </div>
       <FactStrip className="workspace-facts">
@@ -74,37 +79,39 @@ export function DimensionWorkspace({
           <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
         ))}
       </FactStrip>
-      <nav className="tabs" aria-label="Dimension workspace tabs">
-        {availableTabs.map((item) => (
-          <button
-            key={item}
-            className={activeTab === item ? "active" : ""}
-            aria-current={activeTab === item ? "page" : undefined}
-            onClick={() => setTab(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </nav>
-      <div className="workspace-grid">
-        <div className="workspace-main">
-          {activeTab === "Overview" && <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />}
-          {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
-          {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
-          {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
-          {activeTab === "XML" && xmlPreviewEnabled && (
-            <XmlPreview
-              projectId={projectId}
-              dimension={dimension}
-              defaultScope={appConfig.ui.xmlPreview.defaultScope}
-              allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
-              xmlExportEnabled={appConfig.export.xml.enabled}
-              exportAvailability={exportAvailability}
-            />
-          )}
-          {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} expanded />}
+      <div className="workspace-document">
+        <nav className="tabs workspace-tablist" aria-label="Dimension workspace tabs">
+          {availableTabs.map((item) => (
+            <button
+              key={item}
+              className={activeTab === item ? "active" : ""}
+              aria-current={activeTab === item ? "page" : undefined}
+              onClick={() => setTab(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </nav>
+        <div className="workspace-grid">
+          <div className="workspace-main">
+            {activeTab === "Overview" && <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />}
+            {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
+            {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} />}
+            {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
+            {activeTab === "XML" && xmlPreviewEnabled && (
+              <XmlPreview
+                projectId={projectId}
+                dimension={dimension}
+                defaultScope={appConfig.ui.xmlPreview.defaultScope}
+                allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
+                xmlExportEnabled={appConfig.export.xml.enabled}
+                exportAvailability={exportAvailability}
+              />
+            )}
+            {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} expanded />}
+          </div>
+          <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} />
         </div>
-        <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} />
       </div>
     </section>
   );

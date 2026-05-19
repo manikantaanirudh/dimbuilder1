@@ -95,6 +95,191 @@ describe("project blueprints", () => {
     }
   });
 
+  it("creates configured blueprint hierarchy members and relationships for XML export", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      const config = {
+        ...defaultAppConfig,
+        dimensions: {
+          ...defaultAppConfig.dimensions,
+          enabledTypes: ["Account"],
+          displayOrder: ["Account"],
+          blueprints: {
+            Account: {
+              defaultDimensionName: "Accounts",
+              rootMembers: ["Root"],
+              memberKeyField: "Account",
+              relationshipDefaults: { aggregationWeight: 1 },
+              allowMultipleParents: true,
+              members: [
+                { memberKey: "Revenue", description: "Revenue", properties: { "Account Type": "Revenue" } },
+                { memberKey: "ProductRevenue", description: "Product Revenue" }
+              ],
+              relationships: [
+                { parentKey: "Root", childKey: "Revenue" },
+                { parentKey: "Revenue", childKey: "ProductRevenue", aggregationWeight: -1 }
+              ]
+            }
+          }
+        }
+      } as AppConfig;
+
+      const project = createProjectFromBlueprints(repos, config, {
+        name: "Configured Hierarchy",
+        description: "",
+        createdBy: "local-admin"
+      });
+      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      if (!account) throw new Error("Account dimension was not created");
+
+      const members = repos.members.listByDimension(account.id);
+      const relationships = repos.relationships.listByDimension(account.id);
+      const xml = exportProjectXml({
+        project,
+        dimensions: [account],
+        members,
+        relationships
+      });
+
+      expect(members.map((member) => member.memberKey)).toEqual(["Root", "Revenue", "ProductRevenue"]);
+      expect(members.find((member) => member.memberKey === "Revenue")?.properties).toMatchObject({
+        Account: "Revenue",
+        Description: "Revenue",
+        "Account Type": "Revenue"
+      });
+      expect(relationships).toHaveLength(2);
+      expect(relationships[0]).toMatchObject({
+        parentKey: "Root",
+        childKey: "Revenue",
+        aggregationWeight: 1,
+        properties: { Parent: "Root", Child: "Revenue", "Aggregation Weight": 1 }
+      });
+      expect(relationships[1]).toMatchObject({
+        parentKey: "Revenue",
+        childKey: "ProductRevenue",
+        aggregationWeight: -1,
+        properties: { Parent: "Revenue", Child: "ProductRevenue", "Aggregation Weight": -1 }
+      });
+      expect(xml).toContain('<member name="ProductRevenue" alias="" description="Product Revenue" />');
+      expect(xml).toContain('<relationship parent="Root" child="Revenue" aggregationWeight="1" />');
+      expect(xml).toContain('<relationship parent="Revenue" child="ProductRevenue" aggregationWeight="-1" />');
+    } finally {
+      db.close();
+    }
+  });
+
+  it("enriches root members from configured blueprint member entries with the same key", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      const config = {
+        ...defaultAppConfig,
+        dimensions: {
+          ...defaultAppConfig.dimensions,
+          enabledTypes: ["Account"],
+          displayOrder: ["Account"],
+          blueprints: {
+            Account: {
+              defaultDimensionName: "Accounts",
+              rootMembers: ["Root"],
+              memberKeyField: "Account",
+              relationshipDefaults: { aggregationWeight: 1 },
+              allowMultipleParents: true,
+              members: [
+                {
+                  memberKey: "Root",
+                  description: "All accounts",
+                  properties: { "Account Type": "BalanceRecurring" }
+                }
+              ]
+            }
+          }
+        }
+      } as AppConfig;
+
+      const project = createProjectFromBlueprints(repos, config, {
+        name: "Enriched Root",
+        description: "",
+        createdBy: "local-admin"
+      });
+      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      if (!account) throw new Error("Account dimension was not created");
+
+      const members = repos.members.listByDimension(account.id);
+
+      expect(members).toHaveLength(1);
+      expect(members[0]).toMatchObject({
+        memberKey: "Root",
+        description: "All accounts",
+        properties: {
+          Account: "Root",
+          Description: "All accounts",
+          "Account Type": "BalanceRecurring"
+        }
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it("lets explicit blueprint relationship property fields override generated defaults", () => {
+    const db = createDatabase(":memory:");
+    try {
+      const repos = createRepositories(db);
+      const config = {
+        ...defaultAppConfig,
+        dimensions: {
+          ...defaultAppConfig.dimensions,
+          enabledTypes: ["Account"],
+          displayOrder: ["Account"],
+          blueprints: {
+            Account: {
+              defaultDimensionName: "Accounts",
+              rootMembers: ["Root"],
+              memberKeyField: "Account",
+              relationshipDefaults: { aggregationWeight: 1 },
+              allowMultipleParents: true,
+              members: [{ memberKey: "Revenue", description: "Revenue" }],
+              relationships: [
+                {
+                  parentKey: "Root",
+                  childKey: "Revenue",
+                  properties: { "Aggregation Weight": -1 }
+                }
+              ]
+            }
+          }
+        }
+      } as AppConfig;
+
+      const project = createProjectFromBlueprints(repos, config, {
+        name: "Property Override",
+        description: "",
+        createdBy: "local-admin"
+      });
+      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      if (!account) throw new Error("Account dimension was not created");
+
+      const relationships = repos.relationships.listByDimension(account.id);
+      const xml = exportProjectXml({
+        project,
+        dimensions: [account],
+        members: repos.members.listByDimension(account.id),
+        relationships
+      });
+
+      expect(relationships).toHaveLength(1);
+      expect(relationships[0]).toMatchObject({
+        aggregationWeight: -1,
+        properties: { Parent: "Root", Child: "Revenue", "Aggregation Weight": -1 }
+      });
+      expect(xml).toContain('<relationship parent="Root" child="Revenue" aggregationWeight="-1" />');
+    } finally {
+      db.close();
+    }
+  });
+
   it("attributes project creation audit events to the project creator", () => {
     const db = createDatabase(":memory:");
     try {

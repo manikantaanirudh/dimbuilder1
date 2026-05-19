@@ -20,42 +20,52 @@ export function IssuePanel({
   const facts = buildDimensionFacts(dimension, summary);
   const visibleIssues = issues.slice(0, expanded ? 500 : 8);
   const Container = expanded ? "section" : "aside";
+  const pageClassName = expanded ? "issue-panel-page" : "details-rail-page";
+  const issueSummaryClassName = expanded ? "issue-summary" : "issue-summary rail-issue-summary";
+  const issuesSectionClassName = expanded ? "issues-section" : "rail-issues-section";
 
   return (
     <Container className={expanded ? "panel issue-panel expanded" : "panel issue-panel details-rail"}>
-      <div className="panel-heading compact">
-        <div>
-          <span className="section-kicker">{expanded ? "Validation" : "Readiness"}</span>
-          <h2>{expanded ? "Issues" : readinessLabel}</h2>
+      <div className={pageClassName}>
+        <div className="panel-heading compact">
+          <div>
+            <span className="section-kicker">{expanded ? "Validation" : "Readiness"}</span>
+            <h2>{expanded ? "Issues" : readinessLabel}</h2>
+          </div>
+          <StatusBadge tone={summary.blocksExport ? "danger" : summary.total ? "warning" : "success"}>
+            {summary.blocksExport ? "Blocked" : summary.total ? "Review" : "Clean"}
+          </StatusBadge>
         </div>
-        <StatusBadge tone={summary.blocksExport ? "danger" : summary.total ? "warning" : "success"}>
-          {summary.blocksExport ? "Blocked" : summary.total ? "Review" : "Clean"}
-        </StatusBadge>
+
+        <div className={issueSummaryClassName}>
+          <span><b>{summary.errors}</b> errors</span>
+          <span><b>{summary.warnings}</b> warnings</span>
+          {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
+        </div>
+
+        {!expanded && (
+          <div className="rail-section rail-property-section">
+            <h3>Dimension details</h3>
+            <FactStrip className="rail-facts">
+              {facts.map((fact) => (
+                <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
+              ))}
+            </FactStrip>
+          </div>
+        )}
+
+        <div className={issuesSectionClassName}>
+          {visibleIssues.length === 0 ? (
+            <EmptyState title="No issues recorded">
+              {dimension.sheetName} has no recorded validation issues.
+            </EmptyState>
+          ) : (
+            <div className="issue-list">
+              {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} />)}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="issue-summary">
-        <span><b>{summary.errors}</b> errors</span>
-        <span><b>{summary.warnings}</b> warnings</span>
-        {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
-      </div>
-      {!expanded && (
-        <div className="rail-section">
-          <h3>Dimension details</h3>
-          <FactStrip className="rail-facts">
-            {facts.map((fact) => (
-              <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
-            ))}
-          </FactStrip>
-        </div>
-      )}
-      {visibleIssues.length === 0 ? (
-        <EmptyState title="No issues recorded">
-          {dimension.sheetName} has no recorded validation issues.
-        </EmptyState>
-      ) : (
-        <div className="issue-list">
-          {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} />)}
-        </div>
-      )}
     </Container>
   );
 }

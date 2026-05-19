@@ -54,6 +54,20 @@ export interface DimensionBlueprintConfig {
   defaultDimensionName: string;
   rootMembers: string[];
   memberKeyField: string;
+  members?: Array<{
+    memberKey: string;
+    description?: string;
+    properties?: Record<string, unknown>;
+  }>;
+  relationships?: Array<{
+    parentKey: string;
+    childKey: string;
+    aggregationWeight?: number;
+    percentConsol?: number;
+    percentOwnership?: number;
+    ownershipType?: string;
+    properties?: Record<string, unknown>;
+  }>;
   relationshipDefaults: {
     aggregationWeight?: number;
     percentConsol?: number;

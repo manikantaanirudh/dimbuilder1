@@ -1,6 +1,11 @@
 import type { AppConfig, ClientAppConfig } from "./appConfigTypes";
 import { supportedConfigSeverities } from "./appConfigTypes";
 import { getDimensionSchema, supportedDimensionTypes } from "./dimensionSchemas";
+import {
+  relationshipDefaultFieldNames,
+  supportedRelationshipDefaultKeys,
+  type RelationshipDefaultKey
+} from "./relationshipDefaults";
 import type { DimensionType } from "./types";
 
 type UnknownRecord = Record<string, unknown>;
@@ -29,12 +34,7 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     }
   }
 
-  const supportedRelationshipDefaultKeys = new Set([
-    "aggregationWeight",
-    "percentConsol",
-    "percentOwnership",
-    "ownershipType"
-  ]);
+  const supportedRelationshipDefaultKeySet = new Set<RelationshipDefaultKey>(supportedRelationshipDefaultKeys);
 
   for (const [type, blueprint] of Object.entries(config.dimensions.blueprints)) {
     if (!isSupportedDimensionType(type)) continue;
@@ -43,6 +43,7 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     }
     const schema = getDimensionSchema(type as DimensionType);
     const supportedMemberFields = new Set(schema.memberFields.map((field) => field.name));
+    const supportedRelationshipFields = new Set(schema.relationshipFields.map((field) => field.name));
 
     if (typeof blueprint.defaultDimensionName !== "string" || !blueprint.defaultDimensionName.trim()) {
       throw new Error(`Blueprint for '${type}' must define defaultDimensionName.`);
@@ -61,10 +62,17 @@ export function validateAppConfig(config: AppConfig): AppConfig {
       throw new Error(`Blueprint for '${type}' must define relationshipDefaults as an object.`);
     }
     for (const key of Object.keys(blueprint.relationshipDefaults)) {
-      if (!supportedRelationshipDefaultKeys.has(key)) {
+      if (!isRelationshipDefaultKey(key)) {
         throw new Error(`Blueprint for '${type}' uses unsupported relationship default '${key}'.`);
       }
+      validateRelationshipDefaultValue(
+        `Blueprint for '${type}' relationshipDefaults.${key}`,
+        key,
+        blueprint.relationshipDefaults[key]
+      );
     }
+    validateBlueprintMembers(type, blueprint.members, supportedMemberFields);
+    validateBlueprintRelationships(type, blueprint.relationships, supportedRelationshipFields, supportedRelationshipDefaultKeySet);
   }
 
   for (const severity of [
@@ -101,6 +109,109 @@ export function validateAppConfig(config: AppConfig): AppConfig {
   }
 
   return config;
+}
+
+function validateBlueprintMembers(type: string, members: unknown, supportedMemberFields: Set<string>): void {
+  if (members === undefined) return;
+  if (!Array.isArray(members)) {
+    throw new Error(`Blueprint for '${type}' members must be an array.`);
+  }
+
+  for (const member of members) {
+    if (!isRecord(member) || typeof member.memberKey !== "string" || !member.memberKey.trim()) {
+      throw new Error(`Blueprint for '${type}' members must define non-empty memberKey values.`);
+    }
+    if (member.description !== undefined && typeof member.description !== "string") {
+      throw new Error(`Blueprint for '${type}' member '${member.memberKey}' description must be a string.`);
+    }
+    if (member.properties !== undefined && !isRecord(member.properties)) {
+      throw new Error(`Blueprint for '${type}' member '${member.memberKey}' properties must be an object.`);
+    }
+    for (const fieldName of Object.keys(member.properties ?? {})) {
+      if (!supportedMemberFields.has(fieldName)) {
+        throw new Error(`Blueprint for '${type}' member '${member.memberKey}' uses unsupported field '${fieldName}'.`);
+      }
+    }
+  }
+}
+
+function validateBlueprintRelationships(
+  type: string,
+  relationships: unknown,
+  supportedRelationshipFields: Set<string>,
+  supportedRelationshipDefaultKeys: Set<RelationshipDefaultKey>
+): void {
+  if (relationships === undefined) return;
+  if (!Array.isArray(relationships)) {
+    throw new Error(`Blueprint for '${type}' relationships must be an array.`);
+  }
+
+  const supportedKeys = new Set([
+    "parentKey",
+    "childKey",
+    "properties",
+    ...supportedRelationshipDefaultKeys
+  ]);
+  for (const relationship of relationships) {
+    if (
+      !isRecord(relationship) ||
+      typeof relationship.parentKey !== "string" ||
+      !relationship.parentKey.trim() ||
+      typeof relationship.childKey !== "string" ||
+      !relationship.childKey.trim()
+    ) {
+      throw new Error(`Blueprint for '${type}' relationships must define non-empty parentKey and childKey values.`);
+    }
+    const label = `${relationship.parentKey} -> ${relationship.childKey}`;
+    for (const key of Object.keys(relationship)) {
+      if (!supportedKeys.has(key)) {
+        throw new Error(`Blueprint for '${type}' relationship '${label}' uses unsupported relationship default '${key}'.`);
+      }
+      if (isRelationshipDefaultKey(key)) {
+        validateRelationshipDefaultValue(
+          `Blueprint for '${type}' relationship '${label}' ${key}`,
+          key,
+          relationship[key]
+        );
+      }
+    }
+    if (relationship.properties !== undefined && !isRecord(relationship.properties)) {
+      throw new Error(`Blueprint for '${type}' relationship '${label}' properties must be an object.`);
+    }
+    for (const fieldName of Object.keys(relationship.properties ?? {})) {
+      if (!supportedRelationshipFields.has(fieldName)) {
+        throw new Error(`Blueprint for '${type}' relationship '${label}' uses unsupported field '${fieldName}'.`);
+      }
+      const defaultKey = relationshipDefaultKeyForFieldName(fieldName);
+      if (defaultKey !== undefined) {
+        validateRelationshipDefaultValue(
+          `Blueprint for '${type}' relationship '${label}' property '${fieldName}'`,
+          defaultKey,
+          (relationship.properties as UnknownRecord)[fieldName]
+        );
+      }
+    }
+  }
+}
+
+function relationshipDefaultKeyForFieldName(fieldName: string): RelationshipDefaultKey | undefined {
+  return supportedRelationshipDefaultKeys.find((key) => relationshipDefaultFieldNames[key] === fieldName);
+}
+
+function isRelationshipDefaultKey(key: string): key is RelationshipDefaultKey {
+  return (supportedRelationshipDefaultKeys as readonly string[]).includes(key);
+}
+
+function validateRelationshipDefaultValue(label: string, key: string, value: unknown): void {
+  if (
+    (key === "aggregationWeight" || key === "percentConsol" || key === "percentOwnership") &&
+    typeof value !== "number"
+  ) {
+    throw new Error(`${label} must be a number.`);
+  }
+  if (key === "ownershipType" && typeof value !== "string") {
+    throw new Error(`${label} must be a string.`);
+  }
 }
 
 export function buildClientAppConfig(config: AppConfig): ClientAppConfig {

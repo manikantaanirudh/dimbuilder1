@@ -1,5 +1,6 @@
 import type { AppConfig, DimensionBlueprintConfig } from "../shared/appConfigTypes";
 import { getDimensionSchema } from "../shared/dimensionSchemas";
+import { relationshipDefaultsToProperties, relationshipPropertiesToDefaults } from "../shared/relationshipDefaults";
 import type { DimensionType, ProjectRecord } from "../shared/types";
 import type { Repositories } from "./db/repositories";
 
@@ -44,18 +45,72 @@ export function createProjectFromBlueprints(
         }
       });
 
-      blueprint.rootMembers.forEach((rootMember, rootIndex) => {
+      const rootMemberKeys = new Set(blueprint.rootMembers);
+      const configuredMemberMap = new Map<string, NonNullable<DimensionBlueprintConfig["members"]>[number]>();
+      blueprint.rootMembers.forEach((memberKey) => {
+        configuredMemberMap.set(memberKey, { memberKey });
+      });
+      blueprint.members?.forEach((configuredMember) => {
+        const existing = configuredMemberMap.get(configuredMember.memberKey);
+        if (existing && !rootMemberKeys.has(configuredMember.memberKey)) return;
+        configuredMemberMap.set(configuredMember.memberKey, {
+          ...existing,
+          ...configuredMember,
+          properties: {
+            ...(existing?.properties ?? {}),
+            ...(configuredMember.properties ?? {})
+          }
+        });
+      });
+      const configuredMembers = [...configuredMemberMap.values()];
+      configuredMembers.forEach((configuredMember, memberIndex) => {
+        const description = configuredMember.description ?? "";
         repos.members.create({
           dimensionId: dimension.id,
-          memberKey: rootMember,
-          description: "",
+          memberKey: configuredMember.memberKey,
+          description,
           properties: {
-            [blueprint.memberKeyField]: rootMember,
-            Description: ""
+            ...(configuredMember.properties ?? {}),
+            [blueprint.memberKeyField]: configuredMember.memberKey,
+            Description: description
           },
-          rowOrder: rootIndex + 1,
+          rowOrder: memberIndex + 1,
           sourceRowNumber: 0,
           isActive: true
+        });
+      });
+
+      const supportedRelationshipFields = new Set(schema.relationshipFields.map((field) => field.name));
+      blueprint.relationships?.forEach((relationship, relationshipIndex) => {
+        const relationshipPropertyValues = relationshipPropertiesToDefaults(
+          relationship.properties ?? {},
+          supportedRelationshipFields
+        );
+        const relationshipValues = {
+          ...blueprint.relationshipDefaults,
+          ...relationshipPropertyValues,
+          aggregationWeight: relationship.aggregationWeight ?? relationshipPropertyValues.aggregationWeight ?? blueprint.relationshipDefaults.aggregationWeight,
+          percentConsol: relationship.percentConsol ?? relationshipPropertyValues.percentConsol ?? blueprint.relationshipDefaults.percentConsol,
+          percentOwnership: relationship.percentOwnership ?? relationshipPropertyValues.percentOwnership ?? blueprint.relationshipDefaults.percentOwnership,
+          ownershipType: relationship.ownershipType ?? relationshipPropertyValues.ownershipType ?? blueprint.relationshipDefaults.ownershipType
+        };
+        const relationshipProperties = {
+          ...relationship.properties,
+          ...relationshipDefaultsToProperties(relationshipValues, supportedRelationshipFields),
+          Parent: relationship.parentKey,
+          Child: relationship.childKey
+        };
+        repos.relationships.create({
+          dimensionId: dimension.id,
+          parentKey: relationship.parentKey,
+          childKey: relationship.childKey,
+          aggregationWeight: relationshipValues.aggregationWeight ?? null,
+          percentConsol: relationshipValues.percentConsol ?? null,
+          percentOwnership: relationshipValues.percentOwnership ?? null,
+          ownershipType: relationshipValues.ownershipType ?? "",
+          properties: relationshipProperties,
+          rowOrder: relationshipIndex + 1,
+          sourceRowNumber: 0
         });
       });
     });

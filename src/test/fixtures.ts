@@ -17,6 +17,16 @@ export const sampleProject: ProjectRecord = {
   updatedAt: testTimestamp
 };
 
+export const manualProject: ProjectRecord = {
+  id: "project-manual",
+  name: "Manual Metadata Project",
+  description: "App-authored project",
+  sourceFileName: "",
+  createdBy: "local-admin",
+  createdAt: testTimestamp,
+  updatedAt: testTimestamp
+};
+
 export const sampleScenarioDimension: DimensionRecord = {
   id: "dim-scenario",
   projectId: sampleProject.id,
@@ -67,4 +77,3 @@ export function relationshipFixture(overrides: Partial<DimensionRelationshipReco
     ...overrides
   };
 }
-

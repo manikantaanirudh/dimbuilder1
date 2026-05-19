@@ -89,22 +89,24 @@ export function MetadataEditor({
           {status || "Idle"}
         </StatusBadge>
       </div>
-      <div className="form-panel">
-        {fields.map(([key, label, required]) => (
-          <label key={key}>
-            <span>{label}{required ? " *" : ""}</span>
-            <input
-              className={key === "dimensionType" ? "readonly-field" : undefined}
-              value={String(draft[key] ?? "")}
-              readOnly={key === "dimensionType"}
-              onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))}
-              onBlur={() => void save()}
-            />
-          </label>
-        ))}
-      </div>
-      <div className="metadata-actions">
-        <ActionButton onClick={() => void save()}><Save size={15} /> Save</ActionButton>
+      <div className="metadata-document">
+        <div className="form-panel metadata-property-grid">
+          {fields.map(([key, label, required]) => (
+            <label key={key} className="metadata-property-row">
+              <span className="metadata-property-label">{label}{required ? " *" : ""}</span>
+              <input
+                className={key === "dimensionType" ? "metadata-property-input readonly-field" : "metadata-property-input"}
+                value={String(draft[key] ?? "")}
+                readOnly={key === "dimensionType"}
+                onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))}
+                onBlur={() => void save()}
+              />
+            </label>
+          ))}
+        </div>
+        <div className="metadata-actions metadata-save-bar">
+          <ActionButton onClick={() => void save()}><Save size={15} /> Save</ActionButton>
+        </div>
       </div>
     </Panel>
   );

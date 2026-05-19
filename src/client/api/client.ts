@@ -53,6 +53,10 @@ export function fetchProjects() {
   return apiGet<ProjectRecord[]>("/projects");
 }
 
+export function createProject(body: { name: string; description: string }) {
+  return apiPost<ProjectRecord>("/projects", body);
+}
+
 export function fetchAppConfig() {
   return apiGet<ClientAppConfig>("/config");
 }
