@@ -1,7 +1,16 @@
 import { nanoid } from "nanoid";
 import { getDimensionSchema } from "./dimensionSchemas";
 import { analyzeHierarchy } from "./hierarchy";
+import {
+  getPropertyDefinitionByName,
+  getPropertyDefinitionsForDimension,
+  getUnknownProperties,
+  normalizePropertyName,
+  type OneStreamPropertyDefinition,
+  type OneStreamPropertyTargetLevel
+} from "./oneStreamPropertyDictionary";
 import type {
+  DimensionType,
   DimensionMemberRecord,
   DimensionRecord,
   DimensionRelationshipRecord,
@@ -80,7 +89,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     });
   }
 
-  validateMembers(input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, severities, addIssue);
+  validateMembers(input.dimension.dimensionType, input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, severities, addIssue);
   validateRelationships(
     input.dimension,
     input.members,
@@ -145,6 +154,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
 }
 
 function validateMembers(
+  dimensionType: DimensionType,
   members: DimensionMemberRecord[],
   memberKeyField: string,
   booleanFields: string[],
@@ -171,6 +181,8 @@ function validateMembers(
 
     for (const fieldName of booleanFields) validateBooleanField(member, fieldName, addIssue);
     for (const fieldName of numericFields) validateNumericField(member, fieldName, addIssue);
+    validateDictionaryProperties(dimensionType, "member", member, addIssue);
+    warnForUnknownProperties(dimensionType, "member", member, addIssue);
     for (const [fieldName, value] of Object.entries(member.properties)) validateTextValue(member, fieldName, value, addIssue);
   }
 
@@ -238,6 +250,8 @@ function validateRelationships(
     }
 
     for (const fieldName of numericFields) validateNumericField(relationship, fieldName, addIssue);
+    validateDictionaryProperties(dimension.dimensionType, "relationship", relationship, addIssue);
+    warnForUnknownProperties(dimension.dimensionType, "relationship", relationship, addIssue);
 
     for (const [fieldName, value] of Object.entries(relationship.properties)) {
       validateTextValue(relationship, fieldName, value, addIssue);
@@ -312,6 +326,91 @@ function validateTextValue(
       code: "XML_INVALID_CHARACTER",
       message: `${fieldName} contains XML-invalid control characters.`,
       fieldName,
+      rowNumber: entity.sourceRowNumber
+    });
+  }
+}
+
+function validateDictionaryProperties(
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel,
+  entity: DimensionMemberRecord | DimensionRelationshipRecord,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  for (const [fieldName, value] of Object.entries(entity.properties)) {
+    const definition = getPropertyDefinitionByName(dimensionType, targetLevel, fieldName);
+    if (!definition) continue;
+    validateDictionaryValue(entity, targetLevel, definition, value, addIssue);
+  }
+}
+
+function validateDictionaryValue(
+  entity: DimensionMemberRecord | DimensionRelationshipRecord,
+  targetLevel: OneStreamPropertyTargetLevel,
+  definition: OneStreamPropertyDefinition,
+  value: unknown,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const normalized = normalizeCellValue(value);
+  if (!normalized) return;
+  const entityType = targetLevel === "relationship" ? "relationship" : "member";
+
+  if (definition.valueType === "enum" && definition.enumValues?.length) {
+    const allowed = new Set(definition.enumValues.map((candidate) => candidate.toLowerCase()));
+    if (!allowed.has(normalized.toLowerCase())) {
+      addIssue({
+        entityType,
+        entityId: entity.id,
+        severity: "error",
+        code: "INVALID_ENUM_VALUE",
+        message: `${definition.displayName} must be one of: ${definition.enumValues.join(", ")}.`,
+        fieldName: definition.displayName,
+        rowNumber: entity.sourceRowNumber
+      });
+    }
+  }
+
+  if (definition.valueType === "boolean" && !["true", "false"].includes(normalized.toLowerCase())) {
+    addIssue({
+      entityType,
+      entityId: entity.id,
+      severity: "error",
+      code: "INVALID_PROPERTY_TYPE",
+      message: `${definition.displayName} must be TRUE or FALSE.`,
+      fieldName: definition.displayName,
+      rowNumber: entity.sourceRowNumber
+    });
+  }
+
+  if ((definition.valueType === "number" || definition.valueType === "decimal") && !Number.isFinite(Number(normalized))) {
+    addIssue({
+      entityType,
+      entityId: entity.id,
+      severity: "error",
+      code: "INVALID_PROPERTY_TYPE",
+      message: `${definition.displayName} must be numeric.`,
+      fieldName: definition.displayName,
+      rowNumber: entity.sourceRowNumber
+    });
+  }
+}
+
+function warnForUnknownProperties(
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel,
+  entity: DimensionMemberRecord | DimensionRelationshipRecord,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const dictionary = getPropertyDefinitionsForDimension(dimensionType, targetLevel);
+  for (const fieldName of getUnknownProperties(entity.properties, dictionary)) {
+    if (!normalizeCellValue(entity.properties[fieldName])) continue;
+    addIssue({
+      entityType: targetLevel === "relationship" ? "relationship" : "member",
+      entityId: entity.id,
+      severity: "warning",
+      code: "UNKNOWN_PROPERTY",
+      message: `${fieldName} is not in the OneStream ${dimensionType} ${targetLevel} property dictionary.`,
+      fieldName: normalizePropertyName(dimensionType, targetLevel, fieldName),
       rowNumber: entity.sourceRowNumber
     });
   }

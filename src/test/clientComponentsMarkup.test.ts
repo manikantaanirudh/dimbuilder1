@@ -213,6 +213,17 @@ describe("client component markup", () => {
     expect(markup).not.toContain(">Columns</button>");
   });
 
+  it("surfaces property dictionary help on grid column headers", () => {
+    const markup = render(createElement(EditableGrid, {
+      projectId: sampleProject.id,
+      kind: "members",
+      dimension: { ...sampleScenarioDimension, dimensionType: "Account", dimensionName: "Accounts", sheetName: "Accounts" },
+      pageSize: 50
+    }));
+
+    expect(markup).toContain('title="Account Type: Categorizes the account for OneStream consolidation and reporting behavior."');
+  });
+
   it("renders hierarchy as a compact searchable tree workbench", () => {
     const markup = render(createElement(HierarchyTree, {
       projectId: sampleProject.id,

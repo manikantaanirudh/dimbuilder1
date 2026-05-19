@@ -7,6 +7,7 @@ import type {
   ValidationIssue
 } from "../../shared/types";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
+import type { GroupedOneStreamPropertyDictionary } from "../../shared/oneStreamPropertyDictionary";
 
 export interface GridResponse<T> {
   rows: T[];
@@ -59,6 +60,10 @@ export function createProject(body: { name: string; description: string }) {
 
 export function fetchAppConfig() {
   return apiGet<ClientAppConfig>("/config");
+}
+
+export function fetchOneStreamPropertyDictionary(version?: string) {
+  return apiGet<GroupedOneStreamPropertyDictionary>(version ? `/schema/onestream/${version}` : "/schema/onestream");
 }
 
 export function fetchSummary(projectId: string) {

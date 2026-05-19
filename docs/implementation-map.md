@@ -21,6 +21,7 @@ This map links behavior to source files.
 
 - `src/shared/types.ts`: records and shared types.
 - `src/shared/dimensionSchemas.ts`: supported dimension types and fields.
+- `src/shared/oneStreamPropertyDictionary.ts`: versioned OneStream property metadata, aliases, XML names, value types, enum values, and grouped client-safe schema output.
 - `src/shared/relationshipDefaults.ts`: relationship default mappings.
 - `src/shared/text.ts`: normalization and XML escaping helpers.
 
@@ -36,6 +37,13 @@ This map links behavior to source files.
 - `src/server/routes/projects.ts`: `POST /api/projects`.
 - `src/client/components/ImportExportModals.tsx`: Create Project modal.
 - `src/client/api/client.ts`: `createProject()`.
+
+## OneStream Schema Dictionary
+
+- `src/shared/oneStreamPropertyDictionary.ts`: source of truth for supported dimension, member, and relationship properties.
+- `src/server/routes/schema.ts`: exposes `GET /api/schema/onestream` and `GET /api/schema/onestream/:version`.
+- `src/client/api/client.ts`: `fetchOneStreamPropertyDictionary()`.
+- `src/client/components/EditableGrid.tsx`: uses dictionary display/help metadata for grid header tooltips.
 
 ## Import
 
@@ -79,4 +87,3 @@ This map links behavior to source files.
 ## Tests
 
 - `src/test`: Vitest test suite.
-

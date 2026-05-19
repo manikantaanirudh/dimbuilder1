@@ -2,6 +2,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Columns3, Copy, Plus, Search, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
+import { getPropertyDefinitionByName } from "../../shared/oneStreamPropertyDictionary";
 import type {
   DimensionMemberRecord,
   DimensionRecord,
@@ -208,6 +209,12 @@ export function EditableGrid({
     return String(record.properties[column.name] ?? "");
   }
 
+  function columnTitle(column: FieldDefinition): string | undefined {
+    const definition = getPropertyDefinitionByName(dimension.dimensionType, kind === "members" ? "member" : "relationship", column.name);
+    if (!definition?.helpText) return undefined;
+    return `${definition.displayName}: ${definition.helpText}`;
+  }
+
   return (
     <div className="panel grid-panel">
       <div className="grid-toolbar workbench-grid-toolbar">
@@ -265,7 +272,7 @@ export function EditableGrid({
       )}
       <div className="data-grid workbench-data-grid" ref={parentRef}>
         <div className="grid-header" style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(160px, 1fr))` }}>
-          {visibleColumns.map((column) => <div key={column.name}>{column.name}{column.required ? " *" : ""}</div>)}
+          {visibleColumns.map((column) => <div key={column.name} title={columnTitle(column)}>{column.name}{column.required ? " *" : ""}</div>)}
         </div>
         <div style={{ height: virtualizer.getTotalSize(), position: "relative", minWidth: `${visibleColumns.length * 160}px` }}>
           {virtualizer.getVirtualItems().map((item) => {

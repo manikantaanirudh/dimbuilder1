@@ -14,6 +14,15 @@ The Express app mounts API routes under `/api`. Client helper functions live in 
 |---|---|---|
 | GET | `/api/config` | Returns client-safe app config with server paths omitted. |
 
+## Schema
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/schema/onestream` | Returns the current client-safe OneStream property dictionary grouped by dimension type and target level. |
+| GET | `/api/schema/onestream/:version` | Returns the dictionary for a supported dictionary version. Current supported version is `9.2.0`. |
+
+Dictionary responses include `version` plus `dimensions`, with each supported dimension type containing `dimension`, `member`, and `relationship` definition arrays. Definitions come from `src/shared/oneStreamPropertyDictionary.ts` and include display labels, XML names, aliases, value types, enum values, defaults, help text, and export-format metadata.
+
 ## Projects
 
 | Method | Path | Description |
@@ -122,4 +131,3 @@ Unhandled route errors are normalized by `src/server/app.ts`:
   "error": "message"
 }
 ```
-

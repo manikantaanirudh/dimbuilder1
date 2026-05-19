@@ -11,8 +11,11 @@ This baseline describes the application state as of 2026-05-19.
 - XLSX import is an optional seed workflow.
 - Metadata reference XML can align imported dimensions and add metadata-only dimensions.
 - Members and relationships can be edited in the workbench.
+- A versioned OneStream property dictionary describes supported dimension, member, and relationship properties for UI labels, validation, API schema output, and XML property mapping.
 - Validation detects common metadata and hierarchy issues.
+- Validation warns on unknown dictionary properties and errors on invalid dictionary enum or typed values.
 - XML preview and export work from persisted records.
+- XML export preserves unknown properties and uses dictionary aliases/XML names before fallback conversion.
 - XLSX, CSV, JSON, and snapshots are available when enabled.
 - Audit logs record major actions.
 - Tests cover config, parsing, validation, exports, repositories, routes, project blueprints, and UI view models.
@@ -43,4 +46,3 @@ The maintained docs pack lives in `docs/`. The maintenance mechanism is:
 - `npm.cmd run docs:check`
 
 Use both whenever source changes affect behavior or project operation.
-

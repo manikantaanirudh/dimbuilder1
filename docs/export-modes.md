@@ -27,6 +27,8 @@ Config:
 
 XML export reads persisted project, dimensions, members, and relationships. It works for both blueprint-created projects and XLSX-seeded projects.
 
+Property name mapping is now dictionary-aware through `src/shared/oneStreamPropertyDictionary.ts`. Existing explicit XML mappings are preserved, known aliases resolve to canonical XML names, and unknown non-empty properties are retained with fallback XML-name conversion.
+
 ## XLSX
 
 Endpoint:
@@ -107,4 +109,3 @@ The UI disables export when:
 - validation issues contain severities listed in `validation.exportBlockedBySeverities`
 
 The server export endpoints do not currently enforce validation blocking. That behavior is UI-side today and should be hardened before production.
-

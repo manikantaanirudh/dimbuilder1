@@ -89,13 +89,17 @@ For `Entity`, additional relationship fields such as percent consolidation and o
 
 ## Field Name Mapping
 
-`toOneStreamPropertyName()` maps workbook/app field names to OneStream XML property names. Explicit overrides cover known OneStream naming differences, for example:
+`toOneStreamPropertyName()` maps workbook/app field names to OneStream XML property names. The exporter first preserves explicit mappings that existed before the dictionary, then consults the shared OneStream property dictionary in `src/shared/oneStreamPropertyDictionary.ts`, then falls back to `toXmlAttributeName()`.
+
+The dictionary lets XML export understand aliases such as `Acct Type` for `Account Type`, while still emitting the canonical XML property name. Unknown non-empty properties are retained and exported through fallback XML-name conversion so imported or user-added metadata is not silently dropped.
+
+Explicit overrides cover known OneStream naming differences, for example:
 
 - `Aggregation Weight` -> `AggregationWeight`
 - `Percent Consol` -> `PercentConsolidation`
 - `Use Cube FX Settings` -> `UseCubeFxSettings`
 
-Unknown fields are converted through `toXmlAttributeName()`.
+Dictionary-backed fields and unknown fields are tested in `src/test/xmlExport.test.ts`.
 
 ## Escaping And Filtering
 
@@ -113,4 +117,3 @@ Primary coverage:
 - `src/test/xmlExport.test.ts`
 - `src/test/projectBlueprints.test.ts`
 - `src/test/workbookParser.test.ts`
-

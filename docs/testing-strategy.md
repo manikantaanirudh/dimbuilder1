@@ -31,16 +31,17 @@ Covers config merging, YAML loading, blueprint validation, severities, regex val
 ### Schema And Parsing
 
 - `src/test/dimensionSchemas.test.ts`
+- `src/test/oneStreamPropertyDictionary.test.ts`
 - `src/test/workbookParser.test.ts`
 
-Covers dimension schema behavior and XLSX parsing.
+Covers dimension schema behavior, OneStream property dictionary lookup and aliases, and XLSX parsing.
 
 ### Validation And Hierarchy
 
 - `src/test/validationEngine.test.ts`
 - `src/test/hierarchy.test.ts`
 
-Covers validation issues, duplicates, hierarchy cycles, and orphan detection.
+Covers validation issues, dictionary enum/type/unknown-property findings, duplicates, hierarchy cycles, and orphan detection.
 
 ### Exports
 
@@ -57,7 +58,7 @@ Covers XML and XLSX export behavior.
 - `src/test/projectRoutes.test.ts`
 - `src/test/projectBlueprints.test.ts`
 
-Covers repositories, route behavior, project creation, and API workflows.
+Covers repositories, route behavior, project creation, API workflows, and the OneStream schema dictionary endpoint.
 
 ### Client UI Logic
 
@@ -88,4 +89,3 @@ Recommended checks:
 - XML preview tab
 
 When browser automation is blocked by sandboxing, request permission to launch the browser rather than replacing the check with guesswork.
-

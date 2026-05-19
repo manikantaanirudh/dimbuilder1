@@ -76,6 +76,37 @@ describe("xml export", () => {
     expect(xml).toContain('<property name="OwnershipType" value="FullConsolidation" />');
   });
 
+  it("uses dictionary aliases and XML names before fallback property conversion", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      id: "dim-account",
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const xml = exportProjectXml({
+      project: sampleProject,
+      dimensions: [accountDimension],
+      members: [
+        memberFixture({
+          dimensionId: accountDimension.id,
+          memberKey: "Revenue",
+          properties: {
+            Account: "Revenue",
+            Description: "Revenue",
+            "Acct Type": "Revenue",
+            "Legacy Custom Property": "Retain"
+          }
+        })
+      ],
+      relationships: []
+    });
+
+    expect(xml).toContain('<property name="AccountType" value="Revenue" />');
+    expect(xml).toContain('<property name="LegacyCustomProperty" value="Retain" />');
+    expect(xml).not.toContain('<property name="AcctType"');
+  });
+
   it("uses the OneStream version captured from metadata reference", () => {
     const xml = exportProjectXml({
       project: sampleProject,

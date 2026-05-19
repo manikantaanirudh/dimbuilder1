@@ -14,6 +14,7 @@ SQLite database
 Shared modules
   -> config validation
   -> dimension schemas
+  -> OneStream property dictionary
   -> workbook parser
   -> validation engine
   -> XML/XLSX/CSV/JSON exporters
@@ -52,6 +53,7 @@ Shared modules live under `src/shared`.
 - `types.ts` defines project, dimension, member, relationship, issue, and summary records.
 - `appConfigTypes.ts`, `appConfigDefaults.ts`, and `appConfigValidation.ts` define the central configuration contract.
 - `dimensionSchemas.ts` describes supported OneStream dimension fields.
+- `oneStreamPropertyDictionary.ts` describes versioned OneStream property metadata by dimension type and target level.
 - `relationshipDefaults.ts` maps blueprint defaults to relationship properties.
 - `workbookParser.ts` parses XLSX workbook sheets into records.
 - `validationEngine.ts` validates dimensions, members, relationships, and hierarchy health.
@@ -80,4 +82,3 @@ The repository layer is intentionally synchronous because `better-sqlite3` is sy
 4. Parsed records are persisted through repositories.
 5. Validation runs immediately after import.
 6. Import summary and validation count return to the client.
-

@@ -1,5 +1,12 @@
 import { getDimensionSchema } from "./dimensionSchemas";
+import {
+  getPropertyDefinitionByName,
+  normalizePropertyLookupName,
+  toOneStreamXmlPropertyNameFromDictionary,
+  type OneStreamPropertyTargetLevel
+} from "./oneStreamPropertyDictionary";
 import type {
+  DimensionType,
   DimensionMemberRecord,
   DimensionRecord,
   DimensionRelationshipRecord,
@@ -149,10 +156,18 @@ function renderMember(dimension: DimensionRecord, member: DimensionMemberRecord,
   }
 
   const propertyLines = renderPropertyLines(
-    schema.memberFields.filter((field) => field.name !== schema.memberKeyField && field.name !== "Description" && !attributeFieldMap[field.name]),
+    buildPropertyFields({
+      baseFields: schema.memberFields.filter((field) => field.name !== schema.memberKeyField && field.name !== "Description" && !attributeFieldMap[field.name]),
+      properties: member.properties,
+      dimensionType: dimension.dimensionType,
+      targetLevel: "member",
+      excludedFieldNames: [schema.memberKeyField, "Description", ...Object.keys(attributeFieldMap)]
+    }),
     member.properties,
     12,
-    options
+    options,
+    dimension.dimensionType,
+    "member"
   );
 
   if (propertyLines.length === 0) return `          <member ${renderAttributes(attributes, options)} />`;
@@ -185,10 +200,23 @@ function renderRelationship(dimension: DimensionRecord, relationship: DimensionR
     relationshipAttributes.aggregationWeight = properties["Aggregation Weight"];
   }
 
-  const propertyFields = dimension.dimensionType === "Entity"
+  const basePropertyFields = dimension.dimensionType === "Entity"
     ? schema.relationshipFields.filter((field) => field.name !== "Parent" && field.name !== "Child")
     : [];
-  const propertyLines = renderPropertyLines(propertyFields, properties, 12, options);
+  const propertyLines = renderPropertyLines(
+    buildPropertyFields({
+      baseFields: basePropertyFields,
+      properties,
+      dimensionType: dimension.dimensionType,
+      targetLevel: "relationship",
+      excludedFieldNames: ["Parent", "Child", ...(dimension.dimensionType !== "Scenario" && dimension.dimensionType !== "Entity" ? ["Aggregation Weight"] : [])]
+    }),
+    properties,
+    12,
+    options,
+    dimension.dimensionType,
+    "relationship"
+  );
 
   if (propertyLines.length === 0) return `          <relationship ${renderAttributes(relationshipAttributes, options)} />`;
   return [
@@ -221,11 +249,16 @@ function renderPropertyLines(
   fields: FieldDefinition[],
   properties: Record<string, unknown>,
   indent: number,
-  options: typeof defaultExportOptions
+  options: typeof defaultExportOptions,
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel
 ): string[] {
   const prefix = " ".repeat(indent);
   return fields
-    .map((field) => [toOneStreamPropertyName(field.name), normalizeCellValue(properties[field.name])] as const)
+    .map((field) => [
+      toOneStreamPropertyName(field.name, dimensionType, targetLevel),
+      normalizeCellValue(getPropertyValue(properties, field.name, dimensionType, targetLevel))
+    ] as const)
     .filter(([, value]) => value && (!options.skipFormulaErrors || !isFormulaError(value)))
     .map(([name, value]) => `${prefix}<property name="${escapeXml(name)}" value="${escapeXml(value)}" />`);
 }
@@ -237,8 +270,14 @@ function renderAttributes(attributes: Record<string, unknown>, options: typeof d
     .join(" ");
 }
 
-export function toOneStreamPropertyName(fieldName: string): string {
-  return fieldNameOverrides[fieldName] ?? toXmlAttributeName(fieldName, true);
+export function toOneStreamPropertyName(
+  fieldName: string,
+  dimensionType?: DimensionType,
+  targetLevel?: OneStreamPropertyTargetLevel
+): string {
+  return fieldNameOverrides[fieldName]
+    ?? (dimensionType && targetLevel ? toOneStreamXmlPropertyNameFromDictionary(dimensionType, targetLevel, fieldName) : undefined)
+    ?? toXmlAttributeName(fieldName, true);
 }
 
 export function toXmlAttributeName(fieldName: string, pascalCase = false): string {
@@ -249,4 +288,63 @@ export function toXmlAttributeName(fieldName: string, pascalCase = false): strin
     .replace(/[^A-Za-z0-9]/g, "");
   if (!cleaned) return "value";
   return pascalCase ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+}
+
+function buildPropertyFields({
+  baseFields,
+  properties,
+  dimensionType,
+  targetLevel,
+  excludedFieldNames
+}: {
+  baseFields: FieldDefinition[];
+  properties: Record<string, unknown>;
+  dimensionType: DimensionType;
+  targetLevel: OneStreamPropertyTargetLevel;
+  excludedFieldNames: string[];
+}): FieldDefinition[] {
+  const represented = new Set<string>();
+  const representedFields: FieldDefinition[] = [
+    ...baseFields,
+    ...excludedFieldNames.map((name) => ({ name, kind: "text" as const }))
+  ];
+  for (const field of representedFields) {
+    addRepresentedField(represented, dimensionType, targetLevel, field.name);
+    for (const alias of field.aliases ?? []) addRepresentedField(represented, dimensionType, targetLevel, alias);
+  }
+
+  const extraFields = Object.keys(properties)
+    .filter((fieldName) => !represented.has(normalizePropertyLookupName(fieldName)))
+    .map((fieldName) => ({ name: fieldName, kind: "text" as const }));
+
+  return [...baseFields, ...extraFields];
+}
+
+function addRepresentedField(
+  represented: Set<string>,
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel,
+  fieldName: string
+): void {
+  represented.add(normalizePropertyLookupName(fieldName));
+  const definition = getPropertyDefinitionByName(dimensionType, targetLevel, fieldName);
+  if (!definition) return;
+  for (const candidate of [definition.propertyKey, definition.displayName, definition.xmlName, ...definition.aliases]) {
+    represented.add(normalizePropertyLookupName(candidate));
+  }
+}
+
+function getPropertyValue(
+  properties: Record<string, unknown>,
+  fieldName: string,
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel
+): unknown {
+  if (properties[fieldName] !== undefined) return properties[fieldName];
+  const definition = getPropertyDefinitionByName(dimensionType, targetLevel, fieldName);
+  if (!definition) return undefined;
+  for (const candidate of [definition.displayName, definition.propertyKey, definition.xmlName, ...definition.aliases]) {
+    if (properties[candidate] !== undefined) return properties[candidate];
+  }
+  return undefined;
 }

@@ -62,6 +62,17 @@ Source:
 - `src/client/components/MetadataEditor.tsx`
 - `src/server/routes/projects.ts`
 
+## OneStream Property Dictionary
+
+The app exposes a versioned OneStream-aware property dictionary for dimension, member, and relationship metadata. It powers API schema responses, grid header help text, property validation, and XML property-name mapping.
+
+Source:
+
+- `src/shared/oneStreamPropertyDictionary.ts`
+- `src/server/routes/schema.ts`
+- `src/client/api/client.ts`
+- `src/client/components/EditableGrid.tsx`
+
 ## Hierarchy Visualization
 
 Relationships can be inspected as a hierarchy tree.
@@ -111,4 +122,3 @@ Source:
 
 - `src/server/db/repositories.ts`
 - route modules under `src/server/routes`
-

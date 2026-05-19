@@ -144,6 +144,30 @@ describe("validation engine", () => {
     );
   });
 
+  it("validates dictionary enum and value types and warns for unknown properties", () => {
+    const issues = validateDimension({
+      project: sampleProject,
+      dimension: { ...sampleScenarioDimension, dimensionType: "Account", dimensionName: "Accounts", sheetName: "Accounts" },
+      members: [
+        memberFixture({
+          memberKey: "Sales",
+          properties: {
+            Account: "Sales",
+            Description: "Sales",
+            "Account Type": "Unsupported Type",
+            "Allow Input": "Sometimes",
+            "Legacy Custom Property": "Keep me"
+          }
+        })
+      ],
+      relationships: []
+    });
+
+    expect(issues.find((issue) => issue.code === "INVALID_ENUM_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "INVALID_PROPERTY_TYPE" && issue.fieldName === "Allow Input")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "UNKNOWN_PROPERTY" && issue.fieldName === "Legacy Custom Property")?.severity).toBe("warning");
+  });
+
   it("validates Flow Switch Type as a True or False setting", () => {
     const issues = validateDimension({
       project: sampleProject,

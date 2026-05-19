@@ -9,6 +9,7 @@ import { createConfigRouter } from "./routes/config";
 import { createExportRouter } from "./routes/export";
 import { createImportRouter } from "./routes/import";
 import { createProjectRouter } from "./routes/projects";
+import { createSchemaRouter } from "./routes/schema";
 import { createValidationRouter } from "./routes/validation";
 
 export function createApp(db: AppDatabase = createDatabase(), config: AppConfig = defaultAppConfig) {
@@ -21,6 +22,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
+  app.use("/api/schema", createSchemaRouter());
   app.use("/api/import", createImportRouter(repos, config));
   app.use("/api/export", createExportRouter(repos, config));
   app.use("/api/validation", createValidationRouter(repos, config));

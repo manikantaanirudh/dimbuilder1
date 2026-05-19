@@ -7,6 +7,7 @@ SR Onestream Dim Builder is a local-first metadata workbench for building, valid
 - Create app-authored OneStream metadata projects without depending on an Excel workbook.
 - Configure the dimension inventory, display order, root members, member fields, relationship defaults, and seeded member data from one central YAML file.
 - Let users edit dimensions, members, and relationships in a dense workbench UI.
+- Maintain a shared OneStream property dictionary so UI labels, validation, XML export, and future bulk tools understand property aliases, XML names, and value types consistently.
 - Validate metadata before export.
 - Export XML that can represent app-authored project data, plus workbook, CSV, and JSON backup formats.
 
@@ -35,6 +36,7 @@ SR Onestream Dim Builder is a local-first metadata workbench for building, valid
 - Relationship: A parent-child link, stored in `dimension_relationships`.
 - Blueprint: YAML configuration that seeds a dimension, root members, optional members, optional relationships, and default relationship properties.
 - Metadata reference: Optional XML file used to align imported workbook dimensions to existing OneStream metadata.
+- Property dictionary: Versioned shared metadata in `src/shared/oneStreamPropertyDictionary.ts` that describes supported OneStream properties by dimension type and target level.
 
 ## Source Anchors
 
@@ -45,4 +47,3 @@ SR Onestream Dim Builder is a local-first metadata workbench for building, valid
 - API routes: `src/server/routes/*.ts`
 - Client workbench shell: `src/client/components/AppShell.tsx`
 - XML export: `src/shared/xmlExport.ts`
-

@@ -50,4 +50,15 @@ describe("api", () => {
     expect("paths" in config).toBe(false);
     expect("server" in config).toBe(false);
   });
+
+  it("returns the versioned OneStream property dictionary", async () => {
+    const dictionary = await fetch(`${baseUrl}/api/schema/onestream`).then((response) => response.json());
+    const versionedDictionary = await fetch(`${baseUrl}/api/schema/onestream/9.2.0`).then((response) => response.json());
+
+    expect(dictionary.version).toBe("9.2.0");
+    expect(dictionary.dimensions.Account.member.some((definition: { propertyKey: string }) => definition.propertyKey === "accountType")).toBe(true);
+    expect(dictionary.dimensions.Entity.relationship.some((definition: { propertyKey: string }) => definition.propertyKey === "percentConsol")).toBe(true);
+    expect(versionedDictionary.version).toBe("9.2.0");
+    expect(versionedDictionary.dimensions.Flow.member.some((definition: { displayName: string }) => definition.displayName === "Switch Sign")).toBe(true);
+  });
 });

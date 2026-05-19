@@ -77,3 +77,27 @@ Rationale:
 
 The app is still evolving. A strict pre-commit hook would add friction. A skill plus checker gives future Codex sessions clear guidance and a repeatable verification step.
 
+## 2026-05-19: OneStream Property Dictionary Is Shared Domain Logic
+
+Decision:
+
+Supported OneStream metadata properties are represented in `src/shared/oneStreamPropertyDictionary.ts`, not in route handlers, UI-only code, or exporter-only mappings.
+
+Rationale:
+
+The app needs one property contract for UI labels/help text, validation, API schema output, XML mapping, import compatibility, and future diff or bulk-update tools. Keeping the dictionary in shared domain logic lets server routes expose it without duplicating rules, lets the XML exporter resolve aliases consistently, and lets validation flag unknown or invalid values without blocking unknown properties by default.
+
+Tradeoffs:
+
+- The initial dictionary is practical rather than exhaustive.
+- Schema-backed fallback definitions keep current app fields from being treated as unknown while richer OneStream property metadata can be added over time.
+- Versioned API responses are in place, but only the current `9.2.0` dictionary is implemented today.
+
+Impacted files:
+
+- `src/shared/oneStreamPropertyDictionary.ts`
+- `src/shared/xmlExport.ts`
+- `src/shared/validationEngine.ts`
+- `src/server/routes/schema.ts`
+- `src/client/api/client.ts`
+- `src/client/components/EditableGrid.tsx`
