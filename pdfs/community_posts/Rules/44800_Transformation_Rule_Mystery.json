@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/transformation-rule-mystery/44800",
+  "title": "Transformation Rule Mystery",
+  "forum": "Rules",
+  "author": "kivlind",
+  "date": "2025-08-01",
+  "content": "I have a field in my input dataset that I am tracing the mapping for and I can't figure out why OneStream is selecting the mapping rule it is using.",
+  "has_solution": true,
+  "tags": [
+    "Admin",
+    "Transformation"
+  ]
+}

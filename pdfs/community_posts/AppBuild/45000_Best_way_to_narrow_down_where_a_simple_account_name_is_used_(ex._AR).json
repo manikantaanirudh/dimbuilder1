@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/best-way-to-narrow-down-where-a-simple-account-name-is-used/45000",
+  "title": "Best way to narrow down where a simple account name is used (ex. AR)",
+  "forum": "AppBuild",
+  "author": "NicoleBruno",
+  "date": "2025-07-01",
+  "content": "We named an alternate hierarchy account parent AR and are now trying to find where that account was called/used because we want to remove it without impacting other things.",
+  "has_solution": false,
+  "tags": [
+    "Metadata"
+  ]
+}

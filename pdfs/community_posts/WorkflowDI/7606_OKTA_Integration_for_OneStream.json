@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/okta-integration-for-onestream/7606",
+  "title": "OKTA Integration for OneStream",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2022-05-01",
+  "content": "Has anyone integrated OneStream with OKTA to enable SSO login? Any leads/suggestions would be appreciated.",
+  "has_solution": true,
+  "solution_author": "Unknown",
+  "solution_text": "We used Okta to authenticate users - it was straightforward to configure and worked well. The OneStream Installation Guide has a section on Okta configuration.",
+  "tags": [
+    "Security",
+    "SSO"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/commentary-on-a-dashboard/10254",
+  "title": "Commentary on a dashboard",
+  "forum": "Reporting",
+  "author": "Leytond",
+  "date": "2022-09-16",
+  "content": "I have created a dashboard for Flash reporting, and I'm trying to add a section for commentary. I've used the View member 'Annotation' in the cube view. This works fine for short comments but anything beyond that is not visible.",
+  "has_solution": false,
+  "tags": [
+    "Cube View",
+    "dashboards"
+  ]
+}

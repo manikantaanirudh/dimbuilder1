@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/kb/AcceptedCodeSample/dashboard-xfbr-string/6611",
+  "title": "Code Sample: Dashboard XFBR String",
+  "forum": "CodeSample",
+  "author": "OSAdmin",
+  "date": "2022-04-07",
+  "content": "Business rules written as Parameters that return a specific value based on defined inputs. Examples: GetCalcStatus, GetUserIsAdmin, EntityDesc.",
+  "has_solution": false,
+  "tags": [
+    "XFBR",
+    "Code Sample"
+  ]
+}

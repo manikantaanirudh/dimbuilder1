@@ -118,10 +118,30 @@ export interface ValidationConfig {
   missingRequiredFieldSeverity: Severity;
   circularHierarchySeverity: Severity;
   relationshipsWithNoLocalMembersSeverity: Severity;
+  oneStreamProfile: OneStreamValidationProfileConfig;
   exportBlockedBySeverities: Severity[];
 }
 
+export interface OneStreamValidationProfileConfig {
+  enabled: boolean;
+  memberNameMaxLength: number;
+  warnOnMemberNameSpaces: boolean;
+  warnOnMemberNamePeriods: boolean;
+  reservedWords: string[];
+  restrictedCharacters: string[];
+  duplicateAliasSeverity: Severity;
+  invalidSortOrderSeverity: Severity;
+  sharedMemberSeverity: Severity;
+  parentInputWarningSeverity: Severity;
+  unknownPropertySeverity: Severity;
+  invalidEnumSeverity: Severity;
+  invalidPropertyTypeSeverity: Severity;
+}
+
 export interface ExportConfig {
+  allowValidationBypass?: boolean;
+  validationBypassRequiresReason?: boolean;
+  requireValidationBeforeExport?: boolean;
   xml: {
     enabled: boolean;
     prettyPrint: boolean;

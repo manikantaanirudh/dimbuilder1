@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/errors-creating-new-task-in-data-import-schedule-manager/45000",
+  "title": "Errors creating New Task in Data Import Schedule Manager",
+  "forum": "WorkflowDI",
+  "author": "mjuenke",
+  "date": "2025-07-01",
+  "content": "Getting several errors when setting up a New Task in the Data Import Schedule Manager on OS version 9.01 with DSM 8.4.0_SV100. Suspect version compatibility issue.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration",
+    "Data Management"
+  ]
+}

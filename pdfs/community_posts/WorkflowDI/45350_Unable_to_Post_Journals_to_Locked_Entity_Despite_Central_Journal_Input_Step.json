@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/unable-to-post-journals-to-locked-entity/45350",
+  "title": "Unable to Post Journals to Locked Entity Despite Central Journal Input Step",
+  "forum": "WorkflowDI",
+  "author": "Hatim_Elhaouma",
+  "date": "2025-09-01",
+  "content": "Encountering an issue when trying to post a journal via central workflow to an entity whose workflow is locked. Central journal input steps should allow postings when locked.",
+  "has_solution": false,
+  "tags": [
+    "Journals",
+    "Workflow"
+  ]
+}

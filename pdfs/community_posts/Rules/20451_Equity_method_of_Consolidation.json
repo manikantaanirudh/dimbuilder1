@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/equity-method-of-consolidation/20451",
+  "title": "Equity method of Consolidation",
+  "forum": "Rules",
+  "author": "BCG",
+  "date": "2023-05-01",
+  "content": "We have a requirement where we need to write only into C#Elimination of Share of Profit from A#NetIncome and Same to be written to A#Investment in Equity Account.",
+  "has_solution": true,
+  "solution_author": "ChrisLoran",
+  "solution_text": "If the Consolidation Algorithm is Standard then the PCON=0 will ensure nothing gets as far as the C#Elimination stage. You could have a calculate pass which reads directly from the child entity's C#Translated data unit. Another way is to simply have a member formula or Allocation Journal on the Holding Company's base entity.",
+  "tags": [
+    "Finance",
+    "Consolidation"
+  ]
+}

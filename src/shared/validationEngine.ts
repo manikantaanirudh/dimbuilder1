@@ -16,6 +16,9 @@ import type {
   DimensionRelationshipRecord,
   ProjectRecord,
   Severity,
+  UnknownXmlData,
+  UnknownXmlElementData,
+  VaryingPropertyValueRecord,
   ValidationIssue
 } from "./types";
 import {
@@ -23,6 +26,17 @@ import {
   isFormulaError,
   normalizeCellValue
 } from "./text";
+import {
+  findDuplicateVaryingPropertyValues,
+  hasVaryingOverrideContext
+} from "./varyingProperties";
+import {
+  findMembersThatBecomeOrphanedAfterRelationshipDeletes,
+  isRelationshipOperation
+} from "./relationshipOperations";
+import { UNKNOWN_XML_DATA_KEY } from "./xmlImport";
+import { validateOneStreamProfile } from "./oneStreamValidation";
+import type { OneStreamValidationProfileConfig } from "./appConfigTypes";
 
 export interface ValidationSeverityOptions {
   duplicateMemberSeverity: Severity;
@@ -31,6 +45,7 @@ export interface ValidationSeverityOptions {
   missingRequiredFieldSeverity: Severity;
   circularHierarchySeverity: Severity;
   relationshipsWithNoLocalMembersSeverity: Severity;
+  oneStreamProfile?: OneStreamValidationProfileConfig;
 }
 
 export interface ValidateDimensionInput {
@@ -38,6 +53,7 @@ export interface ValidateDimensionInput {
   dimension: DimensionRecord;
   members: DimensionMemberRecord[];
   relationships: DimensionRelationshipRecord[];
+  varyingPropertyValues?: VaryingPropertyValueRecord[];
   duplicateSeverity?: Severity;
   severities?: ValidationSeverityOptions;
 }
@@ -52,7 +68,8 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     unknownRelationshipMemberSeverity: input.severities?.unknownRelationshipMemberSeverity ?? "warning",
     missingRequiredFieldSeverity: input.severities?.missingRequiredFieldSeverity ?? "error",
     circularHierarchySeverity: input.severities?.circularHierarchySeverity ?? "error",
-    relationshipsWithNoLocalMembersSeverity: input.severities?.relationshipsWithNoLocalMembersSeverity ?? "warning"
+    relationshipsWithNoLocalMembersSeverity: input.severities?.relationshipsWithNoLocalMembersSeverity ?? "warning",
+    oneStreamProfile: input.severities?.oneStreamProfile
   };
 
   function addIssue(params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">): void {
@@ -89,12 +106,21 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     });
   }
 
+  validateImportedUnknownXml("dimension", input.dimension.id, input.dimension.metadata, null, addIssue);
   validateMembers(input.dimension.dimensionType, input.members, schema.memberKeyField, schema.booleanFields, schema.numericFields, severities, addIssue);
   validateRelationships(
     input.dimension,
     input.members,
     input.relationships,
     schema.relationshipFields.filter((field) => field.kind === "number").map((field) => field.name),
+    severities,
+    addIssue
+  );
+  validateVaryingProperties(
+    input.dimension,
+    input.members,
+    input.relationships,
+    input.varyingPropertyValues ?? [],
     severities,
     addIssue
   );
@@ -150,7 +176,138 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     });
   }
 
+  if (severities.oneStreamProfile?.enabled) {
+    issues.push(...validateOneStreamProfile({
+      project: input.project,
+      dimension: input.dimension,
+      members: input.members,
+      relationships: input.relationships,
+      varyingPropertyValues: input.varyingPropertyValues,
+      profile: severities.oneStreamProfile
+    }));
+  }
+
   return issues;
+}
+
+function validateVaryingProperties(
+  dimension: DimensionRecord,
+  members: DimensionMemberRecord[],
+  relationships: DimensionRelationshipRecord[],
+  varyingPropertyValues: VaryingPropertyValueRecord[],
+  severities: ValidationSeverityOptions,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const dimensionValues = varyingPropertyValues.filter((value) => value.dimensionId === dimension.id);
+  const memberById = new Map(members.map((member) => [member.id, member]));
+  const relationshipById = new Map(relationships.map((relationship) => [relationship.id, relationship]));
+
+  for (const duplicate of findDuplicateVaryingPropertyValues(dimensionValues)) {
+    for (const value of duplicate.records) {
+      addIssue({
+        entityType: value.targetType,
+        entityId: value.targetId,
+        severity: "error",
+        code: "DUPLICATE_VARYING_PROPERTY",
+        message: `${value.propertyName} has more than one varying value for the same target and context.`,
+        fieldName: value.propertyName,
+        rowNumber: rowNumberForVaryingTarget(value, memberById, relationshipById)
+      });
+    }
+  }
+
+  for (const value of dimensionValues) {
+    const targetExists = varyingTargetExists(dimension, value, memberById, relationshipById);
+    if (!targetExists) {
+      addIssue({
+        entityType: value.targetType,
+        entityId: value.targetId,
+        severity: "error",
+        code: "VARYING_PROPERTY_TARGET_NOT_FOUND",
+        message: `Varying property target '${value.targetId}' was not found in this dimension.`,
+        fieldName: value.propertyName,
+        rowNumber: null
+      });
+    }
+
+    const definition = getPropertyDefinitionByName(dimension.dimensionType, value.targetType, value.propertyName);
+    if (!definition) {
+      addIssue({
+        entityType: value.targetType,
+        entityId: value.targetId,
+        severity: severities.oneStreamProfile?.unknownPropertySeverity ?? "warning",
+        code: "UNKNOWN_VARYING_PROPERTY",
+        message: `${value.propertyName} is not in the OneStream ${dimension.dimensionType} ${value.targetType} property dictionary.`,
+        fieldName: value.propertyName,
+        rowNumber: rowNumberForVaryingTarget(value, memberById, relationshipById)
+      });
+      continue;
+    }
+
+    if ((definition.supportsVarying === false || definition.supportsVarying === undefined) && hasVaryingOverrideContext(value)) {
+      addIssue({
+        entityType: value.targetType,
+        entityId: value.targetId,
+        severity: "warning",
+        code: "NON_VARYING_PROPERTY_OVERRIDE",
+        message: `${definition.displayName} is not marked as a varying OneStream property.`,
+        fieldName: definition.displayName,
+        rowNumber: rowNumberForVaryingTarget(value, memberById, relationshipById)
+      });
+    }
+
+    validateVaryingDictionaryValue(value, definition, severities, rowNumberForVaryingTarget(value, memberById, relationshipById), addIssue);
+  }
+}
+
+function varyingTargetExists(
+  dimension: DimensionRecord,
+  value: VaryingPropertyValueRecord,
+  memberById: Map<string, DimensionMemberRecord>,
+  relationshipById: Map<string, DimensionRelationshipRecord>
+): boolean {
+  if (value.targetType === "dimension") return value.targetId === dimension.id;
+  if (value.targetType === "member") return memberById.has(value.targetId);
+  return relationshipById.has(value.targetId);
+}
+
+function rowNumberForVaryingTarget(
+  value: Pick<VaryingPropertyValueRecord, "targetType" | "targetId">,
+  memberById: Map<string, DimensionMemberRecord>,
+  relationshipById: Map<string, DimensionRelationshipRecord>
+): number | null {
+  if (value.targetType === "member") return memberById.get(value.targetId)?.sourceRowNumber ?? null;
+  if (value.targetType === "relationship") return relationshipById.get(value.targetId)?.sourceRowNumber ?? null;
+  return null;
+}
+
+function validateVaryingDictionaryValue(
+  value: VaryingPropertyValueRecord,
+  definition: OneStreamPropertyDefinition,
+  severities: ValidationSeverityOptions,
+  rowNumber: number | null,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const normalized = normalizeCellValue(value.value);
+  if (!normalized) return;
+  const invalid = (
+    (definition.valueType === "enum" && definition.enumValues?.length && !new Set(definition.enumValues.map((candidate) => candidate.toLowerCase())).has(normalized.toLowerCase()))
+    || (definition.valueType === "boolean" && !["true", "false"].includes(normalized.toLowerCase()))
+    || ((definition.valueType === "number" || definition.valueType === "decimal") && !Number.isFinite(Number(normalized)))
+  );
+
+  if (!invalid) return;
+  addIssue({
+    entityType: value.targetType,
+    entityId: value.targetId,
+    severity: definition.valueType === "enum"
+      ? severities.oneStreamProfile?.invalidEnumSeverity ?? "error"
+      : severities.oneStreamProfile?.invalidPropertyTypeSeverity ?? "error",
+    code: "INVALID_VARYING_PROPERTY_VALUE",
+    message: `${definition.displayName} has an invalid varying property value.`,
+    fieldName: definition.displayName,
+    rowNumber
+  });
 }
 
 function validateMembers(
@@ -181,9 +338,13 @@ function validateMembers(
 
     for (const fieldName of booleanFields) validateBooleanField(member, fieldName, addIssue);
     for (const fieldName of numericFields) validateNumericField(member, fieldName, addIssue);
-    validateDictionaryProperties(dimensionType, "member", member, addIssue);
-    warnForUnknownProperties(dimensionType, "member", member, addIssue);
-    for (const [fieldName, value] of Object.entries(member.properties)) validateTextValue(member, fieldName, value, addIssue);
+    validateDictionaryProperties(dimensionType, "member", member, severities, addIssue);
+    warnForUnknownProperties(dimensionType, "member", member, severities, addIssue);
+    validateImportedUnknownXml("member", member.id, member.properties, member.sourceRowNumber, addIssue);
+    for (const [fieldName, value] of Object.entries(member.properties)) {
+      if (fieldName === UNKNOWN_XML_DATA_KEY) continue;
+      validateTextValue(member, fieldName, value, addIssue);
+    }
   }
 
   for (const [memberKey, duplicates] of byKey) {
@@ -250,13 +411,102 @@ function validateRelationships(
     }
 
     for (const fieldName of numericFields) validateNumericField(relationship, fieldName, addIssue);
-    validateDictionaryProperties(dimension.dimensionType, "relationship", relationship, addIssue);
-    warnForUnknownProperties(dimension.dimensionType, "relationship", relationship, addIssue);
+    validateDictionaryProperties(dimension.dimensionType, "relationship", relationship, severities, addIssue);
+    warnForUnknownProperties(dimension.dimensionType, "relationship", relationship, severities, addIssue);
+    validateImportedUnknownXml("relationship", relationship.id, relationship.properties, relationship.sourceRowNumber, addIssue);
 
     for (const [fieldName, value] of Object.entries(relationship.properties)) {
+      if (fieldName === UNKNOWN_XML_DATA_KEY) continue;
       validateTextValue(relationship, fieldName, value, addIssue);
     }
   }
+
+  validateRelationshipOperations(dimension, members, relationships, addIssue);
+}
+
+function validateRelationshipOperations(
+  dimension: DimensionRecord,
+  members: DimensionMemberRecord[],
+  relationships: DimensionRelationshipRecord[],
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const memberKeys = members.map((member) => member.memberKey);
+  const destructiveRelationships: DimensionRelationshipRecord[] = [];
+
+  for (const relationship of relationships) {
+    const operation = normalizeCellValue(relationship.operation);
+    if (!operation) continue;
+
+    if (!isRelationshipOperation(operation)) {
+      addIssue({
+        entityType: "relationship",
+        entityId: relationship.id,
+        severity: "error",
+        code: "RELATIONSHIP_OPERATION_UNSUPPORTED",
+        message: `Relationship operation '${operation}' is not supported.`,
+        fieldName: "Operation",
+        rowNumber: relationship.sourceRowNumber
+      });
+      continue;
+    }
+
+    if (operation === "delete" || operation === "break") destructiveRelationships.push(relationship);
+
+    if (operation === "copy" && dimension.metadata.allowMultipleParents === false) {
+      addIssue({
+        entityType: "relationship",
+        entityId: relationship.id,
+        severity: "warning",
+        code: "COPY_CONFLICTS_WITH_SINGLE_PARENT_POLICY",
+        message: "Copy operation conflicts with the dimension blueprint single-parent policy.",
+        fieldName: "Operation",
+        rowNumber: relationship.sourceRowNumber
+      });
+    }
+
+    if (operation === "move" && !hasOldParentMetadata(relationship)) {
+      addIssue({
+        entityType: "relationship",
+        entityId: relationship.id,
+        severity: "warning",
+        code: "MOVE_WITHOUT_OLD_PARENT",
+        message: "Move operation requires the old parent context before export planning.",
+        fieldName: "Operation",
+        rowNumber: relationship.sourceRowNumber
+      });
+    }
+
+    if (operation === "break" && normalizeCellValue(relationship.operationSource).toLowerCase() !== "baseline") {
+      addIssue({
+        entityType: "relationship",
+        entityId: relationship.id,
+        severity: "warning",
+        code: "BREAK_BUILD_HAS_NO_BASELINE",
+        message: "Break operation should be sourced from a baseline comparison.",
+        fieldName: "Operation",
+        rowNumber: relationship.sourceRowNumber
+      });
+    }
+  }
+
+  for (const memberKey of findMembersThatBecomeOrphanedAfterRelationshipDeletes(memberKeys, relationships, destructiveRelationships)) {
+    const relationship = destructiveRelationships.find((candidate) => candidate.childKey === memberKey);
+    if (!relationship) continue;
+    addIssue({
+      entityType: "relationship",
+      entityId: relationship.id,
+      severity: "warning",
+      code: "RELATIONSHIP_DELETE_CREATES_ORPHAN",
+      message: `Deleting or breaking this relationship may orphan '${memberKey}'.`,
+      fieldName: "Operation",
+      rowNumber: relationship.sourceRowNumber
+    });
+  }
+}
+
+function hasOldParentMetadata(relationship: DimensionRelationshipRecord): boolean {
+  if (normalizeCellValue(relationship.properties.OldParent || relationship.properties.oldParentKey)) return true;
+  return /oldParent(Key)?/i.test(normalizeCellValue(relationship.operationNotes));
 }
 
 function validateBooleanField(
@@ -335,12 +585,14 @@ function validateDictionaryProperties(
   dimensionType: DimensionType,
   targetLevel: OneStreamPropertyTargetLevel,
   entity: DimensionMemberRecord | DimensionRelationshipRecord,
+  severities: ValidationSeverityOptions,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   for (const [fieldName, value] of Object.entries(entity.properties)) {
+    if (fieldName === UNKNOWN_XML_DATA_KEY) continue;
     const definition = getPropertyDefinitionByName(dimensionType, targetLevel, fieldName);
     if (!definition) continue;
-    validateDictionaryValue(entity, targetLevel, definition, value, addIssue);
+    validateDictionaryValue(entity, targetLevel, definition, value, severities, addIssue);
   }
 }
 
@@ -349,6 +601,7 @@ function validateDictionaryValue(
   targetLevel: OneStreamPropertyTargetLevel,
   definition: OneStreamPropertyDefinition,
   value: unknown,
+  severities: ValidationSeverityOptions,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   const normalized = normalizeCellValue(value);
@@ -361,7 +614,7 @@ function validateDictionaryValue(
       addIssue({
         entityType,
         entityId: entity.id,
-        severity: "error",
+        severity: severities.oneStreamProfile?.invalidEnumSeverity ?? "error",
         code: "INVALID_ENUM_VALUE",
         message: `${definition.displayName} must be one of: ${definition.enumValues.join(", ")}.`,
         fieldName: definition.displayName,
@@ -374,7 +627,7 @@ function validateDictionaryValue(
     addIssue({
       entityType,
       entityId: entity.id,
-      severity: "error",
+      severity: severities.oneStreamProfile?.invalidPropertyTypeSeverity ?? "error",
       code: "INVALID_PROPERTY_TYPE",
       message: `${definition.displayName} must be TRUE or FALSE.`,
       fieldName: definition.displayName,
@@ -386,7 +639,7 @@ function validateDictionaryValue(
     addIssue({
       entityType,
       entityId: entity.id,
-      severity: "error",
+      severity: severities.oneStreamProfile?.invalidPropertyTypeSeverity ?? "error",
       code: "INVALID_PROPERTY_TYPE",
       message: `${definition.displayName} must be numeric.`,
       fieldName: definition.displayName,
@@ -399,19 +652,91 @@ function warnForUnknownProperties(
   dimensionType: DimensionType,
   targetLevel: OneStreamPropertyTargetLevel,
   entity: DimensionMemberRecord | DimensionRelationshipRecord,
+  severities: ValidationSeverityOptions,
   addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
 ): void {
   const dictionary = getPropertyDefinitionsForDimension(dimensionType, targetLevel);
-  for (const fieldName of getUnknownProperties(entity.properties, dictionary)) {
+  for (const fieldName of getUnknownProperties(entity.properties, dictionary).filter((name) => name !== UNKNOWN_XML_DATA_KEY)) {
     if (!normalizeCellValue(entity.properties[fieldName])) continue;
     addIssue({
       entityType: targetLevel === "relationship" ? "relationship" : "member",
       entityId: entity.id,
-      severity: "warning",
+      severity: severities.oneStreamProfile?.unknownPropertySeverity ?? "warning",
       code: "UNKNOWN_PROPERTY",
       message: `${fieldName} is not in the OneStream ${dimensionType} ${targetLevel} property dictionary.`,
       fieldName: normalizePropertyName(dimensionType, targetLevel, fieldName),
       rowNumber: entity.sourceRowNumber
     });
   }
+}
+
+function validateImportedUnknownXml(
+  entityType: "dimension" | "member" | "relationship",
+  entityId: string,
+  source: Record<string, unknown>,
+  rowNumber: number | null,
+  addIssue: (params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">) => void
+): void {
+  const unknownXml = getUnknownXmlData(source);
+  if (!unknownXml) return;
+
+  for (const attributeName of Object.keys(unknownXml.unknownAttributes)) {
+    addIssue({
+      entityType,
+      entityId,
+      severity: "info",
+      code: unknownAttributeCode(entityType),
+      message: `Imported XML attribute '${attributeName}' is not mapped yet and will be preserved on export.`,
+      fieldName: attributeName,
+      rowNumber
+    });
+  }
+
+  for (const element of unknownXml.unknownElements.filter((candidate) => !isPreservedPropertyElement(candidate))) {
+    addIssue({
+      entityType,
+      entityId,
+      severity: "info",
+      code: "XML_UNSUPPORTED_ELEMENT_PRESERVED",
+      message: `Imported XML element '${element.name}' is not mapped yet and will be preserved on export.`,
+      fieldName: element.name,
+      rowNumber
+    });
+  }
+}
+
+function unknownAttributeCode(entityType: "dimension" | "member" | "relationship"): string {
+  if (entityType === "dimension") return "XML_UNKNOWN_DIMENSION_ATTRIBUTE";
+  if (entityType === "member") return "XML_UNKNOWN_MEMBER_ATTRIBUTE";
+  return "XML_UNKNOWN_RELATIONSHIP_ATTRIBUTE";
+}
+
+function getUnknownXmlData(source: Record<string, unknown>): UnknownXmlData | null {
+  const value = source[UNKNOWN_XML_DATA_KEY];
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<UnknownXmlData>;
+  if (!candidate.unknownAttributes && !candidate.unknownElements) return null;
+  return {
+    unknownAttributes: isRecord(candidate.unknownAttributes) ? candidate.unknownAttributes as Record<string, string> : {},
+    unknownElements: Array.isArray(candidate.unknownElements) ? candidate.unknownElements.filter(isUnknownElementData) : [],
+    sourceOrder: typeof candidate.sourceOrder === "number" ? candidate.sourceOrder : 0,
+    originalXmlPath: typeof candidate.originalXmlPath === "string" ? candidate.originalXmlPath : undefined,
+    sourcePath: typeof candidate.sourcePath === "string" ? candidate.sourcePath : undefined
+  };
+}
+
+function isPreservedPropertyElement(element: UnknownXmlElementData): boolean {
+  return element.name === "property" || Boolean(element.originalXmlPath?.endsWith("/properties/property"));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isUnknownElementData(value: unknown): value is UnknownXmlElementData {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<UnknownXmlElementData>;
+  return typeof candidate.name === "string"
+    && isRecord(candidate.attributes)
+    && typeof candidate.sourceOrder === "number";
 }

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/no-valid-datakeys-scenario-time-found/45000",
+  "title": "No valid DataKeys (Scenario / Time) found in data source",
+  "forum": "WorkflowDI",
+  "author": "JeremyRenard",
+  "date": "2025-08-01",
+  "content": "Trying to create first import from scratch. Always gives the same error about no valid DataKeys. All UD1 to UD8 are on None.",
+  "has_solution": true,
+  "tags": [
+    "Data Sources",
+    "Import"
+  ]
+}

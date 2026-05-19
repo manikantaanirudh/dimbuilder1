@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/business-rule-compile-error-and-warnings/4932",
+  "title": "Business Rule Compile Error and Warnings",
+  "forum": "Rules",
+  "author": "Unknown",
+  "date": "2022-01-01",
+  "content": "OneStream Platform releases will periodically include an update to the Business Rules compiler. The enhancements typically make the compiler stricter in detecting syntax or other conditions.",
+  "has_solution": false,
+  "tags": [
+    "Admin"
+  ]
+}

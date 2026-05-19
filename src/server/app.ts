@@ -11,6 +11,7 @@ import { createImportRouter } from "./routes/import";
 import { createProjectRouter } from "./routes/projects";
 import { createSchemaRouter } from "./routes/schema";
 import { createValidationRouter } from "./routes/validation";
+import { createBlueprintRouter } from "./routes/blueprints";
 
 export function createApp(db: AppDatabase = createDatabase(), config: AppConfig = defaultAppConfig) {
   const app = express();
@@ -21,6 +22,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.use("/api/config", createConfigRouter(config));
+  app.use("/api/blueprints", createBlueprintRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
   app.use("/api/schema", createSchemaRouter());
   app.use("/api/import", createImportRouter(repos, config));

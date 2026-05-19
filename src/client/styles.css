@@ -829,6 +829,134 @@ svg {
   padding: 16px;
 }
 
+.snapshot-manager {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.blueprint-studio {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.snapshot-warning,
+.snapshot-status,
+.blueprint-studio-note,
+.blueprint-studio-status {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.blueprint-studio-note,
+.blueprint-studio-status {
+  margin: 0;
+}
+
+.snapshot-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.snapshot-controls label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.snapshot-controls select,
+.snapshot-controls input {
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 10px;
+  font: inherit;
+}
+
+.blueprint-studio-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.blueprint-studio-form label,
+.blueprint-draft-editor {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.blueprint-studio-form select,
+.blueprint-draft-editor textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.blueprint-draft-editor textarea {
+  min-height: 170px;
+  resize: vertical;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.blueprint-studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.blueprint-yaml-preview {
+  min-width: 0;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  padding: 12px;
+  color: var(--text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.snapshot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.snapshot-status {
+  margin: 10px 0 0;
+}
+
 .dimension-list {
   display: grid;
   gap: 8px;
@@ -1024,7 +1152,11 @@ svg {
 
 .metadata-panel,
 .hierarchy-panel,
-.xml-panel {
+.xml-panel,
+.varying-properties-panel,
+.bulk-update-panel,
+.metadata-diff-panel,
+.change-sets-panel {
   padding: 16px;
 }
 
@@ -1106,6 +1238,233 @@ svg {
 .metadata-save-bar {
   margin-top: 0;
   padding-top: 2px;
+}
+
+.varying-properties-panel,
+.bulk-update-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.varying-toolbar,
+.bulk-update-toolbar,
+.diff-toolbar,
+.change-set-toolbar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.varying-form,
+.bulk-update-form,
+.diff-controls,
+.change-set-controls,
+.change-set-lifecycle {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.varying-form label,
+.bulk-update-form label,
+.diff-controls label,
+.change-set-controls label,
+.change-set-lifecycle label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.varying-form input,
+.varying-form select,
+.bulk-update-form input,
+.bulk-update-form select,
+.diff-controls input,
+.diff-controls select,
+.change-set-controls input,
+.change-set-controls select,
+.change-set-lifecycle input,
+.change-set-lifecycle select {
+  width: 100%;
+  padding: 7px 9px;
+}
+
+.varying-value-input {
+  grid-column: span 2;
+}
+
+.checkbox-row {
+  display: grid;
+  align-content: end;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.varying-actions,
+.bulk-update-actions,
+.diff-control-actions,
+.change-set-action-cell {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.bulk-update-steps {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-update-steps span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.bulk-update-validation-note {
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.metadata-diff-panel,
+.change-sets-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.diff-warning {
+  padding: 10px 12px;
+  border: 1px solid rgba(221, 91, 0, 0.24);
+  border-radius: var(--radius-sm);
+  background: #fff4e8;
+  color: #793400;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.diff-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.diff-filter-row .search-box {
+  flex: 1 1 260px;
+}
+
+.varying-table,
+.bulk-update-table,
+.diff-table,
+.change-set-table {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.varying-row,
+.bulk-update-row,
+.diff-row,
+.change-set-row {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(150px, 1fr) minmax(210px, 1.4fr) minmax(150px, 1fr) 96px 92px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.diff-row {
+  grid-template-columns: 92px minmax(160px, 1.3fr) minmax(130px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) 90px;
+}
+
+.bulk-update-row {
+  grid-template-columns: minmax(150px, 1fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(180px, 1.2fr);
+}
+
+.change-set-row {
+  grid-template-columns: 100px 120px minmax(180px, 1fr) minmax(130px, 1fr) 90px;
+}
+
+.varying-row.header,
+.bulk-update-row.header,
+.diff-row.header,
+.change-set-row.header {
+  color: var(--muted);
+  background: var(--surface-subtle);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.varying-row:last-child,
+.bulk-update-row:last-child,
+.diff-row:last-child,
+.change-set-row:last-child {
+  border-bottom: 0;
+}
+
+.varying-row > span,
+.bulk-update-row > span,
+.diff-row > span,
+.change-set-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.varying-empty,
+.bulk-update-empty,
+.diff-empty,
+.change-set-empty {
+  padding: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.change-set-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.change-set-lifecycle {
+  grid-template-columns: minmax(180px, 1fr) 160px repeat(4, auto);
+  align-items: end;
 }
 
 .grid-panel {
@@ -1492,6 +1851,37 @@ svg {
   color: var(--text);
 }
 
+.issue-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(220px, 1fr);
+  gap: 10px;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  padding: 10px;
+}
+
+.issue-filters label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.issue-filters select,
+.issue-filters input {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 6px 8px;
+  font: inherit;
+}
+
 .rail-section {
   border-top: 1px solid var(--border);
   margin-top: 12px;
@@ -1661,6 +2051,85 @@ svg {
 .hierarchy-search {
   width: min(520px, 100%);
   flex: 1 1 280px;
+}
+
+.hierarchy-analytics-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+  padding: 14px;
+}
+
+.hierarchy-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hierarchy-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.hierarchy-metric {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 10px 12px;
+}
+
+.hierarchy-metric span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hierarchy-metric b {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.hierarchy-metric.warning {
+  border-color: #f0cf89;
+  background: var(--warning-soft);
+}
+
+.hierarchy-metric.info {
+  border-color: #b8d5f4;
+  background: var(--info-soft);
+}
+
+.hierarchy-export-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hierarchy-export-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.hierarchy-export-link:hover {
+  background: var(--surface-hover);
 }
 
 .tree,
@@ -1915,6 +2384,22 @@ svg {
   padding: 8px;
 }
 
+.import-mode-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.import-mode-selector .action-button {
+  justify-content: center;
+  min-height: 40px;
+}
+
+.import-mode-description {
+  margin: 10px 0 0;
+}
+
 .modal-status {
   margin-top: 10px;
   border: 1px solid var(--border);
@@ -1949,6 +2434,30 @@ svg {
 .import-summary b {
   color: var(--text);
   font-size: 18px;
+}
+
+.export-mode-panel,
+.export-bypass-panel {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  padding: 12px;
+}
+
+.export-impact-summary {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.export-impact-summary strong {
+  color: var(--text);
+  font-size: 12px;
 }
 
 .export-list {
@@ -2123,7 +2632,8 @@ svg {
 
   .metadata-grid,
   .form-panel,
-  .import-summary {
+  .import-summary,
+  .blueprint-studio-form {
     grid-template-columns: 1fr;
   }
 

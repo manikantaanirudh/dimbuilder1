@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/connect-ms-fabric-lakehouse/45100",
+  "title": "Connect MS Fabric Lakehouse",
+  "forum": "WorkflowDI",
+  "author": "mireles",
+  "date": "2025-08-01",
+  "content": "I'm exploring ways to extract data from a Microsoft Fabric Lakehouse into OneStream. What would be the best authentication method?",
+  "has_solution": false,
+  "tags": [
+    "Data Integration"
+  ]
+}

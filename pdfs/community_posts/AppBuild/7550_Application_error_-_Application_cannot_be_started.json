@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/application-error/7550",
+  "title": "Application error - Application cannot be started",
+  "forum": "AppBuild",
+  "author": "Praveen",
+  "date": "2022-05-23",
+  "content": "I am unable to open the OneStream application and getting 'Application cannot be started' error after downloads.",
+  "has_solution": true,
+  "solution_author": "Sue_T",
+  "solution_text": "You can try to clear your Clickonce cache. Log out of OneStream, Delete the Settings folder in C:\\Users\\USERNAME\\AppData\\Roaming\\OneStream\\Desktop\\Settings, Delete the 2.0 folder in C:\\Users\\USERNAME\\AppData\\Local\\Apps\\2.0",
+  "tags": [
+    "Infrastructure"
+  ]
+}

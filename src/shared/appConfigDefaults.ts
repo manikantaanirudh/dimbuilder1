@@ -180,9 +180,27 @@ export const defaultAppConfig: AppConfig = {
     missingRequiredFieldSeverity: "error",
     circularHierarchySeverity: "error",
     relationshipsWithNoLocalMembersSeverity: "warning",
+    oneStreamProfile: {
+      enabled: true,
+      memberNameMaxLength: 250,
+      warnOnMemberNameSpaces: true,
+      warnOnMemberNamePeriods: true,
+      reservedWords: ["Root", "None"],
+      restrictedCharacters: ["<", ">", "\"", "'", "&", "|", "[", "]", "\t", "\r", "\n"],
+      duplicateAliasSeverity: "warning",
+      invalidSortOrderSeverity: "warning",
+      sharedMemberSeverity: "info",
+      parentInputWarningSeverity: "warning",
+      unknownPropertySeverity: "warning",
+      invalidEnumSeverity: "error",
+      invalidPropertyTypeSeverity: "error"
+    },
     exportBlockedBySeverities: ["error"]
   },
   export: {
+    allowValidationBypass: false,
+    validationBypassRequiresReason: true,
+    requireValidationBeforeExport: false,
     xml: {
       enabled: true,
       prettyPrint: true,

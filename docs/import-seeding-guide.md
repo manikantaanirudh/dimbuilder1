@@ -1,6 +1,6 @@
-# Import Seeding Guide
+# Import And Seeding Guide
 
-XLSX import is an optional seed workflow. It no longer defines the application narrative. Blank projects can be created directly from central blueprints, and XLSX is used when a workbook is available as a starting point.
+XLSX import is an optional seed workflow. It no longer defines the application narrative. Blank projects can be created directly from central blueprints, XLSX can seed a project from a workbook, and XML import can create an editable project from OneStream metadata XML.
 
 ## Entry Point
 
@@ -12,11 +12,13 @@ Client:
 Server:
 
 - `POST /api/import/workbook`
+- `POST /api/import/xml`
 - `src/server/routes/import.ts`
 
 Parser:
 
 - `src/shared/workbookParser.ts`
+- `src/shared/xmlImport.ts`
 
 ## Supported Workbook Detection
 
@@ -74,6 +76,8 @@ Alignment logic can:
 
 ## Persistence Flow
 
+### XLSX Seeding
+
 1. Upload file to `paths.uploadsDirectory`.
 2. Parse metadata reference XML if enabled and found.
 3. Parse workbook into a `ParsedProject`.
@@ -84,11 +88,38 @@ Alignment logic can:
 8. Record `project.import` audit entry.
 9. Return project and import summary.
 
+### XML Import
+
+1. Upload the XML file to `paths.uploadsDirectory`.
+2. Parse OneStream metadata XML in `src/shared/xmlImport.ts`.
+3. Create a project record using the optional `projectName` or uploaded file name.
+4. Insert parsed dimensions, members, and relationships inside a repository transaction.
+5. Store unknown XML attributes and elements in existing `metadata_json` or `properties_json` under `__unknownXml`.
+6. Run validation and replace project issues.
+7. Record `project.importXml` audit entry.
+8. Return project and an import summary with unknown field counts.
+
+## XML Import Behavior
+
+The XML parser supports the app's current OneStream XML export shape:
+
+- project metadata through the uploaded file and root OneStream version
+- dimensions and dimension attributes
+- dimension property elements
+- members and member attributes
+- member property elements
+- relationships and relationship attributes
+- relationship property elements
+
+Known properties are normalized through the shared OneStream property dictionary where possible. Unknown attributes, unknown property elements, and unsupported child elements are preserved so users can round-trip files through the app without silently dropping metadata.
+
+Unknown XML fields produce validation notes such as `XML_UNKNOWN_MEMBER_ATTRIBUTE` and `XML_UNSUPPORTED_ELEMENT_PRESERVED`; these are informational and do not block export by default.
+
 ## Tests
 
 Primary coverage:
 
 - `src/test/workbookParser.test.ts`
+- `src/test/xmlImport.test.ts`
 - `src/test/api.test.ts`
 - `src/test/projectRoutes.test.ts`
-

@@ -20,6 +20,9 @@ This folder is the maintained knowledge base for SR Onestream Dim Builder. It de
 - [Validation Rules](validation-rules.md): Validation engine behavior, severity controls, and export blocking.
 - [Export Modes](export-modes.md): XML, XLSX, CSV, JSON, and snapshot exports.
 - [XML Generation Guide](xml-generation-guide.md): OneStream XML rendering rules and field mapping.
+- [Metadata Diff Guide](metadata-diff-guide.md): Baseline creation, comparison rules, persisted diff items, and current limits.
+- [Change Set Guide](change-set-guide.md): Change set lifecycle, approval gating, package contents, and current release package limits.
+- [Bulk Update Guide](bulk-update-guide.md): Preview-first member and relationship property updates, audit logging, and rollback data.
 
 ## Technical References
 

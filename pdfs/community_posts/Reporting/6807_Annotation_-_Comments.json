@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/annotation---comments/6807",
+  "title": "Annotation - Comments",
+  "forum": "Reporting",
+  "author": "Unknown",
+  "date": "2022-03-01",
+  "content": "The customer would like to explain a dollar variance between Budget and Actual by leveraging 4 columns of data: enter a dollar amount, a combo box to select a type of UD1 data timing (Perm/Temp) and another combo box to select UD8 driver type with the last column for a comment.",
+  "has_solution": false,
+  "tags": [
+    "Cube View"
+  ]
+}

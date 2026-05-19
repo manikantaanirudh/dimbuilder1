@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/subtle-bug-in-example-for-dynamic-dimensions/44850",
+  "title": "Subtle bug in Example for Dynamic Dimensions",
+  "forum": "Rules",
+  "author": "SteveK",
+  "date": "2025-09-01",
+  "content": "In the example code for the Dynamic Dimension Service, ReadDynamicDimensionInfo returns DateTime.Now but ReadDynamicDimensionContentTimestamp sets DateTime.UTCNow. This creates a refresh issue.",
+  "has_solution": false,
+  "tags": [
+    "Admin"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/file-explorer-incoming-workflow-folders-missing/45250",
+  "title": "File Explorer Incoming workflow folders missing in copied applications",
+  "forum": "WorkflowDI",
+  "author": "kchampion",
+  "date": "2025-09-01",
+  "content": "When an application is copied, the new application does not contain the folder structure. To fix, export Workflows and re-import them back into the copied application.",
+  "has_solution": true,
+  "tags": [
+    "FileSystem",
+    "Workflow"
+  ]
+}

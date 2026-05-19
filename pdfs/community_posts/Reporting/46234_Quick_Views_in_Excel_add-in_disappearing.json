@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/quick-views-in-excel-add-in-disappearing/46234",
+  "title": "Quick Views in Excel add-in disappearing",
+  "forum": "Reporting",
+  "author": "Michael_Laroche",
+  "date": "2025-11-24",
+  "content": "Has anyone ever come across an issue where you've built out a quick view in excel and you open the workbook to refresh the quick views and they are all #refresh with the links broken?",
+  "has_solution": true,
+  "solution_author": "BobMarchese",
+  "solution_text": "It sounds as if you are converting your Quick View to XFGetCells format. Once you do that, you will see the #REFRESH and your Quick View definition is deleted. Best thing to do is to make a copy of your QV before converting.",
+  "tags": [
+    "Excel Add In"
+  ]
+}

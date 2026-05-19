@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/v8-0-workspaces/29819",
+  "title": "v8.0+ Workspaces",
+  "forum": "AppBuild",
+  "author": "miked",
+  "date": "2023-11-01",
+  "content": "Does anyone have any good advice on what Workspaces should be created in the application dashboards screen beyond Default? In reading the guide, workspaces seem to have a lot of focus on separating development activities or perhaps for partner place solutions. I am struggling a bit to understand at what level to offer a different workspace.",
+  "has_solution": true,
+  "solution_author": "Henning",
+  "solution_text": "The bigger picture is the building software on software part. This is to enable the community (partners and customers) to create their own solutions based on the OneStream platform. One important element is to isolate each component in a different Workspace. I recommend to create all new solutions in a dedicated Workspace and not using Default anymore.",
+  "tags": [
+    "Workspaces"
+  ]
+}

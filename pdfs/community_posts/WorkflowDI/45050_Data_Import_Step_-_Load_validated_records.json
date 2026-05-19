@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/data-import-step---load-validated-records/45050",
+  "title": "Data Import Step - Load validated records",
+  "forum": "WorkflowDI",
+  "author": "juergzbinden",
+  "date": "2025-08-01",
+  "content": "We are looking for a load into a financial cube. Is there a way to load records that pass validation and write error records to an error protocol?",
+  "has_solution": false,
+  "tags": [
+    "Data Integration"
+  ]
+}

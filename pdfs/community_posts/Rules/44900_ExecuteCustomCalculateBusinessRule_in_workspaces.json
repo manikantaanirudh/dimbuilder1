@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Rules/executeCustomCalculateBusinessRule-workspaces/44900",
+  "title": "ExecuteCustomCalculateBusinessRule in workspaces",
+  "forum": "Rules",
+  "author": "Sergey",
+  "date": "2025-09-01",
+  "content": "I came across an update function ExecuteCustomCalculateBusinessRule with a new workspaceID parameter. How do we execute a custom calculate service in workspace assembly services?",
+  "has_solution": true,
+  "tags": [
+    "Finance",
+    "Workspaces"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/manage-workflow-issues/45400",
+  "title": "Manage Workflow Issues - special character in channel name",
+  "forum": "WorkflowDI",
+  "author": "ShivaPrasad",
+  "date": "2025-09-01",
+  "content": "In Manage Workflow initially faced an issue - Workflow channel name 'Whatif_R&O_Adj' contains special character &. After clicking OK, not showing unlock options.",
+  "has_solution": false,
+  "tags": [
+    "Workflow"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/Reporting/table-view-numer-formatting/20840",
+  "title": "Table View Number Formatting",
+  "forum": "Reporting",
+  "author": "aprats",
+  "date": "2023-06-14",
+  "content": "I have an issue with table view number formatting. On my SQL query, I'm introducing the format: Select FORMAT(Sum(Year_01), 'N2', 'es-es') as Year_01. After populating table view with UseDataTypes=True, it introduces the value as Text.",
+  "has_solution": true,
+  "solution_author": "aprats",
+  "solution_text": "If you use FORMAT in SQL, the column is stored as Text. Solution: Define the text columns as Decimal, then when inserting rows, for number columns, replace ',' for '.' for decimal separator.",
+  "tags": [
+    "Table View"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/rest-api-use/3761",
+  "title": "REST API USE - Connector Rule example",
+  "forum": "WorkflowDI",
+  "author": "pvanerp",
+  "date": "2021-12-01",
+  "content": "I'm working on implementing a REST API in OS. Can anyone explain the steps? I started by downloading POSTMAN for tests.",
+  "has_solution": true,
+  "solution_author": "pvanerp",
+  "solution_text": "Got it to work using WebClient in VB.NET: Dim wc As New WebClient, set headers for cache-control, ContentType, Accept, Authorization as Basic, then DownloadString to get JSON and parse with JObject.",
+  "tags": [
+    "REST API",
+    "Connector"
+  ]
+}

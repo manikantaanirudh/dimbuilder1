@@ -198,7 +198,7 @@ describe("client UI view model", () => {
   });
 
   it("keeps XML out of tabs when disabled", () => {
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "Issues"]);
   });
 
   it("keeps null active dimension as project overview and falls back only for stale dimension ids", () => {
@@ -223,8 +223,8 @@ describe("client UI view model", () => {
   });
 
   it("uses the shorter XML tab label for the clean workbench", () => {
-    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "XML", "Issues"]);
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Issues"]);
+    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "XML", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "Issues"]);
   });
 
   it("builds compact readiness labels and dimension facts", () => {

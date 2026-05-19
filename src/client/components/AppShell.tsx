@@ -50,10 +50,11 @@ export function AppShell({
   const [status, setStatus] = useState("");
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
-  const projectName = store.projects[0]?.name ?? "No project open";
+  const selectedProject = store.projects.find((project) => project.id === store.selectedProjectId) ?? null;
+  const projectName = selectedProject?.name ?? "No project open";
   const projectSource = store.loading
     ? "Loading metadata workspace..."
-    : store.projects[0]?.sourceFileName || appConfig.application.supportText;
+    : selectedProject?.sourceFileName || appConfig.application.supportText;
   const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
@@ -242,9 +243,13 @@ export function AppShell({
           <Dashboard
             dimensions={store.dimensions}
             summary={store.summary}
-            project={store.projects[0] ?? null}
+            project={selectedProject}
             issues={store.issues}
             onOpenDimension={setActiveWorkspace}
+            onProjectChanged={(projectId) => {
+              setStatus("Project snapshot action completed");
+              void store.refresh(projectId);
+            }}
             appConfig={appConfig}
           />
         )}

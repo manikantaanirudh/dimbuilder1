@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/7-3-workspaces-and-xfproj-file/15046",
+  "title": "7.3 Workspaces and .xfproj file",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2022-12-01",
+  "content": "Has anyone worked yet with workspaces (loading/extracting) using a .xfproj file? I am trying to moved a dashboard maintenance unit (DMU) out of the default workspace into a new one.",
+  "has_solution": true,
+  "solution_author": "tledet",
+  "solution_text": "Examples of using Workspace with an .XFProj file: Everything in a Workspace, Everything in a DMU in a Workspace, Everything in the Default Workspace, Everything in the Default Workspace with the DMU specified.",
+  "tags": [
+    "Workspaces"
+  ]
+}

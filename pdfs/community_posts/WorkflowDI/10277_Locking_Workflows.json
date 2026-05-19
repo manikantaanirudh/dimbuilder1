@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/locking-workflows/10277",
+  "title": "Locking Workflows",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2022-08-01",
+  "content": "Would anyone be willing to share how they are locking data to end users, but still allowing consolidation users to make adjustments?",
+  "has_solution": false,
+  "tags": [
+    "Workflow"
+  ]
+}

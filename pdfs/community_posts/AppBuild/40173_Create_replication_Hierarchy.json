@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/AppBuild/create-replication-hierarchy/40173",
+  "title": "Create replication Hierarchy",
+  "forum": "AppBuild",
+  "author": "Unknown",
+  "date": "2024-10-01",
+  "content": "I have an existing hierarchy called 'ControlMgt Hierarchy' which has several rollups underneath it. I need to recreate a new hierarchy named 'ControlMgt Hierarchy_ALTERNATE' where '_ALTERNATE' will be added to all the rollups. The base elements will remain the same.",
+  "has_solution": false,
+  "tags": [
+    "Metadata"
+  ]
+}

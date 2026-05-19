@@ -16,6 +16,22 @@ describe("app config", () => {
     expect(defaultAppConfig.application.productName).toBe("SR Onestream Dim Builder");
     expect(defaultAppConfig.application.title).toBe("SR Onestream Dim Builder");
     expect(defaultAppConfig.export.xlsx.creator).toBe("SR Onestream Dim Builder");
+    expect(defaultAppConfig.export.allowValidationBypass).toBe(false);
+    expect(defaultAppConfig.export.validationBypassRequiresReason).toBe(true);
+    expect(defaultAppConfig.export.requireValidationBeforeExport).toBe(false);
+    expect(defaultAppConfig.validation.oneStreamProfile).toMatchObject({
+      enabled: true,
+      memberNameMaxLength: 250,
+      warnOnMemberNameSpaces: true,
+      warnOnMemberNamePeriods: true,
+      duplicateAliasSeverity: "warning",
+      invalidSortOrderSeverity: "warning",
+      sharedMemberSeverity: "info",
+      parentInputWarningSeverity: "warning",
+      unknownPropertySeverity: "warning",
+      invalidEnumSeverity: "error",
+      invalidPropertyTypeSeverity: "error"
+    });
     expect(defaultAppConfig.ui.defaultWorkspaceTab).toBe("Members");
   });
 
@@ -510,6 +526,46 @@ describe("app config", () => {
     });
 
     expect(() => validateAppConfig(config)).toThrow("Invalid severity 'fatal'");
+  });
+
+  it("rejects invalid export validation gate settings", () => {
+    const invalidBypassConfig = mergeAppConfig(defaultAppConfig, {
+      export: { allowValidationBypass: "yes" }
+    });
+    const invalidReasonConfig = mergeAppConfig(defaultAppConfig, {
+      export: { validationBypassRequiresReason: "yes" }
+    });
+    const invalidRequireValidationConfig = mergeAppConfig(defaultAppConfig, {
+      export: { requireValidationBeforeExport: "yes" }
+    });
+
+    expect(() => validateAppConfig(invalidBypassConfig)).toThrow("export.allowValidationBypass must be a boolean.");
+    expect(() => validateAppConfig(invalidReasonConfig)).toThrow("export.validationBypassRequiresReason must be a boolean.");
+    expect(() => validateAppConfig(invalidRequireValidationConfig)).toThrow("export.requireValidationBeforeExport must be a boolean.");
+  });
+
+  it("rejects invalid OneStream validation profile settings", () => {
+    const invalidEnabledConfig = mergeAppConfig(defaultAppConfig, {
+      validation: { oneStreamProfile: { enabled: "yes" } }
+    });
+    const invalidLengthConfig = mergeAppConfig(defaultAppConfig, {
+      validation: { oneStreamProfile: { memberNameMaxLength: 0 } }
+    });
+    const invalidSeverityConfig = mergeAppConfig(defaultAppConfig, {
+      validation: { oneStreamProfile: { duplicateAliasSeverity: "fatal" } }
+    });
+    const invalidReservedWordsConfig = mergeAppConfig(defaultAppConfig, {
+      validation: { oneStreamProfile: { reservedWords: ["Root", 123] } }
+    });
+    const invalidRestrictedCharactersConfig = mergeAppConfig(defaultAppConfig, {
+      validation: { oneStreamProfile: { restrictedCharacters: ["<", ""] } }
+    });
+
+    expect(() => validateAppConfig(invalidEnabledConfig)).toThrow("validation.oneStreamProfile.enabled must be a boolean.");
+    expect(() => validateAppConfig(invalidLengthConfig)).toThrow("validation.oneStreamProfile.memberNameMaxLength must be a positive integer.");
+    expect(() => validateAppConfig(invalidSeverityConfig)).toThrow("Invalid severity 'fatal' in configuration.");
+    expect(() => validateAppConfig(invalidReservedWordsConfig)).toThrow("validation.oneStreamProfile.reservedWords must be an array of non-empty strings.");
+    expect(() => validateAppConfig(invalidRestrictedCharactersConfig)).toThrow("validation.oneStreamProfile.restrictedCharacters must be an array of non-empty strings.");
   });
 
   it("rejects invalid metadata-only exclusion regex", () => {

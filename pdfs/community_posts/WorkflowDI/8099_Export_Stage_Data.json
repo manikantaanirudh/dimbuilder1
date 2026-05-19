@@ -1,0 +1,12 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/export-stage-data/8099",
+  "title": "Export Stage Data",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2022-05-01",
+  "content": "I am attempting to export Stage Data through a Data Management Job using a Business Rule. The customer is hoping to remove some columns from the export.",
+  "has_solution": false,
+  "tags": [
+    "Data Integration"
+  ]
+}

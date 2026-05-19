@@ -1,0 +1,15 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/webapi-through-sic-/24230",
+  "title": "WEBAPI through SIC",
+  "forum": "WorkflowDI",
+  "author": "Krishna",
+  "date": "2023-07-01",
+  "content": "Has anyone done WEBAPI through SIC? I followed the document and I am not successful connecting to the endpoint.",
+  "has_solution": true,
+  "solution_author": "Krishna",
+  "solution_text": "I was able to fix it. In the BR I have to provide the localhost:PortNumber which was specified in the SIC configuration screen.",
+  "tags": [
+    "SIC",
+    "REST API"
+  ]
+}

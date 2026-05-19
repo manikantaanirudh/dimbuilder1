@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { buildHierarchyTree, type HierarchyNode } from "../../shared/hierarchy";
 import type { DimensionRecord, DimensionRelationshipRecord } from "../../shared/types";
 import { fetchRelationships } from "../api/client";
+import { HierarchyAnalyticsPanel } from "./HierarchyAnalyticsPanel";
 import { StatusBadge } from "./ui";
 
 export function HierarchyTree({ projectId, dimension }: { projectId: string; dimension: DimensionRecord }) {
@@ -34,6 +35,7 @@ export function HierarchyTree({ projectId, dimension }: { projectId: string; dim
           </div>
           <StatusBadge tone={tree.length ? "neutral" : "info"}>{tree.length ? `${tree.length} roots` : "Empty tree"}</StatusBadge>
         </div>
+        <HierarchyAnalyticsPanel projectId={projectId} dimension={dimension} />
         <div className="tree hierarchy-tree" role="tree" aria-label={`${dimension.dimensionName} relationship hierarchy`}>
           {tree.length === 0 ? (
             <div className="hierarchy-empty empty-state-block">

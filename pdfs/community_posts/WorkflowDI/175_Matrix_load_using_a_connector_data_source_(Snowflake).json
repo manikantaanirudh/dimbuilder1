@@ -1,0 +1,16 @@
+{
+  "url": "https://community.onestreamsoftware.com/t5/Workflow-and-Data-Integration/Matrix-load-using-a-connector-data-surce/td-p/175",
+  "title": "Matrix load using a connector data source (Snowflake)",
+  "forum": "WorkflowDI",
+  "author": "Vignesh Mohan",
+  "date": "2021-01-01",
+  "content": "I am trying to import data from Snowflake using JDBC/ODBC connection with Matrix data structure. Getting error: No valid DataKeys (Scenario/Time) found in data source.",
+  "has_solution": true,
+  "solution_author": "Vignesh Mohan",
+  "solution_text": "The issue was the format of workflow year and period sent as parameter to the query. Periods are setup as 2019M1 but source has 01. Minor tweaks in connector rule fixed formatting.",
+  "tags": [
+    "Data Integration",
+    "Snowflake",
+    "Connector"
+  ]
+}

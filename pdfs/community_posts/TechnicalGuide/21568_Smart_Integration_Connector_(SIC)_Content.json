@@ -1,0 +1,13 @@
+{
+  "url": "https://community.onestreamsoftware.com/kb/platformupgradestkb-board/smart-integration-connector-sic-content/21568",
+  "title": "Smart Integration Connector (SIC) Content",
+  "forum": "TechnicalGuide",
+  "author": "djcorbett",
+  "date": "2023-07-05",
+  "content": "SIC is OneStream's new standard for local data source integration to OneStream's Cloud. A Local Gateway Service manages all credentials and files for local data source connectivity.",
+  "has_solution": false,
+  "tags": [
+    "SIC",
+    "Technical Guide"
+  ]
+}

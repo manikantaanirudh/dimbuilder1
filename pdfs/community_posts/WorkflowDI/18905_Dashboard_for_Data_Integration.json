@@ -1,0 +1,14 @@
+{
+  "url": "https://community.onestreamsoftware.com/discussions/WorkflowDI/dashboard/18905",
+  "title": "Dashboard for Data Integration",
+  "forum": "WorkflowDI",
+  "author": "Unknown",
+  "date": "2023-03-01",
+  "content": "We are creating a Dashboard for data integration and to execute consolidations. Is there a Dashboard template out there for download?",
+  "has_solution": true,
+  "solution_author": "JackLacava",
+  "solution_text": "The GolfStream reference application contains a lot of Dashboards you can repurpose or learn from. Marketplace/PartnerPlace/OpenPlace applications contain lots of Dashboards. The CPM Blueprint package contains some Dashboard material.",
+  "tags": [
+    "dashboards"
+  ]
+}
