@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync("src/client/styles.css", "utf8");
+const css = readFileSync("src/client/styles.css", "utf8").replace(/\r\n/g, "\n");
 const html = readFileSync("index.html", "utf8");
 
 describe("Notion-inspired design system CSS", () => {
