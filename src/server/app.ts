@@ -5,6 +5,10 @@ import type { AppConfig } from "../shared/appConfigTypes";
 import type { AppDatabase } from "./db/database";
 import { createDatabase } from "./db/database";
 import { createRepositories } from "./db/repositories";
+import { logger } from "./logger";
+import { createBasicAuthMiddleware } from "./middleware/basicAuth";
+import { generalRateLimiter, heavyOperationRateLimiter } from "./middleware/rateLimiter";
+import { requestLogger } from "./middleware/requestLogger";
 import { createConfigRouter } from "./routes/config";
 import { createExportRouter } from "./routes/export";
 import { createImportRouter } from "./routes/import";
@@ -17,10 +21,20 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   const app = express();
   const repos = createRepositories(db);
 
-  app.use(cors());
+  const corsOrigins = config.server.corsOrigins;
+  app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined));
   app.use(express.json({ limit: "25mb" }));
+  app.use(requestLogger);
 
+  // Health check is unauthenticated
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
+  // Apply Basic Auth to all routes below
+  app.use("/api", createBasicAuthMiddleware(config.auth));
+  app.use("/api", generalRateLimiter);
+  app.use("/api/import", heavyOperationRateLimiter);
+  app.use("/api/export", heavyOperationRateLimiter);
+
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/blueprints", createBlueprintRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
@@ -32,7 +46,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";
     const status = resolveErrorStatus(error);
-    console.error(error);
+    logger.error({ err: error, status }, message);
     res.status(status).json({ error: message });
   });
 

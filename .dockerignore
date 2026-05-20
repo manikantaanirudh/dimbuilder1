@@ -1,0 +1,13 @@
+node_modules
+data
+metadata
+.git
+.github
+.cortex
+coverage
+dist
+original
+autoresearch-master
+scripts/autoresearch/benchmark-cache.json
+scripts/autoresearch/results.tsv
+*.xlsx

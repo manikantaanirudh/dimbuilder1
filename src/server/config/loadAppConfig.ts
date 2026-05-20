@@ -29,6 +29,12 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
     server: {
       ...config.server,
       port: process.env.PORT ? Number(process.env.PORT) : config.server.port
+    },
+    auth: {
+      ...config.auth,
+      enabled: process.env.AUTH_ENABLED ? process.env.AUTH_ENABLED === "true" : config.auth.enabled,
+      username: process.env.AUTH_USERNAME ?? config.auth.username,
+      password: process.env.AUTH_PASSWORD ?? config.auth.password
     }
   };
 }
