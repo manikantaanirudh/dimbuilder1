@@ -89,6 +89,64 @@ export function assertProjectCanExport(
   });
 }
 
+export function assertDimensionCanExport(
+  projectId: string,
+  dimensionId: string,
+  config: AppConfig,
+  repos: Repositories,
+  options: ExportGuardOptions
+): void {
+  const blockedSeverities = uniqueSeverities(config.validation.exportBlockedBySeverities);
+  const allIssues = repos.issues.listValidationIssuesForProject(projectId);
+  const dimensionIssues = allIssues.filter((issue) => issue.dimensionId === dimensionId);
+  const issueCounts = countIssuesBySeverity(dimensionIssues);
+  const bypassAllowed = config.export.allowValidationBypass === true;
+
+  const hasValidationRun = repos.issues.hasValidationRun(projectId) || allIssues.length > 0;
+  if (config.export.requireValidationBeforeExport === true && !hasValidationRun) {
+    throw new ExportGuardError({
+      error: "Validation must run before export",
+      blocked: true,
+      blockedSeverities,
+      issueCounts,
+      bypassAllowed,
+      validationRequired: true
+    });
+  }
+
+  const hasBlockingIssues = dimensionIssues.some((issue) => blockedSeverities.includes(issue.severity));
+  if (!hasBlockingIssues) return;
+
+  if (bypassAllowed && options.bypassRequested) {
+    const reason = String(options.bypassReason ?? "").trim();
+    if (config.export.validationBypassRequiresReason !== false && !reason) {
+      throw new ExportGuardError({
+        error: "Validation bypass reason is required",
+        blocked: true,
+        blockedSeverities,
+        issueCounts,
+        bypassAllowed
+      });
+    }
+    repos.audit.record({
+      projectId,
+      action: "export.validationBypass",
+      entityType: "dimension",
+      entityId: dimensionId,
+      after: { exportType: options.exportType, reason, blockedSeverities, issueCounts }
+    });
+    return;
+  }
+
+  throw new ExportGuardError({
+    error: "Export blocked by dimension validation issues",
+    blocked: true,
+    blockedSeverities,
+    issueCounts,
+    bypassAllowed
+  });
+}
+
 export function sendExportGuardError(res: Response, error: unknown): boolean {
   if (!(error instanceof ExportGuardError)) return false;
   res.status(error.status).json(error.payload);
@@ -107,7 +165,8 @@ function countIssuesBySeverity(issues: ValidationIssue[]): Record<Severity, numb
   return {
     error: issues.filter((issue) => issue.severity === "error").length,
     warning: issues.filter((issue) => issue.severity === "warning").length,
-    info: issues.filter((issue) => issue.severity === "info").length
+    info: issues.filter((issue) => issue.severity === "info").length,
+    off: 0
   };
 }
 

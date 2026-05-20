@@ -1,7 +1,8 @@
 import {
-  Database,
   Download,
   FileUp,
+  FolderOpen,
+  LogOut,
   PlusCircle,
   RotateCcw,
   Save,
@@ -19,14 +20,20 @@ import {
   type DimensionNavItem,
   getExportAvailability
 } from "../ui/viewModel";
-import { validateProject } from "../api/client";
+import { createProjectSnapshot, validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
-import { CreateProjectModal, ExportModal, ImportModal } from "./ImportExportModals";
+import { CreateProjectModal, ExportModal, ImportModal, OpenProjectModal, SaveAsModal } from "./ImportExportModals";
+import { AdminPanel } from "./AdminPanel";
+import { ConfigEditor } from "./ConfigEditor";
+import { ValidationDashboard } from "./ValidationDashboard";
 import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
 
 const PROJECT_OVERVIEW_VALUE = "__project_overview__";
+const ADMIN_VALUE = "__admin__";
+const CONFIG_EDITOR_VALUE = "__config_editor__";
+const VALIDATION_DASHBOARD_VALUE = "__validation_dashboard__";
 
 function mobileNavLabel(item: DimensionNavItem) {
   if (item.issueSummary.errors > 0) return `${item.label} - ${item.issueSummary.errors} errors`;
@@ -45,16 +52,21 @@ export function AppShell({
   const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
   const [navSearch, setNavSearch] = useState("");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [openProjectOpen, setOpenProjectOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [saveAsOpen, setSaveAsOpen] = useState(false);
   const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
   const selectedProject = store.projects.find((project) => project.id === store.selectedProjectId) ?? null;
   const projectName = selectedProject?.name ?? "No project open";
   const projectSource = store.loading
     ? "Loading metadata workspace..."
-    : selectedProject?.sourceFileName || appConfig.application.supportText;
+    : selectedProject
+      ? selectedProject.sourceFileName || selectedProject.description || ""
+      : appConfig.application.supportText;
   const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
@@ -96,11 +108,31 @@ export function AppShell({
     await store.refresh(store.selectedProjectId);
   }
 
+  async function saveProject() {
+    if (!store.selectedProjectId || isSaving) return;
+    setIsSaving(true);
+    setStatus("Saving project...");
+    try {
+      const result = await createProjectSnapshot(store.selectedProjectId);
+      setStatus(`Project saved: ${result.name}`);
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Save failed");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function clearSession() {
+    store.clearProject();
+    setActiveWorkspace(PROJECT_OVERVIEW_VALUE);
+    setStatus("");
+  }
+
   return (
     <div className="app-shell notion-workbench">
       <header className="toolbar global-toolbar">
         <div className="brand global-brand">
-          <span className="brand-mark"><Database size={17} /></span>
+          <img src="/sr-logo.svg" alt="SR" className="app-logo" width="24" height="24" />
           <span className="brand-wordmark">{appConfig.application.productName}</span>
         </div>
 
@@ -127,6 +159,9 @@ export function AppShell({
           <ActionButton variant="primary" onClick={() => setCreateProjectOpen(true)}>
             <PlusCircle size={16} /> New Project
           </ActionButton>
+          <ActionButton onClick={() => setOpenProjectOpen(true)}>
+            <FolderOpen size={16} /> Open Project
+          </ActionButton>
           {toolbar.showImport && (
             <ActionButton onClick={() => setImportOpen(true)}>
               <FileUp size={16} /> Seed from XLSX
@@ -150,25 +185,68 @@ export function AppShell({
               <Download size={16} /> Export
             </ActionButton>
           )}
-          {toolbar.showSave && <ActionButton disabled><Save size={16} /> Save</ActionButton>}
+          {toolbar.showSave && (
+            <ActionButton
+              disabled={!store.selectedProjectId || isSaving}
+              title={store.selectedProjectId ? "Save project snapshot" : "No project open"}
+              onClick={() => void saveProject()}
+            >
+              <Save size={16} /> Save
+            </ActionButton>
+          )}
+          {toolbar.showSave && (
+            <ActionButton
+              disabled={!store.selectedProjectId}
+              title={store.selectedProjectId ? "Save project with a custom name" : "No project open"}
+              onClick={() => setSaveAsOpen(true)}
+            >
+              <Save size={16} /> Save As
+            </ActionButton>
+          )}
+          <ActionButton
+            disabled={!store.selectedProjectId}
+            title="Clear session and close current project"
+            onClick={clearSession}
+          >
+            <LogOut size={16} /> Clear Session
+          </ActionButton>
           {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
           {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
         </ToolbarGroup>
       </header>
+
+      <nav className="secondary-nav">
+        <button
+          className={`secondary-nav-item ${showProjectOverview ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)}
+        >
+          Project Overview
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === VALIDATION_DASHBOARD_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(VALIDATION_DASHBOARD_VALUE)}
+        >
+          Validation
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === ADMIN_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(ADMIN_VALUE)}
+        >
+          Admin
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === CONFIG_EDITOR_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(CONFIG_EDITOR_VALUE)}
+        >
+          Config
+        </button>
+      </nav>
 
       <aside className="sidebar workbench-nav">
         <div className="sidebar-heading">
           <strong>Dimensions</strong>
           <span>{dimensionNavItems.length} total</span>
         </div>
-
-        <button
-          className={`nav-overview ${activeWorkspace === PROJECT_OVERVIEW_VALUE ? "selected" : ""}`}
-          onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)}
-        >
-          <span>Project overview</span>
-          <small>{issueSummary.total ? `${issueSummary.total} issues` : "Ready"}</small>
-        </button>
 
         <div className="nav-search search-box">
           <Search size={14} />
@@ -230,7 +308,18 @@ export function AppShell({
         {store.error && <div className="banner error">{store.error}</div>}
         {status && <div className="banner">{status}</div>}
 
-        {!showProjectOverview && activeDimension && store.selectedProjectId ? (
+        {activeWorkspace === CONFIG_EDITOR_VALUE ? (
+          <ConfigEditor appConfig={appConfig} onConfigSaved={() => window.location.reload()} />
+        ) : activeWorkspace === VALIDATION_DASHBOARD_VALUE ? (
+          <ValidationDashboard
+            issues={store.issues}
+            dimensions={store.dimensions}
+            appConfig={appConfig}
+            onNavigateDimension={setActiveWorkspace}
+          />
+        ) : activeWorkspace === ADMIN_VALUE ? (
+          <AdminPanel appConfig={appConfig} projectId={store.selectedProjectId} />
+        ) : !showProjectOverview && activeDimension && store.selectedProjectId ? (
           <DimensionWorkspace
             projectId={store.selectedProjectId}
             dimension={activeDimension}
@@ -277,6 +366,25 @@ export function AppShell({
         projectId={store.selectedProjectId}
         appConfig={appConfig}
         exportAvailability={exportAvailability}
+      />
+      <OpenProjectModal
+        open={openProjectOpen}
+        onClose={() => setOpenProjectOpen(false)}
+        projects={store.projects}
+        selectedProjectId={store.selectedProjectId}
+        onOpenProject={(projectId) => {
+          setStatus("Project loaded");
+          void store.refresh(projectId);
+        }}
+        onDeleteProject={() => {
+          void store.refresh();
+        }}
+      />
+      <SaveAsModal
+        open={saveAsOpen}
+        onClose={() => setSaveAsOpen(false)}
+        projectId={store.selectedProjectId}
+        onSaved={(name) => { setStatus(`Saved: ${name}`); void store.refresh(); }}
       />
     </div>
   );

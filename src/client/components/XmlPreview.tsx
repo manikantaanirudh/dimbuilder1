@@ -39,29 +39,34 @@ export function XmlPreview({
     }
 
     let cancelled = false;
+    setXml("");
     setStatus("Loading XML preview...");
-    void apiText(`/export/${projectId}/xml`)
+    const path = scope === "dimension"
+      ? `/export/${projectId}/xml?preview=true&dimensionId=${encodeURIComponent(dimension.id)}`
+      : `/export/${projectId}/xml?preview=true`;
+    void apiText(path)
       .then((nextXml) => {
         if (cancelled) return;
         setXml(nextXml);
         setStatus("");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) return;
         setXml("");
-        setStatus("XML preview unavailable.");
+        const message = error instanceof Error && error.message ? error.message : "XML preview unavailable.";
+        setStatus(message.length > 200 ? `${message.slice(0, 200)}...` : message);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [projectId, xmlExportEnabled]);
+  }, [projectId, xmlExportEnabled, scope, dimension.id]);
 
   useEffect(() => {
     setScope(mapDefaultScope(defaultScope, allowAllDimensions));
   }, [allowAllDimensions, defaultScope]);
 
-  const preview = scope === "all" ? xml : extractDimensionXml(xml, dimension.dimensionName);
+  const preview = xml;
   const downloadDisabled = exportAvailability.disabled;
 
   async function copy() {
@@ -111,13 +116,4 @@ export function XmlPreview({
       </div>
     </div>
   );
-}
-
-function extractDimensionXml(xml: string, dimensionName: string): string {
-  const start = xml.indexOf(`name="${dimensionName}"`);
-  if (start === -1) return xml;
-  const dimensionStart = xml.lastIndexOf("<dimension", start);
-  const dimensionEnd = xml.indexOf("</dimension>", start);
-  if (dimensionStart === -1 || dimensionEnd === -1) return xml;
-  return xml.slice(dimensionStart, dimensionEnd + "</dimension>".length);
 }

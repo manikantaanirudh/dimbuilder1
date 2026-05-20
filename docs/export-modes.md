@@ -25,7 +25,7 @@ Config:
 - `export.xml.includeDimensionSourceAttributes`
 - `application.oneStreamVersionFallback`
 
-All export endpoints are guarded by `src/server/exportGuards.ts` before rendering or writing files. Stored validation issues with severities in `validation.exportBlockedBySeverities` return `409` unless validation bypass is enabled and explicitly requested with a reason.
+All export endpoints are guarded by `src/server/exportGuards.ts` before rendering or writing files. Stored validation issues with severities in `validation.exportBlockedBySeverities` return `409` unless validation bypass is enabled and explicitly requested with a reason. Rules with severity `"off"` are disabled and produce no issues, so they never contribute to export blocking.
 
 XML export reads persisted project, dimensions, members, relationships, and varying property values. It works for blueprint-created projects, XLSX-seeded projects, and XML-imported projects.
 
@@ -172,6 +172,16 @@ Release packages are created as directories under `paths.exportsDirectory/releas
 The first package implementation writes full current XML in `05-metadata.xml` and records the requested mode in `manifest.json`. Supported modes are `full`, `additive`, `propertyUpdate`, `relationshipDelete`, `moveCopy`, and `breakBuild`; mode-specific XML subsets remain conservative and should be reviewed before downstream OneStream import.
 
 Package creation re-runs validation and includes the validation report in the package. Change set approval is blocked by server-side validation errors unless `bypassValidation` is explicitly sent and recorded during approval.
+
+## Per-Dimension Export
+
+Individual dimensions can be exported to XML independently, even when other dimensions in the project have blocking validation errors. This is triggered by supplying the `?dimensionId=` query parameter on the XML export endpoint:
+
+```text
+GET /api/export/:projectId/xml?dimensionId=dimension-id
+```
+
+When `dimensionId` is provided, the export guard scopes its validation check to only the targeted dimension's stored issues. If that dimension is clean, export proceeds regardless of issues on other dimensions. The dimension workspace exposes a "Download XML" button for each dimension that uses this capability.
 
 ## Export Blocking
 

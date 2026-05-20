@@ -33,12 +33,16 @@ export function EditableGrid({
   projectId,
   kind,
   dimension,
-  pageSize = 600
+  pageSize = 600,
+  highlightedEntityId = null,
+  issueFilteredIds = null
 }: {
   projectId: string;
   kind: "members" | "relationships";
   dimension: DimensionRecord;
   pageSize?: number;
+  highlightedEntityId?: string | null;
+  issueFilteredIds?: Set<string> | null;
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
@@ -63,12 +67,30 @@ export function EditableGrid({
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
   const gridTitle = kind === "members" ? "Members" : "Relationships";
   const rowNoun = kind === "members" ? "member" : "relationship";
+
+  const gridTemplateColumns = useMemo(() => {
+    const colWidths = visibleColumns.map((column) => {
+      if (column.kind === "boolean") return "minmax(90px, 0.6fr)";
+      if (column.kind === "number") return "minmax(110px, 0.7fr)";
+      if (column.name === schema.memberKeyField || column.name === "Parent" || column.name === "Child") return "minmax(200px, 1.5fr)";
+      return "minmax(160px, 1fr)";
+    });
+    return `48px ${colWidths.join(" ")}`;
+  }, [visibleColumns, schema.memberKeyField]);
+
+  const gridMinWidth = useMemo(() => {
+    return 48 + visibleColumns.length * 160;
+  }, [visibleColumns.length]);
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
     if (!needle) return records;
     return records.filter((record) => JSON.stringify(record).toLowerCase().includes(needle));
   }, [records, search]);
-  const rowSummary = search ? `${filteredRecords.length} shown of ${total}` : `${total} rows`;
+  const rowSummary = issueFilteredIds
+    ? `${records.length} with issues`
+    : search
+      ? `${filteredRecords.length} shown of ${total}`
+      : `${total} rows`;
 
   const virtualizer = useVirtualizer({
     count: filteredRecords.length,
@@ -90,6 +112,25 @@ export function EditableGrid({
     setStatus(`${result.rows.length} of ${result.total} rows loaded`);
   }, [dimension.id, effectivePageSize, kind, projectId]);
 
+  const loadFilteredRecords = useCallback(async (ids: string[]) => {
+    setStatus("Loading filtered rows...");
+    const result = kind === "members"
+      ? await fetchMembers(projectId, dimension.id, 0, 0, ids)
+      : await fetchRelationships(projectId, dimension.id, 0, 0, ids);
+    setRecords(result.rows);
+    setTotal(result.total);
+    setOffset(0);
+    setStatus("");
+  }, [projectId, dimension.id, kind]);
+
+  useEffect(() => {
+    if (issueFilteredIds && issueFilteredIds.size > 0) {
+      void loadFilteredRecords([...issueFilteredIds]);
+    } else if (issueFilteredIds === null) {
+      void loadPage(0);
+    }
+  }, [issueFilteredIds, loadFilteredRecords, loadPage]);
+
   useEffect(() => {
     void loadPage(0);
   }, [loadPage]);
@@ -97,6 +138,15 @@ export function EditableGrid({
   useEffect(() => {
     recordsRef.current = records;
   }, [records]);
+
+  useEffect(() => {
+    if (!highlightedEntityId) return;
+    const index = filteredRecords.findIndex((record) => record.id === highlightedEntityId);
+    if (index >= 0) {
+      virtualizer.scrollToIndex(index, { align: "center" });
+      setSelectedId(highlightedEntityId);
+    }
+  }, [highlightedEntityId, filteredRecords, virtualizer]);
 
   async function saveCell(record: GridRecord, field: FieldDefinition, value: string) {
     const sequence = saveSequenceRef.current + 1;
@@ -271,37 +321,43 @@ export function EditableGrid({
         </div>
       )}
       <div className="data-grid workbench-data-grid" ref={parentRef}>
-        <div className="grid-header" style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(160px, 1fr))` }}>
-          {visibleColumns.map((column) => <div key={column.name} title={columnTitle(column)}>{column.name}{column.required ? " *" : ""}</div>)}
-        </div>
-        <div style={{ height: virtualizer.getTotalSize(), position: "relative", minWidth: `${visibleColumns.length * 160}px` }}>
-          {virtualizer.getVirtualItems().map((item) => {
-            const record = filteredRecords[item.index];
-            return (
-              <div
-                key={record.id}
-                className={`grid-row ${selectedId === record.id ? "selected" : ""}`}
-                style={{ transform: `translateY(${item.start}px)`, gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(160px, 1fr))` }}
-                onClick={() => setSelectedId(record.id)}
-              >
-                {visibleColumns.map((column) => (
-                  <GridCell
-                    key={column.name}
-                    column={column}
-                    value={valueFor(record, column)}
-                    onSave={(value) => void saveCell(record, column, value)}
-                  />
-                ))}
-              </div>
-            );
-          })}
+        <div className="grid-surface" style={{ minWidth: `${gridMinWidth}px` }}>
+          <div className="grid-header" style={{ gridTemplateColumns }}>
+            <div className="grid-row-number">#</div>
+            {visibleColumns.map((column) => <div key={column.name} title={columnTitle(column)}>{column.name}{column.required ? " *" : ""}</div>)}
+          </div>
+          <div className="grid-body" style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((item) => {
+              const record = filteredRecords[item.index];
+              return (
+                <div
+                  key={record.id}
+                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""}`}
+                  style={{ transform: `translateY(${item.start}px)`, gridTemplateColumns }}
+                  onClick={() => setSelectedId(record.id)}
+                >
+                  <span className="grid-row-number">{offset + item.index + 1}</span>
+                  {visibleColumns.map((column) => (
+                    <GridCell
+                      key={column.name}
+                      column={column}
+                      value={valueFor(record, column)}
+                      onSave={(value) => void saveCell(record, column, value)}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-      <div className="pager">
-        <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - effectivePageSize))}>Previous</button>
-        <span>Rows {total === 0 ? 0 : offset + 1}-{Math.min(offset + records.length, total)} of {total}</span>
-        <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + effectivePageSize)}>Next</button>
-      </div>
+      {!issueFilteredIds && (
+        <div className="pager">
+          <button disabled={offset === 0} onClick={() => void loadPage(Math.max(0, offset - effectivePageSize))}>Previous</button>
+          <span>Rows {total === 0 ? 0 : offset + 1}-{Math.min(offset + records.length, total)} of {total}</span>
+          <button disabled={offset + records.length >= total} onClick={() => void loadPage(offset + effectivePageSize)}>Next</button>
+        </div>
+      )}
     </div>
   );
 }

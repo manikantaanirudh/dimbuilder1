@@ -70,17 +70,36 @@ Common attributes:
 
 Some fields become direct member attributes depending on dimension type, such as display and read groups.
 
-Remaining non-empty fields render as:
+Remaining non-empty fields render as property elements. Properties that support varying in OneStream always emit their context attributes (even when empty), matching real OneStream 9.2.0 metadata extract format:
 
 ```xml
-<property name="PropertyName" value="Value" />
+<!-- Non-varying property (no context attributes) -->
+<property name="AccountType" value="Revenue" />
+
+<!-- Scenario+time varying property -->
+<property name="Formula" scenarioType="" time="" revertToDefaultScenarioType="false" value="..." />
+<property name="InUse" scenarioType="" time="" revertToDefaultScenarioType="false" value="True" />
+
+<!-- Scenario-only varying property -->
+<property name="WorkflowChannel" scenarioType="" value="NoDataLock" />
+
+<!-- Cube-type varying property -->
+<property name="FlowConstraint" cubeType="" value="root" />
 ```
 
-If a member has varying property values, base properties remain in the same shape and contextual property values are appended with explicit context attributes:
+The varying context type for each property is determined by the OneStream property dictionary (`varyingContextType` field). Three context patterns exist:
+
+- `scenarioTime`: emits `scenarioType=""` `time=""` `revertToDefaultScenarioType="false"`
+- `scenario`: emits `scenarioType=""` only
+- `cubeType`: emits `cubeType=""` only
+
+If a member has explicit varying property values (stored in `varying_property_values`), those are appended with their specific context values:
 
 ```xml
-<property name="Text1" value="Finance actual note" cubeType="Finance" scenarioType="Actual" timeMember="2026M1" />
+<property name="Text1" scenarioType="Actual" time="2026M1" revertToDefaultScenarioType="false" value="Finance note" />
 ```
+
+When `emitAllSchemaProperties` is true, all schema-defined properties are emitted for each member/relationship (even with empty values), matching OneStream's full extraction format.
 
 ## Relationship Rendering
 
@@ -145,7 +164,16 @@ This means edited known fields win, while unknown untouched XML fields remain av
 
 Varying property rows come from `varying_property_values` and are included by `src/server/routes/export.ts` in the XML snapshot. `src/shared/xmlExport.ts` keeps the existing flat property output intact, then emits deterministic contextual property nodes for matching dimension, member, or relationship targets.
 
-The exact OneStream Load/Extract XML shape for every varying property still needs product-specific confirmation. The current implementation is intentionally conservative: it preserves the property name, value, and cube/scenario/time context without dropping unknown custom properties.
+The XML format matches real OneStream 9.2.0 metadata extracts. Each varying property always emits its context attributes (even when empty), and uses the `time` attribute name (not `timeMember`). The `revertToDefaultScenarioType` attribute is always present for scenario+time varying properties.
+
+## Empty Elements
+
+Dimensions with no members or relationships emit self-closing elements:
+
+```xml
+<members />
+<relationships />
+```
 
 ## Escaping And Filtering
 

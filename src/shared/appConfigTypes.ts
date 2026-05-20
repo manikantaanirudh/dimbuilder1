@@ -1,6 +1,6 @@
 import type { DimensionType, Severity } from "./types";
 
-export const supportedConfigSeverities: Severity[] = ["error", "warning", "info"];
+export const supportedConfigSeverities: Severity[] = ["error", "warning", "info", "off"];
 
 export interface ApplicationConfig {
   productName: string;

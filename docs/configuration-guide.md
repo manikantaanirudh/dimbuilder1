@@ -14,7 +14,7 @@ The central configuration file is `config/dimbuilder.yaml`. It is merged with `d
 
 ### `application`
 
-Controls product identity and user-facing app text.
+Controls product identity and user-facing app text. The default product name is "Spaulding Ridge Onestream Dim Builder".
 
 Important fields:
 
@@ -154,3 +154,9 @@ PORT
 ```
 
 Environment overrides should remain small and operational. Functional behavior should stay in YAML so it can be reviewed and documented.
+
+## Frontend Config Editor
+
+The app includes a browser-based config editor accessible from the "Config" section in the sidebar. It displays the current merged configuration as JSON in an editable textarea. Clicking "Save" sends a `PUT /api/config` request that writes the updated values to the YAML file and hot-reloads the configuration without restarting the server.
+
+This is useful for making quick configuration tweaks (e.g., toggling features, adjusting validation severities, or changing export options) without SSH access or manual YAML editing. The editor respects the same validation rules as the YAML loader — invalid configurations are rejected with a descriptive error.

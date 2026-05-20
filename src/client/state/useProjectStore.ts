@@ -60,6 +60,14 @@ export function useProjectStore() {
     void refresh();
   }, []);
 
+  function clearProject() {
+    setSelectedProjectId(null);
+    setDimensions([]);
+    setSummary(null);
+    setIssues([]);
+    setVaryingPropertyValues([]);
+  }
+
   return {
     projects,
     selectedProjectId,
@@ -70,6 +78,7 @@ export function useProjectStore() {
     varyingPropertyValues,
     loading,
     error,
-    refresh
+    refresh,
+    clearProject
   };
 }

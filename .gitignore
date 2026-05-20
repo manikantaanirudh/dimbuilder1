@@ -13,3 +13,7 @@ playwright-report/
 test-results/
 *.xlsx
 ~$*
+original/
+scripts/autoresearch/results.tsv
+scripts/autoresearch/run.log
+scripts/autoresearch/benchmark-cache.json

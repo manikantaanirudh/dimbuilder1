@@ -178,7 +178,7 @@ describe("grid editing repositories", () => {
       status: "completed",
       summary: {
         totalItems: 1,
-        bySeverity: { info: 1, warning: 0, error: 0 },
+        bySeverity: { info: 1, warning: 0, error: 0, off: 0 },
         byChangeType: { add: 1, update: 0, delete: 0, move: 0, copy: 0, unchanged: 0, warning: 0 },
         members: { adds: 1, updates: 0, deletes: 0 },
         relationships: { adds: 0, deletes: 0, moves: 0, copies: 0 },

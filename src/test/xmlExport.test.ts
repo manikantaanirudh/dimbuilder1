@@ -33,7 +33,7 @@ describe("xml export", () => {
     expect(xml).toContain('type="Scenario"');
     expect(xml).toContain('<member name="Actual" alias="" description="A&amp;B &lt;Actual&gt;"');
     expect(xml).toContain('<properties>');
-    expect(xml).toContain('<property name="Text1" value="quoted &quot;text&quot;" />');
+    expect(xml).toContain('<property name="Text1" scenarioType="" time="" revertToDefaultScenarioType="false" value="quoted &quot;text&quot;" />');
     expect(xml).toContain('<relationship parent="Root" child="Actual" />');
     expect(xml).toContain("A&amp;B &lt;Actual&gt;");
     expect(xml).not.toContain("#NAME?");
@@ -73,9 +73,9 @@ describe("xml export", () => {
 
     expect(xml).toContain('<relationship parent="Root" child="E100">');
     expect(xml).toContain('<property name="ParentSortOrder" value="1" />');
-    expect(xml).toContain('<property name="PercentConsolidation" value="100" />');
-    expect(xml).toContain('<property name="PercentOwnership" value="75" />');
-    expect(xml).toContain('<property name="OwnershipType" value="FullConsolidation" />');
+    expect(xml).toContain('<property name="PercentConsolidation" scenarioType="" time="" revertToDefaultScenarioType="false" value="100" />');
+    expect(xml).toContain('<property name="PercentOwnership" scenarioType="" time="" revertToDefaultScenarioType="false" value="75" />');
+    expect(xml).toContain('<property name="OwnershipType" scenarioType="" time="" revertToDefaultScenarioType="false" value="FullConsolidation" />');
   });
 
   it("uses dictionary aliases and XML names before fallback property conversion", () => {
@@ -142,6 +142,7 @@ describe("xml export", () => {
           scenarioType: "Budget",
           timeMember: "",
           isDefault: false,
+          revertToDefaultScenarioType: false,
           source: "manual",
           metadata: {},
           createdAt: "2026-05-16T00:00:00.000Z",
@@ -159,6 +160,7 @@ describe("xml export", () => {
           scenarioType: "Actual",
           timeMember: "2026M1",
           isDefault: false,
+          revertToDefaultScenarioType: false,
           source: "manual",
           metadata: {},
           createdAt: "2026-05-16T00:00:00.000Z",
@@ -167,10 +169,10 @@ describe("xml export", () => {
       ]
     });
 
-    expect(xml).toContain('<property name="Text1" value="Base" />');
-    expect(xml).toContain('<property name="Text1" value="Finance actual note" cubeType="Finance" scenarioType="Actual" timeMember="2026M1" />');
-    expect(xml).toContain('<property name="LegacyVaryingField" value="Keep" scenarioType="Budget" />');
-    expect(xml.indexOf('name="Text1" value="Finance actual note"')).toBeLessThan(xml.indexOf('name="LegacyVaryingField"'));
+    expect(xml).toContain('<property name="Text1" scenarioType="" time="" revertToDefaultScenarioType="false" value="Base" />');
+    expect(xml).toContain('<property name="Text1" scenarioType="Actual" time="2026M1" revertToDefaultScenarioType="false" value="Finance actual note" />');
+    expect(xml).toContain('<property name="LegacyVaryingField" scenarioType="Budget" time="" revertToDefaultScenarioType="false" value="Keep" />');
+    expect(xml.indexOf('name="Text1"')).toBeLessThan(xml.indexOf('name="LegacyVaryingField"'));
   });
 
   it("uses the OneStream version captured from metadata reference", () => {
@@ -247,7 +249,7 @@ describe("xml export", () => {
     );
 
     expect(xml).toContain('<member name="" alias="" description="#NAME?">');
-    expect(xml).toContain('<property name="Text1" value="#VALUE?" />');
+    expect(xml).toContain('<property name="Text1" scenarioType="" time="" revertToDefaultScenarioType="false" value="#VALUE?" />');
   });
 
   it("preserves imported unknown XML fields after known exported properties", () => {

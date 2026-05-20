@@ -8,7 +8,7 @@ import { exportWorkbook } from "../../shared/xlsxExport";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { ParsedProject, ProjectMetadataState } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
-import { assertProjectCanExport, parseExportGuardOptions, sendExportGuardError } from "../exportGuards";
+import { assertProjectCanExport, assertDimensionCanExport, parseExportGuardOptions, sendExportGuardError } from "../exportGuards";
 
 export function createExportRouter(repos: Repositories, config: AppConfig): Router {
   mkdirSync(config.paths.exportsDirectory, { recursive: true });
@@ -16,12 +16,19 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
 
   router.get("/:projectId/xml", (req, res) => {
     if (!config.export.xml.enabled) return disabledFormat(res, "XML");
-    const snapshot = readSnapshot(repos, req.params.projectId);
+    const dimensionId = optionalQuery(req.query.dimensionId);
+    const previewOnly = isTruthyFlag(req.query.preview);
+    const snapshot = readSnapshot(repos, req.params.projectId, dimensionId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
+    if (!previewOnly) {
+      if (dimensionId) {
+        if (!guardDimensionExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, dimensionId, "xml")) return;
+      } else {
+        if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
+      }
+    }
     const mode = parseExportLoadMode(req.query.mode);
     const baselineId = optionalQuery(req.query.baselineId);
-    const dimensionId = optionalQuery(req.query.dimensionId);
     const baseline = baselineId ? repos.baselines.get(snapshot.project.id, baselineId) : null;
     if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
     const relationshipPlan = mode === "full"
@@ -104,9 +111,19 @@ function disabledFormat(res: import("express").Response, format: string) {
   return res.status(404).json({ error: `${format} export is disabled` });
 }
 
-function readSnapshot(repos: Repositories, projectId: string) {
+function readSnapshot(repos: Repositories, projectId: string, dimensionId?: string) {
   const project = repos.projects.get(projectId);
   if (!project) return null;
+  if (dimensionId) {
+    const dimensions = repos.dimensions.listByProject(project.id).filter((dimension) => dimension.id === dimensionId);
+    return {
+      project,
+      dimensions,
+      members: dimensions.length ? repos.members.listAllByDimension(dimensionId) : [],
+      relationships: dimensions.length ? repos.relationships.listAllByDimension(dimensionId) : [],
+      varyingPropertyValues: repos.varyingProperties.listVaryingPropertyValues(project.id)
+    };
+  }
   return {
     project,
     dimensions: repos.dimensions.listByProject(project.id),
@@ -122,6 +139,10 @@ function optionalQuery(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
+function isTruthyFlag(value: unknown): boolean {
+  return value === true || value === "true" || value === "1" || value === "yes";
+}
+
 function guardExportRequest(
   source: Record<string, unknown>,
   res: import("express").Response,
@@ -132,6 +153,24 @@ function guardExportRequest(
 ): boolean {
   try {
     assertProjectCanExport(projectId, config, repos, parseExportGuardOptions(source, exportType));
+    return true;
+  } catch (error) {
+    if (sendExportGuardError(res, error)) return false;
+    throw error;
+  }
+}
+
+function guardDimensionExportRequest(
+  source: Record<string, unknown>,
+  res: import("express").Response,
+  repos: Repositories,
+  config: AppConfig,
+  projectId: string,
+  dimensionId: string,
+  exportType: string
+): boolean {
+  try {
+    assertDimensionCanExport(projectId, dimensionId, config, repos, parseExportGuardOptions(source, exportType));
     return true;
   } catch (error) {
     if (sendExportGuardError(res, error)) return false;

@@ -10,7 +10,10 @@
     "docs:check": "node scripts/check-docs.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "benchmark": "tsx scripts/autoresearch/benchmark.ts",
+    "benchmark:cache": "tsx scripts/autoresearch/benchmark.ts --cache",
+    "benchmark:quick": "tsx scripts/autoresearch/benchmark.ts --quick --skip-tests"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.12",

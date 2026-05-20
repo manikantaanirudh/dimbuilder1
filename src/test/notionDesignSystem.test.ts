@@ -6,17 +6,17 @@ const html = readFileSync("index.html", "utf8");
 
 describe("Notion-inspired design system CSS", () => {
   it("uses SR Onestream Dim Builder as the browser-facing app identity", () => {
-    expect(html).toContain("<title>SR Onestream Dim Builder</title>");
+    expect(html).toContain("<title>Spaulding Ridge Onestream Dim Builder</title>");
   });
 
   it("uses the Notion-inspired core tokens", () => {
-    expect(css).toContain("--bg: #f6f5f4;");
+    expect(css).toContain("--bg: #f8f9fb;");
     expect(css).toContain("--surface: #ffffff;");
-    expect(css).toContain("--surface-subtle: #fafaf9;");
-    expect(css).toContain("--text: #1a1a1a;");
-    expect(css).toContain("--primary: #5645d4;");
-    expect(css).toContain("--radius: 12px;");
-    expect(css).toContain("--radius-sm: 8px;");
+    expect(css).toContain("--surface-subtle: #f4f6f9;");
+    expect(css).toContain("--text: #00204A;");
+    expect(css).toContain("--primary: #00204A;");
+    expect(css).toContain("--radius: 16px;");
+    expect(css).toContain("--radius-sm: 10px;");
   });
 
   it("defines the global toolbar and Notion rail selectors", () => {

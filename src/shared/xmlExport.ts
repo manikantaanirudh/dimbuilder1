@@ -1,9 +1,11 @@
 import { getDimensionSchema } from "./dimensionSchemas";
 import {
   getPropertyDefinitionByName,
+  getVaryingContextType,
   normalizePropertyLookupName,
   toOneStreamXmlPropertyNameFromDictionary,
-  type OneStreamPropertyTargetLevel
+  type OneStreamPropertyTargetLevel,
+  type OneStreamVaryingContextType
 } from "./oneStreamPropertyDictionary";
 import type {
   DimensionType,
@@ -35,6 +37,7 @@ export interface ExportProjectXmlOptions {
   skipBlankMemberRows?: boolean;
   skipFormulaErrors?: boolean;
   includeDimensionSourceAttributes?: boolean;
+  emitAllSchemaProperties?: boolean;
   loadMode?: ExportLoadMode;
   relationshipPlan?: RelationshipOperationPlan;
   dimensionId?: string;
@@ -119,6 +122,9 @@ const memberAttributeFieldsByType: Record<string, Record<string, string>> = {
 export function exportProjectXml(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string {
   const exportOptions = { ...defaultExportOptions, ...options };
   const oneStreamVersion = getOneStreamVersion(input.dimensions, options.oneStreamVersionFallback);
+  const dimensionsToExport = options.dimensionId
+    ? input.dimensions.filter((dimension) => dimension.id === options.dimensionId)
+    : input.dimensions;
   const lines: string[] = [
     '<?xml version="1.0" encoding="utf-8"?>',
     `<OneStreamXF version="${escapeXml(oneStreamVersion)}">`,
@@ -126,7 +132,7 @@ export function exportProjectXml(input: ExportProjectXmlInput, options: ExportPr
     "    <dimensions>"
   ];
 
-  for (const dimension of input.dimensions) {
+  for (const dimension of dimensionsToExport) {
     lines.push(renderDimensionStart(dimension, exportOptions));
     const unknownXml = getUnknownXmlData(dimension.metadata);
     const dimensionVaryingProperties = renderVaryingPropertyLines(
@@ -143,16 +149,26 @@ export function exportProjectXml(input: ExportProjectXmlInput, options: ExportPr
       lines.push("        <properties>", ...dimensionPropertyLines, "        </properties>");
     }
     lines.push(...renderPreservedUnknownElementLines(unknownXml, 8, exportOptions));
-    lines.push("        <members>");
-    for (const member of input.members.filter((candidate) => candidate.dimensionId === dimension.id && (!exportOptions.skipBlankMemberRows || candidate.memberKey))) {
-      lines.push(renderMember(dimension, member, input.varyingPropertyValues ?? [], exportOptions));
+    const dimensionMembers = input.members.filter((candidate) => candidate.dimensionId === dimension.id && (!exportOptions.skipBlankMemberRows || candidate.memberKey));
+    if (dimensionMembers.length === 0) {
+      lines.push("        <members />");
+    } else {
+      lines.push("        <members>");
+      for (const member of dimensionMembers) {
+        lines.push(renderMember(dimension, member, input.varyingPropertyValues ?? [], exportOptions));
+      }
+      lines.push("        </members>");
     }
-    lines.push("        </members>");
-    lines.push("        <relationships>");
-    for (const relationship of input.relationships.filter((candidate) => candidate.dimensionId === dimension.id && candidate.parentKey && candidate.childKey)) {
-      lines.push(renderRelationship(dimension, relationship, input.varyingPropertyValues ?? [], exportOptions));
+    const dimensionRelationships = input.relationships.filter((candidate) => candidate.dimensionId === dimension.id && candidate.parentKey && candidate.childKey);
+    if (dimensionRelationships.length === 0) {
+      lines.push("        <relationships />");
+    } else {
+      lines.push("        <relationships>");
+      for (const relationship of dimensionRelationships) {
+        lines.push(renderRelationship(dimension, relationship, input.varyingPropertyValues ?? [], exportOptions));
+      }
+      lines.push("        </relationships>");
     }
-    lines.push("        </relationships>");
     lines.push("      </dimension>");
   }
 
@@ -375,6 +391,30 @@ interface RenderedPropertyLine {
   line: string;
 }
 
+/**
+ * Builds the inline varying context attributes string for a property element.
+ * Returns empty string for "none" context, otherwise returns attributes with trailing space.
+ * Matches real OneStream metadata XML format:
+ * - scenarioTime: scenarioType="" time="" revertToDefaultScenarioType="false"
+ * - scenario: scenarioType=""
+ * - cubeType: cubeType=""
+ */
+function buildVaryingContextAttributes(
+  contextType: OneStreamVaryingContextType,
+  context?: { scenarioType?: string; time?: string; cubeType?: string; revertToDefaultScenarioType?: boolean }
+): string {
+  switch (contextType) {
+    case "scenarioTime":
+      return `scenarioType="${escapeXml(context?.scenarioType ?? "")}" time="${escapeXml(context?.time ?? "")}" revertToDefaultScenarioType="${context?.revertToDefaultScenarioType ? "true" : "false"}" `;
+    case "scenario":
+      return `scenarioType="${escapeXml(context?.scenarioType ?? "")}" `;
+    case "cubeType":
+      return `cubeType="${escapeXml(context?.cubeType ?? "")}" `;
+    default:
+      return "";
+  }
+}
+
 function renderPropertyLines(
   fields: FieldDefinition[],
   properties: Record<string, unknown>,
@@ -384,13 +424,19 @@ function renderPropertyLines(
   targetLevel: OneStreamPropertyTargetLevel
 ): RenderedPropertyLine[] {
   const prefix = " ".repeat(indent);
+  const emitAll = (options as ExportProjectXmlOptions).emitAllSchemaProperties ?? false;
   return fields
     .map((field) => [
+      field,
       toOneStreamPropertyName(field.name, dimensionType, targetLevel),
       normalizeCellValue(getPropertyValue(properties, field.name, dimensionType, targetLevel))
     ] as const)
-    .filter(([, value]) => value && (!options.skipFormulaErrors || !isFormulaError(value)))
-    .map(([name, value]) => ({ name, line: `${prefix}<property name="${escapeXml(name)}" value="${escapeXml(value)}" />` }));
+    .filter(([, , value]) => emitAll || (value && (!options.skipFormulaErrors || !isFormulaError(value))))
+    .map(([field, name, value]) => {
+      const contextType = getVaryingContextType(dimensionType, targetLevel, field.name);
+      const contextAttrs = buildVaryingContextAttributes(contextType);
+      return { name, line: `${prefix}<property name="${escapeXml(name)}" ${contextAttrs}value="${escapeXml(value)}" />` };
+    });
 }
 
 function renderVaryingPropertyLines(
@@ -412,16 +458,17 @@ function renderVaryingPropertyLines(
     .filter(([, , value]) => value && (!options.skipFormulaErrors || !isFormulaError(value)))
     .sort((left, right) => compareVaryingProperties(left[0], right[0], dimension.dimensionType, targetLevel))
     .map(([value, propertyName, propertyValue]) => {
-      // TODO: Confirm exact OneStream Load/Extract XML shape for varying properties; this conservative form keeps all context explicit.
-      const attributes: Record<string, unknown> = {
-        name: propertyName,
-        value: propertyValue
-      };
-      if (value.cubeType) attributes.cubeType = value.cubeType;
-      if (value.scenarioType) attributes.scenarioType = value.scenarioType;
-      if (value.timeMember) attributes.timeMember = value.timeMember;
-      if (value.isDefault) attributes.isDefault = "true";
-      return `${prefix}<property ${renderAttributes(attributes, options)} />`;
+      const contextType = getVaryingContextType(dimension.dimensionType, targetLevel, value.propertyName);
+      const contextAttrs = buildVaryingContextAttributes(
+        contextType !== "none" ? contextType : "scenarioTime",
+        {
+          scenarioType: value.scenarioType ?? "",
+          time: value.timeMember ?? "",
+          cubeType: value.cubeType ?? "",
+          revertToDefaultScenarioType: value.revertToDefaultScenarioType ?? false
+        }
+      );
+      return `${prefix}<property name="${escapeXml(propertyName)}" ${contextAttrs}value="${escapeXml(propertyValue)}" />`;
     });
 }
 

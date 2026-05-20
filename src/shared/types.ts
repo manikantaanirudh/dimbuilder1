@@ -12,7 +12,7 @@ export type DimensionType =
   | "UD7"
   | "UD8";
 
-export type Severity = "error" | "warning" | "info";
+export type Severity = "error" | "warning" | "info" | "off";
 export type FieldKind = "text" | "boolean" | "number" | "dropdown" | "formula";
 export type VaryingPropertyTargetType = "dimension" | "member" | "relationship";
 export type BaselineSourceType = "xml" | "snapshot" | "json" | "manual";
@@ -192,6 +192,7 @@ export interface VaryingPropertyValueRecord {
   scenarioType: string;
   timeMember: string;
   isDefault: boolean;
+  revertToDefaultScenarioType: boolean;
   source: string;
   metadata: Record<string, unknown>;
   createdAt: string;
@@ -209,6 +210,7 @@ export interface VaryingPropertyValueInput {
   scenarioType?: string;
   timeMember?: string;
   isDefault?: boolean;
+  revertToDefaultScenarioType?: boolean;
   source?: string;
   metadata?: Record<string, unknown>;
 }

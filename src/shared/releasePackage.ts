@@ -218,7 +218,7 @@ export function summarizeValidationIssues(issues: ValidationIssue[], blockingSev
 }
 
 function emptySeverityCounts(): Record<Severity, number> {
-  return { error: 0, warning: 0, info: 0 };
+  return { error: 0, warning: 0, info: 0, off: 0 };
 }
 
 function emptyChangeTypeCounts(): Record<MetadataDiffChangeType, number> {

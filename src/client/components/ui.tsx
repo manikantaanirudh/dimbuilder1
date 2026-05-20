@@ -10,7 +10,8 @@ type IconButtonAccessibility =
 const severityConfig: Record<Severity, { label: string; tone: Tone }> = {
   error: { label: "Error", tone: "danger" },
   warning: { label: "Warning", tone: "warning" },
-  info: { label: "Info", tone: "info" }
+  info: { label: "Info", tone: "info" },
+  off: { label: "Off", tone: "info" }
 };
 
 export function Panel({

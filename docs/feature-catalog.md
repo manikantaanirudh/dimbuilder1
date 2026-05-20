@@ -2,7 +2,7 @@
 
 ## App Identity
 
-The UI, workbook exports, and config identify the app as SR Onestream Dim Builder.
+The UI, workbook exports, and config identify the app as Spaulding Ridge Onestream Dim Builder.
 
 Source:
 
@@ -224,6 +224,88 @@ Source:
 - `src/client/api/client.ts`
 - `src/server/routes/projects.ts`
 - `src/server/db/repositories.ts`
+
+## Project Rename
+
+Users can rename a project and update its description from the dashboard via inline click-to-edit on the project name. Backed by `PATCH /api/projects/:projectId`.
+
+Source:
+
+- `src/client/components/Dashboard.tsx`
+- `src/client/api/client.ts`
+- `src/server/routes/projects.ts`
+
+## Admin Panel
+
+A dedicated Admin Panel page is accessible from the sidebar. It displays all validation rules, their severities, categories, and whether they block export. This gives administrators a single-pane view of the validation configuration in effect. The panel also includes per-project validation rule toggle switches with a severity dropdown. Rules can be set to "off" to disable them for the current project.
+
+Source:
+
+- `src/client/components/AdminPanel.tsx`
+- `src/client/components/Sidebar.tsx`
+- `src/server/routes/validation.ts`
+- `src/server/db/schema.ts` (`project_validation_overrides` table)
+
+## Save As
+
+Users can create a named snapshot with a description from a "Save As" toolbar button. This opens a modal that persists the current project state as a reusable snapshot without navigating away from the workspace.
+
+Source:
+
+- `src/client/components/DimensionWorkspace.tsx`
+- `src/client/components/ImportExportModals.tsx`
+- `src/client/api/client.ts`
+- `src/server/routes/export.ts`
+
+## Per-Dimension XML Export
+
+Individual dimensions can be exported to XML even when the project has validation errors on other dimensions. The export uses `?dimensionId=` query param with a dimension-scoped validation guard that only checks issues for the targeted dimension. A "Download XML" button appears on each dimension workspace.
+
+Source:
+
+- `src/client/components/DimensionWorkspace.tsx`
+- `src/server/routes/export.ts`
+- `src/server/exportGuards.ts`
+
+## Issue-Filtered Grid
+
+Clicking error or warning counts in the dimension workspace filters the grid to show only rows with matching validation issues. Filtering uses server-side ID-based lookups (sends `?ids=` param to members/relationships endpoints) so all matching records appear regardless of pagination. An "All" state restores the full unfiltered view.
+
+Source:
+
+- `src/client/components/DimensionWorkspace.tsx`
+- `src/client/components/EditableGrid.tsx`
+- `src/client/ui/viewModel.ts`
+
+## Validation Dashboard
+
+A project-wide validation summary page accessible from the sidebar. Displays total error, warning, and info count cards, issues grouped by dimension, and a table of most frequent rule codes. Clickable rows navigate to the corresponding dimension workspace.
+
+Source:
+
+- `src/client/components/ValidationDashboard.tsx`
+- `src/client/components/Sidebar.tsx`
+- `src/server/routes/validation.ts`
+
+## Frontend Config Editor
+
+A "Config" section in the sidebar displays the current application config as JSON in a textarea. Users can edit and save changes, which writes the updated config to the YAML file and applies it live without a server restart. Uses `PUT /api/config`.
+
+Source:
+
+- `src/client/components/ConfigEditor.tsx`
+- `src/client/components/Sidebar.tsx`
+- `src/client/api/client.ts`
+- `src/server/routes/config.ts`
+
+## Spaulding Ridge Branding
+
+Navy (#1B2A4A), Gold (#C5A961), and White color scheme applied throughout the UI. CSS variables define the palette. Toolbar background is navy with gold accent on hover. SR logo favicon (navy rectangle with gold "SR" text). Updated `index.html` title.
+
+Source:
+
+- `src/client/styles/variables.css`
+- `index.html`
 
 ## Audit Logging
 

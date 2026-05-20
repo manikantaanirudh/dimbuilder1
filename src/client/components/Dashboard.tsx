@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ArrowRight, Database } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
+import { apiPatchJson } from "../api/client";
 import { buildIssueSummary, formatCount } from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
 import { SnapshotManager } from "./SnapshotManager";
@@ -32,6 +34,20 @@ export function Dashboard({
   const needsReview = blocksExport || summaryErrors > 0 || summaryWarnings > 0 || issueSummary.total > 0;
   const statusTone = !project ? "neutral" : blocksExport ? "danger" : needsReview ? "warning" : "success";
   const statusLabel = !project ? "No project" : blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready";
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(project?.name ?? "");
+
+  async function handleRename() {
+    if (!project || !editName.trim() || editName.trim() === project.name) {
+      setEditing(false);
+      return;
+    }
+    try {
+      await apiPatchJson<ProjectRecord>(`/projects/${project.id}`, { name: editName.trim() });
+      onProjectChanged?.(project.id);
+    } catch { /* ignore */ }
+    setEditing(false);
+  }
 
   return (
     <section className="dashboard project-overview">
@@ -42,8 +58,34 @@ export function Dashboard({
         <div className="overview-header">
           <div>
             <span className="section-kicker">Project overview</span>
-            <h1>{project?.name ?? "No project open"}</h1>
-            <p>{project?.sourceFileName || "Create a project or seed one from XLSX."}</p>
+            {project && !editing ? (
+              <h1
+                className="editable-title"
+                title="Click to rename project"
+                onClick={() => { setEditName(project.name); setEditing(true); }}
+              >
+                {project.name}
+              </h1>
+            ) : project && editing ? (
+              <input
+                className="rename-input"
+                value={editName}
+                autoFocus
+                onChange={(e) => setEditName(e.target.value)}
+                onBlur={() => void handleRename()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  if (e.key === "Escape") setEditing(false);
+                }}
+              />
+            ) : (
+              <h1>No project open</h1>
+            )}
+            <p>
+              {project
+                ? project.sourceFileName || project.description || "Created manually."
+                : "Create a project or seed one from XLSX."}
+            </p>
           </div>
           <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
         </div>

@@ -1,0 +1,13 @@
+﻿
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Naga/projects/dimbuilder[39m
+
+ [32mΓ£ô[39m src/test/xmlExport.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 391[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m xml export[2m > [22memits deterministic relationship operation plans for non-full XML load modes [33m303[2mms[22m[39m
+ [32mΓ£ô[39m src/test/clientComponentsMarkup.test.ts [2m([22m[2m28 tests[22m[2m)[22m[90m 117[2mms[22m[39m
+ [32mΓ£ô[39m src/test/exportGuards.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 237[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m44 passed[39m[22m[90m (44)[39m
+[2m   Start at [22m 22:32:55
+[2m   Duration [22m 2.48s[2m (transform 1.06s, setup 0ms, collect 2.80s, tests 745ms, environment 2ms, prepare 654ms)[22m
+

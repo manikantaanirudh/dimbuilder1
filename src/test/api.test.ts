@@ -61,4 +61,21 @@ describe("api", () => {
     expect(versionedDictionary.version).toBe("9.2.0");
     expect(versionedDictionary.dimensions.Flow.member.some((definition: { displayName: string }) => definition.displayName === "Switch Sign")).toBe(true);
   });
+
+  it("PATCH /api/projects/:id renames the project", async () => {
+    const createRes = await fetch(`${baseUrl}/api/projects`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Old Name" }) });
+    const project = await createRes.json();
+    expect(createRes.status).toBe(201);
+
+    const patchRes = await fetch(`${baseUrl}/api/projects/${project.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "New Name" }) });
+    expect(patchRes.status).toBe(200);
+    const updated = await patchRes.json();
+    expect(updated.name).toBe("New Name");
+    expect(updated.id).toBe(project.id);
+  });
+
+  it("PATCH /api/projects/:id returns 404 for unknown project", async () => {
+    const patchRes = await fetch(`${baseUrl}/api/projects/nonexistent`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Test" }) });
+    expect(patchRes.status).toBe(404);
+  });
 });

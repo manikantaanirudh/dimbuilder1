@@ -56,6 +56,8 @@ export interface ValidateDimensionInput {
   varyingPropertyValues?: VaryingPropertyValueRecord[];
   duplicateSeverity?: Severity;
   severities?: ValidationSeverityOptions;
+  /** Per-rule-code severity overrides (from project admin panel). Checked for every issue. */
+  ruleOverrides?: Map<string, Severity>;
 }
 
 export function validateDimension(input: ValidateDimensionInput): ValidationIssue[] {
@@ -73,12 +75,17 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
   };
 
   function addIssue(params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">): void {
+    // Apply per-rule-code override if present
+    const overrideSeverity = input.ruleOverrides?.get(params.code);
+    const effectiveSeverity = overrideSeverity ?? params.severity;
+    if (effectiveSeverity === "off") return;
     issues.push({
       id: nanoid(),
       projectId: input.project.id,
       dimensionId: input.dimension.id,
       createdAt,
-      ...params
+      ...params,
+      severity: effectiveSeverity
     });
   }
 

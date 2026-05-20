@@ -610,7 +610,7 @@ describe("server app config loader", () => {
   it("loads the committed config with SR identity and Account blueprint", () => {
     const config = loadAppConfig({ configFilePath: "config/dimbuilder.yaml" });
 
-    expect(config.application.title).toBe("SR Onestream Dim Builder");
+    expect(config.application.title).toBe("Spaulding Ridge Onestream Dim Builder");
     expect(config.dimensions.blueprints.Account).toEqual({
       defaultDimensionName: "Accounts",
       rootMembers: ["Root"],

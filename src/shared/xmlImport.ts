@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream";
 import { nanoid } from "nanoid";
 import { getDimensionSchema, supportedDimensionTypes } from "./dimensionSchemas";
 import { getPropertyDefinitionByName, type OneStreamPropertyTargetLevel } from "./oneStreamPropertyDictionary";
@@ -50,6 +51,18 @@ const dimensionAttributeFields: Record<string, keyof DimensionRecord | "metadata
 
 export function parseOneStreamXml(xml: string, options: ParseOneStreamXmlOptions = {}): ParsedProject {
   const document = parseXml(xml);
+  return buildParsedProjectFromDocument(document, options);
+}
+
+export async function parseOneStreamXmlFromStream(
+  stream: Readable,
+  options: ParseOneStreamXmlOptions = {}
+): Promise<ParsedProject> {
+  const document = await parseXmlStream(stream);
+  return buildParsedProjectFromDocument(document, options);
+}
+
+function buildParsedProjectFromDocument(document: XmlNode, options: ParseOneStreamXmlOptions): ParsedProject {
   const root = findFirstElementByName(document, "OneStreamXF") ?? document;
   const oneStreamVersion = root.attributes.version ?? "";
   const dimensionsParent = findFirstDescendantByName(root, "dimensions") ?? root;
@@ -288,6 +301,9 @@ function parsePropertyElements(
   originalXmlPath: string,
   counters: XmlImportCounters
 ): void {
+  // Known varying context attribute names (not stored as property value)
+  const varyingContextAttrs = new Set(["name", "value", "scenarioType", "time", "cubeType", "revertToDefaultScenarioType"]);
+
   for (const node of childrenByName(propertiesNode, "property")) {
     const propertyName = node.attributes.name ?? "";
     const value = node.attributes.value ?? node.text.trim();
@@ -296,6 +312,21 @@ function parsePropertyElements(
     const knownField = resolveKnownPropertyName(dimensionType, targetLevel, propertyName);
     if (knownField) {
       target[knownField] = parseMaybeNumber(value);
+      // Preserve non-default varying context attributes as unknown element for round-trip
+      const hasNonDefaultContext = (node.attributes.scenarioType && node.attributes.scenarioType !== "")
+        || (node.attributes.time && node.attributes.time !== "")
+        || (node.attributes.cubeType && node.attributes.cubeType !== "");
+      const hasExtraAttributes = Object.keys(node.attributes).some((attr) => !varyingContextAttrs.has(attr));
+      if (hasNonDefaultContext || hasExtraAttributes) {
+        unknownXml.unknownElements.push({
+          name: "property",
+          attributes: { ...node.attributes },
+          text: node.text.trim(),
+          sourceOrder: node.sourceOrder,
+          originalXmlPath: `${originalXmlPath}/property`
+        });
+        counters.unknownPropertiesPreserved += 1;
+      }
     } else {
       unknownXml.unknownElements.push({
         name: propertyName,
@@ -363,45 +394,121 @@ function dimensionPath(sortOrder: number): string {
   return `/OneStreamXF/metadataRoot/dimensions/dimension[${sortOrder}]`;
 }
 
-function parseXml(xml: string): XmlNode {
+interface ParseState {
+  root: XmlNode;
+  stack: XmlNode[];
+  sourceOrder: number;
+}
+
+function createParseState(): ParseState {
   const root: XmlNode = { name: "#document", attributes: {}, children: [], text: "", sourceOrder: 0 };
-  const stack: XmlNode[] = [root];
-  let sourceOrder = 0;
+  return { root, stack: [root], sourceOrder: 0 };
+}
+
+function processToken(token: string, state: ParseState): void {
+  if (!token) return;
+  if (token.startsWith("<!--") || token.startsWith("<?")) return;
+  if (token.startsWith("<![CDATA[")) {
+    state.stack[state.stack.length - 1].text += token.slice(9, -3);
+    return;
+  }
+  if (token.startsWith("</")) {
+    if (state.stack.length > 1) state.stack.pop();
+    return;
+  }
+  if (token.startsWith("<")) {
+    const selfClosing = /\/>\s*$/.test(token);
+    const content = token.slice(1, selfClosing ? -2 : -1).trim();
+    if (!content || content.startsWith("!")) return;
+    const { name, attributes } = parseStartTag(content);
+    const node: XmlNode = {
+      name,
+      attributes,
+      children: [],
+      text: "",
+      sourceOrder: ++state.sourceOrder
+    };
+    state.stack[state.stack.length - 1].children.push(node);
+    if (!selfClosing) state.stack.push(node);
+    return;
+  }
+  const text = decodeXml(token);
+  if (text) state.stack[state.stack.length - 1].text += text;
+}
+
+function parseXml(xml: string): XmlNode {
+  const state = createParseState();
   const tokenPattern = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>|<[^>]+>|[^<]+/g;
   const tokens = xml.match(tokenPattern) ?? [];
+  for (const token of tokens) processToken(token, state);
+  return state.root;
+}
 
-  for (const token of tokens) {
-    if (!token) continue;
-    if (token.startsWith("<!--") || token.startsWith("<?")) continue;
-    if (token.startsWith("<![CDATA[")) {
-      stack[stack.length - 1].text += token.slice(9, -3);
-      continue;
+async function parseXmlStream(stream: Readable): Promise<XmlNode> {
+  const state = createParseState();
+  let buf = "";
+  let i = 0;
+
+  const emit = (token: string) => processToken(token, state);
+
+  const drain = (final: boolean): boolean => {
+    while (i < buf.length) {
+      const ch = buf.charCodeAt(i);
+      if (ch === 0x3c /* < */) {
+        if (buf.startsWith("<!--", i)) {
+          const end = buf.indexOf("-->", i + 4);
+          if (end < 0) return false;
+          emit(buf.slice(i, end + 3));
+          i = end + 3;
+        } else if (buf.startsWith("<?", i)) {
+          const end = buf.indexOf("?>", i + 2);
+          if (end < 0) return false;
+          emit(buf.slice(i, end + 2));
+          i = end + 2;
+        } else if (buf.startsWith("<![CDATA[", i)) {
+          const end = buf.indexOf("]]>", i + 9);
+          if (end < 0) return false;
+          emit(buf.slice(i, end + 3));
+          i = end + 3;
+        } else {
+          const end = buf.indexOf(">", i + 1);
+          if (end < 0) return false;
+          emit(buf.slice(i, end + 1));
+          i = end + 1;
+        }
+      } else {
+        const next = buf.indexOf("<", i);
+        if (next < 0) {
+          if (!final) {
+            // Emit accumulated text now to keep buffer bounded; subsequent
+            // chunks of the same text run will append to the same parent node
+            // because text tokens are concatenated in processToken.
+            emit(buf.slice(i));
+            i = buf.length;
+            return false;
+          }
+          emit(buf.slice(i));
+          i = buf.length;
+        } else {
+          emit(buf.slice(i, next));
+          i = next;
+        }
+      }
     }
-    if (token.startsWith("</")) {
-      if (stack.length > 1) stack.pop();
-      continue;
+    return true;
+  };
+
+  stream.setEncoding("utf8");
+  for await (const chunk of stream as AsyncIterable<string>) {
+    buf += chunk;
+    drain(false);
+    if (i > 0) {
+      buf = buf.slice(i);
+      i = 0;
     }
-    if (token.startsWith("<")) {
-      const selfClosing = /\/>\s*$/.test(token);
-      const content = token.slice(1, selfClosing ? -2 : -1).trim();
-      if (!content || content.startsWith("!")) continue;
-      const { name, attributes } = parseStartTag(content);
-      const node: XmlNode = {
-        name,
-        attributes,
-        children: [],
-        text: "",
-        sourceOrder: ++sourceOrder
-      };
-      stack[stack.length - 1].children.push(node);
-      if (!selfClosing) stack.push(node);
-      continue;
-    }
-    const text = decodeXml(token);
-    if (text.trim()) stack[stack.length - 1].text += text.trim();
   }
-
-  return root;
+  drain(true);
+  return state.root;
 }
 
 function parseStartTag(content: string): { name: string; attributes: Record<string, string> } {

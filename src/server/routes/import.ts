@@ -1,8 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
-import { mkdirSync, readFileSync } from "node:fs";
+import { createReadStream, mkdirSync } from "node:fs";
 import type { AppConfig } from "../../shared/appConfigTypes";
-import { parseOneStreamXml } from "../../shared/xmlImport";
+import { parseOneStreamXmlFromStream } from "../../shared/xmlImport";
 import { parseWorkbook } from "../../shared/workbookParser";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
@@ -73,11 +73,11 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
     }
   });
 
-  router.post("/xml", upload.single("file"), (req, res, next) => {
+  router.post("/xml", upload.single("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
-      const xml = readFileSync(req.file.path, "utf8");
-      const parsed = parseOneStreamXml(xml, {
+      const stream = createReadStream(req.file.path);
+      const parsed = await parseOneStreamXmlFromStream(stream, {
         projectName: req.body.projectName || req.file.originalname.replace(/\.xml$/i, ""),
         sourceFileName: req.file.originalname,
         createdBy: "local-admin"

@@ -15,6 +15,15 @@ export type OneStreamPropertyValueType =
   | "timeMember";
 export type OneStreamPropertyExportFormat = "xml" | "xlsx" | "csv" | "json" | "acm";
 
+/**
+ * Describes how a property's varying context is emitted in OneStream metadata XML.
+ * - "scenarioTime": emits scenarioType="" time="" revertToDefaultScenarioType="false"
+ * - "scenario": emits scenarioType="" only
+ * - "cubeType": emits cubeType="" only
+ * - "none": no varying context attributes (simple name/value)
+ */
+export type OneStreamVaryingContextType = "scenarioTime" | "scenario" | "cubeType" | "none";
+
 export interface OneStreamPropertyDefinition {
   propertyKey: string;
   displayName: string;
@@ -27,6 +36,7 @@ export interface OneStreamPropertyDefinition {
   required?: boolean;
   defaultValue?: string | number | boolean;
   supportsVarying?: boolean;
+  varyingContextType?: OneStreamVaryingContextType;
   appliesToExportFormats?: OneStreamPropertyExportFormat[];
   helpText?: string;
   oneStreamVersionIntroduced?: string;
@@ -67,6 +77,7 @@ const textDefinitions = Array.from({ length: 8 }, (_value, index) => {
     dimensionTypes: "all",
     valueType: "string",
     supportsVarying: true,
+    varyingContextType: "scenarioTime",
     helpText: `Free-form OneStream text property ${number}.`
   });
 });
@@ -82,6 +93,7 @@ const relationshipTextDefinitions = Array.from({ length: 8 }, (_value, index) =>
     dimensionTypes: "all",
     valueType: "string",
     supportsVarying: true,
+    varyingContextType: "scenarioTime",
     helpText: `Free-form OneStream relationship text property ${number}.`
   });
 });
@@ -199,7 +211,7 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     propertyKey: "readSecurityGroup",
     displayName: "Read Security Group",
     xmlName: "readSecurityGroup",
-    aliases: ["Read and Write Data Group", "Read Write Group"],
+    aliases: ["Read and Write Data Group", "Read Write Group", "readWriteDataGroup"],
     targetLevel: "member",
     dimensionTypes: "all",
     valueType: "securityGroup",
@@ -246,6 +258,8 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     dimensionTypes: ["Entity"],
     valueType: "decimal",
     defaultValue: 100,
+    supportsVarying: true,
+    varyingContextType: "scenarioTime",
     helpText: "Entity relationship consolidation percentage."
   }),
   define({
@@ -257,6 +271,8 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     dimensionTypes: ["Entity"],
     valueType: "decimal",
     defaultValue: 100,
+    supportsVarying: true,
+    varyingContextType: "scenarioTime",
     helpText: "Entity relationship ownership percentage."
   }),
   define({
@@ -268,6 +284,8 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     valueType: "enum",
     enumValues: ["FullConsolidation", "Full Consolidation", "PercentConsolidation", "Percent Consolidation", "NoConsolidation", "No Consolidation"],
     defaultValue: "FullConsolidation",
+    supportsVarying: true,
+    varyingContextType: "scenarioTime",
     helpText: "Entity relationship ownership method."
   }),
   ...relationshipTextDefinitions,
@@ -279,7 +297,7 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     targetLevel: "member",
     dimensionTypes: ["Account"],
     valueType: "enum",
-    enumValues: ["Asset", "Liability", "Revenue", "Expense", "Balance", "BalanceRecurring", "Flow", "NonFinancial", "Statistical"],
+    enumValues: ["Asset", "Liability", "Revenue", "Expense", "Balance", "BalanceRecurring", "Flow", "NonFinancial", "Statistical", "DynamicCalc", "Group"],
     helpText: "Categorizes the account for OneStream consolidation and reporting behavior."
   }),
   define({
@@ -328,6 +346,51 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
     dimensionTypes: ["Entity", "Scenario"],
     valueType: "boolean",
     helpText: "Uses cube-level foreign exchange settings."
+  }),
+  define({
+    propertyKey: "readDataGroup2",
+    displayName: "Read Data Group 2",
+    xmlName: "readDataGroup2",
+    targetLevel: "member",
+    dimensionTypes: ["Entity"],
+    valueType: "securityGroup",
+    helpText: "Secondary security group used for read data access."
+  }),
+  define({
+    propertyKey: "readWriteDataGroup2",
+    displayName: "Read Write Data Group 2",
+    xmlName: "readWriteDataGroup2",
+    targetLevel: "member",
+    dimensionTypes: ["Entity"],
+    valueType: "securityGroup",
+    helpText: "Secondary security group used for read/write data access."
+  }),
+  define({
+    propertyKey: "dataCellAccessCategories",
+    displayName: "Data Cell Access Categories",
+    xmlName: "dataCellAccessCategories",
+    targetLevel: "member",
+    dimensionTypes: ["Entity"],
+    valueType: "string",
+    helpText: "Comma-separated data cell access category assignments for the entity."
+  }),
+  define({
+    propertyKey: "conditionalInputCategories",
+    displayName: "Conditional Input Categories",
+    xmlName: "conditionalInputCategories",
+    targetLevel: "member",
+    dimensionTypes: ["Entity"],
+    valueType: "string",
+    helpText: "Comma-separated conditional input category assignments for the entity."
+  }),
+  define({
+    propertyKey: "dataMgmtAccessCategories",
+    displayName: "Data Mgmt Access Categories",
+    xmlName: "dataMgmtAccessCategories",
+    targetLevel: "member",
+    dimensionTypes: ["Entity"],
+    valueType: "string",
+    helpText: "Comma-separated data management access category assignments for the entity."
   }),
   define({
     propertyKey: "flowType",
@@ -443,6 +506,70 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
   ])
 ];
 
+/**
+ * Known OneStream varying context types by xmlName.
+ * Derived from real OneStream 9.2.0 metadata XML extracts.
+ */
+const KNOWN_VARYING_CONTEXT_BY_XML_NAME: Record<string, OneStreamVaryingContextType> = {
+  // scenarioTime: emit scenarioType="" time="" revertToDefaultScenarioType="false"
+  Formula: "scenarioTime",
+  FormulaForCalcDrillDown: "scenarioTime",
+  InUse: "scenarioTime",
+  AllowAdjustments: "scenarioTime",
+  AllowAdjustmentsFromChildren: "scenarioTime",
+  PercentConsolidation: "scenarioTime",
+  PercentOwnership: "scenarioTime",
+  OwnershipType: "scenarioTime",
+  // scenario: emit scenarioType="" only
+  WorkflowChannel: "scenario",
+  SiblingConsolidationPass: "scenario",
+  SiblingRepeatCalcPass: "scenario",
+  AutoTranslationCurrencies: "scenario",
+  // cubeType: emit cubeType="" only
+  FlowConstraint: "cubeType",
+  ICConstraint: "cubeType",
+  ICMemberFilter: "cubeType",
+  UD1Constraint: "cubeType",
+  UD2Constraint: "cubeType",
+  UD3Constraint: "cubeType",
+  UD4Constraint: "cubeType",
+  UD5Constraint: "cubeType",
+  UD6Constraint: "cubeType",
+  UD7Constraint: "cubeType",
+  UD8Constraint: "cubeType",
+  UD1Default: "cubeType",
+  UD2Default: "cubeType",
+  UD3Default: "cubeType",
+  UD4Default: "cubeType",
+  UD5Default: "cubeType",
+  UD6Default: "cubeType",
+  UD7Default: "cubeType",
+  UD8Default: "cubeType"
+};
+
+function applyKnownVaryingContextTypes(definitions: OneStreamPropertyDefinition[]): void {
+  for (const definition of definitions) {
+    if (definition.varyingContextType) continue;
+    const contextType = KNOWN_VARYING_CONTEXT_BY_XML_NAME[definition.xmlName];
+    if (contextType) {
+      definition.varyingContextType = contextType;
+      if (!definition.supportsVarying) definition.supportsVarying = true;
+    }
+  }
+}
+
+/**
+ * Returns the varying context type for a property, or "none" if it has no varying context.
+ */
+export function getVaryingContextType(
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel,
+  fieldName: string
+): OneStreamVaryingContextType {
+  const definition = getPropertyDefinitionByName(dimensionType, targetLevel, fieldName);
+  return definition?.varyingContextType ?? "none";
+}
+
 export const oneStreamPropertyDefinitions = buildDictionaryDefinitions();
 
 export function getPropertyDefinitionsForDimension(
@@ -539,6 +666,7 @@ function buildDictionaryDefinitions(): OneStreamPropertyDefinition[] {
     }
   }
 
+  applyKnownVaryingContextTypes(definitions);
   return definitions;
 }
 

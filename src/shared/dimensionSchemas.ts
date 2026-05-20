@@ -150,7 +150,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
       bool("Allow Adj From Child"),
       text("Display Group"),
       num("Sibling Consol Pass"),
-      num("Sibling Repeat Calc Pass"),
+      text("Sibling Repeat Calc Pass"),
       text("Auto Translate Currencies"),
       text("Text1"),
       text("Text2"),
@@ -186,7 +186,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
       text("Text8")
     ],
     booleanFields: ["Is IC", "IsConsolidated", "In Use", "Allow Adj", "Allow Adj From Child", "Use Cube Data Access Security"],
-    numericFields: ["Sibling Consol Pass", "Sibling Repeat Calc Pass", "Parent Sort Order", "Percent Consol", "Percent Ownership"],
+    numericFields: ["Sibling Consol Pass", "Parent Sort Order", "Percent Consol", "Percent Ownership"],
     requiredFields: ["Dimension Type", "Dimension Name", "Entity", "Parent", "Child"],
     duplicateSeverity: "warning"
   },

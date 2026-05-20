@@ -13,6 +13,18 @@ The Express app mounts API routes under `/api`. Client helper functions live in 
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/config` | Returns client-safe app config with server paths omitted. |
+| PUT | `/api/config` | Accepts a JSON body with the full config object. Writes the updated config to the YAML file and applies changes live without server restart. |
+
+PUT `/api/config` body:
+
+```json
+{
+  "application": { "productName": "..." },
+  "validation": { "..." }
+}
+```
+
+Returns `{ ok: true }` on success.
 
 ## Blueprint Studio
 
@@ -57,6 +69,7 @@ Dictionary responses include `version` plus `dimensions`, with each supported di
 |---|---|---|
 | GET | `/api/projects` | List projects ordered by updated time. |
 | POST | `/api/projects` | Create a blank metadata project from YAML blueprints. |
+| PATCH | `/api/projects/:projectId` | Rename or update a project's name and description. |
 | GET | `/api/projects/:projectId/summary` | Return dashboard counts and recent dimensions. |
 | GET | `/api/projects/:projectId/snapshots` | List saved project snapshots. |
 | GET | `/api/projects/:projectId/snapshots/:snapshotId` | Read one saved project snapshot and its stored JSON state. |
@@ -74,6 +87,17 @@ POST `/api/projects` body:
   "description": "Optional description"
 }
 ```
+
+PATCH `/api/projects/:projectId` body:
+
+```json
+{
+  "name": "Updated Project Name",
+  "description": "Updated description"
+}
+```
+
+Both fields are optional. Returns the updated project record.
 
 ## Project Snapshots
 
@@ -124,7 +148,7 @@ Branch response returns `{ "project": ProjectRecord, "summary": SnapshotRestoreS
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/projects/:projectId/dimensions/:dimensionId/members?offset=0&limit=300` | Page active members for a dimension. |
+| GET | `/api/projects/:projectId/dimensions/:dimensionId/members?offset=0&limit=300&ids=` | Page active members for a dimension. Supports `?ids=` param to fetch specific records by ID (comma-separated), bypassing pagination. |
 | POST | `/api/projects/:projectId/dimensions/:dimensionId/members` | Create a member. |
 | PATCH | `/api/projects/:projectId/members/:memberId` | Update a member. |
 | DELETE | `/api/projects/:projectId/members/:memberId` | Soft-delete a member. |
@@ -145,7 +169,7 @@ Create member body:
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/projects/:projectId/dimensions/:dimensionId/relationships?offset=0&limit=300` | Page relationships for a dimension. |
+| GET | `/api/projects/:projectId/dimensions/:dimensionId/relationships?offset=0&limit=300&ids=` | Page relationships for a dimension. Supports `?ids=` param to fetch specific records by ID (comma-separated), bypassing pagination. |
 | POST | `/api/projects/:projectId/dimensions/:dimensionId/relationships` | Create a relationship with configured defaults. |
 | PATCH | `/api/projects/:projectId/relationships/:relationshipId` | Update a relationship. |
 | DELETE | `/api/projects/:projectId/relationships/:relationshipId` | Delete a relationship. |
@@ -425,6 +449,26 @@ XML import response:
 ```
 
 XML import is implemented in `src/shared/xmlImport.ts` and persisted by `src/server/routes/import.ts`. Unknown XML data is stored in existing metadata/properties JSON fields and is re-emitted by XML export when not overwritten by known edited fields.
+
+## Validation Config (Per-Project Overrides)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/projects/:projectId/validation-config` | Return the per-project validation rule overrides. Each override specifies a rule code and its project-level severity (including `"off"` to disable). |
+| POST | `/api/projects/:projectId/validation-config` | Create or update per-project validation rule overrides. |
+
+POST body:
+
+```json
+{
+  "overrides": [
+    { "ruleCode": "DUPLICATE_MEMBER", "severity": "info" },
+    { "ruleCode": "SHARED_MEMBER_DETECTED", "severity": "off" }
+  ]
+}
+```
+
+Setting severity to `"off"` disables the rule for the project. Overrides are stored in the `project_validation_overrides` table.
 
 ## Validation
 

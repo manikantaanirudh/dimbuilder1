@@ -253,6 +253,15 @@ CREATE TABLE IF NOT EXISTS user_roles (
   PRIMARY KEY (user_id, role_id)
 );
 
+CREATE TABLE IF NOT EXISTS project_validation_overrides (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  rule_code TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'off',
+  updated_at TEXT NOT NULL,
+  UNIQUE(project_id, rule_code)
+);
+
 CREATE INDEX IF NOT EXISTS idx_dimensions_project ON dimensions(project_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_members_dimension ON dimension_members(dimension_id, row_order);
 CREATE INDEX IF NOT EXISTS idx_members_key ON dimension_members(dimension_id, member_key);

@@ -103,6 +103,16 @@ export function createRepositories(db: AppDatabase) {
       delete(projectId: string): void {
         db.prepare("DELETE FROM projects WHERE id = ?").run(projectId);
       },
+      update(projectId: string, input: { name?: string; description?: string }): ProjectRecord | null {
+        const project = this.get(projectId);
+        if (!project) return null;
+        const name = input.name !== undefined ? input.name.trim() : project.name;
+        const description = input.description !== undefined ? input.description : project.description;
+        const updatedAt = now();
+        db.prepare("UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ?")
+          .run(name, description, updatedAt, projectId);
+        return { ...project, name, description, updatedAt };
+      },
       summary(projectId: string): DashboardSummary {
         const dimensions = this.getDimensions(projectId);
         return {
@@ -228,6 +238,13 @@ export function createRepositories(db: AppDatabase) {
           ORDER BY d.sort_order, m.row_order
         `).all(projectId).map(mapMember);
       },
+      listAllByDimension(dimensionId: string): DimensionMemberRecord[] {
+        return db.prepare(`
+          SELECT * FROM dimension_members
+          WHERE dimension_id = ? AND is_active = 1
+          ORDER BY row_order
+        `).all(dimensionId).map(mapMember);
+      },
       countByDimension(dimensionId: string): number {
         return Number(db.prepare("SELECT COUNT(*) AS count FROM dimension_members WHERE dimension_id = ? AND is_active = 1").get(dimensionId)?.count ?? 0);
       },
@@ -241,6 +258,15 @@ export function createRepositories(db: AppDatabase) {
       },
       softDelete(id: string): void {
         db.prepare("UPDATE dimension_members SET is_active = 0, updated_at = ? WHERE id = ?").run(now(), id);
+      },
+      listByIds(dimensionId: string, ids: string[]): DimensionMemberRecord[] {
+        if (ids.length === 0) return [];
+        const placeholders = ids.map(() => "?").join(", ");
+        return db.prepare(`
+          SELECT * FROM dimension_members
+          WHERE dimension_id = ? AND id IN (${placeholders}) AND is_active = 1
+          ORDER BY row_order
+        `).all(dimensionId, ...ids).map(mapMember);
       }
     },
     relationships: {
@@ -298,6 +324,13 @@ export function createRepositories(db: AppDatabase) {
           ORDER BY d.sort_order, r.row_order
         `).all(projectId).map(mapRelationship);
       },
+      listAllByDimension(dimensionId: string): DimensionRelationshipRecord[] {
+        return db.prepare(`
+          SELECT * FROM dimension_relationships
+          WHERE dimension_id = ?
+          ORDER BY row_order
+        `).all(dimensionId).map(mapRelationship);
+      },
       countByDimension(dimensionId: string): number {
         return Number(db.prepare("SELECT COUNT(*) AS count FROM dimension_relationships WHERE dimension_id = ?").get(dimensionId)?.count ?? 0);
       },
@@ -339,6 +372,15 @@ export function createRepositories(db: AppDatabase) {
       },
       delete(id: string): void {
         db.prepare("DELETE FROM dimension_relationships WHERE id = ?").run(id);
+      },
+      listByIds(dimensionId: string, ids: string[]): DimensionRelationshipRecord[] {
+        if (ids.length === 0) return [];
+        const placeholders = ids.map(() => "?").join(", ");
+        return db.prepare(`
+          SELECT * FROM dimension_relationships
+          WHERE dimension_id = ? AND id IN (${placeholders})
+          ORDER BY row_order
+        `).all(dimensionId, ...ids).map(mapRelationship);
       }
     },
     varyingProperties: {
@@ -632,6 +674,29 @@ export function createRepositories(db: AppDatabase) {
         return Number(row?.count ?? 0) > 0;
       }
     },
+    validationOverrides: {
+      listByProject(projectId: string): Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> {
+        return db.prepare("SELECT * FROM project_validation_overrides WHERE project_id = ? ORDER BY rule_code").all(projectId).map((row: any) => ({
+          id: row.id,
+          ruleCode: row.rule_code,
+          severity: row.severity,
+          updatedAt: row.updated_at
+        }));
+      },
+      upsert(projectId: string, ruleCode: string, severity: string): void {
+        const existing = db.prepare("SELECT id FROM project_validation_overrides WHERE project_id = ? AND rule_code = ?").get(projectId, ruleCode);
+        if (existing) {
+          db.prepare("UPDATE project_validation_overrides SET severity = ?, updated_at = ? WHERE project_id = ? AND rule_code = ?")
+            .run(severity, now(), projectId, ruleCode);
+        } else {
+          db.prepare("INSERT INTO project_validation_overrides (id, project_id, rule_code, severity, updated_at) VALUES (?, ?, ?, ?, ?)")
+            .run(nanoid(), projectId, ruleCode, severity, now());
+        }
+      },
+      deleteByProject(projectId: string, ruleCode: string): void {
+        db.prepare("DELETE FROM project_validation_overrides WHERE project_id = ? AND rule_code = ?").run(projectId, ruleCode);
+      }
+    },
     audit: {
       record(input: { projectId: string; action: string; entityType: string; entityId: string; before?: unknown; after?: unknown; userId?: string }): void {
         db.prepare(`
@@ -651,6 +716,9 @@ export function createRepositories(db: AppDatabase) {
       }
     },
     snapshots: {
+      buildState(projectId: string): ProjectSnapshotState {
+        return buildProjectSnapshotState(db, projectId);
+      },
       create(input: { projectId: string; name: string; description: string; snapshot: unknown; createdBy?: string }): string {
         const id = nanoid();
         db.prepare(`
@@ -1112,6 +1180,7 @@ function mapRelationship(row: Record<string, unknown>): DimensionRelationshipRec
 }
 
 function mapVaryingPropertyValue(row: Record<string, unknown>): VaryingPropertyValueRecord {
+  const metadata = parseJson(String(row.metadata_json ?? "{}"), {}) as Record<string, unknown>;
   return {
     id: String(row.id),
     projectId: String(row.project_id),
@@ -1124,8 +1193,9 @@ function mapVaryingPropertyValue(row: Record<string, unknown>): VaryingPropertyV
     scenarioType: String(row.scenario_type ?? ""),
     timeMember: String(row.time_member ?? ""),
     isDefault: Number(row.is_default) === 1,
+    revertToDefaultScenarioType: Boolean(metadata.revertToDefaultScenarioType),
     source: String(row.source ?? ""),
-    metadata: parseJson(String(row.metadata_json ?? "{}"), {}),
+    metadata,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
   };
@@ -1310,7 +1380,7 @@ function mapIssue(row: Record<string, unknown>): ValidationIssue {
 function emptyDiffSummary(): MetadataDiffSummary {
   return {
     totalItems: 0,
-    bySeverity: { error: 0, warning: 0, info: 0 },
+    bySeverity: { error: 0, warning: 0, info: 0, off: 0 },
     byChangeType: { add: 0, update: 0, delete: 0, move: 0, copy: 0, unchanged: 0, warning: 0 },
     members: { adds: 0, updates: 0, deletes: 0 },
     relationships: { adds: 0, deletes: 0, moves: 0, copies: 0 },
@@ -1542,6 +1612,10 @@ function insertSnapshotValidationIssues(db: AppDatabase, projectId: string, issu
 }
 
 function normalizeVaryingPropertyInput(input: VaryingPropertyValueInput): Required<VaryingPropertyValueInput> {
+  const metadata: Record<string, unknown> = { ...(input.metadata ?? {}) };
+  if (input.revertToDefaultScenarioType) {
+    metadata.revertToDefaultScenarioType = true;
+  }
   return {
     projectId: String(input.projectId),
     dimensionId: String(input.dimensionId),
@@ -1553,8 +1627,9 @@ function normalizeVaryingPropertyInput(input: VaryingPropertyValueInput): Requir
     scenarioType: String(input.scenarioType ?? "").trim(),
     timeMember: String(input.timeMember ?? "").trim(),
     isDefault: Boolean(input.isDefault),
+    revertToDefaultScenarioType: Boolean(input.revertToDefaultScenarioType),
     source: String(input.source ?? ""),
-    metadata: input.metadata ?? {}
+    metadata
   };
 }
 

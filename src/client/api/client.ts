@@ -68,6 +68,16 @@ export async function apiPatch(path: string, body: unknown): Promise<void> {
   if (!response.ok) throw new Error(await response.text());
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<T>;
+}
+
 export async function apiPatchJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method: "PATCH",
@@ -89,6 +99,14 @@ export function fetchProjects() {
 
 export function createProject(body: { name: string; description: string }) {
   return apiPost<ProjectRecord>("/projects", body);
+}
+
+export function deleteProject(projectId: string) {
+  return apiDelete(`/projects/${projectId}`);
+}
+
+export function renameProject(projectId: string, body: { name?: string; description?: string }) {
+  return apiPatchJson<ProjectRecord>(`/projects/${projectId}`, body);
 }
 
 export function fetchAppConfig() {
@@ -132,11 +150,17 @@ export function fetchIssues(projectId: string) {
   return apiGet<ValidationIssue[]>(`/projects/${projectId}/issues`);
 }
 
-export function fetchMembers(projectId: string, dimensionId: string, offset = 0, limit = 300) {
+export function fetchMembers(projectId: string, dimensionId: string, offset = 0, limit = 300, ids?: string[]) {
+  if (ids && ids.length > 0) {
+    return apiGet<GridResponse<DimensionMemberRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/members?ids=${ids.join(",")}`);
+  }
   return apiGet<GridResponse<DimensionMemberRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/members?offset=${offset}&limit=${limit}`);
 }
 
-export function fetchRelationships(projectId: string, dimensionId: string, offset = 0, limit = 300) {
+export function fetchRelationships(projectId: string, dimensionId: string, offset = 0, limit = 300, ids?: string[]) {
+  if (ids && ids.length > 0) {
+    return apiGet<GridResponse<DimensionRelationshipRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/relationships?ids=${ids.join(",")}`);
+  }
   return apiGet<GridResponse<DimensionRelationshipRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/relationships?offset=${offset}&limit=${limit}`);
 }
 
@@ -188,6 +212,10 @@ export function fetchProjectBaseline(projectId: string, baselineId: string) {
 
 export function fetchProjectSnapshots(projectId: string) {
   return apiGet<ProjectSnapshotSummaryRecord[]>(`/projects/${projectId}/snapshots`);
+}
+
+export function createProjectSnapshot(projectId: string, body: { name?: string; description?: string } = {}) {
+  return apiPost<{ id: string; name: string }>(`/projects/${projectId}/snapshots`, body);
 }
 
 export function fetchProjectSnapshot(projectId: string, snapshotId: string) {
@@ -330,4 +358,12 @@ export function patchVaryingPropertyValue(projectId: string, valueId: string, bo
 
 export function deleteVaryingPropertyValue(projectId: string, valueId: string) {
   return apiDelete(`/projects/${projectId}/varying-properties/${valueId}`);
+}
+
+export function fetchValidationConfig(projectId: string) {
+  return apiGet<{ overrides: Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> }>(`/projects/${projectId}/validation-config`);
+}
+
+export function saveValidationConfig(projectId: string, overrides: Array<{ ruleCode: string; severity: string }>) {
+  return apiPost<{ overrides: Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> }>(`/projects/${projectId}/validation-config`, { overrides });
 }

@@ -1,10 +1,10 @@
-import { CheckCircle2, Download, FileText, FileUp, PlusCircle, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Download, FileText, FileUp, PlusCircle, Trash2, TriangleAlert } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { ExportLoadMode, ProjectRecord } from "../../shared/types";
 import type { RelationshipOperationPlan } from "../../shared/relationshipOperations";
 import { getEnabledExportFormats, type ExportAvailability, type ExportFormatLink } from "../ui/viewModel";
-import { createProject, planRelationshipExport, uploadWorkbook, uploadXml } from "../api/client";
+import { createProject, createProjectSnapshot, deleteProject, planRelationshipExport, uploadWorkbook, uploadXml } from "../api/client";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
@@ -451,6 +451,162 @@ export function ExportModal({
         {exportStatus && <p className="modal-status">{exportStatus}</p>}
         <div className="modal-actions">
           <ActionButton onClick={onClose}>Close</ActionButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function OpenProjectModal({
+  open,
+  onClose,
+  projects,
+  selectedProjectId,
+  onOpenProject,
+  onDeleteProject
+}: {
+  open: boolean;
+  onClose: () => void;
+  projects: ProjectRecord[];
+  selectedProjectId: string | null;
+  onOpenProject: (projectId: string) => void;
+  onDeleteProject: (projectId: string) => void;
+}) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setConfirmDeleteId(null);
+      setStatus("");
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  async function handleDelete(projectId: string) {
+    try {
+      await deleteProject(projectId);
+      setStatus("Project deleted");
+      setConfirmDeleteId(null);
+      onDeleteProject(projectId);
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Delete failed");
+    }
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="open-project-modal-title">
+        <div className="modal-heading">
+          <h2 id="open-project-modal-title">Open project</h2>
+        </div>
+        <p>Select a project to open, or delete projects you no longer need.</p>
+        {projects.length === 0 ? (
+          <div className="empty-state">No projects found. Create a new project to get started.</div>
+        ) : (
+          <div className="project-list">
+            {projects.map((project) => (
+              <div key={project.id} className={`project-list-item ${project.id === selectedProjectId ? "active" : ""}`}>
+                <div className="project-list-info" onClick={() => { onOpenProject(project.id); onClose(); }}>
+                  <strong>{project.name}</strong>
+                  <small>{project.description || project.sourceFileName || "No description"}</small>
+                  <small className="project-date">{new Date(project.createdAt).toLocaleDateString()}</small>
+                </div>
+                <div className="project-list-actions">
+                  {confirmDeleteId === project.id ? (
+                    <>
+                      <ActionButton variant="primary" className="danger-btn" onClick={() => void handleDelete(project.id)}>
+                        Confirm
+                      </ActionButton>
+                      <ActionButton onClick={() => setConfirmDeleteId(null)}>Cancel</ActionButton>
+                    </>
+                  ) : (
+                    <button
+                      className="grid-icon-button danger"
+                      title="Delete project"
+                      aria-label={`Delete ${project.name}`}
+                      onClick={() => setConfirmDeleteId(project.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+         {status && <div className="modal-status">{status}</div>}
+        <div className="modal-actions">
+          <ActionButton onClick={onClose}>Close</ActionButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SaveAsModal({
+  open,
+  onClose,
+  projectId,
+  onSaved
+}: {
+  open: boolean;
+  onClose: () => void;
+  projectId: string | null;
+  onSaved?: (name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setName("");
+      setDescription("");
+      setStatus("");
+      setSaving(false);
+    }
+  }, [open]);
+
+  if (!open || !projectId) return null;
+
+  async function handleSave() {
+    if (!projectId || !name.trim()) {
+      setStatus("Enter a snapshot name.");
+      return;
+    }
+    setSaving(true);
+    setStatus("Saving...");
+    try {
+      const result = await createProjectSnapshot(projectId, { name: name.trim(), description: description.trim() });
+      setStatus(`Saved: ${result.name}`);
+      onSaved?.(result.name);
+      onClose();
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="save-as-title">
+        <div className="modal-heading"><h2 id="save-as-title">Save As</h2></div>
+        <div className="modal-field">
+          <label>Snapshot name *</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Pre-release v2" autoFocus />
+        </div>
+        <div className="modal-field">
+          <label>Description (optional)</label>
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" />
+        </div>
+        {status && <div className="modal-status">{status}</div>}
+        <div className="modal-actions">
+          <ActionButton onClick={onClose}>Cancel</ActionButton>
+          <ActionButton variant="primary" disabled={saving || !name.trim()} onClick={() => void handleSave()}>Save Snapshot</ActionButton>
         </div>
       </div>
     </div>

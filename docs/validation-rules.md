@@ -72,6 +72,13 @@ Allowed severities are:
 - `error`
 - `warning`
 - `info`
+- `off` — disables the rule entirely; the validation engine skips creating issues for rules with this severity.
+
+## Per-Project Validation Overrides
+
+Individual projects can override rule severities through the Admin Panel or the `GET/POST /:projectId/validation-config` API endpoints. Overrides are stored in the `project_validation_overrides` database table.
+
+The Admin Panel exposes toggle switches per rule with a severity dropdown. Setting a rule to `"off"` disables it for that project only. Overrides take precedence over the global YAML configuration when validation runs.
 
 ## Export Blocking
 
@@ -222,6 +229,10 @@ These issues document round-trip preservation and do not block export by default
 
 Validation issues are stored in `validation_issues`. A validation run replaces all existing issues for the project.
 Export blocking reads these stored issues through repository helpers; routes do not query `validation_issues` directly.
+
+## Admin Panel
+
+The Admin Panel provides a read-only view of all validation rules, their configured severities, categories, and whether they block export. It also includes per-project toggle switches with a severity dropdown to override rule severities (including `"off"` to disable). It is accessible from the sidebar and is useful for understanding and customizing the active validation configuration without editing YAML directly. See the [Feature Catalog](./feature-catalog.md#admin-panel) for source references.
 
 ## Tests
 

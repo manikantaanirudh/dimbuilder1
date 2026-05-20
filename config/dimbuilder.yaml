@@ -1,7 +1,7 @@
 application:
-  productName: SR Onestream Dim Builder
+  productName: Spaulding Ridge Onestream Dim Builder
   applicationName: Local
-  title: SR Onestream Dim Builder
+  title: Spaulding Ridge Onestream Dim Builder
   description: Build, validate, preview, and export OneStream dimension metadata.
   environmentName: Local
   oneStreamVersionFallback: 9.2.0.18004

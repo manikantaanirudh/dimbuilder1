@@ -9,12 +9,14 @@ export function IssuePanel({
   dimension,
   issues,
   appConfig,
-  expanded = false
+  expanded = false,
+  onIssueClick
 }: {
   dimension: DimensionRecord;
   issues: ValidationIssue[];
   appConfig: ClientAppConfig;
   expanded?: boolean;
+  onIssueClick?: (issue: ValidationIssue) => void;
 }) {
   const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
   const [codeFilter, setCodeFilter] = useState("");
@@ -92,7 +94,7 @@ export function IssuePanel({
             </EmptyState>
           ) : (
             <div className="issue-list">
-              {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} />)}
+              {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} onClick={onIssueClick} />)}
             </div>
           )}
         </div>
@@ -101,11 +103,18 @@ export function IssuePanel({
   );
 }
 
-function IssueCard({ issue }: { issue: ValidationIssue }) {
+function IssueCard({ issue, onClick }: { issue: ValidationIssue; onClick?: (issue: ValidationIssue) => void }) {
   const location = [issue.fieldName, issue.rowNumber ? `Row ${issue.rowNumber}` : ""].filter(Boolean).join(" | ");
+  const clickable = onClick && (issue.entityType === "member" || issue.entityType === "relationship");
 
   return (
-    <div className={`issue ${issue.severity}`}>
+    <div
+      className={`issue ${issue.severity}${clickable ? " clickable" : ""}`}
+      onClick={clickable ? () => onClick(issue) : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(issue); } : undefined}
+    >
       <div className="issue-icon">{iconForSeverity(issue.severity)}</div>
       <div>
         <div className="issue-title">

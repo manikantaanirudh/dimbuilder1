@@ -162,6 +162,64 @@ describe("server export validation guard", () => {
   });
 });
 
+const multiDimensionConfig: AppConfig = {
+  ...defaultAppConfig,
+  dimensions: {
+    ...defaultAppConfig.dimensions,
+    enabledTypes: ["Entity", "Account"],
+    displayOrder: ["Entity", "Account"]
+  }
+};
+
+describe("per-dimension export guard", () => {
+  it("allows export for a dimension with no blocking issues even when another dimension has errors", async () => {
+    await withServer(multiDimensionConfig, async ({ baseUrl }) => {
+      const projectResponse = await fetch(`${baseUrl}/api/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Multi Dim Project" })
+      });
+      expect(projectResponse.status).toBe(201);
+      const project = await projectResponse.json() as ProjectRecord;
+
+      const dimensionsResponse = await fetch(`${baseUrl}/api/projects/${project.id}/dimensions`);
+      const dimensions = await dimensionsResponse.json() as DimensionRecord[];
+      const account = dimensions.find((d) => d.dimensionType === "Account")!;
+      const entity = dimensions.find((d) => d.dimensionType === "Entity")!;
+
+      // Break the Account dimension by blanking its name
+      await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dimensionName: "" })
+      });
+
+      const validationResponse = await runValidation(baseUrl, project.id);
+      expect(validationResponse.issues.some((i) => i.severity === "error" && i.dimensionId === account.id)).toBe(true);
+      expect(validationResponse.issues.some((i) => i.severity === "error" && i.dimensionId === entity.id)).toBe(false);
+
+      // Full project export should be blocked
+      const fullExport = await fetch(`${baseUrl}/api/export/${project.id}/xml`);
+      expect(fullExport.status).toBe(409);
+
+      // Per-dimension export for the clean Entity dimension should succeed
+      const entityExport = await fetch(`${baseUrl}/api/export/${project.id}/xml?dimensionId=${entity.id}`);
+      expect(entityExport.status).toBe(200);
+      expect(await entityExport.text()).toContain("<OneStreamXF");
+
+      // Per-dimension export for the broken Account dimension should be blocked
+      const accountExport = await fetch(`${baseUrl}/api/export/${project.id}/xml?dimensionId=${account.id}`);
+      expect(accountExport.status).toBe(409);
+      expect(await accountExport.json()).toMatchObject({
+        error: "Export blocked by dimension validation issues",
+        blocked: true,
+        blockedSeverities: ["error"],
+        issueCounts: { error: 1, warning: 0, info: 0 }
+      });
+    });
+  });
+});
+
 async function withServer(config: AppConfig, run: (context: TestServerContext) => Promise<void>): Promise<void> {
   const db = createDatabase(":memory:");
   const server = createApp(db, config).listen(0);

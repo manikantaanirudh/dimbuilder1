@@ -69,6 +69,32 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     }
   });
 
+  router.delete("/:projectId", (req, res) => {
+    const project = repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    repos.projects.delete(project.id);
+    res.status(204).end();
+  });
+
+  router.patch("/:projectId", (req, res) => {
+    const project = repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const body = req.body ?? {};
+    const updated = repos.projects.update(project.id, {
+      name: body.name,
+      description: body.description
+    });
+    repos.audit.record({
+      projectId: project.id,
+      action: "project.rename",
+      entityType: "project",
+      entityId: project.id,
+      before: { name: project.name, description: project.description },
+      after: { name: updated!.name, description: updated!.description }
+    });
+    res.json(updated);
+  });
+
   router.get("/:projectId/summary", (req, res) => {
     const project = repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
@@ -79,6 +105,34 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     const project = repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.snapshots.listByProject(project.id));
+  });
+
+  router.post("/:projectId/snapshots", (req, res, next) => {
+    try {
+      const project = repos.projects.get(req.params.projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+      const body = req.body ?? {};
+      const name = String(body.name ?? "").trim() || `Save ${new Date().toISOString()}`;
+      const description = String(body.description ?? "");
+      const snapshotState = repos.snapshots.buildState(project.id);
+      const snapshotId = repos.snapshots.create({
+        projectId: project.id,
+        name,
+        description,
+        snapshot: snapshotState,
+        createdBy: "local-admin"
+      });
+      repos.audit.record({
+        projectId: project.id,
+        action: "snapshot.create",
+        entityType: "snapshot",
+        entityId: snapshotId,
+        after: { name }
+      });
+      res.status(201).json({ id: snapshotId, name });
+    } catch (error) {
+      next(error);
+    }
   });
 
   router.get("/:projectId/snapshots/:snapshotId", (req, res) => {
@@ -154,6 +208,12 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
   });
 
   router.get("/:projectId/dimensions/:dimensionId/members", (req, res) => {
+    const idsParam = typeof req.query.ids === "string" ? req.query.ids.trim() : "";
+    if (idsParam) {
+      const ids = idsParam.split(",").map(id => id.trim()).filter(Boolean);
+      const rows = repos.members.listByIds(req.params.dimensionId, ids);
+      return res.json({ rows, total: rows.length });
+    }
     const offset = Math.max(0, Number(req.query.offset ?? 0));
     const limit = Math.min(1000, Math.max(1, Number(req.query.limit ?? 200)));
     res.json({
@@ -204,6 +264,12 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
   });
 
   router.get("/:projectId/dimensions/:dimensionId/relationships", (req, res) => {
+    const idsParam = typeof req.query.ids === "string" ? req.query.ids.trim() : "";
+    if (idsParam) {
+      const ids = idsParam.split(",").map(id => id.trim()).filter(Boolean);
+      const rows = repos.relationships.listByIds(req.params.dimensionId, ids);
+      return res.json({ rows, total: rows.length });
+    }
     const offset = Math.max(0, Number(req.query.offset ?? 0));
     const limit = Math.min(1000, Math.max(1, Number(req.query.limit ?? 200)));
     res.json({
@@ -757,6 +823,31 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
 
   router.get("/:projectId/issues", (req, res) => {
     res.json(repos.issues.listByProject(req.params.projectId));
+  });
+
+  router.get("/:projectId/validation-config", (req, res) => {
+    const project = repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const overrides = repos.validationOverrides.listByProject(project.id);
+    res.json({ overrides });
+  });
+
+  router.post("/:projectId/validation-config", (req, res) => {
+    const project = repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const overrides = req.body?.overrides;
+    if (!Array.isArray(overrides)) return res.status(400).json({ error: "overrides must be an array" });
+    for (const override of overrides) {
+      if (!override.ruleCode || !override.severity) continue;
+      if (override.severity === "default") {
+        repos.validationOverrides.deleteByProject(project.id, override.ruleCode);
+      } else {
+        repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
+      }
+    }
+    repos.audit.record({ projectId: project.id, action: "validation.configUpdate", entityType: "project", entityId: project.id, after: { overrides } });
+    const result = repos.validationOverrides.listByProject(project.id);
+    res.json({ overrides: result });
   });
 
   return router;
