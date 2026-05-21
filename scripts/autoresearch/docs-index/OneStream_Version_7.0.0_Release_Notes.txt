@@ -1,0 +1,116 @@
+OneStream Release
+Notes
+7.0.0Release
+
+Copyright ©2022OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,.NETFramework, Internet
+Explorer, InternetInformation Server,Windows Communication Foundation andSQLServerare
+registered trademarks ortrademarks ofMicrosoft Corporation intheUnitedStatesand/orother
+countries. DevExpress isaregistered trademark ofDeveloper Express, Inc.Ciscoisaregistered
+trademark ofCiscoSystems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark
+ofAdvanced MicroDevices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+7.0.0Release NotesOneStream 1
+Introduction 1
+Important Notes 1
+Prerequisites 1
+Compatibility andImportant Notices 1
+Enhancements andNewFeatures 2
+Fixed 3
+KnownIssues 3
+ContactSupport 4
+OneStream Release Notes iTableofContents
+7.0.0Release NotesOneStream
+Introduction
+OneStream 7.0.0isamajorreleasecontaining newfeatures andenhancements toexisting
+features.
+Important Notes
+Prerequisites
+RefertoUpgrade OneStream forimportant noticesanddetailsregarding planning yourupgrade.
+Compatibility andImportant Notices
+SeeUpgrade OneStream forinformation oncompatibility oftheOneStream Studioand
+OneStream ExcelAdd-inversions.
+Microsoft isformallyretiringInternetExplorer (IE)inJune2022,andthiseffectsallversions when
+IEisdisabled insideofyourorganization. Wemadechanges tothelasttwofeatures thatusedIE.
+SeeUpgrade OneStream.
+Asofthe6.8release, OneStream usesMicrosoft .NET4.8.
+OneStream 7.xwillbethefinalreleaseseriesthatincludes theOneStream StudioClientwhichis
+usedforcustomreportdevelopment. Afterthe7.xseries,futurereleases willeliminate theneedto
+installStudioClient.Reportdesigners willberequired tousetheReportDesigner inthe
+Dashboard ReportComponent feature.
+Duetoevolving regulatory requirements aswellasnewsecurityvulnerabilities inTLS1.0/1.1,
+OneStream recommends thatcustomers removeTLS1.0/1.1dependencies intheirenvironments
+anddisableTLS1.0and1.1attheoperating systemlevelwherepossible. Allclientoperating
+systems thatuseOneStream software andservices mustbesettosupportuseofTLS1.2.This
+includes anyauthentication endpoints beingusedforlogintoOneStream API’saswellas
+OneStream clientssuchastheDesktop clientorExcelAdd-In.Anyconnection attempts using
+TLSversions belowTLS1.2willresultinafailuretoconnect.
+OneStream Release Notes 1TableofContents
+Startingwith7.0,allOneStream serverandclientcomponents aresignedwithanEVCode
+SigningCertificate. EVCertificates canberefreshed morefrequently withoutanydisruption or
+impacttoend-userssoyoucanhaveevengreaterconfidence thatthecodeyoureceived hasnot
+beenalteredorcompromised byathirdparty.Theyautomatically gaintrustedstatusonthe
+Microsoft Defender SmartScreen® Reputation filter,therebyreducing warningmessages.
+Enhancements andNewFeatures
+lComponents thatallowembedding awebpageorfileinsideofOneStream pageare
+switching fromusingIE7toMicrosoft EdgeWebView2. Theswitchisnecessary as
+Microsoft isendingsupportforIE.(PF1-6755)
+lTableViewshavebeenaddedtotheExcelAdd-In.(PF1-6779)
+lParameters aresequential andwillberesolved inthesamedialogue box.(PF1-6779)
+lExcelAdd-InandSpreadsheets “SubmitSheet”submitschanged dataonlyfortheactive
+sheetforCubeViews,QuickViews,XFSetCells, andTableViews.Selecting “Refresh
+Sheet”prompts youwithanyParameters usedontheactivesheet.Selecting “Refresh
+Workbook” prompts youwithalltheParameters usedintheworkbook. Selecting “Submit
+Sheet”or“SubmitWorkbook” nolongerprompts youforParameter values.(PF-21708)
+lOneStream component installers, exceptforStudio,haveswitched fromEXEexecutable
+filestoMSIinstallation packages startingwithrelease7.0.0.TheMSIpackages provideyou
+equivalent capabilities oftheprevious EXEexecutables, butoffermorereliableremote
+management ofdeployments. (PF1-6499)
+lWhenyouupgrade fromversion6.8.1orprior,youneedtouninstall theexisting
+OneStream Desktop clientifyoudonotwanttohavebothversions installed. Deploying the
+MSIwithoutuninstalling theexistingEXEversionwillresultintwoinstalled instances of
+different versions. (PF1-6499)
+lWhenupgrading fromversion6.8.1orprior,youcandecidetodeploytheMSIsilentlyor
+GPO,theexistingExceladd-inmustfirstbeuninstalled. Thisiseitherdonemanually on
+eachmachine, orsilentlythroughtheuninstall ISSfiledelivered withthatversion’s
+installation package. Ifyounormally uninstall andinstallmanually, youcanfollowthe
+normalprocess. Ifyouupgrade usingtheClientUpdater insidetheOneStream Desktop
+Client,youcanfollowthenormalprocess. (PF1-6499)
+OneStream Release Notes 2TableofContents
+lForselfhostedenvironments usingservercomponents, youcanupgrade fromanyversion
+byuninstalling andinstalling. (PF1-6499)
+lDrill-backtoBrowser allowsyoutonavigate tothetransactional recordinitsweb-based
+sourcesystemwithafewclicks.Whenneeding toreviewadditional detailsaboutimported
+transactional datathatisinthesourcesystem,thedrillbackcapability navigates youtoa
+URLusingyourdefaultwebbrowser outsideofOneStream anddirectlytotherecordinits
+sourcesystem.(PF1-6408)
+lWhitelist FileExtensions provideamethodofidentification ofdocuments, according totheir
+fileextensions, thatcanbesavedintotheOneStream application fileexplorer. Whitelist
+extensions helpalleviate theriskofuploading malicious filetypes.(PF1-6382)
+Fixed
+lThedefaultstateofListandTreeViewfiltersinsideaBIViewerdashboard nowhasall
+optionsselected toaccurately reflectdatathatisfilteredwhenthedashboard isinitially
+launched.
+(PF1-6761)
+lTheHybridScenario Pre-aggregated Members settingcannowbeusedwiththeMember
+FiltersandMember FilterstoExclude settings. (PF1-6940)
+KnownIssues
+lYoureceiveanerroraccessing theOneStream Launchpageifyouloginwithanexternal
+useraccountthatwasnotaddedtoanapplication. (PF2-7960)
+Toresolvethisissueeither:
+oHaveanAdministrator addtheaccounttotheapplication.
+oSignoutofyourexternal identityprovider andlogintotheapplication asanotheruser.
+lUsingthird-partylibrariesinbusiness rulescausescompileerrors.Thesolutiondepends on
+ifunsupported NameSpaces areusedinabusiness rulefileormember formula. Seethe
+Upgrade Guide.(PF2-8996)
+OneStream Release Notes 3TableofContents
+Contact Support
+TocontactOneStream support, firstregisteratoursupportsite
+http://support.onestreamsoftware.com andthenemailsupport@onestreamsoftware.com .
+OneStream Release Notes 4TableofContents

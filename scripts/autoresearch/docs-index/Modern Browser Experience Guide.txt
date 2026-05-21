@@ -1,0 +1,1655 @@
+Modern  Browser  
+Experience  Guide
+9.2.0  Release
+
+Copyright  © 2025  OneStream  Software  LLC.  All rights  reserved.
+All trademarks,  logos,  and brand  names  used  on this website  are the property  of their respective  
+owners.  This document  and its contents  are the exclusive  property  of OneStream  Software  LLC 
+and are protected  under  international  intellectual  property  laws.  Any reproduction,  modification,  
+distribution  or public  display  of this documentation,  in whole  or part, without  written  prior consent  
+from OneStream  Software  LLC is strictly  prohibited.
+Table  of Contents
+About  This Guide 1
+Modern  Browser  Experience  Overview 2
+New Features  and Functionality  in Modern  Browser  Experience  
+Version  9.2.0 3
+Functional  Capabilities 3
+Cube  Views 4
+Access  the Modern  Browser  Experience 5
+Authentication 5
+Functional  Capabilities 6
+Intuitive  User  Experience 6
+Log In 6
+Log Out 7
+Change  Applications 8
+Header 8
+Modern Browser Experience Guide iTable ofContents
+OnePlace  Panel 10
+File Explorer 11
+Grids 12
+Anchored  Dialogs 13
+Timeout 14
+Smart  Links 15
+Accessibility 16
+Workflow 17
+Navigation 17
+Workflow  Breadcrumbs 20
+Supported  Workflow  Functionality 21
+Workflow  Steps 21
+General  Workflow  Functionality 21
+Notable  Differences  from Windows  Application 22
+Notable  Workflow  Functionality  Gaps 24
+Workflow  Steps 24
+Modern Browser Experience Guide iiTable ofContents
+General  Workflow  Functionality 24
+Navigating  Workflow  Step Gaps 25
+Cube  Views 26
+Supported  Cube  View  Functionality 26
+Presentation 26
+Toolbar  Functions 27
+Cube  View  and Cell-Level  Context  Menu  Functions 27
+Cube  View  Navigation 28
+Cube  View  Drill Down 28
+Cube  View  Designer 29
+User  Experience  Differentiators 32
+Unsupported  Cube  View  Functionality 33
+Accessibility 34
+Dashboards 36
+Enabling  Dashboard  Access 36
+Notable  Differences  from Windows  Application 38
+Modern Browser Experience Guide iiiTable ofContents
+Dashboard  Components 38
+BI Viewer 38
+BI Viewer  Designer 39
+Embedded  Dashboards 40
+Text Box 43
+Grid View 43
+SQL Table  Editor 43
+Grid Keyboard  Functionality 44
+Large  Data  Pivot  Grid & Pivot  Grid 44
+Advanced  Charts 46
+Text Editor 47
+Filter  Editor 47
+Maps 47
+Menu 47
+Spreadsheet 48
+Web Content 48
+Modern Browser Experience Guide ivTable ofContents
+Notable  Dashboard  Functionality  Gaps 49
+Dashboard  Layouts 49
+Dashboard  Components 49
+Navigating  Dashboard  Gaps 49
+Dashboard  Design  Process 52
+Dashboard  Accessibility  Design  Approaches 52
+Multi- client/Device  Dashboard  Design  Approaches 54
+Approach  1: Unified  Multi- client/Device  Dashboards 54
+Approach  2: Client/Device  Specific  Dashboards 55
+Approach  3: Client/Device  Adaptive  Dashboards 55
+Documents 56
+POV 59
+Additional  Features 59
+Modify  a POV 59
+Save  a POV 60
+Apply  a Saved  POV 61
+Modern Browser Experience Guide vTable ofContents
+Appendix  A: Advanced  Charts 62
+Configuration  Properties 63
+Appendix  B: Spreadsheet  Features  and Functionality 64
+Supported  Spreadsheet  Features  and Functionality 64
+Unsupported  Spreadsheet  Features  and Functionality 66
+Appendix  C: Supported  Number  Formats 68
+Appendix  D: Smart  Link APIs 69
+Create  Smart  Link 69
+Retrieve  Smart  Link 71
+Delete  Smart  Link 72
+Modify  Smart  Link 73
+Appendix  E: Component  Keyboard  Controls 75
+Modern Browser Experience Guide viTable ofContents
+About  This Guide
+This guide  introduces  the Modern  Browser  Experience  and highlights  the end user benefits  and 
+functional  differences  of using  OneStream's  web- accessible  interface.  This guide  is intended  to:
+ lFamiliarize  OneStream  end users,  power  users,  administrators,  partners,  and consultants  
+with the supported  functionality,  features,  and interfaces  in the Modern  Browser  
+Experience.
+ lProvide  the prerequisites  and directions  for implementing  the Modern  Browser  Experience  
+in a customer  environment.
+ lProvide  high- level information  describing  features,  capabilities,  general  usage  patterns,  
+end-user flows,  and best practices  unique  to the Modern  Browser  Experience.
+ lExplain  the functional,  technical,  and visual  differences  between  the Modern  Browser  
+Experience  and the Windows  application.
+Modern Browser Experience Guide 1About This Guide
+Modern  Browser  Experience  
+Overview
+Welcome  to the Modern  Browser  Experience,  OneStream ’s latest,  web- based  offering  that is 
+Generally Available  on OneStream  Platform  Version  8.4.0  or later.  The Modern  Browser  
+Experience  works  alongside  the existing  OneStream Windows  application,  giving  users  more  
+flexibility  by providing  them  with a way to access  their data from a web browser  on a wide range  of 
+devices.  OneStream in the browser  delivers  a streamlined,  modernized  experience  that strives  to 
+provide  comprehensive  coverage  of end user features.  With a strong  foundation  developed  
+utilizing  contemporary  concepts  and technologies,  the Modern  Browser  Experience  introduces  a 
+suite  of innovative  designs  and improved  solutions.
+All OneStream  Solution s should  render  in the Modern  Browser  Experience.  To find out which  
+solutions  are officially  supported,  refer to solution  documentation.  Additionally,  functionality  
+provided  through  the System  and Application  Tabs  is not yet available  through  the browser.
+The following  sections  highlight  benefits,  explore  differences,  and provide  current  limitations  to 
+help customers  and partners  evaluate  the browser  experience  for their business  needs. 
+For requirements,  see Hardware  and Software  requirements  in the Installation  guide.
+For more  information  on the installation  process,  see the  Installation  Guide.
+For information  on prerequisites  for self-hosted  environments,  refer to the Legacy  Authentication  
+section  in the Upgrade  Guide.
+Modern Browser Experience Guide 2Modern Browser Experience Overview
+New Features  and Functionality  in 
+Modern  Browser  Experience  
+Version  9.2.0
+Modern  Browser  Experience  Version  9.2.0  introduces  new features  across  the platform  and 
+includes  a variety  of bug fixes,  performance  improvements,  and security  and privacy  
+enhancements.
+Functional  Capabilities
+Feature Description
+Accessibility Implemented  significant  enhancements  to support  screen  reader  
+software  and related  keyboard  controls.  Added  an Accessibility  toggle  
+that applies  ADA- compliant  colors  and patterns  to certain  Cube  View  
+cells,  enhancing  visibility  for users  with limited  color  perception  while  
+preserving  the default  experience  for others.  See Appendix  E for a 
+comprehensive  list of supported  keyboard  controls.  See Dashboard  
+Accessibility  Design  Approaches  for more  information  on accessible  
+dashboard  design  strategies.
+Dynamic  Grids Dynamic  Grids  have  been  implemented,  providing  designers  with a 
+fully customizable,  exceptionally  performant  grid component  for 
+dashboards.
+Modern Browser Experience Guide 3New Features andFunctionality inModern Browser Experience Version 9.2.0
+Cube  Views
+Feature Description
+Cube  View  
+DesignerThe Cube  View  Designer  has been  updated  with an improved  look and feel, 
+enabling  more  intuitive  interaction  with on-screen  elements  and fields.  Users  
+can now save  a new cube  view directly  from the Cube  View  Designer.  This 
+enhancement  allows  users  to save  a modified  design  as a new,  separate  
+cube  view.  See Cube  View  Designer  for more  information.
+Modern Browser Experience Guide 4New Features andFunctionality inModern Browser Experience Version 9.2.0
+Access  the Modern  Browser  
+Experience
+The browser  URL structure  uses  a company  subdomain  (for example,  
+https://cloudsitename.onestreamcloud.com).  OneStream  recommends  using  Chrome,  Edge,  or 
+Safari  to access  the Modern  Browser  Experience.
+Authentication
+For OneStream  hosted  environments,  OneStream  IdentityServer  (OIS)  technology  enables  
+browser  users  to authenticate  through  a browser  and enables  administrators  to set up online  
+environments  to use native  IDs or an identity  provider  (IdP).  For more  information  on 
+authentication  using  OIS, see the Identity  and Access  Management  Guide.
+Setup  and configuration  of the Modern  Browser  Experience  may vary based  on how your 
+environments  are hosted.  For self-hosted  environments,  users  can authenticate  into the browser  
+using  their existing  authentication  method.  Additional  instructions  for self-hosted  authentication  
+can be found  in the Installation  Guide.
+Modern Browser Experience Guide 5Access theModern Browser Experience
+Functional  Capabilities
+This section  explores  foundational  capabilities  and general  features  of the Modern  Browser  
+Experience,  and highlights  the notable  differences  between  the browser  and Windows  
+application.
+Intuitive  User  Experience
+Log In
+The Modern  Browser  Experience  is accessed  through  a web browser  instead  of using  a Windows  
+shortcut  or ClickOnce  to open  a local instance  of OneStream . You can use bookmarked  URLs  to 
+navigate  to the browser.  Once  successfully  authenticated,  you can select  an application  from the 
+drop- down  menu  and click the LOG IN  button  to access  OneStream .
+The browser  environment  can be accessed  using  a custom  URL.  For example,  
+https://cloudsitename.onestreamcloud.com.  Once  the initial  login  screen  has loaded,  users  can 
+enter  a username  and click the Next button  to authenticate  through  their Single  Sign- On (SSO)  
+provider.  
+Modern Browser Experience Guide 6Functional Capabilities
+Following  successful  authentication,  the user will either  be:
+ lRedirected  to the Login  Agreement  page  (if applicable).
+ lRedirected  to an application  (if only one application  is accessible).
+ lRedirected  to the Application  Selection  page  (if more  than one application  is accessible).
+Log Out
+Users  can log out from the Application  Selection  page  or by selecting  Log Out from the User  
+Menu.
+Modern Browser Experience Guide 7Functional Capabilities
+Logging  out of the Modern  Browser  Experience  will not log out users  from their other  open  
+instances  of OneStream , such  as the Windows  application  or Excel  Add- In, nor will it log out users  
+from their SSO  sessions.
+Change  Applications
+Select  Change  Application  from the User  Menu  to display  the Application  Selection  page  and 
+change  the current  application.
+Header
+The Modern  Browser  Experience  provides  a familiar  header  area and updated  OnePlace  panel  
+which  can be accessed  at any time while  using  the browser  application.  Similar  to the Windows  
+application,  the header  has a Home  button  embedded  in the OneStream  logo and displays  the 
+Application  Name.  Other  header  functionality  has been  moved  to two menus  in the top right 
+corner  of the screen.
+Modern Browser Experience Guide 8Functional Capabilities
+ l
+ Gear  Icon – Application  Name,  Global  POV,  Version  Number,  Help 
+Documentation,  Task  Activity,  File Explorer
+ l
+ User  Icon – User’s  Name,  Change  Application,  Set/Clear  Home  Page,  
+Accessibility,  Log Out
+The OnePlace  Panel  can be fully collapsed,  opened  to display  Navigation  controls,  or expanded  
+as an overlay  when  working  with any of the menu  areas.
+NOTE:  The OnePlace  panel  may be fully hidden  for certain  users  using  security  
+settings.
+Modern Browser Experience Guide 9Functional Capabilities
+OnePlace  Panel
+Hide  OnePlace  Panel
+The OnePlacePane  security  role can be used  to hide the Navigation  panel.  This configuration  has 
+been  added  under  Security  Roles  to enable  or disable  end user access  to the OnePlace  
+navigation  panel.  Note  that the Modern  Browser  Experience  does  not provide  a user interface  to 
+facilitate  configuring  and applying  security  roles  at this time.
+Navigate  OnePlace  Panel
+Users  can click a tile on the OnePlace  toolbar  to expand  the flyout  panel  and access  related  end 
+user options  and features.  The drop- down  menu  at the top of each  panel  can be used  to easily  
+navigate  through  all of the OnePlace  panels.
+Modern Browser Experience Guide 10Functional Capabilities
+File Explorer
+File Explorer  is used  to manage  all OneStream  files and saved  POVs.  The File Explorer  dialog  
+can be opened  by selecting  the File Explorer  option  from the Tools  menu  in the application  
+header.  File Explorer  functionality  is fully supported  in the Modern  Browser  Experience  and 
+primarily  located  on the dialog  toolbar.
+ 
+Modern Browser Experience Guide 11Functional Capabilities
+Grids
+While  the browser  grids  offer the same  functionality  as the Windows  application,  some  differences  
+were  added  to improve  the user experience.  Many  of the grids  have  virtual  scrolling  instead  of 
+paging  to handle  large  datasets.  In addition  to the Sorting,  Filtering,  and Column  controls  found  in 
+the Windows  application,  the browser  experience  has added  a column  Lock  feature,  which  allows  
+users  to lock in place  any column  and the columns  to its left, while  being  able to scroll  the 
+remaining  columns  horizontally.   Many  of the grids  will also have  a context  menu  button  
+  in the 
+left corner  of the grid header  with additional  functionality.  See Appendix  C for a list of supported  
+Number  Formats.
+Modern Browser Experience Guide 12Functional Capabilities
+Anchored  Dialogs
+Many  of the dialog  boxes  display  in a slide- out panel  anchored  to the right side of the page  instead  
+of the floating  dialogs  used  in the Windows  application.  This paradigm  offers  improved  visibility  
+and provides  consistency  for users  accessing  the browser  from various  devices.  Slide- out panels  
+can be expanded  or constricted  to suit user preference  by dragging  the left edge  horizontally  
+across  the page.
+Modern Browser Experience Guide 13Functional Capabilities
+This anchored  dialog  box has been  extended  to dashboards  that appear  in dialog  boxes.  There  is 
+a larger  default  width  compared  to the Windows  application,  but the width  can be altered  with the 
+dialog  box display  format  configurations.  Since  these  dialog  boxes  are always  the full height  of the 
+screen,  the height  configuration  for dashboards  in dialog  boxes  are ignored.
+Timeout
+A warning  for users  who are about  to be logged  off due to inactivity  will now be displayed  in a 
+floating  dialog  two minutes  prior to timeout,  providing  users  with the ability  to extend  their session  
+or log off. The length  of idle time allowed  for a user can be configured,  but the two-minute  warning  
+threshold  is not currently  adjustable.
+Modern Browser Experience Guide 14Functional Capabilities
+Smart  Links
+Smart  Links  are designed  to make  it easy  to share  dashboards.  Built with a combination  of 
+security- aware  features  and declarative  parameters,  these  links can open  dashboards  to specific  
+pages  or mimic  a series  of clicks.
+Smart  Links  are generated  and stored  for a set period  using  a Business  Rule.  To access  a shared  
+link, users  will simply  click a hyperlink  or paste  the URL into a browser.  On access,  the Smart  Link 
+will:
+ lVerify  if the user is logged  in (if not, remain  active  through  the login  process)
+ lCheck  if the user has access  to the shared  dashboard
+ lVerify  the dashboard  can be rendered  on the user’s  device
+Modern Browser Experience Guide 15Functional Capabilities
+ lSupply  the dashboard  with any declared  parameters
+ lPrompt  the user for any undeclared  parameters
+ lRender  the dashboard
+Example  Smart  Link URL:  https://example.onestream.com/share/  
+E1C52337EEE9430EAAF52D6A5846109B/DashboardProfile/Dashboard
+To get started,  review  the code  snippets  in Appendix  D.
+Accessibility
+Interfaces,  features,  and functionality  provided  in the Modern  Browser  Experience  have  been  
+enhanced  to thoroughly  and effectively  support  the industry- standard  Web Content  Accessibility  
+Guidelines  (WCAG)  established  by the World  Wide  Web Consortium  (W3C).
+Modern Browser Experience Guide 16Functional Capabilities
+Workflow
+Workflow  on the browser  delivers  the same  functionality  offered  in the Windows  Application  with a 
+few notable  exceptions  mentioned  below.  Some  tactical  user experience  improvements  have  
+been  made,  while  primarily  focusing  on delivering  the functionality  of the workflow  steps.
+Navigation
+Similar  to the Windows  Application,  Workflows  are accessed  through  the OnePlace  panel.  Users  
+are able to modify  the Workflow  POV  by selecting  the edit icon next to each  dimension  and 
+navigate  between  Workflow  Units  under  Time  Periods.  It is important  to note a few differences  
+between  the browser  and the Windows  Application:
+ lThe Workflow  POV  Edit menu  is displayed  as an overlay  menu,  instead  of a pop-up dialog.  
+Users  are able to update  Workflow,  Scenario,  and Year  using  the available  tabs.  A Save  
+button  at the top of the section  finalizes  any changes.
+Modern Browser Experience Guide 17Workflow
+ lThe new Focus  View  function  allows  users  to view only the selected  time period.  In the 
+example  below,  a user chose  to view only June  to simplify  navigation.  To return  to the full 
+list, simply  disable  the Focus  View  toggle.
+Modern Browser Experience Guide 18Workflow
+Status  Icons  have  been  updated,  and in some  cases,  combined  to make  a more  intuitive  user 
+experience.
+Modern Browser Experience Guide 19Workflow
+Workflow  Breadcrumbs
+You can navigate  to a specific  month,  time period,  scenario,  or workflow  step of your choosing  
+from the workflow  navigation  feature.  Selecting  an option  will take you to the corresponding  step.  
+A new drop- down  menu  in the Workflow  page  title bar allows  users  to quickly  toggle  between  
+Workflow  Steps  in a Time  Period.
+Modern Browser Experience Guide 20Workflow
+Supported  Workflow  Functionality
+Workflow  Steps
+ lBlend  lJournal  Input
+ lCertify  lLoad
+ lConfirm  lPre-Process
+ lDirect  lProcess
+ lForm  lValidate
+ lImport  lWorkspace
+General  Workflow  Functionality
+ lDrill Back  lTime  Range  Periods
+ lDrill Down  lView  Transformation  Rules
+ lAnalysis  Area  lView  Processing  Log
+ lApplication  Configurations  lView  Source  Document
+ lIntercompany  Matching  lTime  Period  Actions
+ lMulti- Period  Processing  lDependent  Actions
+Modern Browser Experience Guide 21Workflow
+Notable  Differences  from  Windows  
+Application
+ lJournals  - The Journal  Input  page  in the Modern  Browser  Experience  utilizes  an updated  
+layout  that is different  from design  used  in the Windows  application  but intended  to improve  
+the user experience  and increase  productivity.  Refer  to the screenshot  and list below  to 
+review  specific,  key differences  between  the two interfaces.
+ o1 - Journal  Template  appears  in collapsible  pane.
+ o2 - Entities  appear  in upper  grid.
+ o3 - Journals'  Grid now appears  above  the Journal  details.
+ o4 - Paging  on Journals'  Grid.
+ o5 - Journal  details  appear  below  the Journals'  Grid.
+ o6 - Journal  header  settings  appear  in collapsible  drown- downs.
+ o7 - Journal  Header.
+Modern Browser Experience Guide 22Workflow
+ o8 - Journal  Line Items.
+ o9 - Paging  on journal  line items.
+ lWorkflow  Page  Styling  – Workflow  Title,  Workflow  Steps,  Grids,  Status  Area,  and Analysis  
+Area.
+ lStatus  Icons  – Consistent  with the OnePlace  panel,  the Workflow  status  icons  have  been  
+simplified  in the browser  to make  a more  intuitive  user experience.
+ l
+ lWorkflow  Progress  Buttons  – Now displayed  on the right side of the screen,  the progress  
+buttons  have  been  updated  with new icons  and borders  to improve  visibility.
+ lDrag  and Drop  File Import  – Files  can be imported  by selecting  from your device  or using  a 
+new drag and drop feature.
+Modern Browser Experience Guide 23Workflow
+ lContext  Menus  for Grids  – All Workflow  Grid functions  have  been  moved  from right- click 
+menus  to a context  menu  in the header  of each  grid.
+ lRename  Journal  – You can rename  journals  by editing  the Journal  Name  property  in the 
+journal  header,  instead  of a rename  button  and dialog.
+Notable  Workflow  Functionality  Gaps
+Workflow  Steps
+ lManage  Workflow
+General  Workflow  Functionality
+ lEdit Transformation  Rules
+Modern Browser Experience Guide 24Workflow
+Navigating  Workflow  Step  Gaps
+Helpful  tips have  been  added  to the browser  experience  to identify  unsupported  workflow  steps  
+for both dashboard  designers  and end users.  Coming  Soon  icons  indicate  a workflow  step is not 
+currently  supported.
+Even  if all steps  are supported  in each  workflow,  thorough  testing  is still recommended  to ensure  
+processes  are working  as expected  before  production  use.
+Modern Browser Experience Guide 25Workflow
+Cube  Views
+Cube  views  are flexible  reporting  artifacts  that enable  cube  data to be presented  and edited  in 
+various  ways  by utilizing  security,  configuration,  and formatting  properties,  member  formulas,  and 
+calculations.
+Nearly  all cube  view features  provided  in the Windows  Application  are available  to users  of the 
+Modern  Browser  Experience.  For cube  views  that utilize  features  or functionality  that have  not yet 
+been  implemented,  or in cases  when  variations  arise  due to technical  differences  between  
+desktop  and web- based  applications,  there  may be configuration  changes  or workarounds  that 
+can be leveraged  until functional  gaps  can be closed.
+For Cube  View  keyboard  controls,  see Appendix  E: Component  Keyboard  Controls .
+Supported  Cube  View  Functionality
+Presentation
+ lCube  View  and Export  Format  Configuration  Properties
+ lCell Data  Types
+ lCell Status  Background  Colors
+ lRow and Column  Sharing
+ lNested  and Expandable  Column  and Row Headers
+Modern Browser Experience Guide 26Cube Views
+Toolbar  Functions
+ lContext  Menu  Dropdown
+ lSave  and Revert  Changes
+ lData  Refresh
+ lParameter  Selection
+Cube  View  and Cell- Level  Context  Menu  Functions
+ lCalculate,  Translate,  Consolidate
+ lData  Attachments
+ lSpreading
+ lCell Detail
+ lCell POV  Information
+ lData  Unit Statistics
+ lCell Status
+ lDrill Down
+ lRow Suppression
+ lExport
+ lCube  View  and Dashboard  Navigation  Links
+Modern Browser Experience Guide 27Cube Views
+Cube  View  Navigation
+The General  Visibility  setting  in Cube  View  profiles  will be applicable  for cube  views  and the 
+Windows  application  (OnePlace,  Workflow,  and Dashboards).  The Client/Device  Visibility  setting  
+in Dashboard  profiles  will also affect  access  to embedded  cube  views  or data explorer  
+components  in Dashboards.  See Dashboards .
+Cube  View  Drill Down
+The Drill Down  interface  has been  moved  from a page  tab into a slide- out panel.  You can drill 
+down  into cube  data from a cell intersection  by right- clicking  the cell and selecting  Drill Down  
+from the cube  view context  menu.  The cube  view drill down  interface  opens  in a slide- out panel,  
+which  can be resized  horizontally.
+Currently,  only the Open  in Panel  option  is supported.  The Open  in New Tab option  will be 
+considered  in a future  release.
+A context  menu  was also added  to the toolbar  on the Drill Down  page  to consolidate  some  
+functionality  in a way that better  supports  different  screen  sizes  and devices.
+A hidden  context  menu  for drill down  has been  implemented  to consolidate  key drill down  
+functions,  such  as Load  Results  for Imported  Cell and Audit  History  for Forms  or Adjustment  
+Cells.
+Modern Browser Experience Guide 28Cube Views
+Cube  View  Designer
+The Cube  View  Designer  is a new feature  in the Modern  Browser  Experience  that is based  closely  
+on the design  of the Cube  View  Designer  in the Windows  application.  However,  the Cube  View  
+Designer  in the Modern  Browser  Experience  is accessed  from pre-existing  cube  views  and 
+provides  users  with the ability  to see the underlying  configurations  that define  the structure  and 
+presentation  of the originating  cube  view.  Users  can edit those  configurations  and preview  their 
+changes  directly  from the designer,  and administrators  can save  their design  updates  to the 
+originating  cube  view.
+Users  with the appropriate  privileges  can open  the Cube  View  Designer  by selecting  the option  
+from the cube  view toolbar  and hidden  context  menu.  When  the Cube  View  Designer  dialog  is 
+opened,  a copy  of the originating  cube  view is rendered  in the dialog.  Users  can view and/or  edit 
+the row and column  layout,  expansion  levels,  member  filters,  display  format  definitions,  data 
+configuration  settings,  and general  row and column  templates.  Please  note the following  
+differences  between  the Windows  application  and browser  designer  interfaces:
+ lCube  POV  can be found  under  the Member  Filters  tab. The POV  applies  to the entire  cube  
+view.
+ lCube  View  Row/Column  Sharing  settings  can be found  under  the Sharing  tab when  the 
+Default  cell is selected  in the layout  grid. These  sharing  settings  apply  to the entire  cube  
+view.  Users  must  enter  cube  view template  names  manually  as the object  look- up dialog  
+has not yet been  implemented  in the designer.  Specific  row/column  sharing  settings  are not 
+currently  available  to edit or view in the designer.
+ lDisplay  formatting  settings  must  be entered  manually  in the designer  as the formatting  
+dialogs  have  not yet been  implemented  for this feature.
+ lShortcut  Cube  View  Names  must  be entered  manually  in the designer  as the object  lookup  
+dialog  has not yet been  implemented  for this feature.
+Modern Browser Experience Guide 29Cube Views
+Once  changes  have  been  made  to any of the available  configurations  in the designer,  the Preview  
+button  can be used  to process  those  changes  and render  the new,  temporary  design  of the cube  
+view in the left panel  of the dialog.  The Preview  function  does  not change  the configuration  of the 
+originating  cube  view but instead  provides  users  with a way to quickly  see how their changes  
+would  impact  the design  and presentation  of the cube  view.  After  previewing  changes,  users  can 
+make  further  updates  and preview  the temporary  cube  view again  or use the Revert  button  at any 
+time to revert  settings  back  to the last saved  version  of the original  cube  view.
+Users  with the appropriate  security  privileges  can use the Publish  feature  to create  or overwrite  a 
+cube  view using  the configuration  settings  defined  in the designer.  Clicking  on the Publish  button  
+opens  a menu  with options  to Save  or Save  As.
+Modern Browser Experience Guide 30Cube Views
+ lSelecting  Save  will overwrite  settings  in the original  cube  view definition  with the settings  
+specified  in the designer.
+ lSelecting  Save  As will open  a dialog  that provides  users  with the option  to enter  a name,  
+description,  and/or  cube  view group  and save  the modified  configuration  in the designer  as 
+a new cube  view.  Users  can select  a cube  view group  from the drop- down  menu  to review  
+the group  details  and associated  cube  views  in the two panels  below  Settings.
+Modern Browser Experience Guide 31Cube Views
+User  Experience  Differentiators
+Row virtualization  has been  implemented  to efficiently  retrieve  and render  large  datasets  for Cube  
+Views.  Row virtualization  retrieves  data to display  as the user scrolls  vertically  through  Cube  View  
+pages,  improving  performance  of client- side data rendering  and enabling  a more  seamless  data 
+review  process.  Row virtualization  occurs  in defined  Cube  View  page  boundaries.
+Cube  View  Designer
+ lThe Cube  View  Designer  interface  in the Modern  Browser  experience  can only be 
+accessed  from an existing  cube  view (via the toolbar  menu  or hidden  context  menu)  at this 
+time.
+Autofit
+ lThe Modern  Browser  Experience  provides  users  with two different  ways  to autofit  column  
+widths  in cube  views:
+ oThe default  autofit  method  will determine  the width  of a given  column  based  on the 
+length  of the column  header  text when  there  is no width  specified  for that column.  The 
+default  minimum  column  width  of 160px  will be applied  if the column  header  text is 
+shorter  in length.
+ oThe new autofit  is enabled  when  the global  column  width  for a cube  view is set to 
+"Auto."  When  this is specified,  each  column  width  is set to the length  of the widest  cell 
+found  within  the top 30 rows  of that column.  If any column  has a specific  width  
+defined,  that width  setting  will be utilized  instead  of autofit.  This must  be set at the 
+global  level and will not work  for specific  columns  with width  set to "Auto."  The default  
+minimum  column  width  of 160px  will not be used  when  "Auto"  is set globally  for cube  
+view columns.
+Modern Browser Experience Guide 32Cube Views
+Unsupported  Cube  View  Functionality
+ lAllocation
+ lCube  View  Designer
+ oGeneral  Settings
+ nHeader  Text,  Size,  and Overrides
+ nReport
+Modern Browser Experience Guide 33Cube Views
+ nExcel
+ nNavigation  Links
+ oReport  Header
+ oReport  Footer
+ oRows  and Columns
+ nSharing
+ nRow Overrides
+ nColumn  Overrides
+ nConditional  Formatting
+Accessibility
+To further  improve  Cube  View  readability  for individuals  who do not rely on screen  readers  or 
+color  cues,  an optional  toggle  has been  introduced  that provides  the ability  to switch  between  
+default  background  colors  or patterns  to better  distinguish  valid,  invalid,  or unsaved  cells.  Note  
+that custom  cell background  display  formatting  will take precedence  over the default  background  
+colors  and patterns.  The Accessibility  Plus toggle  can be found  in the User  Menu  and the default  
+state  is off.
+Modern Browser Experience Guide 34Cube Views
+Modern Browser Experience Guide 35Cube Views
+Dashboards
+Functional  coverage  (with  the goal of offering  equivalent  use of layouts  and components  available  
+in the Windows  application)  continues  to be expanded  upon  for dashboards  in the Modern  
+Browser  Experience.  Currently,  the most  commonly  used  features  are available.  For dashboards  
+that contain  elements  that have  not yet been  delivered  or expose  issues  that may arise  through  
+use of unique  design  techniques,  there  are typically  design  and configuration  changes  or 
+workarounds  that can be utilized  to achieve  the same  goals  until subsequent  releases  close  those  
+particular,  functional  gaps.
+While  browser  capabilities  move  toward  comprehensive  end user dashboard  functionality  and 
+parity  between  the Windows  application  and the Modern  Browser  Experience,  different,  
+underlying  technologies  utilized  to develop  the clients  will potentially  prevent  exact  replication  of 
+dashboards  in both clients.  Additionally,  the architecture  used  to support  interface  styling  is 
+different  between  the clients,  causing  dashboards  designed  for one client  to look dissimilar  when  
+rendered  in another.
+If a preexisting  dashboard  contains  only supported  layouts  and components,  it can be enabled  for 
+use with a single  configuration.  However,  for an optimized  user experience  on the browser  or on 
+mobile  devices,  designers  may consider  modifying  the dashboard  or creating  new client/device  
+specific  dashboards.
+Enabling  Dashboard  Access
+To ensure  dashboards  are only rendered  within  the client  (Windows  application  or browser)  or 
+device  (PC, tablet,  or phone),  a new configuration  has been  added  to the Dashboard  Profile  called  
+Client/Device  Visibility.
+Modern Browser Experience Guide 36Dashboards
+The Client/Device  Visibility  configuration  enables  dashboard  designers  to control  which  
+dashboard  profiles,  and the dashboards  they contain,  can be accessed  and viewed  on one or 
+more  clients  and devices.  Enabling  this configuration  will display  the dashboard  in the OnePlace  
+Dashboard  list of the respective  client/device  selection.
+Preexisting  and newly  created  dashboards  will be set to the Windows  application  only by default.  
+Dashboards  are not initially  visible.  Dashboards  always  render  in Workflows.
+Modern Browser Experience Guide 37Dashboards
+Notable  Differences  from  Windows  
+Application
+Dashboard  Components
+BI Viewer
+You may observe  style differences,  like muted  borders  and headers,  or alternative  style 
+visualizations.
+BI Viewer  sometimes  shows  infinite  loading  screens  in Browser  that are driven  by differences  in 
+how the component  reads  configurations.
+Modern Browser Experience Guide 38Dashboards
+Observed  
+BehaviorCause Resolution
+Infinite  
+Loading  
+Screen  
+AppearsA filter is set to a question  mark  
+(?).Update  the filter to be set to an empty  
+string.  Validated  in browser  and 
+WinApp.
+Infinite  
+Loading  
+Screen  
+AppearsA Calculated  Field  is set to a 
+decimal  without  a leading  zero.  
+(Example:  .2).Update  the filter to include  a leading  
+zero.  (Example:  0.2) Validated  in 
+browser  and WinApp.
+BI Viewer  Designer
+BI Viewer  Designer  allows  users  to modify  components  directly  in the Modern  Browser  
+Experience  without  navigating  back  to the Windows  Application.  The BI Designer  Interface  is 
+currently  only available  to users  who have  permissions  to edit the dashboard.  Depending  on the 
+BI Viewer  configurations,  users  may open  the BI Designer  Interface  using  the following  methods:
+ lIf the BI Viewer  has a title, then a pencil  icon will appear  on the right side of the title bar.
+ lIf the BI Viewer  does  not have  a title, then a pencil  icon will appear  in a hover- over menu  on 
+each  component.
+Modern Browser Experience Guide 39Dashboards
+BI Viewer  Designer  includes  most  of the same  functions  available  in the Windows  Application  in a 
+new browser- optimized  layout.  Component  settings,  like save  or data sources,  are found  in the 
+upper  left menu.  Users  can add components  using  the tool bar at the left. Each  component  
+includes  its own hover- over menu  to modify  component- specific  settings.  The browser  BI Viewer  
+Designer  does  not support  adding  data adapters  or creating  BI Viewer  components  from scratch.  
+These  steps  must  be done  in the OneStream Windows  Application  before  they can be modified  in 
+the browser.  See BI Viewer  Designer  documentation  for more  information.
+Embedded  Dashboards
+New client/device  specific  dashboards  configurations  allow  a single  root dashboard  to render  
+different  embedded  dashboards  depending  on the client  or device  type.  (More  details  on the use 
+of this configuration  are described  within  the Multi- Client/Device  Dashboard  Design  Approaches  
+below)
+Modern Browser Experience Guide 40Dashboards
+Modern Browser Experience Guide 41Dashboards
+ 
+Modern Browser Experience Guide 42Dashboards
+Text Box
+The Find and Replace  formatting  options  are currently  not available  when  using  Rich Text in the 
+Modern  Browser  Experience.
+Grid View
+Grid options  are now listed  in a context  menu.
+SQL Table  Editor
+Additional  options  are now listed  in a context  menu.  Edited  cells have  minor  style updates.
+Modern Browser Experience Guide 43Dashboards
+ 
+Grid Keyboard  Functionality
+The browser  experience  includes  basic  keyboard  shortcuts.  See Appendix  E for more  information.
+Large  Data  Pivot  Grid & Pivot  Grid
+Pivot  Grids  in the browser  now come  with a streamlined  configuration,  and a modernized  
+interface,  while  maintaining  compatibility  with existing  workflows  like the ability  to drag and drop 
+fields.  Both Pivot  Grids  and Large  Data  Pivot  Grids  benefit  from updated  data processing  that 
+ensures  all data is available  for aggregation.
+Modern Browser Experience Guide 44Dashboards
+Notable  Differences  in Pivot  Grids
+Field  Controls  are displayed  in a floating  dialog  box and launch  using  the Show  Field  Chooser  
+button  in the upper  right corner  of the pivot  grid.
+A count  of total rows  in the dataset  is displayed  on the top right of the pivot  grid.
+NOTE:  This count  will not change  when  filtering  data,  it will always  display  the total 
+count  of rows.
+In the Field  Chooser  dialog  box, you can select  or clear  any field in the All Fields  section  or drag 
+and drop any field into the Row Fields,  Column  Fields,  Data  Fields  or Filter  Fields.  Field  selections  
+update  at real time once  you select  the OK button  and close  the Field  Chooser  dialog  box. 
+Filtering  options  are available  for each  field.
+Button Action
+Modern Browser Experience Guide 45Dashboards
+Displays  bar chart  above  the grid.
+NOTE:  Once  the View  Chart  button  is 
+clicked,  it changes  to the Hide Chart  
+button.
+Opens  Field  Chooser  dialog  box.
+Exports  to an .xslx file.
+Charts  in Pivot  Grids
+When  the chart  is displayed,  you can hover  the mouse  over any of the bars for more  information.
+NOTE:  Bar charts  are the only available  chart  type at this time.
+Keyboard  Controls  in Pivot  Grids
+A wide array  of functions  allow  users  to interact  with Pivot  Grids  using  keyboard  shortcuts.  See 
+Appendix  E for a full list of interactions.
+Advanced  Charts
+There  are some  charts  and configuration  properties  that are not currently  supported.  See 
+Appendix  A for a detailed  breakdown.
+Modern Browser Experience Guide 46Dashboards
+Text Editor
+The Text Editor  feature  mirrors  almost  all of the windows  application  functionality  including:  
+create,  save,  open,  edit, rich text editing,  insert,  and layout  functions.  Additionally,  
+OneStream functions  such  as refresh  documents,  show  field codes,  and hide field codes  are also 
+available  in the browser.  One key difference  of this feature  is that the Review  tab is not currently  
+available.
+Filter  Editor
+The Filter  Editor  component  gives  users  a visual  interface  for modifying  and applying  advanced  
+logic to filters.  While  most  operators  are available  in the browser,  the following  are not currently  
+supported:  Not And, Not Or, and Not Between  (Numeric  Values).  Only Equals  and Does  Not 
+Equal  generate  a data bound  drop- down  list. Other  operators  render  a text box.
+See Dashboard  Filter  Editor  in the Design  and Reference  Guide  for more  information.
+Maps
+Hover- over images  for shapes  on Maps  are not currently  available.
+Menu
+Menu  component  images  expand  to fit all available  space  in the Modern  Browser  Experience.  
+Ensure  that the image  source  being  used  is set to 96 DPI for consistent  display  in the Modern  
+Browser  Experience  and the Windows  Application.
+Modern Browser Experience Guide 47Dashboards
+Spreadsheet
+The Modern  Browser  Experience's  Spreadsheet  feature  provides  users  with the ability  to utilize  
+spreadsheet  functionality  similar  to the Excel  Add- in directly  through  the browser.  Spreadsheet  
+behaves  similar  in the browser  experience  as it does  in the Windows  Application.  Refer  to 
+Appendix  B for supported  and unsupported  functionality  in Spreadsheet.
+Web  Content
+By default,  Web Content  is opened  in a new tab in the browser.  The content  may also be rendered  
+directly  in a dashboard  using  an iframe  by modifying  the following  component  configuration:
+ lOpen  Content  in New Tab (Web  Only)  - Set the value  of this field to "False"  to open  web 
+content  in an iframe.
+NOTE:  Not all websites  are compatible  with iframes  and some  may be blocked  from 
+rendering  in an iframe.  Thorough  testing  of all use cases  for Target  URLs  is strongly  
+encouraged.
+Modern Browser Experience Guide 48Dashboards
+Notable  Dashboard  Functionality  Gaps
+Dashboard  Layouts
+ lCanvas
+ lDock
+ lWrap
+Dashboard  Components
+ lBasic  Charts
+ lPassword  Box
+ lSankey  Diagram
+ lState  Indicator
+Navigating  Dashboard  Gaps
+Helpful  tips have  been  added  to both the Windows  application  and the Modern  Browser  
+Experience  to assist  dashboard  designers  and end users  in identifying  dashboard  layouts  and 
+components  that are not yet supported  on the browser.
+In the Windows  application,  labels  for Windows  App Only have  been  added  to both the 
+Dashboard  Properties  Layout  Type  and Dashboard  Component  selection  lists.
+Modern Browser Experience Guide 49Dashboards
+A placeholder  image  indicates  if the dashboard  layout  or component  is not currently  supported.  A 
+hover  tooltip  specifies  the layout  or component  that is not rendering.
+Modern Browser Experience Guide 50Dashboards
+Even  if all dashboard  layouts  and components  are supported,  we still recommend  conducting  a 
+full regression  test of any dashboard  that is being  transferred  from the Windows  application  to the 
+browser  to ensure  functional  parity  before  production  use.
+Modern Browser Experience Guide 51Dashboards
+Dashboard  Design  Process
+When  building  a dashboard  for browser  use, designers  should  open  both their Windows  
+application  and Modern  Browser  Experience  simultaneously.  Using  the Windows  application,  
+designers  can update  and save  dashboard  configurations.  To view reflected  changes,  simply  
+refresh  the browser.
+When  building  a dashboard  for use on a tablet  or phone,  designers  can follow  the same  process,  
+using  either  a physical  device  or mobile  device  emulator  in a browser.  Designers  should  make  
+sure they log into their browser  environment  with the emulator  properly  sized  to ensure  the 
+browser  experience  reacts  to the device  it is emulating.
+As with the Windows  application,  using  dashboard  design  best practices  can significantly  improve  
+the performance  of a dashboard.  The browser  experience  may have  performance  sensitivities  
+that differ  from the Windows  application.
+Dashboard  Accessibility  Design  Approaches
+OneStream  Dashboard  components  are configured  to support  standard  accessibility  guidelines,  
+allowing  for users  to navigate  through  elements  using  the keyboard  and for screen  readers  to 
+convey  element  names,  contextual  roles,  and values  (as applicable).  Element  names  are 
+conveyed  based  on a component's  configured  name  or description  and the component  type 
+reflects  the role..
+The following  optional  dashboard  components  have  some  accessibility  limitations:
+ lAdvanced  Charts
+ lBI Viewer
+ lFilter  Editor
+Modern Browser Experience Guide 52Dashboards
+ lMap
+ lLarge  Data  Pivot  Grid
+ lPivot  Grid
+ lText Editor
+Dashboards  are highly  customizable  so it is important  to design  with accessibility  in mind,  
+leveraging  properties  such  as font, color,  sizing,  and use of parameters,  among  many  others.
+Image  and Label  dashboard  components  can now be configured  to skip through  UI elements  that 
+don't  contain  content  while  using  keyboard  controls  to navigate.  To configure  an Image  or Label  
+component  so it can be skipped,  type |SKIP|  in the description  field of the component  in the 
+Component  Properties  tab.
+Additionally,  keyboard  users  will see a link appear  when  they bring  focus  to an embedded  
+dashboard  that enables  them  to move  past the content  contained  in that dashboard  and navigate  
+directly  to the next embedded  dashboard  in the page,  providing  additional  efficiency  by allowing  
+for quicker  navigation  through  content- rich dashboards.
+Modern Browser Experience Guide 53Dashboards
+Multi- client/Device  Dashboard  Design  Approaches
+When  designing  a dashboard  that will be used  across  multiple  clients  or devices,  dashboard  
+designers  can use three  different  approaches  to find the right balance  of upfront  effort,  end-user 
+optimization,  and maintenance  effort  that best suits their needs.
+Approach  1: Unified  Multi- client/Device  Dashboards
+This approach  uses  a single  non-adaptive  dashboard.  The designer  will most  likely  have  to make  
+compromises  to make  it usable  for each  client/device  type.  These  compromises  typically  result  in 
+a simplified  dashboard  with efficient  maintenance.  This type of dashboard  needs  to have  the 
+proper  combination  Client/Device  Visibility  configurations  to be accessible  from the OnePlace  
+Dashboard  across  clients  and devices.  It can be more  difficult  for multi- device  use due to varying  
+space  for dashboard  components,  but it is an effective  way to access  dashboards  initially.  
+Designers  can rely on this approach  to update  existing  Windows  application  dashboards  for use. 
+For more  complex  scenarios,  designers  should  consider  building  client/device  specific  
+dashboards  or adaptive  dashboards.
+Modern Browser Experience Guide 54Dashboards
+Approach  2: Client/Device  Specific  Dashboards
+This approach  uses  multiple  non-adaptive  dashboards.  Designers  create  separate  dashboards  
+that render  equivalent  information  and functionalities  but have  different  designs  that are optimized  
+for specific  client  and device  types.  These  dashboards  need  to be added  to separate  dashboard  
+profiles.  Each  of the dashboard  profiles  have  different  Client/Device  Visibility  configurations,  
+which  limits  their visibility  in the OnePlace  Dashboard  list to only the appropriate  client  or device  
+they were  designed  for. This approach  offers  an optimized  user experience  and low design  
+complexity,  but it has a high maintenance  effort.
+Approach  3: Client/Device  Adaptive  Dashboards
+This approach  uses  a single  adaptive  dashboard.  Designers  need  an initial  understanding  of how 
+their dashboard  should  adapt  to each  client  or device  type intended  for use. The designer  creates  
+Embedded  Dashboards  with configurations  that link to client/device  specific  dashboards.  The 
+Embedded  Dashboards  can be placed  at any level within  nested  dashboards  allowing  designers  
+to easily  customize  components  shared  across  multiple  devices  or create  unique  experiences  per 
+device  type.  This approach  offers  a highly  optimized  user experience  and lower  maintenance  
+effort,  but it has high design  complexity.
+Current  dashboards  that have  been  designed  previously  for the OneStream  Windows  application  
+may need  to be redesigned  for an optimized  user experience  on the browser  or alternative  device  
+types.
+Modern Browser Experience Guide 55Dashboards
+Documents
+The Documents  panel  in the Modern  Browser  Experience  offers  an intuitive  interface  based  on 
+the design  of the Windows  Platform.  Files  accessed  through  the browser  can only be downloaded  
+to the user's  local machine  and cannot  be opened  in local applications  due to security  concerns.  
+Additionally,  a context  menu  has been  implemented  at the top of the Documents  area that 
+provides  a button  to download  selected  documents.  This context  menu  also provides  a button  to 
+open  the File Explorer  dialog  and view File Details.  The File Details  can be viewed  by double-
+clicking  a file name.  
+Modern Browser Experience Guide 56Documents
+When  a folder  is selected,  the context  menu  provides  specific  options  to open  the folder  in File 
+Explorer  and or view the Folder  Details.
+Modern Browser Experience Guide 57Documents
+The POV  used  to view files and folders  cannot  be modified  in the Documents  panel,  but can be 
+applied  through  the File Explorer.
+NOTE:  When  downloading  files from OneStream , users  may need  to update  the file 
+associations  on their devices  in order  to recognize  OneStream  specific  file extensions.
+Modern Browser Experience Guide 58Documents
+POV
+The POV  panel  can be accessed  from the OnePlace  toolbar  and can be used  to view and modify  
+the current  Cube  POV.  Similar  to Workflow  POV,  the Cube  POV  menu  is presented  as an overlay  
+instead  of a floating  dialog.  Notably,  information  from the Windows  Platform  POV  menu  is 
+displayed  in a two different  areas  in the browser:
+ lGlobal  POV : Select  the gear icon in the application  header  to view current  Global  POV.
+ lWorkflow  POV:  Navigate  to Workflow  from the OnePlace  panel  to view and modify  the 
+current  Workflow  POV.
+Additional  Features
+Modify  a POV
+To modify  a POV,  click the pencil  icon next to each  field,  make  your modification,  and click Save.
+Modern Browser Experience Guide 59POV
+Save  a POV
+To save  a POV,  select  Save  POV  from the POV  context  menu.  File Explorer  will then open,  
+providing  the option  to name  and save  the current  POV  settings.
+Modern Browser Experience Guide 60POV
+Apply  a Saved  POV
+Saved  POVs  are stored  in File Explorer.  To set a saved  POV,  use the Apply  POV  button  in the 
+File Explorer  toolbar.  You must  select  an item with the file type of POV  selected  to see the button.  
+POV  can only be applied  through  the File Explorer.
+Modern Browser Experience Guide 61POV
+Appendix  A: Advanced  Charts
+The following  chart  types  are currently  supported  by the Advanced  Charts  dashboard  component.
+XY2D Area,  Area  Stacked,  Area  Full Stacked,  Area  
+Spline,  Area  Step,  Bar, Bar Stacked,  Bar Full 
+Stacked,  Bar Side By Side Stacked,  Bar Side By 
+Side Full Stacked,  Line,  Line Stacked,  Line Full 
+Stacked,  Line Step,  Waterfall
+Simple2D Nested  Donut,  Pie And Donut
+The following  chart  types  are not currently  supported  by the Advanced  Charts  dashboard  
+component.
+XY2D Area  Range,  Bar Side By Side,  Bar Range  
+Overlapped,  Bar Range  Overlapped  Waterfall,  
+Bar Range  Side By Side,  Bar Range  Side By 
+Side Waterfall,  Bubble,  Candlestick,  Line 
+Scatter,  Point,  Spline,  Stock
+Simple2D Funnel
+Polar2D Polar  Area,  Polar  Line,  Polar  Point
+Radar2D Radar  Area,  Radar  Line,  Radar  Point
+Modern Browser Experience Guide 62Appendix A:Advanced Charts
+Configuration  Properties
+The following  chart  configuration  properties  are not currently  supported  by the Advanced  Charts  
+dashboard  component.
+Chart Show  Toggle  Size Button,  Point  Label  Text 
+Format,  Enable  Animations
+Crosshair Crosshair  Enabled,  Show  Crosshair  Lines,  
+Show  Crosshair  Labels,  Crosshair  Label  Mode,  
+Crosshair  Label  Text Format
+Legend Show  Check  Boxes,  Show  Border
+X-Axis,  Y-Axis,  Secondary  Y-Axis Text Format,  Use Automatic  Step,  Step,  
+Interlaced,  Interlaced  Color,  Show  Minor  Grid 
+Lines
+Y-Axis,  Secondary  Y-Axis Scale  Break  Style  Type,  Maximum  Number  of 
+Scale  Breaks
+Series  Properties Model  Display  Type,  Marker  Size,  Bar Width,  
+Pie Hole Radius  Percent
+Waterfall  Series  Properties Total  Included  in Series
+Modern Browser Experience Guide 63Appendix A:Advanced Charts
+Appendix  B: Spreadsheet  Features  
+and Functionality
+To access  the Spreadsheet  component  in the Modern Browser  Experience,  you must  embed  it 
+within  a dashboard.
+Supported  Spreadsheet  Features  and 
+Functionality
+Component  Integration  lDashboards
+ lWorkflow  Forms
+Modern Browser Experience Guide 64Appendix B:Spreadsheet Features andFunctionality
+Data  Sources  and Related  
+Functionality lSpreadsheet  Files
+ oCreate,  open,  edit, and save
+ lCube  View  Connections
+ oCreate,  display,  edit, and remove
+ oRefresh  data and submit  changes
+ oSupport  for Cube  View  formatting
+ lTable  View  Definitions
+ oCreate,  display,  edit, and remove
+ oRefresh  data and submit  changes
+ lRetrieve  Functions
+ oSupported  Functions
+ nXFGetCell,  XFGetCell5,  
+XFGetFXRate,  
+XFGetCalculatedFxRate,  
+XFGetMemberProperty,  
+XFGetRelationshipProperty,  
+XFGetHierarchyProperty,  
+XFGetMemberInfo  XFSetCell  , 
+XFSetFXRate
+ nRefresh  data and submit  
+changes  (XFSetCell  only)
+Modern Browser Experience Guide 65Appendix B:Spreadsheet Features andFunctionality
+Ribbon  Functions  lNew (Create  Spreadsheet)
+ lOpen  (Local  File, OneStream  System  File, 
+Application  Workspace  File, System  
+Workspace  File)
+ lSave  As (OneStream  System  File, 
+Application  Workspace  File, System  
+Workspace  File)
+ lRefresh  Sheet  and Refresh  Workbook
+ lSubmit  Sheet  and Submit  Workbook
+Unsupported  Spreadsheet  Features  and 
+Functionality
+Charts  lLimited  Chart  Types
+ lColor  Customization
+Modern Browser Experience Guide 66Appendix B:Spreadsheet Features andFunctionality
+Functions  lQuick  Views
+ lFormula  Bar
+ lMacros
+ lSolver
+ lSheet  References
+ lDocument  Properties
+ lContext  Menu  Features  and Functions
+ lInsert  Copied/Cut  Cells
+ lKeyboard  Controls:
+ oShift + End
+ oCtrl + PageUp  / Ctrl + PageDown  
+(does  not set tab focus)
+ oCtrl + N (overwrites  spreadsheet  
+with unsaved  changes)
+Formatting  lPreview  Font Formats
+ lConditional  Formatting
+ lCell Borders  (last selection  is reset  after 
+format  is applied)
+Modern Browser Experience Guide 67Appendix B:Spreadsheet Features andFunctionality
+Appendix  C: Supported  Number  
+Formats
+The following  formats  for numbers  and dates  are currently  supported  in the Modern  Browser  
+Experience  for these  components:
+ lCube  Views
+ lDynamic  Grids
+ lGrid Views
+ lSQL Table  Editor
+Modern Browser Experience Guide 68Appendix C:Supported Number Formats
+Appendix  D: Smart  Link APIs
+Create  Smart  Link
+The following  business  rules  create  Smart  Links  and allow  developers  to provide  dynamic  
+parameters  (Custom  Substitution  Variables)  using  name- value  pairs.  In the code  snippets  below,  
+link expiration  is set to 240 hours  (10 days)  and outputs  the Smart  Link in a message  box. 
+Optionally,  the link can direct  a user to a different  OneStream  environment  using  Host Override  or 
+append  a custom  name  to the end of the Smart  Link URL using  Custom  Name .
+C# Code  Snippet:
+public XFSelectionChangedTaskResult  CreateSmartLink (SessionInfo  si, BRGlobals  globals,  
+object api, DashboardExtenderArgs  args)
+        {
+            // Create new smart link and set expiration
+            var smartlink  = new XFSmartLink ();    
+            smartlink.IsSystemlevel  = true;
+            smartlink.ExpirationDateUtc  = DateTime.UtcNow. AddHours (240);
+            
+            // Optional  Properties
+            // Host override:  Allows to change the host value. Must be a value host
+            //smartlink.HostOverride  = "https://buxtest.com:444";
+            
+            // Custom Name: Adds a suffix at the end of the smart link. Alphanumeric,  50 
+characters  max.
+            //smartlink.CustomName  = "ThisIsACustomName";
+ 
+            var dashboard  = new XFSmartLinkDashboard ();
+            
+            // Change values below to target different  applications/  Dashboards
+            dashboard.ApplicationName  = "GolfStreamDemo_ v36";
+            dashboard.DashboardName  = "SmartLinks" ;
+            dashboard.WorkspaceName  = "Default" ;
+            dashboard.DashboardProfileName  = "Default" ;
+            dashboard.CustomSubstVars  = new Dictionary< string, string>();
+            
+            // Add/ Remove the lines below to modify the custom subst vars that will be 
+applied.
+            dashboard.CustomSubstVars. Add("parameter1" , "value");
+            dashboard.CustomSubstVars. Add("parameter2" , "value2" );            
+Modern Browser Experience Guide 69Appendix D:Smart Link APIs
+            
+            smartlink.TargetObject  = dashboard;
+                
+            string sValue = BRApi.State. CreateSmartLink (si, smartlink);
+            var match = System.Text.RegularExpressions.Regex. Match(sValue,  @"share/ ([A-Z0-9]
+{32})");
+            
+            BRApi.Dashboards.Parameters. SetLiteralParameterValue (si, false, "slid", 
+match.Groups [1].Value);
+            
+            var result = new XFSelectionChangedTaskResult ();
+            result.IsOK  = true;
+            result.ShowMessageBox  = true;
+            result.Message  = sValue;
+            return result;
+        }
+VB Code  Snippet: 
+Public Function  CreateSmartLink (ByVal si As SessionInfo,  ByVal globals As BRGlobals,  ByVal 
+api As Object, ByVal args As DashboardExtenderArgs)  As XFSelectionChangedTaskResult
+            ' Create new smart link and set expiration
+            Dim smartlink  = New XFSmartLink ()
+            smartlink.IsSystemlevel  = True
+            smartlink.ExpirationDateUtc  = DateTime.UtcNow.AddHours (240)
+            
+            ' Optional  Properties
+            ' Host override:  Allows To change the host value. Must be a value host
+            'smartlink.HostOverride  = "https://buxtest.com:444"
+            
+            ' Custom Name: Adds a suffix at the End Of the smart link. Alphanumeric,  50 
+characters  max.
+            'smartlink.CustomName  = "ThisIsACustomName"
+            
+            Dim dashboard  = New XFSmartLinkDashboard ()
+            
+            ' Change values below to target different  applications/  Dashboards
+            dashboard.ApplicationName  = "GolfStreamDemo_ v36"
+            dashboard.DashboardName  = "SmartLinks"
+            dashboard.WorkspaceName  = "Default"
+            dashboard.DashboardProfileName  = "Default"
+            dashboard.CustomSubstVars  = New Dictionary (Of String, String)()
+            
+            ' Add/ Remove the lines below to modify the custom subst vars that will be 
+applied.
+            dashboard.CustomSubstVars.Add ("parameter1" , "value")
+            dashboard.CustomSubstVars.Add ("parameter2" , "value2" )
+            
+            smartlink.TargetObject  = dashboard
+            
+            Dim sValue As String = BRApi.State.CreateSmartLink (si, smartlink)            
+            Dim match = System.Text.RegularExpressions.Regex.Match (sValue,  "share/([A-Z0-9]
+{32})")
+Modern Browser Experience Guide 70Appendix D:Smart Link APIs
+            
+            BRApi.Dashboards.Parameters.SetLiteralParameterValue (si, False, "slid", 
+match.Groups (1).Value)
+            
+            Dim result = New XFSelectionChangedTaskResult ()
+            result.IsOK  = True
+            result.ShowMessageBox  = True
+            result.Message  = sValue
+            Return result
+        End Function
+Retrieve  Smart  Link
+Smart  Links  are stored  for a set period  of time.  Using  the following  business  rules,  developers  can 
+retrieve  a stored  Smart  Link using  slid (Smart  Link ID)
+C# Code  Snippet:
+public XFSelectionChangedTaskResult  GetSmartLink (SessionInfo  si, BRGlobals  globals,  object 
+api, DashboardExtenderArgs  args)
+        {
+            var id = BRApi.Dashboards.Parameters. GetLiteralParameterValue (si, false, 
+"slid");
+            
+            var guidId = Guid.Parse(id);
+            XFSmartLink  sValue = BRApi.State. GetSmartLink (si, true, guidId);
+            var text = System.Text.Json.JsonSerializer. Serialize (sValue);
+            
+            var result = new XFSelectionChangedTaskResult ();
+            result.IsOK  = true;
+            result.ShowMessageBox  = true;
+            result.Message  = text;
+            return result;
+        }
+VB Code  Snippet: 
+Public Function  GetSmartLink (ByVal si As SessionInfo,  ByVal globals As BRGlobals,  ByVal api 
+As Object, ByVal args As DashboardExtenderArgs)  As XFSelectionChangedTaskResult
+            Dim id = BRApi.Dashboards.Parameters.GetLiteralParameterValue (si, False, "slid")
+            
+            Dim guidId = Guid.Parse (id)
+            Dim sValue As XFSmartLink  = BRApi.State.GetSmartLink (si, True, guidId)
+Modern Browser Experience Guide 71Appendix D:Smart Link APIs
+            Dim text = System.Text.Json.JsonSerializer.Serialize (sValue)
+            
+            Dim result = New XFSelectionChangedTaskResult ()
+            result.IsOK  = True
+            result.ShowMessageBox  = True
+            result.Message  = text
+            Return result
+        End Function
+Delete  Smart  Link
+The following  business  rules  delete  stored  Smart  Links.
+C# Code  Snippet:
+public XFSelectionChangedTaskResult  DeleteSmartLink (SessionInfo  si, BRGlobals  globals,  
+object api, DashboardExtenderArgs  args)
+        {
+            var id = BRApi.Dashboards.Parameters. GetLiteralParameterValue (si, false, 
+"slid");        
+            var guidId = Guid.Parse(id);
+            
+            BRApi.State. DeleteSmartLink (si, true, guidId);
+            var text = "Deleted" ;
+            
+            var result = new XFSelectionChangedTaskResult ();
+            result.IsOK  = true;
+            result.ShowMessageBox  = true;
+            result.Message  = text;
+            return result;
+        }
+VB Code  Snippet:
+    Public Function  DeleteSmartLink (ByVal si As SessionInfo,  ByVal globals As BRGlobals,  
+ByVal api As Object, ByVal args As DashboardExtenderArgs)  As XFSelectionChangedTaskResult
+            Dim id = BRApi.Dashboards.Parameters.GetLiteralParameterValue (si, False, "slid")            
+            Dim guidId = Guid.Parse (id)
+            
+            BRApi.State.DeleteSmartLink (si, True, guidId)
+            Dim text = "Deleted"
+            
+            Dim result = New XFSelectionChangedTaskResult ()
+            result.IsOK  = True
+Modern Browser Experience Guide 72Appendix D:Smart Link APIs
+            result.ShowMessageBox  = True
+            result.Message  = text
+            Return result
+        End Function
+Modify  Smart  Link
+The following  business  rules  are designed  to overwrite  an existing  Smart  Link while  retaining  its 
+URL.  Since  modifying  a link overwrites  all stored  values,  all required  values  need  to be provided  
+when  using  this rule.
+C# Code  Snippet:
+public XFSelectionChangedTaskResult  ModifySmartLink (SessionInfo  si, BRGlobals  globals,  
+object api, DashboardExtenderArgs  args)
+        {
+            var id = BRApi.Dashboards.Parameters. GetLiteralParameterValue (si, false, 
+"slid");
+            var guidId = Guid.Parse(id);
+            
+            var smartlink  = new XFSmartLink ();    
+            smartlink.IsSystemlevel  = true;
+            smartlink.ExpirationDateUtc  = DateTime.UtcNow. AddHours (240);
+ 
+            var dashboard  = new XFSmartLinkDashboard ();
+            
+            // Change values below to target different  applications/  Dashboards
+            dashboard.ApplicationName  = "GolfStreamDemo_ v36";
+            dashboard.DashboardName  = "Modified" ;
+            dashboard.WorkspaceName  = "Default" ;
+            dashboard.DashboardProfileName  = "Default" ;
+            dashboard.CustomSubstVars  = new Dictionary< string, string>();
+            
+            // Add/ Remove the lines below to modify the custom subst vars that will be 
+applied.
+            dashboard.CustomSubstVars. Add("parameter1" , "test");
+            dashboard.CustomSubstVars. Add("parameter2" , "value2" );            
+            dashboard.CustomSubstVars. Add("parameter3" , "value3" );
+            dashboard.CustomSubstVars. Add("parameter4" , "value4" );    
+            
+            smartlink.TargetObject  = dashboard;
+            
+            BRApi.State. ModifySmartLink (si, true, guidId, smartlink);
+            
+            var result = new XFSelectionChangedTaskResult ();
+            result.IsOK  = true;
+Modern Browser Experience Guide 73Appendix D:Smart Link APIs
+            result.ShowMessageBox  = true;
+            result.Message  = "Modified" ;
+            return result;
+        }
+    }
+}
+VB Code  Snippet:
+ 
+        Public Function  ModifySmartLink (ByVal si As SessionInfo,  ByVal globals As BRGlobals,  
+ByVal api As Object, ByVal args As DashboardExtenderArgs)  As XFSelectionChangedTaskResult
+            Dim id = BRApi.Dashboards.Parameters.GetLiteralParameterValue (si, False, "slid")
+            Dim guidId = Guid.Parse (id)
+            
+            Dim smartlink  = New XFSmartLink ()
+            smartlink.IsSystemlevel  = True
+            smartlink.ExpirationDateUtc  = DateTime.UtcNow.AddHours (240)
+            
+            Dim dashboard  = New XFSmartLinkDashboard ()
+            dashboard.ApplicationName  = "GolfStreamDemo_ v36"
+            dashboard.DashboardName  = "Modified"
+            dashboard.WorkspaceName  = "Default"
+            dashboard.DashboardProfileName  = "Default"
+            dashboard.CustomSubstVars  = New Dictionary (Of String, String)()
+            
+            ' Change values below to target different  applications/  Dashboards
+            dashboard.CustomSubstVars.Add ("parameter1" , "test")
+            dashboard.CustomSubstVars.Add ("parameter2" , "value2" )
+            dashboard.CustomSubstVars.Add ("parameter3" , "value3" )
+            dashboard.CustomSubstVars.Add ("parameter4" , "value4" )
+            
+            smartlink.TargetObject  = dashboard
+            
+            BRApi.State.ModifySmartLink (si, True, guidId, smartlink)
+            
+            Dim result = New XFSelectionChangedTaskResult ()
+            result.IsOK  = True
+            result.ShowMessageBox  = True
+            result.Message  = "Modified"
+            Return result
+        End Function
+    End Class
+End Namespace
+Modern Browser Experience Guide 74Appendix D:Smart Link APIs
+Appendix  E: Component  Keyboard  
+Controls
+All Components
+Modern Browser Experience Guide 75Appendix E:Component Keyboard Controls
+Component Controls
+BI Viewer  lTab and Shift  + Tab keys navigate  
+between  the following  elements  in the 
+Dashboard  layout:
+ oDashboard  Title
+ oTab Container  - Tab Page  Titles
+ oGroups
+ oDashboard  Items
+ lWhen  you select  a dashboard  item,  press  
+Enter  to switch  to interactive  mode.  This 
+mode  allows  you to navigate  within  the 
+item.
+ lIn interactive  mode,  you can use the Tab 
+and Shift  + Tab keys to navigate  through  
+the title elements  and the dashboard  
+element’s  content.
+ lA user can use the following  keys to 
+interact  with the Document  Viewer  
+component:
+ lTab (Shift+Tab)  navigates  between  
+dashboard  layout  elements.  In Interactive  
+mode,  navigates  within  a dashboard  item.
+Modern Browser Experience Guide 76Appendix E:Component Keyboard Controls
+Component Controls
+ lEnter  switches  to Interactive  mode  when  
+the focus  is on a dashboard  item and 
+expands  or collapses  a panel  when  a 
+button  is selected  in the Tab panel.
+ lEsc or Escape  exits Interactive  mode.
+Book  Viewer  lTab moves  the focus  to the next element.
+ lShift + Tab moves  the focus  to the 
+preceding  element.
+ lEnter  clicks  the focused  element.
+ lRight  arrow  moves  the paging  control  to 
+the next page.
+ lLeft arrow  moves  the paging  control  to 
+the previous  page.
+ lUp arrow  moves  the document  up.
+ lDown  arrow  moves  the document  down.
+Button  lSpace  clicks  the focused  button.
+ lEnter  clicks  the focused  button.
+Modern Browser Experience Guide 77Appendix E:Component Keyboard Controls
+Component Controls
+Chart  (Waterfall)  lLeft arrow  moves  the focus  to the left 
+point  in the series.
+ lRight  arrow  moves  the focus  to the right 
+point  in the series.
+ lUp arrow  moves  the focus  according  to 
+the database  order.  Pressing  the Up 
+arrow  key navigates  through  items  based  
+on their order  in the database.
+ lDown  arrow  moves  the focus  according  
+to the database  order.  Pressing  the Down  
+arrow  key navigates  through  items  based  
+on their order  in the database.
+Checkbox  lSpace  clicks  the focused  check  box.
+ lEnter  clicks  the focused  check  box.
+Modern Browser Experience Guide 78Appendix E:Component Keyboard Controls
+Component Controls
+Combo  Box  lAlt + Down  opens  the popup  element  
+when  the component  is focused.
+ lAlt + Up closes  the popup  element  if it is 
+open.
+ lEsc or Escape  closes  the popup  element  
+if it is open.
+ lUp arrow  moves  the focus  to the previous  
+item in the list.
+ lDown  arrow  moves  the focus  to the next 
+item in the list.
+ lHome  moves  the focus  to the first item in 
+the list.
+ lEnd moves  the focus  to the last item in 
+the list.
+ lEnter  selects  the currently  focused  item 
+(for example,  if you are filtering  by typing  
+this would  be the first item that matches  
+the filter).
+Modern Browser Experience Guide 79Appendix E:Component Keyboard Controls
+Component Controls
+Cube  View  lTab moves  the focus  to the next cell in the 
+row or the first cell in the next row.
+ lShift  + Tab or Shift  + Right  arrow  
+selects  the next cell in the row or the first 
+cell in the next row.
+ lShift  + Left arrow  selects  the preceding  
+cell in the row or the last cell in the 
+preceding  row.
+ lShift  + Backspace  deselects  a cell from 
+a group  of selected  cells.
+ lRight  arrow  moves  the focus  to the next 
+cell in the row or the first cell in the next 
+row.
+ lLeft arrow  moves  the focus  to the 
+preceding  cell in the row or the last cell in 
+the preceding  row.
+ lUp arrow  moves  the focus  to the cell 
+above  the selected  cell.
+ lDown  arrow  moves  the focus  to the cell 
+below  the selected  cell.
+ lEnter  moves  the focus  to the cell below  
+the selected  cell.
+Modern Browser Experience Guide 80Appendix E:Component Keyboard Controls
+Component Controls
+ lShift  + F10 opens  the context  menu  from 
+the tool bar.
+ lMenu  opens  the context  menu  for the 
+selected  cell.
+ lF2 enables  edit mode  for the selected  
+cell.
+ lF4 moves  the focus  backwards  to the cell 
+to the left of the currently  selected  cell. If 
+you are at the first cell in a column  and 
+there  are rows  above  the cell, F4 moves  
+the focus  up one row and to the last cell in 
+the farthest  right column.  If you are in the 
+first cell of the grid, F4 moves  the focus  up 
+to the tool bar to the context  menu.
+ lEsc or Escape  exits edit mode  for the 
+selected  cell.
+Data  Explorer  Report  lTab moves  the focus  to the next element.
+ lEnter  clicks  the focused  element.
+ lRight  arrow  moves  the paging  control  to 
+the next page.
+ lLeft arrow  moves  the paging  control  to 
+the previous  page.
+Modern Browser Experience Guide 81Appendix E:Component Keyboard Controls
+Component Controls
+Date  Selector  (Date  Input)  lAlt + Down  arrow  opens  the popup  with 
+the calendar.
+ lAlt + Up arrow  or Esc closes  the popup  
+with the calendar.
+ lUp arrow  increases  the value  of the date 
+portion  that contains  the cursor.  Takes  the 
+corresponding  Step into account.
+ lDown  arrow  decreases  the value  of the 
+date portion  that contains  the cursor.  
+Takes  the corresponding  Step into 
+account.
+ lLeft arrow  moves  the cursor  one position  
+to the left.
+ lRight  arrow  moves  the cursor  one 
+position  to the right.
+ lDelete  or Backspace  deletes  the current  
+date portion  that contains  the cursor.
+Modern Browser Experience Guide 82Appendix E:Component Keyboard Controls
+Component Controls
+Date  Selector  (Calendar)  lDown  Arrow  moves  the focus  to down  
+cell, or navigates  the view if currently  
+focused  date is in the last row of the 
+current  view period.
+ lUp Arrow  moves  the focus  to the upper  
+cell, or navigates  the view if currently  
+focused  date is at the top row of the 
+current  view period.
+ lLeft Arrow  moves  the focus  to previous  
+cell.
+ lRight  Arrow  moves  the focus  to next cell.
+ lEnter  toggles  the current  date selection.
+ lCtrl + Up Arrow  navigates  to the upper  
+view (for example.,  from current  month  
+days,  to the year).
+ lCtrl + Down  Arrow  navigates  to the 
+lower  view (for example,  from the months  
+in the year to the days  of the month).
+ lCtrl + Right  Arrow  navigates  to the next 
+period.
+ lCtrl + Left Arrow  navigates  to the 
+previous  period.
+Modern Browser Experience Guide 83Appendix E:Component Keyboard Controls
+Component Controls
+ lTab moves  the focus  between  the 
+different  navigation  elements  - view 
+selection,  previous/next  buttons,  today  
+button,  and the grid with 
+dates/months/years.
+ lShift  + Tab moves  backwards  through  
+thefocusable  elements.
+ lHome  focuses  the first day of the month.
+ lEnd focuses  the last day of the month.
+Dialog  lArrow  Up / Arrow  Down  moves  the 
+focus  between  the drawer  items.
+ lEnter  selects  the focused  page.
+File Viewer  lTab moves  the focus  to the next element.
+ lEnter  clicks  the focused  element.
+ lRight  arrow  moves  the paging  control  to 
+the next page.
+ lLeft arrow  moves  the paging  control  to 
+the previous  page.
+Modern Browser Experience Guide 84Appendix E:Component Keyboard Controls
+Component Controls
+Gantt  View  lHome  moves  focus  to first task.
+ lEnd moves  the focus  to the last task.
+ lUp Arrow  moves  the focus  to previous  
+task.
+ lDown  Arrow  moves  the focus  to next 
+task.
+ lLeft Arrow  scrolls  the view to the left.
+ lRight  Arrow  scrolls  the view to the right.
+ lEnter  opens  the popup  edit form to 
+provide  editing  of the task.
+ lDelete  the task gets deleted.
+ lAlt/Opt (Mac)  + Left Arrow  the task is 
+collapsed,  if it contains  child tasks.
+ lAlt/Opt (Mac)  + Right  Arrow  the task is 
+expanded,  if it contains  child tasks.
+Grid View  lSee Grid View  Controls .
+Image  lTab moves  the focus  to the next image.
+ lShift  + Tab moves  the focus  to the 
+preceding  image
+Modern Browser Experience Guide 85Appendix E:Component Keyboard Controls
+Component Controls
+Label  lTab moves  the focus  to the next label.
+ lShift  + Tab moves  the focus  to the 
+preceding  label.
+Large  Data  Pivot  Grid  lSee Pivot  Grid Controls .
+Logo  lTab moves  the focus  to the next image.
+ lShift  + Tab moves  the focus  to the 
+preceding  image.
+Map  lTab moves  the focus  to the next element.
+ lShift  + Tab moves  the focus  to the 
+preceding  element.
+ lEnter  clicks  the focused  element.
+Menu  lEnter  opens  a menu  when  the menu  
+button  has focus.
+ lUp arrow  moves  the focus  up to the next 
+menu  item.
+ lDown  arrow  moves  the focus  down  to the 
+next menu  item.
+ lEsc or Escape  closes  the menu.
+Pivot  Grid  lSee Pivot  Grid Controls .
+Modern Browser Experience Guide 86Appendix E:Component Keyboard Controls
+Component Controls
+Radio  Button  Group  lArrow  keys  move  the focus  to the next 
+option  in the group.
+Report  lTab moves  the focus  to the next element.
+ lEnter  clicks  the focused  element.
+ lRight  arrow  moves  the paging  control  to 
+the next page.
+ lLeft arrow  moves  the paging  control  to 
+the previous  page.
+Text Box  lTab moves  the focus  into and out of the 
+text box.
+Toast  Notifications  lF9 closes  all notifications.
+Modern Browser Experience Guide 87Appendix E:Component Keyboard Controls
+Component Controls
+Tree View  lUp arrow  goes  to the previous  tree node.
+ lDown  arrow  goes  to the next tree node.
+ lRight  arrow  expands  a collapsed  node.  If 
+the node  is expanded,  focus  is moved  to 
+its first child node.
+ lLeft arrow  collapses  an expanded  node.  
+If the node  is collapsed,  focus  is moved  to 
+its parent.
+ lHome  moves  the focus  to the first node  in 
+the tree without  opening  or closing  a 
+node.
+ lEnd moves  the focus  to the last node  in 
+the tree that is focusable  without  opening  
+a node.
+ lEnter  selects  the focused  tree view item 
+when  the selection  mode  is Single  or 
+Multiple . When  the selection  mode  is 
+Multiple  and there  are other  selected  
+items,  they get deselected.
+ lCtrl + Enter  selects  focused  item.  When  
+the item is already  selected,  it gets 
+deselected.
+Modern Browser Experience Guide 88Appendix E:Component Keyboard Controls
+Component Controls
+ lShift  + Enter  when  Multiple  selection  is 
+enabled,  perform  range  selection  from the 
+previous  selected  item to the current  
+selected  item.  Equivalent  to Shift+Click.
+SQL Table  Editor  lSee Grid View  Controls .
+ 
+Grid View  Controls
+Toolbar  lRight  arrow  and Left arrow  moves  the focus  between  the toolbar  
+focusable  elements.
+ l Home  focuses  to the first focusable  element.
+ lEnd focuses  to the last focusable  element.
+Group  
+Header lRight  arrow  and Left arrow  moves  the focus  between  the toolbar  
+focusable  elements.
+ l Home  focuses  to the first focusable  element.
+ lEnd focuses  to the last focusable  element.
+ lDelete  or Backspace  deletes  the grouping  for the focused  field 
+name.
+Modern Browser Experience Guide 89Appendix E:Component Keyboard Controls
+Pager  lEnter  changes  the focus  to the first focusable  Pager  element  when  
+the Pager  wrapper  is focused.
+ l Escape  changes  the focus  to the Pager  wrapper  when  an inner  
+Pager  element  is focused.
+ lTab changes  the focus  to the next Pager  element  when  an inner  
+Pager  element  is focused.
+ l Shift  + Tab changes  the focus  to the previous  Pager  element  when  
+an inner  Pager  element  is focused.
+ l Left Arrow  loads  the previous  page  (if it exists)  when  the Pager  
+wrapper  is focused.
+ lPage  Up loads  the previous  page  (if it exists)  when  the Pager  
+wrapper  is focused.
+ lRight  Arrow  loads  the previous  page  (if it exists)  when  the Pager  
+wrapper  is focused.
+ l Page  Down  loads  the previous  page  (if it exists)  when  the Pager  
+wrapper  is focused.
+ lHome  loads  the previous  page  (if the current  page  is not already  the 
+first one) when  the Pager  wrapper  is focused.
+ l End loads  the next page  (if the current  page  is not already  the last 
+one) when  the Pager  wrapper  is focused.
+Modern Browser Experience Guide 90Appendix E:Component Keyboard Controls
+All Grid Cells  lRight  arrow  moves  the focus  one cell to the right (if any).
+ l Left arrow  moves  the focus  one cell to the left (if any).
+ lUp arrow  moves  the focus  one cell up (if any).
+ lDown  arrow  moves  the focus  one cell down  (if any).
+ l Home  moves  the focus  to the first cell in the row that contains  focus.
+ l End moves  the focus  to the last cell in the row that contains  focus.
+ lCtrl + Home  moves  the focus  to the first (top-left) data cell in the grid.
+ l Ctrl + End moves  the focus  to the last cell in the last loaded  row of 
+the Grid.
+ lPage  Down  loads  and displays  the next page  of data.  If virtual  
+scrolling  is used,  scrolls  one page  down.
+ l Page  Up loads  and displays  the previous  page  of data.  If virtual  
+scrolling  is used,  scrolls  one page  up.
+ lShift  + Alt + B moves  the focus  to the first breadcrumb  menu.
+NOTE:  Only applicable  when  the focus  is in grids  within  the 
+Workflow  Steps.
+ lShift  + Alt + W moves  the focus  to the first active  Workflow  State  
+buttons.
+NOTE:  Only applicable  when  the focus  is in grids  within  the 
+Workflow  Steps.
+Modern Browser Experience Guide 91Appendix E:Component Keyboard Controls
+Grid Data  
+CellsAll Scenarios
+ lEnter  when  the grid is in InCell  EditMode  - EditMode  is activated.  In 
+hierarchy  cell - expands  /collapses  the detail  row. In grouping  cell - 
+expands  /collapses  the group.  If the cell contains  a focusable  
+element  - the focus  moves  to the first focusable  element  inside.
+ l F2 enters  edit mode  when  the Grid is in InCell  EditMode.
+ l Esc if the editor  is opened,  cancels  the edit and closes  the editor.  If 
+the focus  is on an element  inside  a cell, returns  the focus  back  to the 
+cell.
+Row  Selection  Scenario
+ l Space  selects  the row holding  the currently  focused  cell.
+ lCtrl + Space  selects  or deselects  the current  row, while  persisting  
+previously  selected  rows  (only  for selection  mode  "multiple").
+ lShift  + Space  performs  range  selection,  selects  all the rows  between  
+the last selected  one (with  Space  or mouse  click)  and the one holding  
+the focused  cell.
+ l Shift  + Up Arrow  selects  the row above.  When  multiple  selection  is 
+enabled,  it extends  the selection  to that row.
+ lShift  + Down  Arrow  Selects  the row below.  When  multiple  selection  
+is enabled,  it extends  the selection  to that row.
+Modern Browser Experience Guide 92Appendix E:Component Keyboard Controls
+Grid Header  
+Cells lEnter  if sorting  is enabled,  sort is applied.
+ lAlt + Arrow  Down  opens  the Column  menu  / Filter  menu  and moves  
+the focus  to that menu.
+ l Esc closes  Column  menu  / Filter  menu.
+ lCtrl + Space  group/ungroup  the focused  column.
+ lCtrl + Left Arrow  reorders  the column  with the one on its left.
+ lCtrl + Right  Arrow  reorders  the column  with the one on its right.
+Command  
+Column  Cells lEnter  moves  the focus  inside  the command  column.  First button  is 
+focused.  If a button  is focused,  it triggers  the button  action.
+ lEsc if a button  is focused,  it returns  focus  to the command  cell.
+ lTab moves  the focus  to the next button  in the column.
+ lShift  + Tab moves  the focus  to the previous  button  in the column.
+Inline  Edit 
+Row lTab moves  to the next editor  in the row.
+ l Esc cancels  the row edit. The focus  goes  to the command  cell from 
+where  the row edit was triggered.
+Modern Browser Experience Guide 93Appendix E:Component Keyboard Controls
+In-cell Edit 
+Cell lTab moves  to the next editor  in the row (closing  current  editor).  It 
+skips  cells with Editable=false  and command  columns.  If the focus  is 
+already  on the last editable  cell on the row, the focus  is moved  to the 
+first editable  cell on the next row, and it's editor  is opened.  If you are 
+already  on the last row of the grid, focus  remains  on the cell, with the 
+editor  closed.
+ lShift  + Tab moves  to the previous  editor  in the row (closing  current  
+editor).  It skips  cells with Editable=false  and command  columns.  If 
+the focus  is already  on the first editable  cell on the row, the focus  is 
+moved  to the last editable  cell on the previous  row, and it's editor  is 
+opened.  If you are already  on the first row of the grid, the focus  
+remains  on the cell, with the editor  closed.
+ lEnter  commits  changes  for the edited  item,  and moves  the focus  to 
+the same  cell on the row below,  opening  it for edit.
+ lEsc cancels  the edit. The focus  goes  to the current  cell.
+Filter  Row  lArrow  Keys  moves  to the next editor  in the form.
+ lEnter  enters  in the td and focuses  the first focusable  element  in it. All 
+filter row components  gain tabindex=0.  The focus  remains  trapped  
+inside  the filter row.
+ l Tab goes  through  the filter row components.
+ l Esc focus  goes  to the td element  wrapping  the currently  focused  
+filter component.
+Modern Browser Experience Guide 94Appendix E:Component Keyboard Controls
+Column  
+Menu lAlt + Arrow  Down  when  the header  cell is focused,  it opens  the 
+column  menu.
+ l Arrow  Down  focuses  the next item in the column  menu.
+ lArrow  Up focuses  the previous  item in the column  menu.
+ lEnter  activates  the focused  action  in the column  menu.
+ lSpace  toggles  a check  box menu  item (if focused).
+ l Esc closes  the column  menu.  If the focus  is inside  a drop- down  
+menuor  a filter,  closes  the drop- down  menu.
+Filter  Menu  lAlt + Arrow  Down  when  a header  cell is focused,  it opens  the filter 
+menu.
+ lTab focuses  the next item in the filter menu.
+ lShift  + Tab focuses  the previous  item in the filter menu.
+ lEsc closes  the filter menu.  Note  that if a popup  inside  the menu  is 
+currently  opened,  Escape  will close  it instead.  Pressing  Escape  a 
+second  time will close  the menu.
+ l Space  toggles  a check  box menu  item (if focused).
+Group  Row  lEnter  expands/collapses  the row.
+Detail  
+Template  
+Master  Row lEnter  expands/collapses  the row.
+Modern Browser Experience Guide 95Appendix E:Component Keyboard Controls
+Checkbox  
+Column lSpace  toggle  check  box. Toggling  the check  box selects/deselects  a 
+row.
+ l Esc returns  the focus  to the cell.
+ 
+Pivot  Grid Controls
+Toolbar  lTab moves  to the next active  option  in the toolbar.  If no active  elements  
+present,  it moves  to the next active  element  in the browser  page.
+ lShift  + Tab moves  to the previous  active  option  in the toolbar.  If no 
+active  elements  present,  it moves  to the previous  active  element  in the 
+browser  page.
+ lEnter  performs  the selection  operation  of the current  active  element.
+Field  List  lTab moves  to the next active  UI element.
+ lShift  + Tab moves  to the previous  UI element.
+ lEnter  selects  or deselects  a field in the All fields  section.
+ lDown  arrow  moves  down  in the filter selection  section.
+ lUp arrow  moves  up in the filter selection  section.
+ lSpace  selects  or deselects  a field in the All fields  section.
+Modern Browser Experience Guide 96Appendix E:Component Keyboard Controls
+Filter  
+Dialog lTab moves  forward  through  filters.  Activates  the OK and Cancel  
+buttons.
+ lShift  + Tab moves  backwards  through  filters.  Activates  the OK and  
+Cancel  buttons.
+ l Down  arrow  moves  to the UI element  below.
+ lUp arrow  moves  to the UI element  above.
+ l Enter  selects  or deselects  a filter.  Activates  the OK and Cancel  
+buttons.
+ lSpace  selects  or deselects  a filter.  Activates  the OK and Cancel  
+buttons.
+Drill-
+Through  
+Dialog lTab moves  to the next active  element  in the drill-through  dialog.  If the 
+current  active  element  is a Grid cell, it moves  the cell focus  to right side.
+ l Shift  + Tab moves  to the previous  active  element  in the drill-through  
+dialog.  If the current  active  element  is a Grid cell, it moves  the cell focus  
+to left side.
+ lDown  arrow  moves  the row/cell  focus  downward.
+ l Up arrow  moves  the row/cell  focus  upward.
+ l Left arrow  moves  the cell focus  to the left side.
+ lRight  arrow  moves  the cell focus  to the right side.
+ l End moves  to the bottom  of the drill down  section.
+ l Ctrl + Home  scrolls  up.
+ l Ctrl + End scrolls  down.
+Modern Browser Experience Guide 97Appendix E:Component Keyboard Controls

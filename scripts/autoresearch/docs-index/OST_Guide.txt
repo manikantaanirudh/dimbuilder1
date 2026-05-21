@@ -1,0 +1,294 @@
+OneStream  Sample  
+Templates
+PV600  SV100
+
+Copyright  © 2025  OneStream  Software  LLC.  All rights  reserved.
+Any warranty  with respect  to the software  or its functionality  will be expressly  given  in the 
+Subscription  License  Agreement  or Software  License  and Services  Agreement  between  
+OneStream  and the warrantee.  This document  does  not itself constitute  a representation  or 
+warranty  with respect  to the software  or any related  matter.
+OneStream  Software,  OneStream,  Extensible  Dimensionality,  and the OneStream  logo are 
+trademarks  of OneStream  Software  LLC in the United  States  and other  countries.  Microsoft,  
+Microsoft  Azure,  Microsoft  Office,  Windows,  Windows  Server,  Excel,  Internet  Information  
+Services,  Windows  Communication  Foundation  and SQL Server  are registered  trademarks  or 
+trademarks  of Microsoft  Corporation  in the United  States  and/or  other  countries.  DevExpress  is a 
+registered  trademark  of Developer  Express,  Inc. Cisco  is a registered  trademark  of Cisco  
+Systems,  Inc. Intel is a trademark  of Intel Corporation.  AMD64  is a trademark  of Advanced  Micro  
+Devices,  Inc. Other  names  may be trademarks  of their respective  owners.
+Table  of Contents
+Using  Sample  Templates 1
+Time  Profiles  Overview 2
+Default  Dimensions  Overview 3
+Simple  Currency  Cash  Flow  Overview 4
+Simple  Single  Currency  Cash  Flow  Overview 5
+US Entity  Dimension  Overview 6
+Workflow  Import  Custom  Tables  Overview 7
+Workflow  Templates 7
+Custom  Table  Templates 7
+Setup 8
+Workflow  Excel  Import  Templates 8
+Custom  Table  XL Templates 9
+Security  Template  Overview 10
+Setup 11
+OneStream Sample Templates iTable ofContents
+User  Security  Design 11
+Data_ Certifier  Security  Design 11
+WF Profile  Security  Design 12
+Account  Security  Design 13
+Import  Best Practices 13
+Optimal  Display  Settings 14
+Modifying  OneStream  Solutions 14
+OneStream Sample Templates iiTable ofContents
+Using  Sample  Templates
+This guide  describes  the necessary  steps  to set up and use the OneStream  Sample  
+Templates  Solution.  The package  contents  for the solution  is located  in the OneStream  
+Solution  Exchange.  The templates  include:
+ lTime  Profiles
+ lDefault  Dimensions
+ lSimple  Currency  Cash  Flow
+ lSimple  Single  Currency  Cash  Flow
+ lSecurity
+ lUS Entity  Dimensions
+ lWorkflow  Import/Custom  Tables
+NOTE:  Excel  files imported  into custom  tables  need  to be modified  to match  
+the table  definition  prior to importing.              
+OneStream Sample Templates 1Using Sample Templates
+Time  Profiles  Overview
+The Time  Profiles  template  provides  a set of predetermined  templates  that include  twelve  
+XML files each  containing  the metadata  for a different  fiscal  year.  This provides  a quick  
+way to add Time  Profiles  for alternate  year- end definitions.
+Time  Profiles  are configured  to set the calendar  to a Non- Standard  Fiscal  Year  End. This  
+solution  only impacts  Months  and does  not affect  any other  application  properties. 
+The Time  Profiles  zip file contains  twelve  XML files, each  including  the Time  Profile  
+metadata  for a different  Fiscal  Year  End. Determine  the month  and year end needed  for 
+the flow dimension  for a Customer  Application  and then extract  the appropriate  XML file 
+from the OneStream  Sample  Templates  zip file.
+To add the Application  Template:
+ 1. Log into the correct  application.
+ 2. Open  the Application  Load/Extract  screen.
+ 3. Import  the XML file.
+These  profiles  can be assigned  to any cube  in your application.
+OneStream Sample Templates 2Time Profiles Overview
+Default  Dimensions  Overview
+The Default  Map Templates  Solution  provides  a set of predefined  Pass  Through  
+Dimension  Maps  for Entity,  Account,  Intercompany,  View,  User  Defined  Dimensions  1-8, 
+and three  separate  Time  maps  (mmm/yyyy,  mm/yyyy,  and Pass  Through). Use these  to 
+quickly  build  an application  or Proof  of Concept. Each  map type has separate  metadata  
+files that can be imported,  which  saves  time when  creating  the Dimension.
+The Default  Dimensions  Template  package  is a zip file containing  multiple  XML files, 
+each  containing  the metadata  for a different  Dimension  mapping  (Entity,  IC, Time,  View,  
+and UD1 – UD8).
+To set up a default  dimension:
+ 1. Determine  the Dimension  where  the template  will be imported.
+ 2. Extract  the appropriate  XML file from the OneStream  Solution  Exchange  zip file.
+ 3. Log into the application  that contains  the Dimension  template.
+ 4. Open  the Application  Load/Extract  screen.
+ 5. Import  the XML file.
+NOTE:  Import  individual  XML files only. Do  not import  the entire  zip file as 
+this will result  in importing  all of the Transformation  Rules  that include  
+multiple  time maps.
+OneStream Sample Templates 3Default Dimensions Overview
+Simple  Currency  Cash  Flow  Overview
+The Simple  Currency  Cash  Flow  template  provides  a set of predetermined  Dimension  
+templates  to build  a Flow  dimension  for a Customer  application  or proof  of concept. The  
+main  use of this template  is for a customer  application  or proof  of concept  where  the 
+customer  has multiple  currencies  and does  not need  detailed  information  on translation.
+The Simple  Currency  Cash  Flow  Dimension  Template  Package  is a zip containing  one 
+.XML  file.
+To add this Dimension  template,  log into the correct  application,  open  the Application  
+Load/Extract  screen  and import  the .XML  file.
+To pull the Beginning  Balance  from the Prior  Scenario  instead  of the Current  Scenario,  
+enter  the Prior  Scenario  name  into the Text 1 field of the Current  Scenario.
+CAUTION:  Do not import  this file into an application  with an existing  Flow  
+dimension  as conflicts  may occur.  Use this template  in a test environment  to 
+rename  members  and update  formulas  as necessary.
+OneStream Sample Templates 4Simple Currency Cash Flow Overview
+Simple  Single  Currency  Cash  Flow  
+Overview
+This template  provides  a set of predetermined  Dimension  templates  that create  a Flow  
+Dimension  in a Customer  Application  or Proof  of Concept  containing  one currency  and no 
+translation. Typically  used  for a company  operating  in a single  country  without  foreign  
+operations  outside  of their host country,  such  as a health  care company.
+This template  provides  a set of predetermined  Dimension  templates  that create  a Flow  
+Dimension  in a Customer  Application  or Proof  of Concept  containing  one currency  and no 
+translation. 
+To add the Dimension  Template:
+ 1. Log into the correct  application.
+ 2. Open  the Application  Load/Extract  screen.
+ 3. Import  the zip file.
+To pull the Beginning  Balance  from the Prior  Scenario  rather  than the Current  Scenario,  
+enter  the Prior  Scenario  name  into the Text 1 field of the Current  Scenario.
+CAUTION:  Do not import  the zip file into an application  with an existing  Flow  
+Dimension  as conflicts  may occur.  Use this template  in a test environment  to 
+rename  members  and update  formulas  as needed.
+OneStream Sample Templates 5Simple Single Currency Cash Flow Overview
+US Entity  Dimension  Overview
+Metadata  files and 50 US states  are provided  for the Entity  and User  Defined  1-8 
+Dimensions. Import  these  files to save  time when  creating  a Dimension. Perform  these  
+setup  tasks:
+ 1. Determine  which  Dimension  the States  Template  will be imported  into.
+ 2. Extract  the appropriate  XML file from the OneStream  Solution  Exchange  zip file.
+ 3. Log into the correct  application.
+ 4. Open  the Application  Load/Extract  screen.
+ 5. Import  the XML file.
+OneStream Sample Templates 6USEntity Dimension Overview
+Workflow  Import  Custom  Tables  
+Overview
+The Workflow  Import  Custom  Tables  are a set of predefined  sample  Excel  file templates  
+for importing  data to the OneStream  Workflow  and custom  tables. The  Workflow  
+templates  include  Cell Detail,  Forms,  Matrix  Forms,  and Journals. The  custom  table  
+templates  include  a sample  table  creation  script  and the Excel  templates  needed  to load 
+to the predefined  table.  See the following  sections:
+ lWorkflow  Templates
+ lCustom  Table  Templates
+ lSetup
+Workflow  Templates
+The sample  Workflow  templates  allow  you to import  Excel  files for Cell Detail,  Forms,  
+Matrix  Forms,  and Journals.
+Custom  Table  Templates
+The sample  custom  table  templates  contain  Excel  files to import  multiple  methods  into a 
+custom  table.  The Sample  Employee  Table  Script  creates  the custom  table  that is used  
+with the provided  Excel  templates.
+OneStream Sample Templates 7Workflow Import Custom Tables Overview
+Setup
+The zip file is not imported  into OneStream  directly. It  should  be downloaded  to your PC in 
+order  to update  the desired  sample  template. After  the template  is updated,  it can be 
+imported  into OneStream  via the Workflow  or loaded  to a custom  table.
+Details  on each  template  and field can be found  in the OneStream  Design  and Reference  
+Guide  under  Loading Data  via Excel  Templates  or CSV in Chapter  3: Data  Collection  
+Guides.
+Workflow  Excel  Import  Templates
+There  are a variety  of import  templates  you can use with Excel.  The follow  sections  
+describe  the benefits  and usage  of each  template.
+Cell Detail  Import  Template
+Import  Cell Detail  information  to a specific  intersection  in OneStream. Header  Rows  
+specify  the location  to which  the Cell Detail  is loaded. Data  Rows  contain  the Cell Detail  
+amount  and additional  information  to import  to the specified  location.
+Form  Import  Template
+Import  Form  information  to a specific  intersection  in OneStream. Header  Rows  specify  
+the location  to which  the Form  data is loaded. Data  Rows  contain  the Form  amount  and 
+details  to import  to the specified  location.
+Form  Matrix  Import  Template
+Import  Form  information  to a specific  intersection  in OneStream.  Header  Rows  specify  
+the location  to which  the Form  data is loaded. Data  Rows  contain  the Form  amount  and 
+OneStream Sample Templates 8Workflow Import Custom Tables Overview
+details  to import  to the specified  location. Matrix  forms  can only be used  to matrix  on up to 
+three  dimensions.
+Journal  Import  Template
+Import  Journal  information  to a specific  intersection  in OneStream.  Header  Rows  specify  
+the location  to which  the Journal  data is loaded. Data  Rows  contain  the Journal  amount  
+and details  to import  to the specified  location.
+Custom  Table  XL Templates
+Modify  Excel  files that you will import  into custom  tables  before  importing  them.
+OneStream Sample Templates 9Workflow Import Custom Tables Overview
+Security  Template  Overview
+The template  provides  a mechanism  to develop  User,  Entity,  and Workflow  security  in a 
+central  location.  When  the security  design  is completed,  the User  Security  Design  tab, 
+WF Profile  Security  Design  tab, and Entity  Security  tab all have  an XML builder  that builds  
+the XML according  to the OneStream  XML configuration.  This provides  extract  loads  of 
+the User,  Workflow,  and Entity  security  into the OneStream  Framework.  The .xlsx 
+Security  template  contains  the following  design  tabs:
+ lUser  Security  Design  – Contains  XML builder  code
+ lWF Load- Certify  Security  – Centralizes  who loads  and certifies  data per Workflow  
+and per Entity.  Used  to develop  WF Profile  Security  Design.  No XML builder  code.
+ lWF Profile  Security  Design  – Contains  XML builder  code.
+ lEntity  Security  Design  – Contains  XML builder  code.
+ lAccount  Security  Design  – Centralizes  a more  granular  level of account  security  
+and specifies  who should  have  access  to certain  accounts.  No XML builder  code.
+The tab order  determines  the flow in which  processes  are designed.  See these  sections  
+for information  about  using  this template:
+ lSetup
+ lUser  Security  Design
+ lImport  Best Practices
+ lOptimal  Display  Settings
+ lModifying  OneStream  Solution s
+OneStream Sample Templates 10Security Template Overview
+Setup
+There  are certain  dependencies  when  developing  the security  matrix.  
+Load  these  items  in the following  order:
+ 1. Load  users  as they are assigned  to Workflow  Security.
+ 2. Load  Workflow  Security.
+ 3. Load  Entity  Security.
+User  Security  Design
+ 1. Enter information  for Users.  Columns  A and B are required.
+ 2. Copy  the formulas  in Column  G down  the rows  as needed.
+ 3. Copy  the XML content  of column  G into Notepad  as a .XML  file. Make  sure the 
+header  and footer  match.
+ 4. Import  the file into the application and  confirm  the users  are visible.
+Data_ Certifier  Security  Design
+This template  organizes  entities  into Workflows  and then identifies  which  users  load data 
+and which  users  certify  data for each  Workflow.
+ 1. In the Entity  field,  define  all Entities  that submit  and report  data.
+ 2. In the Workflow  field,  add the Workflow  Name , which  identifies  which  Workflow  is 
+responsible  for loading  data for the respective  Entity.
+OneStream Sample Templates 11Security Template Overview
+ 3. For each  Entity/Workflow  combination,  define  the users  who will load and certify  
+data.
+WF Profile  Security  Design
+ 1. In Column  A, define  the Workflows  that need  Workflow  security  groups.
+ 2. In Column  B, define  the naming  convention  of the Workflow  security  groups.
+ 3. Enter  the appropriate  users  and groups  for the Workflows.  
+ 4. Copy  XML from column  AH to an .XML  file and load it into the application.
+Entity  Security  Design
+ 1. In Column  A, define  the Entities.
+ 2. In Column  B, define  the naming  convention  for the Entity  Read  and Read/Write  
+Security  Group.
+ 3. In Column  C, add the description  of the Entity  Security  Groups.
+ 4. For the Child  columns,  enter  either  the User  or Group  assigned  to the Entity  Read  or 
+Read  Write  Security  Group.
+Read  Only Example:  For the Entity  Read  Security  Group,  enter  the users  who 
+require  access  but do not have  access  to the Entity  through  a Workflow.  If a user 
+does  not load data but has workflow  responsibility  through  a Review  Workflow,  then 
+assign  the Review  Workflow  Data  Execution  group  or Review  Workflow  Access  
+Group  to the Entity  Read  Security  Group.
+Read/Write  Example:  For the Entity  Read  Write  Security  Group,  assign  the 
+Workflow  Data
+OneStream Sample Templates 12Security Template Overview
+Execution  Groups  to the Entity  Read  Write  Group.  By gaining  access  to the 
+Workflow  Data  Execution  Group,  you would  then have  access  to the Entity  Read  
+Write  Security  Group  for data loading.  Maintenance  of user data loading  is then 
+controlled  by which  workflows  they are allowed  access  to.
+It is recommended  to start from the top of the Entity  Hierarchy  and continue  toward  
+the bottom.  Create  the Entity  Security  Group  prior to assigning  it to other  Entity  
+Security  Groups.
+5. Copy  XML from column  AS to a text file and load to the application.
+Account  Security  Design
+There  is no Read  or Read- Write  security  with Account  members.  To access  Account  
+security,  go to  Cubes  > Data  Access  This is known  as slice security.
+The Account  Security  Design  allows  organization  for accounts  that require  security  and 
+users  who have  access  to them.  There  is currently  no XML builder.
+Import  Best  Practices
+ lImport  individual  XML files only.
+ lDo not import  XML files into an application  with an existing  Flow  Dimension  as 
+conflicts  may occur.  Use the templates  in a test environment  to rename  members  
+and update  formulas  as necessary.
+ lFor Time  Profiles  templates,  determine  the month  and year end needed  for the 
+application  or proof  of concept  and then extract  the appropriate  .XML  file.
+OneStream Sample Templates 13Security Template Overview
+ lFor Simple  Currency  Cash  Flow  templates,  to pull the Beginning  Balance  from 
+the Prior  Scenario  instead  of the Current  Scenario,  enter  the Prior  Scenario  name  
+into the Text 1 field of the Current  Scenario.
+ lFor Simple  Single  Currency  Cash  Flow  templates,  to pull the Beginning  Balance  
+from the Prior  Scenario  instead  of the Current  Scenario,  enter  the Prior  Scenario  
+name  into the Text 1 field of the Current  Scenario.
+Optimal  Display  Settings
+OneStream  Platform  and Solutions  frequently  require  the display  of multiple  data 
+elements  for proper  data entry  and analysis.
+The recommended  screen  resolution  is a minimum  of 1920  x 1080  for optimal  rendering  
+of forms  and reports.
+Modifying  OneStream  Solution s
+A few cautions  and disclaimers  when  modifying  a OneStream  Solution s:
+ lMajor  changes  to Business  Rules  or custom  tables  within  a OneStream  Solution  will 
+not be supported  through  normal  channels  as the resulting  solution  is significantly  
+different  from the core solution.
+ lIf changes  are made  to any Dashboard  object  or Business  Rule,  consider  renaming  
+it or copying  it to a new object  first. This is important  because  if there  is an upgrade  
+to the OneStream  Solution  in the future  and the customer  applies  the upgrade,  this 
+will overlay  and delete  the changes.  This also applies  when  updating  any of the 
+standard  reports  and Dashboards.
+OneStream Sample Templates 14Security Template Overview
+ lIf modifications  are made  to a OneStream  Solution , upgrading  to later versions  will 
+be more  complex  depending  on the degree  of customization.  Simple  changes  such  
+as changing  a logo or colors  on a Dashboard  do not impact  upgrades  significantly.  
+Do not make  changes  to the custom  database  tables  and Business  Rules.
+OneStream Sample Templates 15Security Template Overview

@@ -1,0 +1,335 @@
+Solution  Descriptions  
+Guide
+9.0.1  Release
+
+Copyright  © 2025  OneStream  Software  LLC.  All rights  reserved.
+All trademarks,  logos,  and brand  names  used  on this website  are the property  of their respective  
+owners.  This document  and its contents  are the exclusive  property  of OneStream  Software  LLC 
+and are protected  under  international  intellectual  property  laws.  Any reproduction,  modification,  
+distribution  or public  display  of this documentation,  in whole  or part, without  written  prior consent  
+from OneStream  Software  LLC is strictly  prohibited.
+Table  of Contents
+Overview 1
+Standard 1
+Reporting 2
+Platform  - Standard 3
+Platform  - Reporting 5
+Close  - Standard 7
+Close  - Reporting 8
+Consolidation  - Standard 9
+Consolidation  - Reporting 11
+ESG  Reporting  & Planning  - Standard 13
+ESG  Reporting  & Planning  - Reporting 14
+FP&A  – Standard 15
+FP&A  – Reporting 17
+SensibleAI  Forecast™ 19
+Solution Descriptions Guide iTable ofContents
+SensibleAI  Studio™  - Standard 20
+Solution Descriptions Guide iiTable ofContents
+Overview
+The Solutions  identified  in this OneStream  Solutions  Description  are each  separate  and individual  
+SKU’s,  but may be packaged  in a bundle,  as further  outlined  in your Order  Schedule.  Solutions  
+may be categorized  as either  “Standard”  or “Reporting”  as further  specified  below.
+Standard
+Standard  Solutions  have  full access  and use rights  to all functionality,  including  read and write  
+access,  in the specific  Solution.
+Standard  Solutions  permit  an Authorized  Person  to change  data in a cube,  relational  table,  or 
+other  modeling  apparatus  including:
+ lAccessing  functionality  under  the “Application”  or “System”  tabs in the OneStream  
+Windows  Desktop  application  or the equivalent  functionality  in other  user interfaces
+ lModifying  values  stored  in a cube  or relational  table
+ lExecuting  actions  that run calculations,  such  as Calculate,  Translate,  or Consolidate
+ lImporting  data through  the Stage  engine  or other  data ingestion  mechanisms
+ lModifying  predefined  reports  or dashboards
+ lExecuting  data management  jobs or tasks  that modify  stored  data
+Solution Descriptions Guide 1Table ofContents
+Reporting
+Reporting  Solutions  are limited  to read- only access  by Authorized  Persons,  including:
+ lViewing  Cube  Views  and Dashboards
+ lExporting  data to Excel
+ lAccessing  data through  the OneStream  Excel  Add- in
+ lSelect  a parameter  for the purpose  of rendering  a pre-defined  report
+ lViewing  workflows  and steps  embedded  therein
+ lViewing  documents  stored  within  the OneStream  service
+Solution Descriptions Guide 2Table ofContents
+Platform  - Standard
+Platform  - Standard  consists  of full access  and use rights  to the core functionality  of the 
+OneStream  SaaS  platform  including:
+ lAccess  to download,  install,  and utilize  the OneStream  Windows  Desktop  Application,  
+OneStream  Excel  Add- in, and Modern  Browser  Experience
+ lInteraction  with Workflows,  Cubes,  Cube  Views,  Dashboards,  Documents,  and Data  
+Collection  and Quality
+ lAbility  to create  and query  relational  tables  through  the use of applications  from the Solution  
+Exchange  or other  custom  applications
+As part of the Platform  – Standard  Solution,  access  to Cube  functionality  is limited  to dimension  
+management,  in-memory  analytics  (that is, to support  Cube  Views),  and associated  member  
+formula  and business  rule functionality.
+The Platform  – Standard  Solution  includes  the ability  to download,  install,  and utilize  the following  
+applications  from the OneStream  Solution  Exchange:
+ lAdministration  Solution  Tools
+ lApplication  Control  Manager
+ lCloud  Administration  Tools
+ lData  Entry  123
+ lExcel  Add- in Installer
+ lExcel  Metadata  Builder
+ lFile Explorer  Manager
+Solution Descriptions Guide 3
+ lGuided  Reporting
+ lLoad  Test Suite
+ lMarketPlace  Solution  Tools
+ lNavigation  Center
+ lParcel  Service
+ lSample  Templates
+ lSecurity  Audit  Reports
+ lSnippet  Editor
+ lStandard  Application  Reports
+ lStandard  System  Reports
+ lSystem  Diagnostics
+ lTable  Data  Manager
+ lXML Security  Remover
+ l Manage  the OneStream  applications  within  the Service  environments
+ lManage  the system  functionality  of the Service
+ lManage  user authentication  and authorization  in OneStream  applications  and the 
+OneStream  Identity  and Access  Management  portal
+Solution Descriptions Guide 4
+Platform  - Reporting
+Platform  - Reporting  consists  of read- only access  to the core functionality  of the OneStream  SaaS  
+platform  including:
+ lAccess  to download,  install,  and utilize  the OneStream  Windows  Desktop  Application,  
+OneStream  Excel  Add- in, and Modern  Browser  Experience
+ lInteraction  with Workflows,  Cubes,  Cube  Views,  Dashboards,  Documents,  and Data  
+Collection  and Quality
+As part of the Platform  – Reporting  Solution,  access  to Cube  functionality  is limited  to in-memory  
+analytics  (that is, to support  Cube  Views)  and associated  member  formula  and business  rule 
+functionality.
+The Platform  – Reporting  Solution  includes  read- only access  to the following  applications  from the 
+OneStream  Solution  Exchange:
+ lAdministration  Solution  Tools
+ lApplication  Control  Manager
+ lCloud  Administration  Tools
+ lData  Entry  123
+ lExcel  Add- in Installer
+ lExcel  Metadata  Builder
+ l File Explorer  Manager
+ lGuided  Reporting
+ lLoad  Test Suite
+Solution Descriptions Guide 5
+ lMarketPlace  Solution  Tools
+ lNavigation  Center
+ lParcel  Service
+ lSample  Templates
+ lSecurity  Audit  Reports
+ lSnippet  Editor
+ lStandard  Application  Reports
+ lStandard  System  Reports
+ lSystem  Diagnostics
+ lTable  Data  Manager
+ lXML Security  Remover
+Solution Descriptions Guide 6
+Close  - Standard
+Close  - Standard  consists  of full access  and use rights  to the following  functionality  of the 
+OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Standard  solution
+ lAccess  to the following  Scenario  dimension  types:
+ oActual
+Close  – Standard  includes  full access  and use rights  to download,  install,  and utilize  the following  
+applications  from the OneStream  Solution  Exchange:
+ lBAI Parser  Solution
+ lContract  Compliance
+ lOneStream  Financial  Close
+ lAccount  Reconciliations
+ lTransaction  Matching
+ lReporting  Compliance
+ lSAP Connector
+ lTask  Manager
+Solution Descriptions Guide 7
+Close  - Reporting
+Close  – Reporting  consists  of read- only access  and use rights  to the following  functionality  of the 
+OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Reporting  solution
+ lAccess  to the following  Scenario  dimension  types:
+ oActual
+Close  – Reporting  includes  read- only access  to the following  applications  from the OneStream  
+Solution  Exchange:
+ lBAI Parser  Solution
+ lContract  Compliance
+ lOneStream  Financial  Close
+ lAccount  Reconciliations
+ lTransaction  Matching
+ lReporting  Compliance
+ lSAP Connector
+ lTask  Manager
+Solution Descriptions Guide 8
+Consolidation  - Standard
+Consolidation  - Standard  consists  of full access  and use rights  to the following  functionality  of the 
+OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Standard  solution
+ lFinancial  Model  Consolidation
+ oIncludes,  but is not limited  to: Currency  Translation,  Direct  and Indirect  Eliminations,  
+and Equity  Pickup
+ lEntity  Aggregation
+ lAccess  to the following  Scenario  dimension  types:
+ oActual
+ oFlash
+ oHistory
+ oTax
+Consolidation  – Standard  also includes  full access  and use rights  to download,  install,  and utilize  
+from the Solution  Exchange  the following  applications:
+ lBAI Parser  Solution
+ lContract  Compliance
+ lOneStream  Financial  Close
+ lReporting  Compliance
+ lSAP Connector
+Solution Descriptions Guide 9
+ lTask  Manager
+ lThing  Compliance
+Solution Descriptions Guide 10
+Consolidation  - Reporting
+Consolidation  - Standard  consists  of read- only access  and use rights  to the following  functionality  
+of the OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Reporting  solution
+ lFinancial  Model  Consolidation
+ oIncludes,  but is not limited  to: Currency  Translation,  Direct  and Indirect  Eliminations,  
+and Equity  Pickup
+ lEntity  Aggregation
+ lAccess  to the following  Scenario  dimension  types:
+ oActual
+ oFlash
+ oHistory
+ oTax
+Consolidation  – Reporting  also includes  read- only access  to the following  applications  from the 
+OneStream  Solution  Exchange:
+ lBAI Parser  Solution
+ l Contract  Compliance
+ lTransaction  Matching
+ lReporting  Compliance
+ lSAP Connector
+Solution Descriptions Guide 11
+ lTask  Manager
+ lThing  Compliance
+Solution Descriptions Guide 12
+ESG  Reporting  & Planning  - Standard
+ESG  Reporting  & Planning  - Standard  consists  of full access  and use rights  to the following  
+functionality  of the OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Standard  solution
+ESG  Reporting  & Planning  – Standard  includes  full access  and use rights  to download,  install,  
+and utilize  the following  application  from the OneStream  Solution  Exchange:
+ lESG  Reporting  & Planning
+Solution Descriptions Guide 13
+ESG  Reporting  & Planning  - Reporting
+ESG  Reporting  & Planning  - Standard  consists  of read- only access  and use rights  to the following  
+functionality  of the OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Reporting  solution
+ESG  Reporting  & Planning  – Reporting  includes  read- only access  to the following  application  
+from the OneStream  Solution  Exchange:
+ lESG  Reporting  & Planning
+Solution Descriptions Guide 14
+FP&A  – Standard
+FP&A  - Standard  consists  of full access  and use rights  to the following  functionality  of the 
+OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Standard  solution
+ lEntity  Aggregation
+ lAccess  to the following  Scenario  dimension  types:
+ oBudget
+ oForecast
+ oFXModel
+ oLongTerm
+ oModel
+ oOperational
+ oPlan
+ oTarget
+ lRead- only access  to the following  Scenario  dimension  types:
+ oActual
+ o Flash
+ o History
+ oTax
+Solution Descriptions Guide 15
+FP&A  – Standard  also includes  full access  and use rights  to download,  install,  and utilize  the 
+following  applications  from the OneStream  Solution  Exchange:
+ lBAI Parser  Solution
+ lCapital  Planning
+ lCash  Planning
+ lContract  Compliance
+ lPeople  Planning
+ lReporting  Compliance
+ lSAP Connector
+ lSales  Planning
+ lScenario  Analysis  123
+ lTask  Manager
+ lThing  Compliance
+ lThing  Planning
+Solution Descriptions Guide 16
+FP&A  – Reporting
+FP&A  - Standard  consists  of full access  and use rights  to the following  functionality  of the 
+OneStream  SaaS  platform  including:
+ lThe features  included  within  the Platform  – Reporting  solution
+ lEntity  Aggregation
+ lAccess  to the following  Scenario  dimension  types:
+ oBudget
+ oForecast
+ oFXModel
+ oLongTerm
+ oModel
+ oOperational
+ o Plan
+ oTarget
+ lRead- only access  to the following  Scenario  dimension  types:
+ oActual
+ oFlash
+ oHistory
+ oTax
+Solution Descriptions Guide 17
+FP&A  – Reporting  also includes  read- only access  to the following  applications  from the 
+OneStream  Solution  Exchange:
+ lBAI Parser  Solution
+ lCapital  Planning
+ lCash  Planning
+ lContract  Compliance
+ lPeople  Planning
+ lReporting  Compliance
+ lSAP Connector
+ lSales  Planning
+ lScenario  Analysis  123
+ lTask  Manager
+ lThing  Compliance
+ lThing  Planning
+Solution Descriptions Guide 18
+SensibleAI  Forecast ™
+SensibleAI  Forecast  consists  of full access  and use rights  to the following  application  from the 
+OneStream  Solution : 
+ lSensibleAI  Forecast  Solution
+ l SensibleAI  Studio  Essentials  Package,  which  includes:
+ o SensibleAI  Studio  Solution
+ o SensibleAI  Studio  Essentials  Routines   
+ oSensibleAI  Studio  Essentials  Solutions  
+ oSensibleAI  Studio  Essentials  Genesis  Blocks  
+Service  Limits  – SensibleAI  Forecast
+ OneStream  SensibleAI  Forecast  is a separately  priced  product,  and additional  fees will apply  
+based  on the number  of Targets  defined  in the customer  Order  Schedule.  
+“Target”  means  a data element  in the SensibleAI  Solution  in which:  i) Customer  historical  data is 
+ingested;  and ii) forecast  data is generated  by the SensibleAI  Solution.  Targets  are consumed  
+across  both production  and non-production  environments.  
+Please  see below  for Service  Limits  applicable  to SensibleAI  Studio  Essentials  Package.   
+Solution Descriptions Guide 19
+SensibleAI  Studio ™ - Standard
+SensibleAI  Studio  - Standard  consists  of full access  and use rights  to the following  application  
+from the OneStream  Solution  Exchange:
+ l SensibleAI  Essentials  Package  
+ lSensibleAI  Studio  Standard  Routines  
+ lSensibleAI  Studio  Standard  Solutions  
+ lSensibleAI  Studio  Standard  Genesis  Blocks  
+Service  Limits  – SensibleAI  Essentials  Package  and SensibleAI  Studio  - Standard
+ 1. A maximum  of 3000  Invocations  per calendar  quarter  of LLM Chat  Models  surface  through  
+SensibleAI  Studio  and Xperiflow  Business  Rules.  
+ 2.  A maximum  of 300,000  LLM Embedding  Generations  per calendar  quarter.  
+ 3.  A maximum  of 100,000  Code  Scan  Units  per calendar  quarter.  
+ Any unused  Invocations,  LLM Embedding  Generations  or Code  Scan  Units  may not be rolled  
+over and consumed  during  a subsequent  calendar  quarter.  
+“Invocation”  means  a single  call or execution  of a service,  function,  or model  within  the Platform.   
+“LLM  Embedding  Generation”  means  single  operation  where  an LLM embedding  model  
+processes  one discrete  sub-set of text to produce  its numeric  embedding  representation.
+ “Code  Scan  Unit”  means  single  evaluation  that checks  a specific  code  file ("Scan  Item")  against  
+one Condition,  returning  any matching  instances  within  that file.
+ “Condition”  means  predefined  coding  pattern  or issue  (e.g.,  "Unnecessary  Logging  Statements",  
+"Nested  SQL loops")  that the scanning  process  searches  for within  a Scan  Item.  
+Solution Descriptions Guide 20

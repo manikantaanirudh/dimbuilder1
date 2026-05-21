@@ -2,11 +2,38 @@
 
 The Express app mounts API routes under `/api`. Client helper functions live in `src/client/api/client.ts`.
 
+## Cross-Cutting Concerns
+
+### Authentication
+
+When `auth.enabled` is true in config, all `/api/*` routes except `/api/health` require HTTP Basic Authentication. See `security-model.md` for details.
+
+### Rate Limiting
+
+All `/api/*` routes are subject to a general rate limit of 100 requests per 60-second window per IP. Import and export routes (`/api/import/*`, `/api/export/*`) have a stricter limit of 10 requests per 60-second window.
+
+Rate limit status is communicated via `draft-7` standard headers (`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`). Exceeding the limit returns `429`:
+
+```json
+{ "error": "Too many requests, please try again later." }
+```
+
+### Request Body Validation
+
+Mutation routes validate request bodies with Zod schemas via `validateBody()` middleware. Invalid payloads return `400`:
+
+```json
+{
+  "error": "Validation failed",
+  "details": [{ "path": "name", "message": "Project name is required" }]
+}
+```
+
 ## Health
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/health` | Returns `{ ok: true }`. |
+| GET | `/api/health` | Returns `{ ok: true }`. Always unauthenticated. |
 
 ## Config
 

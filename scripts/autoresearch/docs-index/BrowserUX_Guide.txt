@@ -1,0 +1,1055 @@
+BrowserUX Early 
+Access Programs 
+Guide
+8.2.4 Release
+
+Copyright  © 2024  OneStream  Software  LLC.  All rights  reserved.
+Any warranty  with respect  to the software  or its functionality  will be expressly  given  in the 
+Subscription  License  Agreement  or Software  License  and Services  Agreement  between  
+OneStream  and the warrantee.  This document  does  not itself constitute  a representation  or 
+warranty  with respect  to the software  or any related  matter.
+OneStream  Software,  OneStream,  Extensible  Dimensionality  and the OneStream  logo are 
+trademarks  of OneStream  Software  LLC in the United  States  and other  countries.  Microsoft,  
+Microsoft  Azure,  Microsoft  Office,  Windows,  Windows  Server,  Excel,  .NET  Framework,  Internet  
+Information  Services,  Windows  Communication  Foundation  and SQL Server  are registered  
+trademarks  or trademarks  of Microsoft  Corporation  in the United  States  and/or  other  countries.  
+DevExpress  is a registered  trademark  of Developer  Express,  Inc. Cisco  is a registered  trademark  
+of Cisco  Systems,  Inc. Intel is a trademark  of Intel Corporation.  AMD64  is a trademark  of 
+Advanced  Micro  Devices,  Inc. Other  names  may be trademarks  of their respective  owners.
+Table  of Contents
+Disclaimer 1
+About  This Guide 1
+BrowserUX  Overview 2
+Early  Access  Programs  Description 3
+Private  Preview  Program 3
+Limited  Availability  Program 4
+General  Availability  Launch 4
+New in BrowserUX  8.2 5
+Workflow 5
+Dashboard 7
+Functional  Capabilities 7
+BrowserUX  Implementation 8
+Prerequisites  for BrowserUX  Implementation 8
+System  Requirements 8
+Setup  and Configuration 9
+Authentication 9
+Functional  Capabilities  of BrowserUX 10
+General  User  Experience 10
+BrowserUX Early Access Programs Guide iTable ofContents
+Log in to BrowserUX 10
+Log out of BrowserUX 11
+Change  Applications 11
+Header 12
+OnePlace  Panel 12
+Hide OnePlace  Panel 12
+Navigate  OnePlace  Panel  Sections 13
+File Explorer 14
+Grids 14
+Anchored  Dialogs 15
+Cancel  Long- Running  Tasks 16
+Workflow 18
+Navigation 18
+Supported  Workflow  Functionality 21
+Workflow  Steps 21
+General  Workflow  Functionality 21
+Notable  Differences  from Windows  Application 22
+Notable  Workflow  Functionality  Gaps 24
+Workflow  Steps 24
+General  Workflow  Functionality 24
+BrowserUX Early Access Programs Guide iiTable ofContents
+Navigating  Workflow  Step Gaps 24
+Cube  Views 25
+Supported  Cube  View  Functionality 25
+Presentation 25
+Toolbar  Functions 25
+Cube  View  and Cell-Level  Context  Menu  Functions 26
+Cube  View  Navigation 26
+Cube  View  Drill Down 26
+User  Experience  Differentiators 28
+Notable  Functional  Gaps 28
+Dashboards 29
+Enabling  Dashboard  Access 29
+Supported  Dashboard  Functionality 30
+Dashboard  Layouts 30
+Dashboard  Components 30
+General  Dashboard  Functionality 30
+Notable  Differences  from Windows  Application 31
+Dashboard  Components 31
+Notable  Dashboard  Functionality  Gaps 39
+Dashboard  Layouts 39
+BrowserUX Early Access Programs Guide iiiTable ofContents
+Dashboard  Components 40
+Navigating  Dashboard  Gaps 40
+BrowserUX Dashboard  Design  Process 43
+Multi- client/Device  Dashboard  Design  Approaches 43
+Approach  1: Unified  Multi- client/Device  Dashboards 43
+Approach  2: Client/Device  Specific  Dashboards 44
+Approach  3: Client/Device  Adaptive  Dashboards 44
+Documents 45
+POV 47
+Additional  Features 47
+Modify  a POV 47
+Save  a POV 48
+Set a Saved  POV 49
+Third- Party  Component  Technology 50
+Appendix  A: Pivot  Grids 51
+Calculated  Fields  Syntax 51
+Keyboard Navigation  in Pivot  Grids 52
+Chart  Types  in Pivot  Grids 59
+Appendix  B: Advanced  Charts 61
+Configuration  Properties 61
+BrowserUX Early Access Programs Guide ivTable ofContents
+Disclaimer
+Anything  you see in this program  is subject  to change  and may or may not be included  in a 
+generally  available  software  release.
+About  This Guide
+This guide  introduces  the OneStream  BrowserUX  client  interface  and highlights  the benefits  and 
+differences  of using  this modern,  web- accessible  interface  for OneStream  end users.  This guide  
+is intended  to:
+ lFamiliarize  OneStream  end users,  power  users,  administrators,  partners,  and consultants  
+with BrowserUX  navigational  features  and UI (user  interface)  elements.
+ lProvide  prerequisites  and directions  for implementation  of BrowserUX  in a customer  
+environment  during  various  stages  of development.
+ lProvide  high- level information  about  supported  features  and capabilities,  general  usage  
+patterns,  end-user flows,  and best practices.
+ lProvide  high- level information  about  differences  between  the OneStream  BrowserUX  and 
+Windows  Client.
+NOTE:  This guide  is intended  for participants  in the OneStream  Early  Access  
+programs  (for example,  Private  Preview  for non-production  use and Limited  
+Availability  for production  use),  as well as for internal  OneStream  teams,  such  as 
+Consulting  Services,  Sales,  and Customer  Support.
+BrowserUX Early Access Programs Guide 1Disclaimer
+BrowserUX  Overview
+Welcome  to BrowserUX,  OneStream’s  latest  web- based  offering.  BrowserUX  works  alongside  
+the existing  OneStream  Windows  Application  to give users  more  options  to access  their data 
+across  a wide range  of devices.  In its initial  phases,  BrowserUX  delivers  a streamlined,  modern  
+experience  that strives  to provide  comprehensive  coverage  of OnePlace  features.  With a strong  
+foundation  in updated  technologies,  BrowserUX  will introduce  a suite  of innovative  designs  and 
+improved  solutions  in future  releases.
+While  we are representing  much  of the existing  end user functionality,  we are currently  not 
+supporting  the use of MarketPlace  solutions  within  BrowserUX.  We will review  these  solutions  on 
+a case- by-case  basis  and report  supported  solutions  in this documentation  in future  releases.  
+Additionally,  you will notice  the System  and Application  Tabs  are not available  in BrowserUX.
+The following  sections  highlight  benefits,  explore  differences,  and provide  current  limitations  to 
+help customers  and partners  evaluate  BrowserUX  for their business  needs. 
+BrowserUX Early Access Programs Guide 2BrowserUX Overview
+Early  Access  Programs  
+Description
+Early  Access  Programs  enable  OneStream  to validate  new platform  features  and solutions  with 
+interested  customers,  gain feedback,  and continuously  improve  the product.
+The BrowserUX  initiative  has completed  several  months  of customer  feedback  through  a "Hosted  
+Private  Preview"  and now is enabling  BrowserUX  in customer's  cloud  and self-hosted  
+environments.  Eligible  customers  for these  programs  must  exhibit  the following:
+ lA prescribed  browser  use case  that OneStream  Product  & Engineering  feels  can be 
+successful  with the targeted  platform  version.
+ lThe use case  must  have  a targeted  audience,  intended  devices,  and defined  success  
+criteria.
+ lThe use case  must  have  go-to-production  intent;  meaning  that if the use case  is deemed  
+successful  in a Private  Preview  experience,  the customer  will commit  to transitioning  the 
+use case  to production.
+ lCustomers  must  be willing  to upgrade  platform  releases  to receive  new or updated  
+functionality.
+ lCustomers  must  have  an early  adopter  spirit.
+Interested  customers  can learn  more  about  the BrowserUX  initiative  by engaging  their Customer  
+Success  Manager  who will arrange  a meeting  with the OneStream  product  team.
+Private  Preview  Program
+OneStream  Private  Previews  are intended  to extend  pre-General  Availability  platform  features  or 
+solutions  to customers  for non-production  validation  and feedback.  Private  Previews  may be 
+OneStream  hosted,  or installed  to customer  self-hosted  or cloud  environments.  They  are 
+managed  by the Product  and Engineering  team  and there  is no commitment  to issue  resolution  
+nor support  through  OneStream's  normal  support  ticketing  process.
+All OneStream  BrowserUX  initiative  customer  engagements  commence  with a Private  Preview  
+experience.  The agreed  upon  use case  is validated  in a non-production  instance  with a targeted  
+audience  and defined  success  criteria.
+BrowserUX Early Access Programs Guide 3Early Access Programs Description
+Limited  Availability  Program
+OneStream  Limited  Availability  programs  are for early  adopting  customers  to operate  new 
+functionality  in their Production  instance,  under  OneStream's  full Service  Level  Agreement  (SLA).  
+Features  and solutions  in Limited  Availability  are supported  by the normal  Support  ticketing  
+process.
+Features  or Solutions  in this program  are deemed  "Limited"  because  either  the intended  
+functionality  is not yet complete,  or OneStream  is throttling  the adopting  customers  to ensure  
+successful  learning  and support  across  the OneStream  and Partner  communities.
+Successful  BrowserUX  Private  Preview  experiences  are eligible  for transition  to Production  under  
+the Limited  Availability  program.  OneStream  is looking  to establish  BrowserUX  success  in the 
+market  through  Limited  Availability  before  considering  a General  Availability  launch.
+The release  of 8.1 BrowserUX  entered  into Limited  Availability.  For 8.2, BrowserUX  is remaining  
+in Limited  Availability  and still seeking  customers  and partners  to participate  in the program.  
+Customers  upgrading  to v8+ releases  are provided  the option  to have  BrowserUX  enabled  in their 
+Non- Production  and Production  instances.
+General  Availability  Launch
+The culmination  of our efforts  is the General  Availability  launch.  At this point,  the product  is made  
+available  to our entire  customer  base.  General  Availability  marks  the official  release,  showcasing  
+the enhanced  capabilities  of BrowserUX.  The team  continues  supporting  and enhancing  the 
+product  after BrowserUX  is made  generally  available.
+BrowserUX Early Access Programs Guide 4Early Access Programs Description
+New in BrowserUX  8.2
+BrowserUX 8.2.0  introduces  a variety  of new features  across  the platform,  which  compliment  
+earlier  delivered  functionality  to enable  a wider  range  of end users  needs.
+BrowserUX  releases  features  significant  enhancements  to the User  Experience.  Release  8.2 
+continues  to build  in the Workflow  and Dashboard  areas  to ensure  a cohesive  experience  for 
+existing  Windows  Application  users.
+Workflow
+Feature Description
+Dependent  
+ActionsLock/Unlock  Descendants,  Corporate  Certification  Management,  and 
+Corporate  Data  Control  are now available  in the Workflow  Status  menu.
+Multi- Period  
+ProcessingExecute  batch  actions  across  multiple  periods.  Accessible  in the 
+Workflow  context  menu.
+Grid Actions  
+Moved  to 
+Context  MenusFormerly  accessed  in Right- Click  menus,  Grid Actions  are now available  
+in the Grid context  menu  to support  a smoother  experience  on touch  
+devices.
+Grid Keyboard  
+FunctionalityEnabled  keyboard  navigation  on Grid types  throughout  the system.  
+Users  have  access  to directional  keys as well as Enter  and Tab. 
+Workflow  
+NavigationQuickly  navigate  between  Workflow  Steps  with a dropdown  menu  in the 
+page  title bar.
+Journal  Export Export  journals  from the Journals  workflow  toolbar  to an XLSX  import  
+template  file for the current  workflow  profile  and scenario.  This is useful  
+when  you want  to import  journals  into another  application,  scenario,  or 
+workflow  profile  without  needing  a business  rule or having  to navigate  to 
+another  page.
+Add Journal  
+Line ItemsYou can specify  exactly  where  to insert  a new line item in a journal.  Insert  
+a journal  line item by selecting  an existing  line item then clicking  the Add 
+BrowserUX Early Access Programs Guide 5New inBrowserUX 8.2
+Feature Description
+Line Item button.  This adds  a new line item directly  below  the selected  
+one.  Prior  to this enhancement,  all new journal  line items  were  placed  at 
+the top of the journal  by default.  If you do not select  a location  for a new 
+line item,  it will be added  to the top of the journal.
+Rename  
+JournalsYou can rename  journal  entries  in Working  or Rejected  status.  In the 
+DesktopApp,  renaming  a journal  requires  you to launch  a Rename  
+Journal  dialog.  In BUX,  the journal  name  property  is editable,  and 
+changes  are saved  as part of the standard  Save  action.
+Filter  Journals  
+By EntityYou can filter journal  entries  on the entity  name  using  the Filter  button  in 
+the Journals  tool bar.  You can use this filter in combination  with grid 
+column  filters.  Filtering  helps  auditors,  accountants,  and other  
+stakeholders,  quickly  identify  specific  transactions  and reduces  the time 
+spent  on searching  for information,  especially  when  investigating  entries.
+Personalize  
+Journal  Line 
+Item Dimension  
+Member  
+DescriptionsYou can hide or show  member  descriptions  next to member  names  in 
+journal  line items.  Preferences  are saved  in your local browser.
+Enhanced  Error  
+Display  for 
+Journal  
+ValidationWhen  validating  journals,  detected  validation  errors  are prominently  
+displayed  in a Validation  Messages  pane.  This update  aligns  with the 
+Desktop  App method  of validation  error  presentation,  ensuring  a 
+consistent  and clean  user experience.
+SQL Table  
+Editor  Row 
+Background  
+ColorAdministrators  have  the option  to apply  a background  color  to all rows  or 
+alternate  rows  of an SQL table  in SQL Table  Editor  grids.  This makes  it 
+easier  to distinguish  between  rows  of data at a glance,  and can 
+significantly  reduce  eye strain.
+BrowserUX Early Access Programs Guide 6New inBrowserUX 8.2
+Dashboard
+Feature Description
+Advanced  Charts Area,  Bar, Line,  Pie and Donut  Charts
+Large  Data  Pivot  
+GridSupports  existing  Large  Data  Pivot  Grid components  in Dashboards  
+while  offering  extended  functionality.
+Pivot  Grid Supports  existing  Pivot  Grid components  in Dashboards  while  
+offering  extended  functionality.
+Date  Selector Provides  a configurable  calendar  for Dashboards  that enables  users  
+to select  a date
+SQL Table  Editor  - 
+Filter  RowOptional  configuration  that allows  users  to filter in a specialized  Filter  
+Row directly  beneath  column  headers.
+SQL Table  Editor  & 
+Grid View  - 
+Keyboard  
+FunctionalityOptional  configuration  that allows  users  to filter in a specialized  Filter  
+Row directly  beneath  column  headers.  Users  have  access  to 
+directional  keys as well as Enter  and Tab. 
+Functional  Capabilities
+Cancel  Long- Running  Tasks If a Cube  View  takes  longer  than 10 
+seconds  to render,  users  will be 
+prompted  to choose  to cancel  the task 
+or continue  processing.  Users  can 
+cancel  this task from the Data  Explorer  
+page  or Task  Activity  panel.  The Task  
+Activity  panel  also now includes  filters  
+to display  long- running  tasks  and was 
+updated  to ensure  it provides  proper  
+task statuses  upon  cancellation  and 
+logging  detail  for Cube  Views.
+BrowserUX Early Access Programs Guide 7New inBrowserUX 8.2
+BrowserUX  Implementation
+This section  will guide  you through  the prerequisites  for BrowserUX  implementation  and the steps  
+for setup  and configuration.
+Prerequisites  for BrowserUX  Implementation
+Customers  must  have  OneStream  Platform  version  8.0 or later installed  in their environments.  For 
+more  information  on the installation  process,  see the  Installation  Guide .
+For information  on prerequisites  for self-hosted  environments,  refer to the Legacy  Authentication  
+section  in the Upgrade  Guide  for BrowserUX  guide.
+System  Requirements
+Supported  operating  systems:
+ lMicrosoft  Windows  10 and 11
+ lmacOS
+ liOS
+ lAndroid
+NOTE:  MacOS,  iOS, and Android  OS version  compatibility  are being  evaluated  
+during  the Private  Preview  program.
+Supported  browsers:
+ lMicrosoft  Edge
+ lGoogle  Chrome
+ lApple  Safari
+BrowserUX Early Access Programs Guide 8BrowserUX Implementation
+Setup  and Configuration
+The setup  and configuration  of OneStream  BrowserUX  may vary based  on how your 
+environments  are hosted.  Follow  the instructions  below  that apply  to your environment  setup.
+The BrowserUX  URL structure  uses  a company  domain.  For example  
+https://cloudsitename.onestreamcloud.com/.  This URL can run on Chrome,  Edge,  and Safari  
+browsers.
+NOTE:  This URL is different  from the ClickOnce  URL,  which  allows  users  to run an 
+instance  of the OneStream  Windows  Client  remotely  from an application  server.  
+ClickOnce  URLs  can only run in an Edge browser.
+Authentication
+For OneStream  hosted  environments,  OneStream  IdentityServer  (OIS)  technology  enables  
+BrowserUX  users  to authenticate  through  a browser  and enables  administrators  to set up 
+BrowserUX  environments  to use native  IDs or an identity  provider  (IdP).  For more  information  on 
+authentication  using  OIS, see the Identity  and Access  Management  Guide.  
+For self-hosted  environments,  users  can authenticate  into BrowserUX  using  their existing  
+authentication  method.  Additional  instructions  for self-hosted  authentication  can be found  in the 
+Installation  Guide  and BrowserUX  Upgrade  Guide .
+BrowserUX Early Access Programs Guide 9Setup andConfiguration
+Functional  Capabilities  of 
+BrowserUX
+Learn  how to navigate  OneStream  BrowserUX.  This section  explores  general  features  and 
+highlights  notable  differences  between  BrowserUX  and Windows  Application.
+General  User  Experience
+Log in to BrowserUX
+BrowserUX  is accessed  through  a web browser  instead  of using  a Windows  shortcut  or ClickOnce  
+to open  a local instance  of OneStream . You can use bookmarked  URLs  to navigate  to 
+BrowserUX.  Once  successfully  authenticated,  you can select  an application  from the drop- down  
+menu  and click the LOG IN  button  to access  OneStream .
+BrowserUX  is accessed  through  a custom  URL.  For example,  
+https://cloudsitename.onestreamcloud.com/.  To start the authentication  process,  input  a 
+Username  and select  Next.  Once  authenticated,  BrowserUX  will display  a OneStream  Home  
+Page  or, if multiple  Applications  are available,  an Application  Selector.
+BrowserUX Early Access Programs Guide 10Functional Capabilities ofBrowserUX
+Log out of BrowserUX
+ 1. In the User  Menu , select  Log Out, or
+ 2. On the Application  Selection  page,  click the LOG OUT  button,  or
+Logging  off of BrowserUX  will not log off other  open  OneStream  instances,  such  as the Windows  
+Client  or Excel  Add- In. If using  single  sign- on, the user will not be logged  out of your single- sign on 
+session.
+Change  Applications
+To change  applications,  select  Change  Applications  from the User  Menu . The Application  
+Selector  will be displayed  with available  applications.
+BrowserUX Early Access Programs Guide 11Functional Capabilities ofBrowserUX
+Header
+BrowserUX  has a header  and a OnePlace  panel  that persist  throughout  the user experience.  
+Similar  to the Windows  Application,  the header  has a Home  button  embedded  in the OneStream  
+logo and displays  the Application  Name.  Otherheader  functionalityhas  been  moved  to two menus  
+in the top right corner  of the screen.
+ l
+ Gear  Icon – Application  Name,  Global  POV,  Version  Number,  Help Documentation,  
+Task  Activity,  File Explorer
+ l
+ User  Icon – User’s  Name,  Change  Application,  Set/Clear  Home  Page,  Log Out
+The OnePlace  Panel  can be fully collapsed,  opened  to display  Navigation  controls,  or expanded  
+as an overlay  when  working  with any of the menu  areas.
+NOTE:  The OnePlace  panel  may be fully hidden  for certain  users  using  security  
+settings.
+OnePlace  Panel
+Hide  OnePlace  Panel
+The OnePlacePane  security  role can be used  to hide the Navigation  panel  in BrowserUX.  This 
+configuration  has been  added  under  Security  Roles  to enable  or disable  end user access  to the 
+OnePlace  navigation  panel.
+BrowserUX Early Access Programs Guide 12Functional Capabilities ofBrowserUX
+Navigate  OnePlace  Panel  Sections
+In the expanded  OnePlace  panel,  there  is a drop- down  menu  at the top of each  area to navigate  
+between  them.
+BrowserUX Early Access Programs Guide 13Functional Capabilities ofBrowserUX
+File Explorer
+File Explorer  is used  to manage  all OneStream  files and saved  POVs.  All file actions  are available  
+in the toolbar,  including  create,  edit, delete,  upload,  download,  and apply  POV.  
+ 
+Grids
+While  the BrowserUX  grids  offer the same  functionality  as the Windows  Client,  some  differences  
+were  added  to improve  the user experience.  Many  of the grids  have  virtual  scrolling  instead  of 
+paging  to handle  large  datasets.  In addition  to the Sorting,  Filtering,  and Column  controls  found  in 
+the Windows  Client,  BrowserUX  has added  a column  Lock  feature,  which  allows  users  to lock in 
+place  any column  and the columns  to its left, while  being  able to scroll  the remaining  columns  
+horizontally.  In the header,  BrowserUX  has added  an AutoFit  button,  which  will automatically  fit all 
+the column  widths.  Many  of the grids  will also have  a context  menu  button  
+  in the left corner  
+of the grid header  with additional  functionality.
+BrowserUX Early Access Programs Guide 14Functional Capabilities ofBrowserUX
+Anchored  Dialogs
+Many  of the dialog  boxes  in BrowserUX  display  in a slide- out panel  anchored  to the right side of 
+the page  instead  of the floating  dialogs  used  in the Windows  Client.  This paradigm  offers  
+improved  visibility  and provides  consistency  for users  accessing  BrowserUX  from various  
+devices.  Slide- out panels  can be expanded  or constricted  to suit user preference  by dragging  the 
+left edge  horizontally  across  the page.
+BrowserUX Early Access Programs Guide 15Functional Capabilities ofBrowserUX
+This anchored  dialog  box has been  extended  to dashboards  that appear  in dialog  boxes.  There  is 
+a larger  default  width  compared  to the Windows  Client,  but the width  can be altered  with the dialog  
+box display  format  configurations.  Since  these  dialog  boxes  are always  the full height  of the 
+screen,  the height  configuration  for dashboards  in dialog  boxes  is ignored  in BrowserUX.
+Cancel  Long- Running  Tasks
+The ability  to cancel  long- running  tasks  in OneStream  provides  users  and administrators  with an 
+enhanced  level of control  over a variety  of OneStream  processes,  such  as loading  and exporting  
+large  cube  views,  uploading  files, running  data management  jobs,  and more.  A new dialog  has 
+been  implemented  to support  this functionality  and a button  has been  added  to the Task  Activity  
+grid to enable  users  to open  the Task  Progress  dialog  and cancel  tasks.  Filters  have  also been  
+added  to the Task  Activity  panel  to limit data to running  tasks  and to allow  administrators  to see 
+task data for all users.
+BrowserUX Early Access Programs Guide 16Functional Capabilities ofBrowserUX
+BrowserUX Early Access Programs Guide 17Functional Capabilities ofBrowserUX
+Workflow
+Workflow  in BrowserUX  delivers  the same  functionality  and customizations  offered  in the 
+Windows  Application  with a few notable  exceptions  mentioned  below.  Some  tactical  user 
+experience  improvements  have  been  made,  while  primarily  focusing  on delivering  the 
+functionality  of the workflow  steps.
+Navigation
+Similar  to the Windows  Application,  Workflows  are accessed  through  the OnePlace  panel.  Users  
+are able to modify  the Workflow  POV  by selecting  the edit icon next to each  dimension  and 
+navigate  between  Workflow  Units  under  Time  Periods.  It is important  to note a few differences  
+between  BrowserUX  and the Windows  Application:
+ lThe Workflow  POV  Edit menu  is displayed  as an overlay  menu,  instead  of a pop-up dialog.  
+Users  are able to update  Workflow,  Scenario,  and Year  using  the available  tabs.  A Save  
+button  at the top of the section  finalizes  any changes.
+BrowserUX Early Access Programs Guide 18Workflow
+BrowserUX Early Access Programs Guide 19Workflow
+ lA new dropdown  in the Workflow  page  title bar allows  users  to quickly  toggle  between  
+Workflow  Steps  in a Time  Period.
+ lThe new Focus  View  function  allows  users  to view only the selected  time period.  In the 
+example  below,  a user chose  to view only June  to simplify  navigation.  To return  to the full 
+list, simply  disable  the Focus  View  toggle.
+Status  Icons  have  been  updated,  and in some  cases,  combined  to make  a more  intuitive  user 
+experience.
+BrowserUX Early Access Programs Guide 20Workflow
+Supported  Workflow  Functionality
+Workflow  Steps
+ lBlend  lImport
+ lCentral  Form  Input  lJournal  Input
+ lCentral  Import  lLoad
+ lCentral  Journal  Input  lPre-Process
+ lCertify  lProcess
+ lConfirm  lValidate
+ lDirect  lWorkspace
+ lForm  
+General  Workflow  Functionality
+ lDrill Back  lTime  Range  Periods
+ lDrill Down  lView  Transformation  Rules
+ lAnalysis  Area  lView  Processing  Log
+ lApplication  Configurations  lView  Source  Document
+BrowserUX Early Access Programs Guide 21Workflow
+ lIntercompany  Matching  lTime  Period  Actions
+ lMulti- Period  Processing  lDependent  Actions
+Notable  Differences  from  Windows  
+Application
+ lWorkflow  Page  Styling  – Workflow  Title,  Workflow  Steps,  Grids,  Status  Area,  and Analysis  
+Area.
+ lStatus  Icons  – Consistent  with the OnePlace  panel,  the Workflow  status  icons  have  been  
+simplified  in BrowserUX to  make  a more  intuitive  user experience.
+BrowserUX Early Access Programs Guide 22Workflow
+ lWorkflow  Progress  Buttons  – Now displayed  on the right side of the screen,  the progress  
+buttons  have  been  updated  with new icons  and borders  to improve  visibility.
+Drag  and Drop  File Import  – Files  can be imported  by selecting  from your device  or using  a 
+new drag & drop feature.
+ lContext  Menus  for Grids  – All Workflow  Grid functions  have  been  moved  from right- click 
+menus  to a context  menu  in the header  of each  grid.
+ lRename  Journal  – You can rename  journals  by editing  the Journal  Name  property  in the 
+journal  header,  instead  of a rename  button  and dialog.
+BrowserUX Early Access Programs Guide 23Workflow
+Notable  Workflow  Functionality  Gaps
+Workflow  Steps
+ lManage  Workflow
+General  Workflow  Functionality
+ lEdit Transformation  Rules
+ lSpreadsheet  Form  Input
+Navigating  Workflow  Step  Gaps
+Helpful  tips have  been  added  to BrowserUX to  identify  unsupported  workflow  steps  for both 
+dashboard  designers  and end users.  In BrowserUX,  Coming  Soon  icons  indicate  a workflow  step 
+is not currently  supported.
+Even  if all steps  are supported  in each  workflow,  thorough  testing  is still recommended  to ensure  
+processes  are working  as expected  before  production  use.
+BrowserUX Early Access Programs Guide 24Workflow
+Cube  Views
+BrowserUX  cube  views  are flexible  reporting  artifacts  that enable  cube  data to be presented  and 
+customized  in numerous  ways  using  various  configurations  and formatting  properties,  member  
+formulas,  and calculations.
+Nearly  all cube  view features  provided  in the Windows  Client  are available  to users  in BrowserUX.  
+For cube  views  that utilize  features  or functionality  that has not been  delivered,  or in the case  that 
+variations  arise  due to technical  differences  inherent  in web applications,  there  may be 
+configuration  changes  or other  workarounds  that can be leveraged  until subsequent  releases  
+close  the functional  gaps.
+Supported  Cube  View  Functionality
+Presentation
+ lCube  View  and Export  Format  Configuration  Properties
+ lCell Data  Types
+ lCell Status  Background  Colors
+ lRow and Column  Sharing
+ lNested  and Expandable  Column  and Row Headers
+Toolbar  Functions
+ lContext  Menu  Dropdown
+ lSave  and Revert  Changes
+ lData  Refresh
+ lParameter  Selection
+BrowserUX Early Access Programs Guide 25Cube Views
+Cube  View  and Cell- Level  Context  Menu  Functions
+ lCalculate,  Translate,  Consolidate
+ lData  Attachments
+ lSpreading
+ lCell Detail
+ lCell POV  Information
+ lData  Unit Statistics
+ lCell Status
+ lDrill Down
+ lRow Suppression
+ lExport
+ lCube  View  and Dashboard  Navigation  Links
+Cube  View  Navigation
+The General  Visibility  setting  in Cube  View  profiles  will be applicable  for cube  views  in BrowserUX  
+and the Windows  Client  (OnePlace,  Workflow,  and Dashboards).  The Client/Device  Visibility  
+setting  in Dashboard  profiles  will also affect  access  to embedded  cube  views  or data explorer  
+components  in Dashboards.  See Dashboards .
+Cube  View  Drill Down
+The Drill Down  interface  has been  moved  from a page  tab into a slide- out panel  in BrowserUX.  
+You can drill down  into cube  data from a cell intersection  by right- clicking  the cell and selecting  
+Drill Down  from the cube  view context  menu.  The cube  view drill down  interface  opens  in a slide-
+out panel,  which  can be resized  horizontally.
+Currently,  only the Open  in Panel  option  is supported.  The Open  in New Tab option  will be 
+considered  in a future  release.
+BrowserUX Early Access Programs Guide 26Cube Views
+A context  menu  was also added  to the toolbar  on the Drill Down  page  to consolidate  some  
+functionality  in a way that better  supports  different  screen  sizes  and devices.
+A hidden  context  menu  for drill down  has been  implemented  to consolidate  key drill down  
+functions,  such  as Load  Results  for Imported  Cell and Audit  History  for Forms  or Adjustment  
+Cells.
+BrowserUX Early Access Programs Guide 27Cube Views
+User  Experience  Differentiators
+In BrowserUX,  row and column  virtualization  has been  implemented  to efficiently  retrieve  and 
+render  large  datasets  for cube  views.  Row and column  virtualization  retrieves  data to display  as 
+the user scrolls  vertically  or horizontally  through  cube  view pages,  improving  performance  of 
+client- side data rendering  and enabling  a more  seamless  data review  process.  Row virtualization  
+occurs  in defined  Cube  View  page  boundaries.
+Notable  Functional  Gaps
+ lAllocation  
+ lAutofit  
+NOTE:  BrowserUX  uses  column  widths  specified  at design  time or a default  
+width  of 160 pixels  when  no specific  width  is defined  for a column,  or when  an 
+asterisk  or "Auto"  is used  to set the width.  OneStream  will continue  to pursue  
+enhancements  that better  support  automatic  column  width  definitions.
+BrowserUX Early Access Programs Guide 28Cube Views
+Dashboards
+BrowserUX dashboards  are expanding  functional  coverage  with the goal of offering  equivalent  
+use of layouts  and components  available  in the Windows  Client.  Currently,  the most  commonly  
+used  features  are available  in BrowserUX.  For dashboards  that contain  elements  that have  not 
+been  delivered  or potential  gaps  that can arise  out of unique  design  techniques,  there  are typically  
+substitutions,  configuration  changes,  or workarounds  that can be implemented  until subsequent  
+releases  close  the functional  gap.
+While  BrowserUX  moves  toward  comprehensive  end user dashboard  functionality  and matching  
+rendering  between  the Windows  Client  and BrowserUX,  the underlying  technologies  between  the 
+clients  will likely  prevent  perfect  replication  of dashboards  in both clients.  Additionally,  since  the 
+user interface  styling  is different  between  the clients,  dashboards  designed  for one client  may look 
+out of place  when  rendered  in another.
+If a preexisting  dashboard  contains  only supported  layouts  and components,  it can be enabled  for 
+BrowserUX use  with a single  configuration.  However,  for an optimized  user experience  in 
+BrowserUX  or on mobile  devices,  designers  may consider  modifying  the dashboard  or creating  
+new client/device  specific  experiences.
+Enabling  Dashboard  Access
+To ensure  dashboards  are only rendered  within  the client  (Windows  Application  or BrowserUX)  or 
+device  (PC, tablet,  or phone),  a new configuration  has been  added  to the Dashboard  Profile  called  
+Client/Device  Visibility.  
+BrowserUX Early Access Programs Guide 29Dashboards
+The Client/Device  Visibility  configuration  enables  dashboard  designers  to control  which  
+dashboard  profiles,  and the dashboards  they contain,  can be accessed  and viewed  on one or 
+more  clients  and devices.  Enabling  this configuration  will display  the dashboard  in the OnePlace  
+Dashboard  list of the respective  client/device  selection.
+Preexisting  and newly  created  dashboards  will be set to the Windows  Client  only by default.  
+Dashboards  are not initially  visible  in BrowserUX.
+Supported  Dashboard  Functionality
+Dashboard  Layouts
+ lGrid  lHorizontal  Stack  Panel
+ lUniform  lVertical  Stack  Panel
+ lTabs  
+Dashboard  Components
+ lAdvanced  Charts  lImage
+ lBI Viewer  lLabel
+ lBook  Viewer  lLarge  Data  Pivot  Grid
+ lButton  lList Box
+ lCheck  Box  lLogo
+ lCombo  Box  lPivot  Grid
+ lCube  View  lRadio  Button  Group
+ lData  Explorer  lReport
+ lData  Explorer  Report  lSupplied  Parameter
+ lDate  Selector  lText Box
+ lEmbedded  Dashboard  lText Viewer
+ lFile Viewer  lTree View
+ lGantt  View  lSQL Table  Editor
+ lGrid View  
+General  Dashboard  Functionality
+ lActions
+ lExtensible  Documents
+BrowserUX Early Access Programs Guide 30Dashboards
+ lUser  Supplied  Parameters
+Notable  Differences  from  Windows  
+Application
+Dashboard  Components
+BI Viewer
+You may observe  style differences,  like muted  borders  and headers,  or alternative  style 
+visualizations.
+Embedded  Dashboards
+New client/device  specific  dashboards  configurations  allow  a single  root dashboard  to render  
+different  embedded  dashboards  depending  on the client  or device  type.  (More  details  on the use 
+of this configuration  are described  within  the Multi- Client/Device  Dashboard  Design  Approaches  
+below)
+BrowserUX Early Access Programs Guide 31Dashboards
+BrowserUX Early Access Programs Guide 32Dashboards
+BrowserUX Early Access Programs Guide 33Dashboards
+Grid View
+Grid options  are now listed  in a context  menu.
+SQL Table  Editor
+Additional  options  are now listed  in a context  menu.  Edited  cells have  minor  style updates.
+BrowserUX Early Access Programs Guide 34Dashboards
+Grid Keyboard  Functionality  
+BrowserUX  includes  basic  keyboard  shortcuts  including  navigation  with arrow  keys and 
+advancing  through  cells using  either  Enter  or Tab.
+Large  Data  Pivot  Grid & Pivot  Grid
+Pivot  Grids  in Browser  UX come  with a host of new features  including  Saved  Reports,  Charts,  
+Calculated  Fields,  and Keyboard  Navigation.  Both Pivot  Grid and Large  Data  Pivot  Grid benefit  
+from updated  data processing  that ensures  all data is available  for aggregation.
+Notable  Differences  in Pivot  Grids
+Field  Controls  are displayed  in a floating  dialog  and launch  using  the Show  Fieldlist  button  in the 
+upper  right corner  of the pivot  grid.
+BrowserUX Early Access Programs Guide 35Dashboards
+A count  of total rows  in the dataset  is displayed  on the top right of the pivot  grid.
+NOTE:  This count  will not change  when  filtering  data,  it will always  display  the total 
+count  of rows.
+Button Action
+Create  new report
+Save  a report
+Save  as current  report
+Rename  a current  report
+Delete  a current  report
+Default  Report  dropdown  
+BrowserUX Early Access Programs Guide 36Dashboards
+Show  table
+Chart  types
+Export
+Subtotals
+Grand  totals
+Formatting
+New Features  in Pivot  Grids
+Saved  Reports  – Easily  reference  past grid configurations  by saving  reports.  The default  report  
+will return  the Pivot  Grid to its initial  configuration,  while  Create,  Save,  Save  As, and Rename  
+buttons  manage  custom  reports.  Find reporting  functions  in the Browser  UX Pivot  Grid Toolbar.
+Charts  – This new feature  lets users  easily  visualize  the data from a customized  pivot  grid into a 
+chart.  Simply  select  the Chart  icon in the toolbar,  then configure  the available  options.  Charts  can 
+be saved  as reports  for future  reference  using  the Saved  Reports  feature.  See Appendix  B for a 
+full list of available  chart  types.
+BrowserUX Early Access Programs Guide 37Dashboards
+ lOptions:  Show  Legend,  Multiple  Axis
+ lExplore  larger  charts  using  the zoom  feature.  Available  using  scroll  control  on mouse,  the 
+zoom  toolbar  on the chart,  or by using  keyboard  shortcuts.
+ lVisualize  the expansion  and collapse  of the pivot  grid data from the chart  using  right mouse  
+click menu.
+ lKeyboard  Functionality  - A wide array  of functions  allow  users  to interact  with Pivot  Grids  
+using  keyboard  shortcuts.  See Appendix  B for a full list of interactions.
+ lCalculated  Fields  - The calculated  field feature  allows  users  to create  custom  fields  which  
+are not present  in the actual  data.  Users  can create  these  fields  using  basic  mathematical  
+BrowserUX Early Access Programs Guide 38Dashboards
+expressions  collaborating  with existing  fields.  See Appendix  A for syntax.
+Advanced  Charts
+There  are some  charts  and configuration  properties  that are not currently  supported.  See 
+Appendix  B for a detailed  breakdown.
+Notable  Dashboard  Functionality  Gaps
+Dashboard  Layouts
+ lCanvas
+ lDock
+ lWrap
+BrowserUX Early Access Programs Guide 39Dashboards
+Dashboard  Components
+ lBasic  Charts  lSpreadsheet
+ lFilter  lState  Indicator
+ lMap  lText Editor
+ lPassword  Box  lWeb Content
+ lSankey  Diagram  lMember  Tree
+Navigating  Dashboard  Gaps
+Helpful  tips have  been  added  to both the Windows  Client  and BrowserUX  to assist  dashboard  
+designers  and end users  in identifying  dashboard  layouts  and components  that are not yet 
+supported  in BrowserUX.
+In the Windows  Client,  labels  for Windows  App Only have  been  added  to both the Dashboard  
+Properties  Layout  Type  and Dashboard  Component  selection  lists.
+BrowserUX Early Access Programs Guide 40Dashboards
+In BrowserUX,  a placeholder  image  indicates  if the dashboard  layout  or component  is not 
+currently  supported.  A hover  tooltip  specifies  the layout  or component  that is not rendering.
+BrowserUX Early Access Programs Guide 41Dashboards
+BrowserUX Early Access Programs Guide 42Dashboards
+Even  if all dashboard  layouts  and components  are supported,  we still recommend  conducting  a 
+full regression  test of any dashboard  that is being  transferred  from the Windows  Client  to 
+BrowserUX to  ensure  functional  parity  before  production  use.
+BrowserUX Dashboard  Design  Process
+When  building  a dashboard  for BrowserUX use,  designers  should  open  both their Windows  and 
+BrowserUX clients  simultaneously.  Using  the Windows  Client,  designers  can update  and save  
+dashboard  configurations.  To view changes  reflected  in BrowserUX,  simply  refresh  the browser.
+When  building  a dashboard  for use on a tablet  or phone,  designers  can follow  the same  process,  
+using  either  a physical  device  or mobile  device  emulator  in a browser.  Designers  should  make  
+sure they log into their BrowserUX environment  with the emulator  properly  sized  to ensure  
+BrowserUX reacts  to the device  it is emulating.
+As with the Windows  Client,  using  dashboard  design  best practices  can significantly  improve  the 
+performance  of a dashboard.  BrowserUX may  have  performance  sensitivities  that differ  from the 
+Windows  Client.
+Multi- client/Device  Dashboard  Design  Approaches
+When  designing  a dashboard  that will be used  across  multiple  clients  or devices,  dashboard  
+designers  can use three  different  approaches  to find the right balance  of upfront  effort,  end-user 
+optimization,  and maintenance  effort  that best suits their needs.
+Approach  1: Unified  Multi- client/Device  Dashboards
+This approach  uses  a single  non-adaptive  dashboard.  The designer  will most  likely  have  to make  
+compromises  to make  it usable  for each  client/device  type.  These  compromises  typically  result  in 
+a simplified  dashboard  with efficient  maintenance.  This type of dashboard  needs  to have  the 
+proper  combination  Client/Device  Visibility  configurations  to be accessible  from the OnePlace  
+Dashboard  across  clients  and devices.  It can be more  difficult  for multi- device  use due to varying  
+space  for dashboard  components,  but it is an effective  way to access  dashboards  in 
+BrowserUX initially.  Designers  can rely on this approach  to update  existing  Windows  Client  
+dashboards  for use in BrowserUX.  For more  complex  scenarios,  designers  should  consider  
+building  client/device  specific  dashboards  or adaptive  dashboards.
+BrowserUX Early Access Programs Guide 43Dashboards
+Approach  2: Client/Device  Specific  Dashboards
+This approach  uses  multiple  non-adaptive  dashboards.  Designers  create  separate  dashboards  
+that render  equivalent  information  and functionalities  but have  different  designs  that are optimized  
+for specific  client  and device  types.  These  dashboards  need  to be added  to separate  dashboard  
+profiles.  Each  of the dashboard  profiles  have  different  Client/Device  Visibility  configurations,  
+which  limits  their visibility  in the OnePlace  Dashboard  list to only the appropriate  client  or device  
+they were  designed  for. This approach  offers  an optimized  user experience  and low design  
+complexity,  but it has a high maintenance  effort.
+Approach  3: Client/Device  Adaptive  Dashboards
+This approach  uses  a single  adaptive  dashboard.  Designers  need  an initial  understanding  of how 
+their dashboard  should  adapt  to each  client  or device  type intended  for use. The designer  creates  
+Embedded  Dashboards  with configurations  that link to client/device  specific  dashboards.  The 
+Embedded  Dashboards  can be placed  at any level within  nested  dashboards.  Allowing  designers  
+to easily  customize  components  shared  across  multiple  devices  or create  unique  experiences  per 
+device  type.  This approach  offers  a highly  optimized  user experience  and lower  maintenance  
+effort,  but it has high design  complexity.
+Current  dashboards  that have  been  designed  previously  for the OneStream  Windows  Client  may 
+need  to be redesigned  for an optimized  user experience  in BrowserUX or  alternative  device  types.
+BrowserUX Early Access Programs Guide 44Dashboards
+Documents
+The Documents  area in BrowserUX  has a similar  navigation  pattern  with the Windows  Client.  
+However,  the Browser  Client  downloads  files instead  of opening  them  in their native  application.  A 
+context  menu  has been  added  to the top of the Documents  area,  which  contains  a download  
+button  for selected  documents.  This Context  Menu  also contains  an Open  File Explorer  button  
+and View  File Details  button.  The File Details  can also be viewed  by double  clicking  onto the file 
+itself.  When  a folder  is selected  the Context  Menu  only has the Open  File Explorer  button  and the 
+View  Folder  Details  button.
+POV  can be applied  through  the File Explorer  only.
+Additionally,  by double- clicking  the file, folder  or selecting  View  File Details  from the context  
+menu,  you can see the File Details  or Folder  Details.
+BrowserUX Early Access Programs Guide 45Documents
+BrowserUX Early Access Programs Guide 46Documents
+POV
+In BrowserUX,  POV  is in the OnePlace  panel.  To view and modify  the current  Cube  POV,  select  
+the POV  menu  from the OnePlace  panel.  Similar  to Workflow  POV,  the Cube  POV  Edit menu  is 
+displayed  as an overlay  menu,  instead  of a pop-up dialog.  It's also important  to note that 
+information  from the Windows  Application  POV  menu  is displayed  in a few different  areas  in 
+BrowserUX:
+ lGlobal  POV : Select  the gear icon in the header  to view current  Global  POV  settings.
+ lWorkflow  POV:  Select  Workflow  in the OnePlace  panel  to view and modify  the current  
+Workflow  POV.
+Additional  Features
+Modify  a POV
+To modify  a POV,  click the pencil  icon next to each  field,  make  your modification,  and click Save.
+BrowserUX Early Access Programs Guide 47POV
+Save  a POV
+To save  a POV,  select  Save  POV  from the POV  context  menu.  File Explorer  will open  with an 
+option  to name  and save  the current  POV  settings.
+BrowserUX Early Access Programs Guide 48POV
+Set a Saved  POV
+Saved  POVs  are stored  in File Explorer.  To set a saved  POV,  use the Apply  POV  button  in the 
+File Explorer  toolbar.  POV  can be applied  through  the File Explorer  only.
+BrowserUX Early Access Programs Guide 49POV
+Third- Party  Component  
+Technology
+OneStream  is created  using  both OneStream's  own tools  and third- party  tools  in the authoring,  
+installation,  and running  of OneStream's  supported  products.  OneStream  BrowserUX  third-  party  
+developer  components  include  Syncfusion.  OneStream  customers  are not required  to purchase  
+these  developer  tools.
+The copyright  notice  with respect  to these  third parties  is as follows:
+ lSyncfusion.  (c) 2001- 2023  Copyright  Syncfusion  Inc. All rights  reserved.
+For a comprehensive  list of all third- party  component  tools  throughout  the OneStream  Windows  
+Client  application,  see Third- Party  Component  Technology .
+BrowserUX Early Access Programs Guide 50Third- Party Component Technology
+Appendix  A: Pivot  Grids
+Calculated  Fields  Syntax
+Add a Calculated  Field  to Pivot  Grids  in BrowserUX  by selecting  Show  Field  List from the toolbar,  
+then Calculated  Field.  The following  syntax  gives  users  several  options  for customizing  fields.
+Operator Name Syntax
++ addition X + Y
+- subtraction X - Y
+* multiplication X * Y
+/ division X / Y
+^ power X^2
+< Less  than X < Y
+<= less than or equal X <= Y
+> greater  than X > Y
+>= greater  than or equal X >= Y
+== equal X == Y
+!= not equal X != Y
+| OR X | Y
+& AND X & Y
+BrowserUX Early Access Programs Guide 51Appendix A:Pivot Grids
+? conditional condition  ? 
+then :  else
+isNaN function  that checks  if the value  is not a number isNaN (value)
+!isNaN function  that checks  if the value  is a number isNaN (value)
+abs function  that returns  the absolute  value  of a number abs(number)
+min function  that returns  the minimum  value min
+(number1,  
+number2)
+max function  that returns  the maximum  value max
+(number1,  
+number2)
+Keyboard Navigation  in Pivot  Grids
+Focus
+Alt + J Focuses  the Pivot  Table  component.
+Pivot Table
+Tab Moves  the cell focus  right side.  If no cells are focused,  it moves  to the next 
+active  element  in the browser  page.
+Shift + Tab Moves  the cell focus  left side.  If no cells are focused,  it moves  to the previous  
+active  element  in the browser  page.
+Down  
+arrowMoves  the cell focus  downwards.
+Up arrow Moves  the cell focus  upwards.
+BrowserUX Early Access Programs Guide 52Appendix A:Pivot Grids
+Left arrow Moves  the cell focus  left side.
+Right  
+arrowMoves  the cell focus  right side.
+Home Goes  to the first cell in the current  row.
+End Goes  to the last cell in the current  row.
+Ctrl + 
+HomeGoes  to the first cell in the table.
+Ctrl + End Goes  to the last cell in the table.
+Enter If the current  cell is an expand/collapse  cell, it performs  expand/collapse  
+operation  (drill operation).  If the current  row/column  header  is in value  sort 
+state,  it performs  value  sorting.
+Shift + 
+EnterIf value  sorting  is enabled  in the pivot  table  and the current  cell is a header  with 
+respect  to its value  axis, it performs  value  sorting  to either  ascending  or 
+descending  order.
+Grouping  Bar
+Tab Moves  to the next active  element  (field’s  button)  in the grouping  bar. If no 
+active  elements  present,  it moves  to the next active  element  in the browser  
+page.
+Shift + Tab Moves  to the previous  active  element  (field’s  button)  in the grouping  bar. If no 
+active  elements  present,  it moves  to the previous  active  element  in the 
+browser  page.
+Shift + F If the current  active  element  is a field’s  button  and if it has a filter icon,  the filter 
+dialog  will be opened  to perform  filtering.
+Shift + S If the current  active  element  is a field’s  button  and if it has a sort icon,  the 
+sorting  will be performed  to the selected  field.
+BrowserUX Early Access Programs Guide 53Appendix A:Pivot Grids
+Shift + E If the current  active  element  is a calculated  field’s  button  and if it has an edit 
+icon,  the calculated  field dialog  will be opened  to perform  editing  the selected  
+calculated  field.
+Enter Performs  the selection  operation  of the current  active  element.  If the current  
+active  element  is a field’s  button  and it has a dropdown  icon,  the aggregation  
+menu  will open  to perform  calculations  using  aggregation  options  to the 
+selected  value  field.
+Delete If the current  active  element  is a field’s  button,  the selected  field will be 
+removed  from the current  report.
+Down  
+arrowIf the current  active  element  is a dropdown  list, the next item will be selected.
+Up arrow If the current  active  element  is a dropdown  list, the previous  item will be 
+selected.
+Home If the current  active  element  is a dropdown  list, the first item will be selected.
+End If the current  active  element  is a dropdown  list, the last item will be selected.
+Alt + Down If the current  active  element  is a dropdown  list, the popup  will be opened.
+Alt + Down If the current  active  element  is a dropdown  list, the popup  will be closed.
+Esc or 
+EscapeCloses  the dropdown  list.
+Field  List
+Ctrl + Shift 
++ FIf the popup  field list is enabled  in either  the pivot  table  or the pivot  chart,  the 
+field list dialog  will be opened.
+Tab Moves  to the next active  element  in the field list. If no active  elements  present,  
+it moves  to the next active  element  in the browser  page.
+BrowserUX Early Access Programs Guide 54Appendix A:Pivot Grids
+Shift + Tab Moves  to the previous  active  element  in the field list. If no active  elements  
+present,  it moves  to the previous  active  element  in the browser  page.
+Shift + F If the current  active  element  is a field’s  button  and if it has a filter icon,  the filter 
+dialog  will be opened  to perform  filtering.
+Shift + S If the current  active  element  is a field’s  button  and if it has a sort icon,  the 
+sorting  will be performed  to the selected  field.
+Shift + E If the current  active  element  is a calculated  field’s  button  and if it has an edit 
+icon,  the calculated  field dialog  will be opened  to perform  editing  the selected  
+calculated  field.
+Enter Performs  the selection  operation  of the current  active  element.  If the current  
+active  element  is a field’s  button  and if it has a dropdown  icon,  the aggregation  
+menu  will be opened  to perform  calculations  using  aggregation  options  to the 
+selected  value  field.
+Delete If the current  active  element  is a field’s  button,  the selected  field will be 
+removed  from the current  report.
+Down  
+arrowIf the current  active  element  is a tree node,  it moves  to the next node.
+Up arrow If the current  active  element  is a tree node,  it moves  to the previous  node.
+Left arrow If the current  active  element  is a tree node,  it collapses  the current  node.
+Right  
+arrowIf the current  active  element  is a tree node,  it expands  the current  node.
+Home If the current  active  element  is a tree node,  it goes  to the first node.
+End If the current  active  element  is a tree node,  it goes  to the last node.
+Space If the current  active  element  is a tree node  or a checkbox  element,  it will be 
+either  checked  or unchecked.
+BrowserUX Early Access Programs Guide 55Appendix A:Pivot Grids
+Esc or 
+EscapeCloses  the popup  field list dialog.
+Toolbar
+Tab Moves  to the next active  option  in the toolbar.  If no active  elements  present,  it 
+moves  to the next active  element  in the browser  page.
+Shift + Tab Moves  to the previous  active  option  in the toolbar.  If no active  elements  
+present,  it moves  to the previous  active  element  in the browser  page.
+Enter Performs  the selection  operation  of the current  active  element.
+Calculated  Field  
+Shift + E If the current  active  element  is a field’s  button  and if it has an edit icon in either  
+the field list or grouping  bar UI, the calculated  field dialog  will be opened  to 
+perform  editing  the selected  calculated  field.
+Tab Moves  to the next active  element  in the calculated  field dialog.  If no active  
+elements  present,  it moves  to the next active  element  in the browser  page.
+Shift + Tab Moves  to the previous  active  element  in the calculated  field dialog.  If no active  
+elements  present,  it moves  to the previous  active  element  in the browser  
+page.
+Enter Performs  the selection  operation  of the current  active  element.  If the current  
+active  element  is a tree node,  it copies  the selected  field name/formula  to the 
+formula  text area to perform  calculations.
+Down  
+arrowIf the current  active  element  is a tree node,  it moves  to the next node.
+Up arrow If the current  active  element  is a tree node,  it moves  to the previous  node.
+Left arrow If the current  active  element  is a tree node,  it collapses  the current  node.
+BrowserUX Early Access Programs Guide 56Appendix A:Pivot Grids
+Right  
+arrowIf the current  active  element  is a tree node,  it expands  the current  node.  If the 
+current  active  element  is a tree node  and has a menu  icon,  the aggregation  
+menu  will be opened  to select  appropriate  aggregation  type to the selected  
+field.
+Home If the current  active  element  is a tree node,  it goes  to the first node.
+End If the current  active  element  is a tree node,  it goes  to the last node.
+Esc or 
+EscapeCloses  the filter dialog.
+Drill Through
+Tab Moves  to the next active  element  in the drill-through  dialog.  If the current  
+active  element  is a Grid cell, it moves  the cell focus  to right side.  If no active  
+elements  present,  then it moves  to the next active  element  in the browser  
+page.
+Shift + Tab Moves  to the previous  active  element  in the drill-through  dialog.  If the current  
+active  element  is a Grid cell, it moves  the cell focus  to left side,  If no active  
+elements  present,  then it moves  to the previous  active  element  in the browser  
+page.
+Down  
+arrowMoves  the row/cell  focus  downwards.
+Up arrow Moves  the row/cell  focus  upwards.
+Left arrow Moves  the cell focus  left side.
+Right  
+arrowMoves  the cell focus  left side.
+Home Goes  to the first cell in the current  row.
+End Goes  to the last cell in the current  row.
+BrowserUX Early Access Programs Guide 57Appendix A:Pivot Grids
+Ctrl + 
+HomeGoes  to the first cell in the table.
+Ctrl + End Goes  to the first cell in the table.
+Enter Performs  the selection  operation  of the current  active  element.
+Esc or 
+EscapeIf the cell is in selected  state,  it deselects  all rows/cells.  If the row/cell  is in edit 
+state,  it cancels  the current  entries  in the row/cell.  If the current  active  element  
+is not a row/cell,  it closes  the drill-through  dialog.
+F2 If the cell is in selected  state,  it deselects  all rows/cells.  If the row/cell  is in edit 
+state,  it cancels  the current  entries  in the row/cell.  If the current  active  element  
+is not a row/cell,  it closes  the drill-through  dialog.
+Insert Adds  a new row/cell  in the data grid.
+Delete Removes  the selected  row in the data grid.
+Filter  Dialog
+Shift + F If the current  active  element  is a field’s  button  and if it has a filter icon in either  
+the field list or grouping  bar UI, the filter dialog  will be opened  to perform  
+filtering.
+Tab If the current  active  element  is a field’s  button  and if it has a filter icon in either  
+the field list or grouping  bar UI, the filter dialog  will be opened  to perform  
+filtering.
+Shift + Tab Moves  to the next active  element  in the filter dialog.  If no active  elements  
+present,  it moves  to the next active  element  in the browser  page.
+Enter Moves  to the previous  active  element  in the filter dialog.  If no active  elements  
+present,  it moves  to the previous  active  element  in the browser  page.
+Down  
+arrowIf the current  active  element  is a tree node,  it moves  to the next node.
+BrowserUX Early Access Programs Guide 58Appendix A:Pivot Grids
+Up arrow If the current  active  element  is a tree node,  it moves  to the previous  node.
+Left arrow If the current  active  element  is a tree node,  it collapses  the current  node.  If the 
+current  active  element  is a tab, it moves  focus  to the previous  tab element.
+Right  
+arrowIf the current  active  element  is a tree node,  it expands  the current  node.  If the 
+current  active  element  is a tab, it moves  focus  to the next tab element.
+Home If the current  active  element  is a tree node,  it goes  to the first node.
+End If the current  active  element  is a tree node,  it goes  to the last node.
+Space If the current  active  element  is a tree node  or a checkbox  element,  it will be 
+either  checked  or unchecked.
+Esc or 
+EscapeCloses  the filter dialog.
+Alt + Down If the current  active  element  is a DropDownList  or DatePicker  or 
+DateTimePicker,  the popup  will be opened.
+Alt + Up If the current  active  element  is a DropDownList  or DatePicker  or 
+DateTimePicker,  the popup  will be closed.
+Chart  Types  in Pivot  Grids
+These  are the available  chart  types  within  Pivot  Grids.
+Column,  Stacked  Column,  100%  Stacked  Column Bubble
+Bar, Stacked  Bar, 100%  Stacked  Bar Pareto
+Line,  Stacked  Line,  Step Line,  100%  Stacked  Line Radar
+Area,  Stacked  Area,  Step Area,  100%  Stacked  Area Pie
+BrowserUX Early Access Programs Guide 59Appendix A:Pivot Grids
+Scatter Doughnut
+Polar Funnel
+Spline Pyramid
+BrowserUX Early Access Programs Guide 60Appendix A:Pivot Grids
+Appendix  B: Advanced  Charts
+The following  chart  types  are currently  supported  by the BrowserUX  Advanced  Charts  dashboard  
+component.
+XY2D Area,  Area  Stacked,  Area  Full Stacked,  Area  
+Spline,  Area  Step,  Bar, Bar Stacked,  Bar Full 
+Stacked,  Bar Side By Side Stacked,  Bar Side By 
+Side Full Stacked,  Line,  Line Stacked,  Line Full 
+Stacked,  Line Step
+Simple2D Nested  Donut,  Pie And Donut
+The following  chart  types  are not currently  supported  by the BrowserUX  Advanced  Charts  
+dashboard  component.
+XY2D Area  Range,  Bar Side By Side,  Bar Range  
+Overlapped,  Bar Range  Overlapped  Waterfall,  
+Bar Range  Side By Side,  Bar Range  Side By 
+Side Waterfall,  Bubble,  Candlestick,  Line 
+Scatter,  Point,  Spline,  Stock,  Waterfall
+Simple2D Funnel
+Polar2D Polar  Area,  Polar  Line,  Polar  Point
+Radar2D Radar  Area,  Radar  Line,  Radar  Point
+Configuration  Properties
+The following  chart  configuration  properties  are not currently  supported.
+Chart Show  Toggle  Size Button,  Point  Label  Text 
+Format,  Enable  Animations
+BrowserUX Early Access Programs Guide 61Appendix B:Advanced Charts
+Crosshair Crosshair  Enabled,  Show  Crosshair  Lines,  
+Show  Crosshair  Labels,  Crosshair  Label  Mode,  
+Crosshair  Label  Text Format
+Legend Show  Check  Boxes,  Show  Border
+X-Axis,  Y-Axis,  Secondary  Y-Axis Text Format,  Use Automatic  Step,  Step,  
+Interlaced,  Interlaced  Color,  Show  Minor  Grid 
+Lines
+Y-Axis,  Secondary  Y-Axis Scale  Break  Style  Type,  Maximum  Number  of 
+Scale  Breaks
+Series  Properties Model  Display  Type,  Marker  Size,  Bar Width,  
+Pie Hole Radius  Percent
+Waterfall  Series  Properties Start  Bar Color,  Total  Bar Color,  Rising  Bar 
+Color,  Falling  Bar Color,  Total  Included  In 
+Series,  Total  Value  Label,  Include  Subtotals,  
+Subtotal  Indexes,  Subtotal  Labels,  Subtotal  Bar 
+Color,  Label  Position
+BrowserUX Early Access Programs Guide 62Appendix B:Advanced Charts

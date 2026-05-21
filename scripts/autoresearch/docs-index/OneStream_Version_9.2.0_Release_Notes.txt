@@ -1,0 +1,375 @@
+OneStream  
+Release  Notes
+9.2.0Release
+
+Copyright ©2026OneStream Software LLC.Allrightsreserved.
+Alltrademarks, logos,andbrandnamesusedonthiswebsitearetheproperty oftheirrespective
+owners.Thisdocument anditscontents aretheexclusive property ofOneStream Software LLC
+andareprotected underinternational intellectual property laws.Anyreproduction, modification,
+distribution orpublicdisplayofthisdocumentation, inwholeorpart,withoutwrittenpriorconsent
+fromOneStream Software LLCisstrictlyprohibited.
+TableofContents
+Platform Release 9.2.0 1
+Highlights 2
+NewFeatures 2
+DataFrame 2
+Standard Recurring Journals 2
+Database PageAccess 2
+Enhancements 3
+Journals 3
+CubeViewsGeneral Settings 3
+Scenario Dimension Library 3
+Spreadsheet andExcelAdd-In 4
+SmartIntegration Connector 4
+Dashboard Components 4
+Dimension Member Alias 5
+OneStream Release Notes iTableofContents
+FixedIssues 6
+Journals 6
+Spreadsheet andExcelAdd-In 6
+SmartIntegration Connector 6
+ModernBrowser Experience 7
+Miscellaneous 7
+Deprecation 8
+Upgrade Information 9
+Compatibility 11
+Software asaService(SaaS)Updates 12
+Security Updates 13
+Documentation 13
+Recommendations 13
+Notes 15
+KnownIssues 15
+EndofSupport 16
+OneStream Release Notes iiTableofContents
+ContactSupport 16
+OneStream Release Notes iiiTableofContents
+Platform Release 9.2.0
+ThethemeforthisMinorreleaseisnewfeatures andenhancements.
+Seethe9.2.0Release Highlights courseonOneStream Navigator .
+Clickalinktogodirectlytothatsection:
+lHighlights
+lNewFeatures
+lEnhancements
+lFixedIssues
+lDeprecation
+lUpgrade Information
+lCompatibility
+lSoftware asaService(SaaS)Updates
+lSecurity Updates
+lDocumentation
+lRecommendations
+lNotes
+lKnownIssues
+lEndofSupport
+lContactSupport
+OneStream Release Notes 1Platform Release 9.2.0
+Highlights
+lYoucancreatejournalentriesforexpenses thatrecuratregularintervals. Recurring
+journalsmaintain consistency, ensureaccurate recording, andminimize errors.
+NewFeatures
+DataFrame
+NewBRApisareavailable tocreateDataFrame objects.SeeAPIOverview .(PF9-1631)
+Standard Recurring Journals
+Youcancreatejournalentriesforexpenses thatrecuratregularintervals. Recurring journals
+maintain consistency, ensureaccurate recording, andminimize errors.SeeRecurring Journals. .
+(PF-111253)
+Database PageAccess
+lTheproperty thatgivesaccesstotheDatabase Pagehaschanged. Tocontrolaccessto
+theDatabase Page,configure theAccessGroupforPlatform Tablesproperty forthe
+OneStream Database Server.
+lExternal Databases arenowdisplayed ontheDatabase Page.TolimitaccesstoExternal
+Databases, configure theAccessGroupforAncillary TablesandMaintenance Groupfor
+Ancillary Tablesproperty ofeachdatabase.
+OneStream Release Notes 2Platform Release 9.2.0
+Enhancements
+Journals
+lJournal Rejection Comments :Youcanprovideareasonforrejecting ajournalduringthe
+rejection process. Thecomment issavedtothejournalauditrecord,ensuring transparency
+amongjournalapprovers andcreators. (PF1-11035)
+CubeViewsGeneral Settings
+lCanCalculate, CanTranslate, andCanConsolidate :Thisnewsettingcanbesetto
+TrueorTrue(Without Force).IfsettoTrue,youcanright-clickonacellandcalculate,
+translate, orconsolidate datainOnePlace. IfsettoTrue(Without Force),forceactions
+(ForceConsolidate, ForceTranslate, ForceCalculate) andtheirloggingvariantsdisplayin
+theuserinterface butaredisabled. Youcanrunstandard consolidations, translations, or
+calculations withoutforcingthemwhilemaintaining systemintegrity. (PF1-11246)
+Scenario Dimension Library
+lForceConsolidate, Translate, andCalculate Scenario Security Group:Thisnew
+property intheScenario dimension controlswhocanperformforceoperations
+independently ofaccesstostandard consolidate, calculate, ortranslate operations. Ifyou
+areamember ofthissecuritygroup,youcansuccessfully performforceoperations. Ifyou
+arenotinthesecuritygroup,youwillreceiveanerrorwhenattempting toperformforce
+operations. (PF1-11136)
+OneStream Release Notes 3Platform Release 9.2.0
+Spreadsheet andExcelAdd-In
+lUseMultithreading forCubeViewWorkbook Refresh:AnewsettingforExcelAdd-In
+allowsCubeViewprocessing stepstorunconcurrently acrossmultipleworksheets. This
+significantly reduces refreshtimes.(PF8-2824)
+SmartIntegration Connector
+lDynamic CubeUsage:BRApi.Database.ExecuteActionQuery supports modifying
+Dynamic CubesoverSmartIntegration Connector. SeeBusiness Rules.(PF2-15821)
+lPerforming WriteBacks:SQL Table Editorsupports writingbackwhenusingSmart
+Integration Connector anda SQL Server DB.(PF2-15601)
+lEnhanced Long-running JobProcess :
+BRApi.Utilities.ExecRemoteGatewayJobAndWait supports along-runningjobprocess
+usingasinglebusiness rule.(PF2-15583)
+lDatasets :Tomaintain consistency, datasets anddatatables returned byremotebusiness
+rulesaretransferred byParquetfromJSON.(PF2-15612)
+Dashboard Components
+lComboBox:TheHoverColor DisplayFormatProperty isavailable forthiscomponent.
+(PF6-8044,PF6-8041)
+lComboBox:TheBackgroundColor DisplayFormatProperty willdisplaywhenthe
+component isexpanded. (PF6-8046,PF6-8048)
+lDateSelector :TheHoverColor DisplayFormatProperty isavailable forthiscomponent.
+(PF6-8108,PF6-8111)
+OneStream Release Notes 4Platform Release 9.2.0
+lTreeView:Thefollowing DisplayFormatProperties areavailable forthiscomponent:
+FontFamily, FontSize, Bold,Italic,TextColor, BackgroundColor, andBorderColor. (PF6-
+8040)
+lRadioButton:TheBackgroundColor DisplayFormatProperty isavailable forthis
+component. (PF6-8165,PF6-8167)
+lWebContent :TheBorderColor DisplayFormatProperty isavailable forthiscomponent.
+(PF6-8168,PF6-8170)
+lGridView:TheBorderColor, FontFamily, andFontSize DisplayFormatProperties are
+available forthiscomponent. (PF6-8040)
+lSQLTableEditor:TheBorderColor, TextColor, FontFamily, andFontSize DisplayFormat
+Properties areavailable forthiscomponent. (PF6-8040)
+lButton:TheLabelTextHorizontalAlignment DisplayFormatProperty isavailable to
+configure labeltextalignment, andtheRoundedBorders DisplayFormatProperty is
+available toroundthecomponent's borders. (PF6-8232)
+lIsEnabled :ThisDisplayFormatProperty determines ifacomponent isenabled orunable
+tobeselected. Theproperty isavailable forthesecomponents: ComboBox,CheckBox,
+ListBox,andRadioButtonGroup.(PF6-2117)
+Dimension Member Alias
+lDimension Member AliasReferences inSearchFunctionality :Youcanusea
+dimension member's aliastosearchintheMember FilterBuilderandDimension Library
+page'sSearchHierarchy window. (PF6-7923)
+OneStream Release Notes 5Platform Release 9.2.0
+FixedIssues
+Journals
+lInputJournal Performance :Inputjournalsexperience fewerdelayswhenopening or
+interacting withlargejournals. (PF1-11469)
+Spreadsheet andExcelAdd-In
+lRefresh Read-onlyFiles:Excelfiles,including XFGetCell functions, canrefreshinread-
+onlymodeifVersionHistoryisnotopenandtheOneStream  ribbonisnolongerturnedoff.
+(PF8-3005)
+lMultiple XFGetCell Formulas :Spreadsheet reliablyprocesses multipleXFGetCell
+formulas combined inasinglecell.(PF8-3006)
+lExcelWorkbook Refresh:Excelworkbooks refreshwithoutExcelOLEactions
+interrupting theprocess. (PF8-3018)
+SmartIntegration Connector
+lReturning aGUID: Theunknown exception whentryingtoreturnaGUIDusingaremote
+business ruleisfixed,andGUIDparameters workcorrectly inremotebusiness rules.(PF2-
+16030)
+OneStream Release Notes 6Platform Release 9.2.0
+Modern Browser Experience
+lFileUpload:Userscanuploadlargefilestothefilesharewithoutseeingasignificant delay
+compared totheWindows Application. (PF4-11892)
+lCubeViews:UsingthetabkeytoselectthenextcellinarowwillcausetheCubeViewto
+scrollhorizontally orvertically todisplaytheselected cell.(PF4-11498)
+lForms:Name-valuepairscanbepassedasliteralparameter valuesindashboard forms.
+(PF3-15576)
+lComboBoxes:Selected valuesarelistedinthemulti-selectcomboboxtextfield,andthe
+listofselected valuescanbeviewedinentiretyinthecomponent tooltip.(PF3-15384)
+Miscellaneous
+lComboBoxComponent :ComboBoxdefaultvalueswilldisplaywhenboththe
+ShowSearch andIsMultiSelect properties aresettoTrue.(PF6-8161)
+lWorkspaces :ForuserswithGenesis instances installed, performance improvements have
+beenmadetothenon-Genesis Workspaces treetoimprove redrawloadingtimewhen
+creating newWorkspaces items.(PF6-8599)
+lStageView:Auditrecordswilldisplayafterimport.(PF9-1625)
+lREST API :TheSessionInfo timeoutmatches theuseractivitytimeoutsettings. (PF7-
+10181)
+lDynamic Dimensions :ItemNotFoundexception nolongerthrownwhencalling
+GetCubeInfo. (PF9-1770)
+OneStream Release Notes 7Platform Release 9.2.0
+Deprecation
+lTheBasicChartwillnolongerbeavailable asanewdashboard component. TheBasic
+Chartcomponent willcontinue tofunctionandsupportedit,copy/paste, andXMLfile
+loadinguntilitisdeprecated fromtheOneStream  Platform, whichistargeted forthesecond
+releasein2026.
+lWinSCP, mostcommonly usedinSecureFileTransfer Protocol (SFTP)dataintegration
+processes, hasbeendeprecated inthisreleaseandwillnolongerbeincluded inthe
+Platform andSmartIntegration Connector asanativelyreferenceable DLL.OneStream
+recommends usingSSH.Net forSFTPintegrations. Existingcustomers thatuseWinSCP
+andarepreparing toupgrade tothisreleaseareencouraged toconverttheirWinSCP
+processes touseSSH.Net.  Additional information onSSH.Net canbefoundintheSmart
+Integration Connector Guide.
+lVPNorExpressRoute usedwithOneStream cloudonPlatform Versions before8.0.0
+reached EndofServiceon31August2024.Allcustomers usingVPNorExpressRoute who
+areupgrading toPlatform Release 8.0.0orlaterwillberequired tomigratetoSmart
+Integration Connector tointegrate withlocaldatasources. Cloudcustomers remaining on
+Platform Versions before8.0.0cancontinue touseVPNorExpressRoute throughtheEnd
+ofServicedate,afterwhichVPNwillbeoutofsupport. SmartIntegration Connector
+provides secureconnectivity between aOneStream SaaSinstance andcustomer data
+sourcesresidingwithinalocalnetwork. SeetheSmartIntegration Connector Guidefor
+moreinformation aboutenabling thisfeatureinyourenvironment.
+lThefollowing BRApishavebeenremoved fromPlatform: BRApi.Utilities.EncryptText and
+BRApi.Utilities.DecryptText. Pleaseupdateyourbusiness rulestouseKeyManagement -
+SecretsfoundwithintheCloudAdministration ToolsMarketplace Solution, orintegrate with
+yourownthird-partysecretsprovider. (PF7-4417)
+OneStream Release Notes 8Platform Release 9.2.0
+lTheBusiness RuleAPI BRApi.Utilities.GetAppServerPerformanceInfo isscheduled for
+removal inafuturereleaseinamannerconsistent withoursunsetpolicy.(PF7-10286)
+Thefollowing solutions willbemovingtoCommunity Solutions inDecember 2026:
+lSampleTemplates
+lExcelMetadata Builder
+Thefollowing solutions willbesunsetinDecember 2026andwillnolongerbesupported by
+OneStream::
+lSnippetEditor
+lMarketPlace Solutions
+Upgrade Information
+RefertoRequirements forimportant noticesanddetailsregarding planning yourupgrade.
+lPlatform Version9.0.0introduced astreamlined stagetableimplementation, yielding
+severalbenefits:
+oReduced stagetabledatastorage
+oMorepredictable dataloadperformance throughout theyear
+oGreaterdatabase stabilityforcustomers withhighervolumestageactivity
+Ifyouareupgrading fromaPlatform Versionearlierthan9.0.0,thetableoptimizations may
+requireyoutochangestage-relatedqueriesandrulestomaintain existingoperational
+behavior. SeetheOneStream 9.0StageSchema Changes postonCommunity. (added
+April16,2026)
+OneStream Release Notes 9Platform Release 9.2.0
+lAsofPlatform Release 9.2.0,thedefaultrightsoftheAdministrators grouptothe
+Database Serverhavebeenmodified tobeconfigurable. TheAdministrators groupisno
+longerdefaulted tohaverightstotheAncillary TableSecurity roles.TheAdministrators
+groupmustbeassigned totheOneStream Database ServerSecurity rolesforAccess
+GroupforAncillary Tables,Maintenance GroupforAncillary Tables,andTable
+Creation GroupforAncillary Tables.(addedJanuary 30,2026)
+lAsofPlatform Release 9.2.0,theApplication Administrator rightstoaccessthecontents of
+theDatabase Pagearenolongerprovisioned usingtheApplication Security roleof
+Administer Application .Provisioning accesstothecontentoftheDatabase Pageis
+configured usingtheOneStream Database ServerSecurity roleAccess Groupfor
+Platform Tables.(addedJanuary 30,2026)
+lFramework andapplication database schemaupdates arerequired forthisupgrade. Full
+database backups arerecommended. SeetheUpgrade Guide.
+lPlatform codemigrated fromSystem.Data.SqlClient toMicrosoft.Data.SqlClient. See
+"Platform Release 8.0orLaterReadiness" intheUpgrade Guide.(PF7-1295)
+lWhenupgrading toPlatform Version9.2.0,makesurethataccesstotheDatabase pageis
+configured correctly tomakesurethatthecorrectusershaveaccesstotheExternal
+Databases.
+l.NET8Desktop Runtime mustbeinstalled tolocaldesktops andlaptopstosuccessfully
+operatetheWindows Application ClientinaPlatform Version9.1.0orlaterenvironment.
+SeethePlatform v8+Upgrade Resource inONECommunity. (PF7-3087)
+lTousetheModernBrowser Experience forPlatform Version8.4.0orlater,younolonger
+needtologaticketorcontactyourCustomer Success Manager. OnPlatform Versions
+8.4.0andlater,theModernBrowser Experience willbeincluded witheveryrelease.
+OneStream Release Notes 10Platform Release 9.2.0
+lTheIPaddress ofyourOneStream environment willchangewhenyouupgrade toPlatform
+Version9.0.0orlater.IfyourIThasanoutbound allowlist(forexample, usingnetwork
+securitysystems), youmaynotbeabletoaccessthenewPlatform environment untilyour
+OneStream domains areallowed. Werecommend allowing allyourOneStream domains
+insteadofIPsinrelevant networksecuritysystems because theIPswillbedynamic going
+forward.
+Domains:
+o<sitename>.onestreamcloud.com
+o<sitename- dev>.onestreamcloud.com
+Ifyouhavequestions orneedassistance, openaCase.
+Compatibility
+lOneStream supports Windows Server2019and2022.
+lOneStream Clientoperation supports Windows 10and11.
+lTaskManager PV8.4.0 SV100iscompatible withPlatform Version8.4.0orlater.To
+upgrade, itisrecommended toperformanUninstall UIofprevious TaskManager versions,
+upgrade toPlatform Version8.4.0orlater,theninstallTaskManager PV8.4.0 SV100.See
+theTaskManager Release Notes.
+lCustomers withStandard Application ReportsPV640SV101(RPTA)installed must
+performthefollowing actionspriortoupgrading toPlatform version9.0orhigheras
+Standard Application Reports, Standard SystemReports, andSecurity AuditReportsare
+consolidated intotheNavigation Centersolution.
+OneStream Release Notes 11Platform Release 9.2.0
+1.Uninstall theStandard Application ReportssolutioninthecurrentPlatform version
+priortoupgrading toversion9.0orhigher.Failuretouninstall Standard Application
+ReportswillresultinBusiness Rulecompilation errorsuponupgrading toPlatform
+version9.0orhigher.
+2.Following asuccessful upgrade toPlatform version9.0orhigher,youshouldinstall
+thecurrentversionoftheNavigation Centersolution, whichprovides Standard
+Application Reports, Standard SystemReports, andSecurity AuditReports.
+ThecurrentversionofNavigation CenterisPV850SV103.Anewerreleaseof
+Navigation Centerisplanned forlateDecember 2025.
+Software asaService (SaaS)
+Updates
+lWebApplication Firewall (WAF):Afterupgrading toPlatform Version9.0.0orlater,SaaS
+customers willautomatically havetheirOneStream  Version 9.0.0orlaterinstances
+protected byourWAF:OneStream ’sWebApplication Firewall. TheWAFenhances the
+securitypostureofOneStream ’sSaaSServicebyproviding moreadvanced real-time
+protection againstcommon web-basedthreats.TheWAFisalignedwithindustrybest
+practices, including theOpenWebApplication Security Project(OWASP) top10attack
+types,tofurtherstrengthen theOneStream  SaaSServicefromexploits, vulnerabilities, and
+malicious attacks.
+lDataTierExpansion :Platform Version9.0.0andlateraccommodates SaaScustomers
+thathavestorageneedsthatexceed4TBperinstance. Customers shouldengage
+Customer Success withstorageinquiries.
+OneStream Release Notes 12Platform Release 9.2.0
+Security Updates
+lForcloud-hostedenvironments, JSONWebEncryption (JWE)andDemonstrated Proofof
+Possession (DPoP)areusedtoenhance authentication securitybyencrypting sensitive
+tokendataandbindingaccesstokenstoclients,reducing theriskoftokeninterception and
+misuse.(PF11-179,PF11-181)
+lForOneStream IdentityServer (OIS),theOIDCLocalRedirect Portsecurityfeatureis
+required. Thissecurityenhancement willbeautomatically appliedtoallcloud-hostedOIS
+environments. Ifyouhavequestions, contactOneStream Support.
+Documentation
+lTheURLfortheDocumentation websiteis:https://documentation.onestream.com/docs/
+Recommendations
+lThesecond2026releaseofOneStream  isscheduled todeprecate theBasicChart
+dashboard component. Beforeupgrading toa2026Platform Release, werecommend all
+customers confirmBasicChartcompatibility intheRelease Notesanddetermine ifanyof
+theirdashboards areusingtheBasicChart.Beginning withoursecond2026Release, the
+BasicChartcomponent willnolongerfunction. Therefore, dashboards shouldusethemore
+versatile, andbrowser- compatible, Advanced ChartorBiViewercomponents. Incases
+whereaOneStream  Solution isimpacted bytheBasicChartcomponent, newSolution
+versions willbemadeavailable onSolution Exchange tosupport2026upgrades.
+OneStream Release Notes 13Platform Release 9.2.0
+SupportfortheBasicChartonearlierreleases willfollowthepoliciesdefinedinthe
+“Product SupportandMaintenance Policy”foundontheCommunity “Commercial Terms
+andConditions” page.SeeOneStream Knowledge BasearticleKB0013842 toassistwith
+application analysis forthepresence oftheBasicChartdashboard component.
+lAvoidfileoperations directlyontheserverduringcustomizations, suchasbusiness rules,
+BRAPIs, andsolutions. Thisprevents dataloss,maintains fileintegrity, andavoidssecurity
+andmaintenance issues.
+lOneStream willnolongerprovidesupportforauthentication usingMSADandLDAP.MSAD
+andLDAPauthentication configurations willcontinue tofunction. However, intheeventof
+anerror,OneStream Supportwillnolongerbeavailable forthisfeature.
+Cloudorself-hostedcustomers usingMSADorLDAPshouldupgrade tothecurrent
+releasetoensurecompatibility withthelatestauthentication librariesandprotocols. Self-
+hostedcustomers canfindadditional information onexternal singlesign-on(SSO)
+configuration intheInstallation andConfiguration Guide.Cloud-hostedcustomers canrefer
+tothe"Identity Providers" sectionoftheIdentityandAccessManagement Guidefor
+configuration instructions.
+Customers alreadyusingexternal SSOplatforms, suchasMicrosoft EntraorOkta,should
+consider usingthoseplatforms withOneStream .Forself-hostedcustomers, analternative
+solutiontoupgrading tothecurrentreleaseistoselectfromavarietyofself-hosted
+systems, suchasADFS,PingFederate, andKeycloak forfederating MSADorLDAP,and
+ActiveDirectory oversupported protocols, suchasOpenIDConnect.
+lIfyouareinaself-hostedenvironment, OneStream stronglyencourages singlesign-onwith
+anexternal identityprovider. Toconfigure singlesign-onwithanexternal identityprovider,
+seetheInstallation andConfiguration Guide.(PF7-8083,PF7-8086)
+lOneStream recommends thatanycredentialed integration withOneStream Platform
+shouldchangepasswords regularly.
+OneStream Release Notes 14Platform Release 9.2.0
+lWhenreferring tofilepaths,itisbestpracticetoensurecross-platform compatibility.
+Insteadofmanually using‘\’forfilepathlocations, werecommend theuseof
+Path.Combine. Thisfunctionseamlessly handlesthepathseparators ('\'forWindows, '/'for
+Unix-basedsystems), makingyourcodeconsistently functional regardless oftheoperating
+system.
+lReferencing parameters withthesamenameinseparate Workspaces willoftenresultin
+incorrect valuesdisplaying intheprocessed UI.Asabestpractice, keepparameter names
+uniquewhenreferencing parameters acrossWorkspaces. Ifwhatneedstoberunis
+contained withinoneWorkspace, thenthisisnotaconcern. (PF6-6555)
+Notes
+lCustomers intheOneStream -hostedenvironment willuseOneStream IdentityServer for
+authentication andcanmanage identityproviders (IdPs)andpersonal accesstokens
+(PATs)intheIdentity&AccessManagement Portal.SeetheIdentityandAccess
+Management Guide.
+lOneStream planstocontinue tofollowMicrosoft's LongTermSupport(LTS)release
+cadence for.NETCoreversions -updating theOneStream Platform tothelatest.NetCore
+versioneverytwoyears.OneStream  expects thefirstreleaseof2026torequire.NET10.
+KnownIssues
+SeeKnownIssues.
+OneStream Release Notes 15Platform Release 9.2.0
+EndofSupport
+SeeEndofSupport.
+Contact Support
+ContactOneStream Supportbyregistering at:
+Support-OneStream Software
+OneStream Release Notes 16Platform Release 9.2.0

@@ -1,0 +1,1279 @@
+RESTAPI
+Implementation Guide
+9.2.0Release
+
+Copyright ©2025OneStream SoftwareLLC.Allrightsreserved.
+Alltrademarks, logos,andbrandnamesusedonthiswebsitearethepropertyoftheirrespective
+owners.Thisdocument anditscontentsaretheexclusivepropertyofOneStream SoftwareLLC
+andareprotected underinternational intellectual propertylaws.Anyreproduction, modification,
+distribution orpublicdisplayofthisdocumentation, inwholeorpart,withoutwrittenpriorconsent
+fromOneStream SoftwareLLCisstrictlyprohibited.
+TableofContents
+Introduction 1
+RESTAPI Summary 2
+Version5.2.0 2
+Authentication 2
+DataManagement 2
+DataProvider 3
+Version7.2.0 3
+Authentication 3
+Application 3
+DataManagement 4
+DataProvider 4
+RESTAPIOverview 5
+OneStream WebAPIEndpoints 5
+Authentication 5
+RESTAPIImplementation Guide iTableofContents
+DataManagement 5
+DataProvider 6
+CallStateForLongRunningRequests 7
+Authentication 8
+Application API 10
+DataProviderAPIv7.2.0 12
+OneStream RESTAPIImplementation 15
+Authentication 15
+OneStream WebAPIEndpoints 18
+Configure OneStream APIforExternalAuthentication 40
+AzureAD(Microsoft EntraID)Configuration 40
+Configure theRESTAPI Application Registration inAzureAD
+(Microsoft EntraID) 41
+SetUptheWebServerConfiguration inOneStream 42
+Configure theUserinOneStream 45
+AzureAD(Microsoft EntraID)Endpoints 46
+RESTAPIImplementation Guide iiTableofContents
+SetUpPostmanAccessTokenRequests 47
+OktaConfiguration 48
+Configure theRESTAPI Application Registration inOkta 49
+AddAuthorization ServersandScopesinOkta 49
+SetUptheWebServerConfiguration inOneStream 50
+Configure theUserinOneStream 53
+PingFederate Configuration 53
+Configure theRESTAPI Application Registration in
+PingFederate 54
+SetUptheWebServerConfiguration inOneStream 54
+Configure theUserinOneStream 57
+Configure theAUDValue 58
+RESTAPIImplementation Guide iiiTableofContents
+Introduction
+Thisguideprovidesinformation abouttheimplementation, authentication, andapplication
+programming interfaces availabletoextendOneStream functionality. 
+OneStream WebAPIisaRESTfulwebservicedesignedtoexposeOneStream DataAutomation
+functionswheninteracting withthird-partyAPIclientapplications.
+Forcustomers inaself-hostedenvironment, WebAPImustbeinstalledonawebserverand
+configured forexternalauthentication providerssupporting OAuth2.0/OpenID Connect
+authorization protocol.Identityproviderscurrentlysupported areAzureAD(Microsoft EntraID),
+Okta,andPingFederate.
+Allcustomers inaOneStream -hostedenvironment usingauthentication withOneStream
+IdentityServer, includingthoseusingnativeauthentication andanyOIDCorSAML 2.0 compliant
+externalidentityproviders, mustusepersonalaccesstokens(PATs)toaccessOneStream REST
+API.
+Tomaintainoptimalperformance andensuresecurity,usepublicanddocumented APIsonly.
+InternalAPIsarenotintendedforpublicgeneraluseandmaybechangedorremovedwithout
+notice.Supportcannotprovideassistance forissuesresultingfromtheusesofnonpublic
+features.
+SeetheIdentityandAccessManagement Guideforinformation aboutauthentication with
+OneStream IdentityServer andusingPATs.
+OneStream WebAPIisAPIclientagnostic.ItacceptsandoutputsdatainJSONformatmakingit
+possibleforeveryAPIclientapplication thatsupportsthisformattoalsointeractwiththeservice.
+RESTAPIImplementation Guide 1Introduction
+RESTAPI Summary
+Version 5.2.0
+Inversion5.2.0ofOneStream RESTAPI,alltheAPIcallsaresynchronous. Theresponses donot
+comebackuntilallthedatahasbeenprocessed ontheOneStream server.Itisnotrecommended
+tousethisversionforlargedatasetsbecausetimeoutsmayoccurbeforetheresponsecomes
+through.Forlargedatasets,itisrecommended tousetheasynchronous APIendpoints
+introduced inversion7.2.0.
+Authentication
+Typically, thisAPIisusedonlytoverifythattheRESTAPIisconfigured correctlyandthetoken
+usedtoauthenticate isvalid.Inthisversion,aftertheconfiguration andtokenhavebeenvalidated
+forauthentication, itisnotnecessary tocallthisAPIforotherAPIstofunctionaslongasaproper
+authentication tokenisprovidedonthoseAPIcalls.
+DataManagement
+ThisAPIisusedtorunsequences andstepsontheOneStream servers.Thiscanbeusedtorun
+consolidations, businessrules,oranyothertypesofsequences andstepsconfigured in
+OneStream .TheAPIcallsinthisversiondonotrespondwithasuccessorfailurestatusuntilafter
+thetaskhascompleted inOneStream ,whichcantakealongtimeinsomecases.
+RESTAPIImplementation Guide 2RESTAPI Summary
+DataProvider
+ThisAPI isusedtoreturndatafromwithinOneStream toathird-partyapplication orscript.Itcan
+beusedtoreturndatafromaOneStream -configured dataadapter,CubeView,SQLquery,or
+methodcommand. IftheAPIcallissuccessful, thedataisreturnedinJSON format withinthe
+responsebody.Ifthedatasetislarge,itmaytakealongtimefortheresponsetocomeback.
+Version 7.2.0
+Inversion7.2.0ofOneStream RESTAPI,theAPI callsarebothsynchronous andasynchronous.
+Theasynchronous callsarerecommended forlargedatasetsorwhenanimmediate responseis
+needed.
+Authentication
+ThisAPIcontainsonlytheLogonAPIcall,whichisnecessary toreturntheSessionInfo (SI)object
+forusewithinanyotherAPIcallsinthisversion.
+Application
+ThisAPIcontainsonlytheOpenApplication APIcallandreturnsaSessionInfo objectforaspecific
+application. Thisisnecessary whenmakinganyotherAPIcallthatrequiresanopenapplication,
+whichisalmostalwaysthecase.ItrequirestheSessionInfo tokenfromtheLogonAPIcallasa
+parameter withinthebodyoftherequest.
+RESTAPIImplementation Guide 3RESTAPI Summary
+DataManagement
+ThisAPIisusedtorunsequences andstepsontheOneStream servers.Thiscanbeusedtorun
+consolidations, businessrules,oranyothertypesofsequences andstepsconfigured in
+OneStream .
+InthisversionoftheDataManagement API,theExecuteSequence andExecuteStep APIcalls
+havebeenconsolidated intoasingleendpointwhereaparameter specifieswhetheritiscallinga
+sequence orastep.Italsocontainsanasynchronous endpointwheretheresponseisissued
+immediately insteadofwaitingforthesequence orsteptocomplete. Thiscanbehelpfulifthestep
+orsequence typicallytakesalongtimetorun.ThereisalsoanAPIcalltocheckthestatusofthe
+steporsequence thatwasinitiated.Thiscanbeusedinaclient-sidepollingandsleeplooptowait
+forthetasktobecompleted. AllcallswithinthisAPIrunagainstaspecificapplication and
+thereforerequireaSessionInfo objectfromOpenApplication.
+DataProvider
+TheAPIcallsinthissectionareusedtoreturndatafromwithinOneStream toathird-party
+application orscript.Inthisversion,itcanonlybeusedtoreturndatafromaOneStream -
+configured dataadapter.However, thedataadapteritselfcanreceivedatafromavarietyof
+differenttypesofsources.Thereisalsobothasynchronous andasynchronous versionoftheAPI
+call.Developers candecidewhethertheywantthecalltoblockandwaituntilthedatais
+processed anddeliveredortheywanttouseclient-sidepollingandsleeplooptowaitforthedata
+tobeavailable, whichrequiresthatXFCallState isenabledintheconfiguration. Thelatteroption
+maybepreferable whenexpecting largesetsofdataorwhentherearealotofcalculations
+involved,whichmayslowdowndeliverytoapointwhereatimeoutmayoccur.
+RESTAPIImplementation Guide 4RESTAPI Summary
+RESTAPIOverview
+Inthistopic:
+lOneStream WebAPIEndpoints
+lOneStream RESTAPIImplementation
+lConfigure OneStream APIforExternalAuthentication
+OneStream WebAPIEndpoints
+URLsarerelativetoqueryparameter api-version=5.2.0, unlessotherwise noted.
+Authentication
+Authentication endpoint.Represents aRESTfulserviceforAuthentication.
+lPOSTapi/Authentication/LogonAndReturnCookie
+UsedprimarilytoverifyWebAPIinstallation completed successfully. Returnsan
+authentication messageoramessageindicating failurealongwithaproperHTTPcode.
+DataManagement
+DataManagement endpoint.Represents aRESTfulserviceofDataManagement.
+lPOSTapi/DataManagement/ExecuteSequence:
+ExecutesaDataManagement Sequence andreturnsasuccess/failure messagealongwith
+aproperHTTPcode.
+RESTAPIImplementation Guide 5RESTAPIOverview
+lPOSTapi/DataManagement/ExecuteStep
+ExecutesaDatamanagement Stepandreturnsasuccess/failure messagealongwitha
+properHTTPcode.
+DataProvider
+DataProvider endpointrepresents aRESTfulserviceofDataProvider.
+lPOSTapi/DataProvider/GetAdoDataSetForAdapter:
+ExecutesaDataProviderHTTPPostrequestandreturnsaJSONrepresentation ofa
+DataSetforagivenDashboard Adapter.
+lPOSTapi/DataProvider/GetAdoDataSetForCubeViewCommand
+ExecutesaDataProviderHTTPPostrequestandreturnsaJSONrepresentation ofa
+DataSetforagivenCubeView.
+lPOSTapi/DataProvider/GetAdoDataSetForSqlCommand
+ExecutesaDataProviderHTTPPostrequestandreturnsaJSONrepresentation ofa
+DataSetforagivenSqlquery.Administrator roleisrequired forthisfunctionality.
+lPOSTapi/DataProvider/GetAdoDataSetForMethodCommand
+ExecutesaDataProviderHTTPPostrequestandreturnsaJSONrepresentation ofa
+DataSetforagivenpre-definedlistofmethodcommands. Administrator roleisrequired
+forthisfunctionality.
+RESTAPIImplementation Guide 6RESTAPIOverview
+CallStateForLongRunning Requests
+Topreventproxyappliance time-out,apollingmethodwasintroduced forlongrunningrequests.
+Whenthisisenabled,allrequestsusethepollingmethodbasedontheconfigured settinginthe
+XFAppServerConfig.xml indicating howlongtherequesthastocomplete. Thisallowslong
+runningrequeststocompletewithouttheproxyappliances returninga502BadGatewayasa
+responsetotherequestinactivitythatcausestheproxytoterminate theconnection.
+HowItWorks
+XFCallState pollingmustfirstbeenabledintheXFAppServerConfig.xml inthe
+EnvironmentSettings block.
+Theconfigured valuesofUseCallStateForLongRunningRequests and
+CallStateNetworkTimeoutNumSeconds managetheXFCallState functionality. When
+UseCallStateForLongRunningRequests issettotrue,callstatepollingisused.Theconfigured
+valueforCallStateNetworkTimeoutNumSeconds determines thetimetowaitbeforeusingcall
+statetocompletetherequest,default120seconds.
+RESTAPIImplementation Guide 7RESTAPIOverview
+Authentication
+Forcustomers inaOneStream- hostedenvironment, seetheIdentityandAccessManagement
+Guideforinformation aboutauthentication withOneStream IdentityServer andusingpersonal
+accesstokens(PATs).
+TosecureRESTAPIwithOAuth2.0forcustomers inaself-hostedenvironment, configure
+authentication with oneofthesesupported externalproviders:
+lAzureAD(Microsoft EntraID)Configuration
+lOktaConfiguration
+lPingFederate Configuration
+Accesstokensfromtheanyoftheaboveprovidershaveshortexpiration times.Toavoidcopying
+theentiretokenvaluetotheAuthorization/Token textbox,createavariablethatholdsthevalue.
+Foreverycalltotheexternalprovider,thevalueoftheaccesstokenreturnedwillbecopiedtothe
+variable.
+lCreateaglobalvariableinPostman, nameitappropriately, forinstance webapi_access_
+token.
+lIntheTeststabofthePOSTrequesttotheexternalprovidercopythescriptbelow:
+vardata=pm.response.json ();
+pm.environment.set ("webapi_access_token",data.access_ token);
+Authentication API
+Method Endpoint Description
+Post Authentication/LogonLogsonandreturnsaSessionInfo
+(SI)objectforusewithotherRest
+APIcallsthatacceptanSIasan
+RESTAPIImplementation Guide 8RESTAPIOverview
+Method Endpoint Description
+argument. Thisendpointperformsa
+logononlyanddoesnotopenan
+application. Thisistheequivalent of
+enteringlogincredentials inthe
+DesktopAppbeforeselectingand
+openinganapplication.
+Authentication/Logon
+POSThttps://{BaseWebServer}/Onestreamapi/api/Authentication/Logon?api- version=7.2.0
+QueryParameters
+Key Value Required
+api-version 7.2.0 Yes
+Authorization
+Type Value Required
+BearerToken (youraccesstoken) Yes
+Headers
+Key Value Required
+Content-Type application/json Yes
+Request Body
+Key Type Description Required
+BaseWebServerURL stringYourURLforthewebservice Yes
+RESTAPIImplementation Guide 9RESTAPIOverview
+Sample Request
+{
+ "BaseWebServerUrl": "https:// golfstream.onestreamcloud.com/OneStreamWeb"
+}
+Sample Response
+{
+ "Message": "Logonsucceeded.",
+ "Logon SessionInfo": {
+ "XfBytes": "QB8AACNodHRwOi8vbG9jYWxob3N0OjUwMDAxL09uZVN0cm
+ VhbVdlYhQAAAB7izp1jCP3BUVr8bjD2f6KmmL5BKzhOVWUzU1MikEYOVekO
+ ZUIT0tUQV9NMk27tnn6+VZaR544CKlYPCFeWSBWCTmQ2ggAAAAAAAAAAAAA
+ AAAAAAAAAAAAAAAFZW4tVVMAAAAAAAAAAAAAAAAAAAAAAAAAAP/////////
+ /////////////////8P//////////////AwAAABn8//8Z/P//Gfz//xn8//
+ 8Z/P//Gfz//xn8//8Z/P//Gfz//xn8//8Z/P//Gfz//w==""
+ },
+ "Authorized applications": [
+ "GolfStreamDemo_ 2022",
+ "OFC_ECA_ProductMgmt",
+ "OneStream_ GolfStream"
+ ]
+}
+Application API
+Method Endpoint Description
+Post Application/OpenApplicationOpensspecifiedapplication.
+RequiresavalidsessionInfo token
+obtainedfromthe
+Authentication/Logon method.
+Application/OpenApplication
+POSThttps://{BaseWebServer}/Onestreamapi/api/Application/OpenApplication?api-
+version=7.2.0
+RESTAPIImplementation Guide 10RESTAPIOverview
+QueryParameters
+Key Value Required
+api-version 7.2.0 Yes
+Authorization
+Type Value Required
+BearerToken (youraccesstoken) Yes
+Headers
+Key Value Required
+Content-Type application/json Yes
+Request Body
+Key Type Description Required
+ApplicationName stringNameoftheapplication toopen Yes
+SIarray
+(bytes)TheSessionInfo (SI)objectobtained
+fromAuthentication/Logon endpoint.Yes
+Sample Request
+{
+ "ApplicationName": "GolfStreamDemo_ 2022",
+ "SI":{
+ "XfBytes": "QB8AACNodHRwOi8vbG9jYWxob3N0OjUwMDAxL09uZVN0cmVhb
+ VdlYhQAAAB7izp1jCP3BUVr8bjD2f6KmmL5BKzhOVWUzU1MikEYOVekOZUIT0
+ tUQV9NMk27tnn6+VZaR544CKlYPCFeWSBWCTmQ2ggAAAAAAAAAAAAAAAAAAAA
+ AAAAAAAAFZW4tVVMAAAAAAAAAAAAAAAAAAAAAAAAAAP//////////////////
+ ////////8P//////////////AwAAABn8//8Z/P//Gfz//xn8//8Z/P//Gfz//
+ xn8//8Z/P//Gfz//xn8//8Z/P//Gfz//w=="
+ }
+}
+RESTAPIImplementation Guide 11RESTAPIOverview
+Sample Response
+{
+ "Message": "Openapplication succeeded.",
+ "Application SessionInfo": {
+ "XfBytes": "QB8AACNodHRwOi8vbG9jYWxob3N0OjUwMDAxL09uZVN0
+ cmVhbVdlYhQAAAAep0GewgsakcN4GJDmuwyaaIMazfN/aHyhnXNLgg+h
+ Uxy6cpQIT0tUQV9NMk27tnn6+VZaR544CKlYPCFe0BusL1iM2ggUAAAA
+ rL9Q04ePExHJxVU89Y1MAeNxrh8UT25lU3RyZWFtX0dvbGZTdHJlYW3x
+ ShfEXWxvRbOx2hWDSCd0BWVuLVVTAAAAAAAAAAAAAAAAAAAAAAAAAAD/
+ /////////wAAAAACAFABAABQAfD///8AAAAAYHzddwMAAABCAfAAGfz/
+ /5z///+c////FQAQACYAIAARAGAAAwCQABn8//8Z/P//Gfz//xn8//8="
+ }
+}
+DataProvider APIv7.2.0
+Method Endpoint Description
+PostDataProvider/
+GetadoDataSetForAdapterExecutesaDataProviderHTTP
+Postrequestandandreturnsa
+JSONrepresentation ofaDataSet
+foragivenDashboard Adapter.
+RequiresaSessionInfo (SI)object
+obtainedfrom
+Application/OpenApplication
+endpoint.
+DataProvider/GetAdoDataSetForAdapter
+POSThttps://
+{BaseWebServer}/Onestreamapi/api/DataProvider/GetAdoDataSetForAdapter?api-
+version=7.2.0
+RESTAPIImplementation Guide 12RESTAPIOverview
+QueryParameters
+Key Value Required
+api-version 7.2.0 Yes
+Authorization
+Type Value Required
+BearerToken (youraccesstoken) Yes
+Headers
+Key Value Required
+Content-Type application/json Yes
+Request Body
+Key Type Description Required
+IsSystemLevel booleanAnindication ofwhetherthe
+Dashboard Adapterisdefinedatthe
+SystemLevel(True)orforthe
+specifiedApplication (False).Yes
+AdapterName stringThenameoftheDashboard Adapter
+usedfordataretrieval.Yes
+ResultDataTableName stringNameoftheresultingtableinthe
+DataSetYes
+CustomSubstVarsAsCommaSeparatedPairs stringCommaseparated listofVariable
+name/value pairsrequiringauser
+prompt.Thesemustbespecified
+usingthefollowingformat:
+"VariableName1=No
+RESTAPIImplementation Guide 13RESTAPIOverview
+Key Type Description Required
+[VariableValue1],VariableName2=
+[VariableValue2],...".
+SIarray
+(bytes)TheSessionInfo (SI)objectobtained
+fromApplication/OpenApplication
+endpoint.Yes
+Sample Request
+{
+ "IsSystemLevel": true,
+ "AdapterName": "SalesMix(WF)",
+ "ResultDataTableName": "ResultsTable",
+ "CustomSubstVarsAsCommaSeparatedPairs": "",
+ "SI":{
+ "XfBytes": "QB8AACNodHRwOi8vbG9jYWxob3N0OjUwMDAxL09uZVN0cm
+ VhbVdlYhQAAAAep0GewgsakcN4GJDmuwyaaIMazfN/aHyhnXNLgg+hUxy6c
+ pQIT0tUQV9NMk27tnn6+VZaR544CKlYPCFe0BusL1iM2ggUAAAArL9Q04eP
+ ExHJxVU89Y1MAeNxrh8UT25lU3RyZWFtX0dvbGZTdHJlYW3xShfEXWxvRbO
+ x2hWDSCd0BWVuLVVTAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////wAAAA
+ ACAFABAABQAfD///8AAAAAYHzddwMAAABCAfAAGfz//5z///+c////FQAQA
+ CYAIAARAGAAAwCQABn8//8Z/P//Gfz//xn8//8="
+ }
+}
+Sample Response
+{
+ "ResultsTable": [
+{
+ "RowId": 0,
+ "RowName": "Row1",
+ "PovCubeNameAndDesc": "GolfStream -Corporate",
+ "Pov00EntityNameAndDesc": "TotalGolfStream",
+ "Pov02ScenarioNameAndDesc": "Actual -Actual",
+ "Pov03TimeNameAndDesc": "2011M2 -Feb2011",
+ "Pov04ViewNameAndDesc": "YTD",
+ "RowHdr0NameAndDesc": "Drivers",
+ "RowHdr0Indent": 0,
+ "Col0Hdr0NameAndDesc": "60000-Operating Sales",
+ "Col0Hdr0Indent": 0,
+ "Col0Value": 25552270.482000000000000000,
+ "Col0ValueAsText": "25,552,270.48"
+RESTAPIImplementation Guide 14RESTAPIOverview
+ }, 
+ } 
+     "RowId": 1,
+ "RowName": "Row1",
+ "PovCubeNameAndDesc": "GolfStream -Corporate",
+ "Pov00EntityNameAndDesc": "TotalGolfStream",
+ "Pov02ScenarioNameAndDesc": "Actual -Actual",
+ "Pov03TimeNameAndDesc": "2011M2 -Feb2011",
+ "Pov04ViewNameAndDesc": "YTD",
+ "RowHdr0NameAndDesc": "Fairway Woods",
+ "RowHdr0Indent": 0,
+ "Col0Hdr0NameAndDesc": "60000-Operating Sales",
+ "Col0Hdr0Indent": 0,
+ "Col0Value": 17476089.966000000000000000,
+ "Col0ValueAsText": "17,476,089.97"
+ }
+ ]
+}
+OneStream RESTAPIImplementation
+Inthistopic:
+lAuthentication
+lOneStream WebAPIEndpoints
+Authentication
+Forcustomers inaOneStream- hostedenvironment, seetheIdentityandAccessManagement
+Guideforinformation aboutauthentication withOneStream IdentityServer andusingpersonal
+accesstokens(PATs).
+TosecureRESTAPIwithOAuth2.0forcustomers inaself-hostedenvironment, configure
+authentication with oneofthesesupported externalproviders:
+RESTAPIImplementation Guide 15RESTAPIOverview
+lAzureAD(Microsoft EntraID)Configuration
+lOktaConfiguration
+lPingFederate Configuration
+Accesstokensfromtheanyoftheaboveprovidershaveshortexpiration times.Toavoidcopying
+theentiretokenvaluetotheAuthorization/Token textbox,createavariablethatholdsthevalue.
+Foreverycalltotheexternalprovider,thevalueoftheaccesstokenreturnedwillbecopiedtothe
+variable.
+lCreateaglobalvariableinPostman, nameitappropriately, forinstance webapi_access_
+token.
+lIntheTeststabofthePOSTrequesttotheexternalprovidercopythescriptbelow:
+vardata=pm.response.json ();
+pm.environment.set ("webapi_access_token",data.access_ token);
+Authentication API
+Method Endpoint Description
+Post Authentication/LogonLogsonandreturnsaSessionInfo
+(SI)objectforusewithotherRest
+APIcallsthatacceptanSIasan
+argument. Thisendpointperformsa
+logononlyanddoesnotopenan
+application. Thisistheequivalent of
+enteringlogincredentials inthe
+DesktopAppbeforeselectingand
+openinganapplication.
+RESTAPIImplementation Guide 16RESTAPIOverview
+Authentication/Logon
+POSThttps://{BaseWebServer}/Onestreamapi/api/Authentication/Logon?api- version=7.2.0
+QueryParameters
+Key Value Required
+api-version 7.2.0 Yes
+Authorization
+Type Value Required
+BearerToken (youraccesstoken) Yes
+Headers
+Key Value Required
+Content-Type application/json Yes
+Request Body
+Key Type Description Required
+BaseWebServerURL stringYourURLforthewebservice Yes
+Sample Request
+{
+ "BaseWebServerUrl": "https:// golfstream.onestreamcloud.com/OneStreamWeb"
+}
+Sample Response
+{
+ "Message": "Logonsucceeded.",
+ "Logon SessionInfo": {
+ "XfBytes": "QB8AACNodHRwOi8vbG9jYWxob3N0OjUwMDAxL09uZVN0cm
+ VhbVdlYhQAAAB7izp1jCP3BUVr8bjD2f6KmmL5BKzhOVWUzU1MikEYOVekO
+RESTAPIImplementation Guide 17RESTAPIOverview
+ ZUIT0tUQV9NMk27tnn6+VZaR544CKlYPCFeWSBWCTmQ2ggAAAAAAAAAAAAA
+ AAAAAAAAAAAAAAAFZW4tVVMAAAAAAAAAAAAAAAAAAAAAAAAAAP/////////
+ /////////////////8P//////////////AwAAABn8//8Z/P//Gfz//xn8//
+ 8Z/P//Gfz//xn8//8Z/P//Gfz//xn8//8Z/P//Gfz//w==""
+ },
+ "Authorized applications": [
+ "GolfStreamDemo_ 2022",
+ "OFC_ECA_ProductMgmt",
+ "OneStream_ GolfStream"
+ ]
+}
+OneStream WebAPI Endpoints
+ThisAPIimplementation isclientagnosticthereforeeveryAPItestcapablethird-partytoolcanbe
+pointedtoOneStreamWeb APIendpoints. ThistutorialisusingPostman. Notethatallarguments
+inthebodyarerequiredunlessotherwise specified.
+Versioning Thisimplementation willstartwithApi-version=5.2.0
+DataManagement Execute Sequence endpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]:
+[port]/onestreamapi/api/DataManagement/ExecuteSequence?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+"BaseWebServerUrl ":[OneStream ServerLogonURL],
+RESTAPIImplementation Guide 18RESTAPIOverview
+"WorkspaceName ":[yourworkspace name],-Optional
+"ApplicationName ":[yourapplication name],
+"SequenceName ":[existingsequence name],
+"CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvalue
+pairsassubstitution variableswiththefollowingformat:"VariableName1=
+[VariableValue1],VariableName2= [VariableValue2],..."] -Optional
+ }
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, amessageof"Data
+Management Sequence [sequence name]wascompleted" willbereturnedotherwise a
+descriptive errormessagewillshow.MoredetailswillbeloggedintheErrorandActivity
+logs.
+DataManagement Execute Stependpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]: [port]/onestreamapi/api/DataManagement/ExecuteStep?api-
+version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+ "BaseWebServerUrl ":[OneStream ServerLogonURL],
+ "ApplicationName ":[yourapplication name],
+ "DataManagementGroupName ":[anexisting datamanagement groupname],
+ "StepName ":[existing stepname],
+ "CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvaluepairsas
+substitution variables withthe
+following format: "VariableName1= [VariableValue1],VariableName2= [VariableValue2],..."] -
+Optional
+ }
+RESTAPIImplementation Guide 19RESTAPIOverview
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, amessageof"Data
+Management Step[stepname]wascompleted" willbereturnedotherwise adescriptive
+errormessagewillshow.MoredetailswillbeloggedintheErrorandActivitylogs.
+RESTAPIImplementation Guide 20RESTAPIOverview
+DataProvider GetAdoDataSetForAdapter endpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]:
+[port]/onestreamapi/api/DataProvider/GetAdoDataSetForAdapter?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+ "BaseWebServerUrl ":[OneStream ServerLogonURL],
+ "ApplicationName ":[yourapplication name],
+ "WorkspaceName ":Reserved forfutureuse.Useanemptystring. -Optional ,
+ "AdapterName ":[existing adapter name],
+"ResultDataTableName ":[nameofresulting tableintheDataSet],
+"CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvaluepairsas
+substitution variables withthe
+following format: "VariableName1= [VariableValue1],VariableName2= [VariableValue2],..."] -
+Optional
+ }
+Example:
+{
+"BaseWebServerUrl ":"https://olympus.onestreamtest.com/onestreamweb",
+"ApplicationName ":"GolfStream_ v37",
+"IsSystemLevel ":"False",
+"AdapterName ":"ActivityClassListing_ PLP",
+"ResultDataTableName ":"ResultsTable",
+"CustomSubstVarsAsCommaSeparatedPairs ":""
+}
+RESTAPIImplementation Guide 21RESTAPIOverview
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, aJSONdatatable
+willbereturnedotherwise adescriptive errormessagewillshow.Moredetailswillbelogged
+intheErrorandActivitylogs.
+ThisisareturnedresponsefromtherequestusingtheabovebodyexampleinPostman:
+{
+"ResultsTable" : [
+{
+"ClassID" : "100_Salary",
+"Name": "100 - Salary" ,
+"Description" : "100 - Salary" ,
+"ValueType" : 0,
+"ValueTypeName" : "Wage Percentage" ,
+"ClassItemID" : "79b612b9- 8cb4-49ca-9a0d-d13c7683a7f2" ,
+"Description1" : "100 - Salary" ,
+"WeightOrValue" : "1",
+"FKAccountID" : "Salary_ Exp",
+"Flow": "None",
+"IC": "None",
+"UD1": "None",
+"UD2": "None",
+"UD3": "None",
+"UD4": "None",
+"UD5": "None",
+"UD6": "None",
+"UD7": "None",
+"UD8": "None",
+"Sequence" : 10.0,
+RESTAPIImplementation Guide 22RESTAPIOverview
+"FKClassID" : "100_Salary"
+        },
+…
+]}}
+DataProvider GetAdoDataSetForCubeViewCommand
+endpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]: [port]/onestreamapi/api/DataProvider/
+GetAdoDataSetForCubeViewCommand?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+ "BaseWebServerUrl ":[OneStream ServerLogonURL],
+ "ApplicationName ":[yourapplication name],
+ "CubeViewName ":[existing CubeViewname],
+ "DataTablePerCubeViewRow ":[iftruereturns aDataTablePerCubeViewrow-bool],
+"ResultDataTableName ":[nameofresulting tableintheDataSet],
+"CubeViewDataTableOptions ":[setofformatting boleanoptions forthereturned table-
+Optional ],
+"CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvaluepairsas
+substitution variables withthe
+following format: "VariableName1= [VariableValue1],VariableName2= [VariableValue2],..."] -
+Optional
+ }
+Example:
+{
+RESTAPIImplementation Guide 23RESTAPIOverview
+"BaseWebServerUrl ":"https://olympus.onestreamtest.com/onestreamweb",
+"ApplicationName ":"GolfStream_ v37",
+"CubeViewName ":"GrossMargin",
+"DataTablePerCubeViewRow ":false,
+"ResultDataTableName ":"ResultDataTableNames",
+"CustomSubstVarsAsCommaSeparatedPairs ":"",
+"CubeViewDataTableOptions ":{
+                " IncludeTitle ":false,
+                " IncludeHeaderLeftLabel1 ":true,
+                " IncludeHeaderLeftLabel2 ":true,
+                " IncludeHeaderLeftLabel3 ":true,
+                " IncludeHeaderLeftLabel4 ":true,
+                " IncludeHeaderCenterLabel1 ":true,
+                " IncludeHeaderCenterLabel2 ":true,
+                " IncludeHeaderCenterLabel3 ":true,
+                " IncludeHeaderCenterLabel4 ":true,
+                " IncludeHeaderRightLabel1 ":true,
+                " IncludeHeaderRightLabel2 ":true,
+                " IncludeHeaderRightLabel3 ":true,
+                " IncludeHeaderRightLabel4 ":true,
+                " IncludePovCube ":true,
+                " IncludePovEntity ":true,
+                " IncludePovParent ":true,
+                " IncludePovCons ":true,
+                " IncludePovScenario ":true,
+                " IncludePovTime ":true,
+                " IncludePovView ":true,
+                " IncludePovAccount ":true,
+RESTAPIImplementation Guide 24RESTAPIOverview
+                " IncludePovFlow ":true,
+                " IncludePovOrigin ":true,
+                " IncludePovIC ":true,
+                " IncludePovUD1 ":true,
+                " IncludePovUD2 ":true,
+                " IncludePovUD3 ":false,
+                " IncludePovUD4 ":true,
+                " IncludePovUD5 ":false,
+                " IncludePovUD6 ":true,
+                " IncludePovUD7 ":false,
+                " IncludePovUD8 ":true,
+                " IncludeMemberDetails ":true,
+                " IncludeRowNavigationLink ":true,
+                " IncludeHasDataStatus ":true,
+                " IncludeAnnotation ":true,
+                " IncludeAssumptions ":true,
+                " IncludeAuditComment ":true,
+                " IncludeFootnote ":true,
+                " IncludeVarianceExplanation ":true
+                }
+}
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, aJSONdatatable
+willbereturnedotherwise adescriptive errormessagewillshow.Moredetailswillbelogged
+intheErrorandActivitylogs.
+ThisisareturnedresponsefromtherequestusingtheabovebodyexampleinPostman:
+{
+"ResultDataTableNames" : [
+RESTAPIImplementation Guide 25RESTAPIOverview
+{
+"RowId": 0,
+"RowName" : "Row1",
+"HeaderLeftLabel1" : "",
+"HeaderLeftLabel2" : "",
+"HeaderLeftLabel3" : "",
+"HeaderLeftLabel4" : "",
+"HeaderCenterLabel1" : "",
+"HeaderCenterLabel2" : "",
+"HeaderCenterLabel3" : "",
+"HeaderCenterLabel4" : "",
+"HeaderRightLabel1" : "",
+"HeaderRightLabel2" : "",
+"HeaderRightLabel3" : "",
+"HeaderRightLabel4" : "",
+"PovCubeId" : 5,
+            …
+"Col8VarianceExplanation" : ""
+},
+…
+]}}
+DataProvider GetAdoDataSetForSqlCommand endpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]: [port]/onestreamapi/api/DataProvider/
+GetAdoDataSetForSqlCommand?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+RESTAPIImplementation Guide 26RESTAPIOverview
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+"BaseWebServerUrl ":[OneStream ServerLogonURL],
+"ApplicationName ":[yourapplication name],
+"SqlQuery ":[sqlquerystatement usedtoreturndata],
+"DbLocation ":[specifyifdatafromanexternaldatabasereferenced intheconfiguration
+willneedtobereturned-string-defaultsto"Application" -Optional],
+"ResultDataTableName ":[nameofresultingtableintheDataSet],
+"XFExternalDBConnectionNam ":[specifyifDbLocation issetto"External”],
+"CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvalue
+pairsassubstitution variableswiththefollowingformat:"VariableName1=
+[VariableValue1],VariableName2= [VariableValue2],..."] -Optional
+ }
+Example:
+{
+"BaseWebServerUrl ":"https://olympus.onestreamtest.com/onestreamweb",
+"ApplicationName ":"GolfStream_ v37",
+"SQLQuery ":"Select TOP100*fromCube",
+"ResultDataTableName ":"ResultDataTableName",
+"DBLocation ":"Application",
+"XFExternalConnectionName ":"",
+"CustomSubstVarsAsCommaSeparatedPairs ":""
+}
+RESTAPIImplementation Guide 27RESTAPIOverview
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, aJSONdatatable
+willbereturnedotherwise adescriptive errormessagewillshow.Moredetailswillbelogged
+intheErrorandActivitylogs.
+ThisisareturnedresponsefromtherequestusingtheabovebodyexampleinPostman:
+{
+"ResultDataTableName" : [
+{
+"CubeId" : 0,
+"Name": "Houston" ,
+"Description" : "Houston Clubs" ,
+"CubeType" : 0,
+"IsTopLevelCube" : false,
+"TimeDimProfileID" : "664c9bd4- a314-4941-81be-513aeddac13a" ,
+"AccessGroupUniqueID" : "e31054d8- 83bf-4f79-b563-0e450342de9e" ,
+"MaintenanceGroupUniqueID" : "e31054d8- 83bf-4f79-b563-0e450342de9e" ,
+"ConsAlgorithmType" : 0,
+"TransAlgorithmType" : 0,
+"CalcNoneConsIfNoData" : false,
+"CalcLocalCurrIfNoData" : true,
+"CalcTransCurrsIfNoData" : false,
+"CalcOwnerPreAdjIfNoData" : false,
+"CalcShareIfNoData" : false,
+"CalcElimIfNoData" : false,
+"CalcOwnerPostAdjIfNoData" : false,
+"BR1Name" : "CorporateBusinessRules" ,
+"BR2Name" : "",
+"BR3Name" : "",
+RESTAPIImplementation Guide 28RESTAPIOverview
+"BR4Name" : "",
+"BR5Name" : "",
+"BR6Name" : "",
+"BR7Name" : "",
+"BR8Name" : "",
+"DefaultCurrencyId" : 176,
+"FxRateTypeIDForRevExp" : "89ce1f1c- c1cb-438e-9825-e00861a4fa5b" ,
+"FxRuleTypeIdForRevExp" : 1,
+"FxRateTypeIDForAssetLiab" : "89ce1f1c- c1cb-438e-9825-e00861a4fa5b" ,
+"FxRuleTypeIdForAssetLiab" : 0,
+"XmlData" : ""
+        },
+...
+]}}
+IMPORTANT: TheAdministrator roleisrequiredforthisfunctionality.
+DataProvider GetAdoDataSetForMethodCommand endpoint
+1.CreatenewPOSTrequestinPostman, 
+2.Url= http(s)://[servername]: [port]/onestreamapi/api/DataProvider/
+GetAdoDataSetForMethodCommand?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+{
+ "BaseWebServerUrl ":[OneStream ServerLogonURL],
+ "ApplicationName ":[yourapplication name],
+RESTAPIImplementation Guide 29RESTAPIOverview
+"MethodQuery ":[method querytoreturndata],
+ "XFCommandMethodTypeId ":[pre-defined listofXFmethodcommands usedby
+XFDataProvider tofillaDataSet],
+"ResultDataTableName ":[nameofresulting tableintheDataSet],
+"CustomSubstVarsAsCommaSeparatedPairs ":[commaseparated listofkeyvaluepairsas
+substitution variables withthe
+following format: "VariableName1= [VariableValue1],VariableName2= [VariableValue2],..."] -
+Optional
+ }
+Example:
+{
+"BaseWebServerUrl ":"https://olympus.onestreamtest.com/onestreamweb",
+"ApplicationName ":"GolfStream_ v37",
+"MethodQuery ":"{Houston} {Actual} {2018M1} {true}{}",
+"XFCommandMethodTypeId ":"CertificationForWorkflowUnit",
+"ResultDataTableName ":"MyResultsTable",
+"CustomSubstVarsAsCommaSeparatedPairs ":""
+}
+XFCommandMethodTypeId maytakeanyvaluesfromthelistbelow:
+"WorkflowCalculationEntities"
+"WorkflowConfirmationEntities"
+"WorkflowProfileAndDependentProfileEntities"
+"WorkflowProfileEntities"
+"WorkflowProfiles"
+"WorkflowProfileRelatives"
+"WorkflowStatus"
+"WorkflowStatusTwelvePeriod"
+"WorkflowAndEntityStatus
+"JournalsForWorkflowUnit"
+RESTAPIImplementation Guide 30RESTAPIOverview
+"FormsStatusForWorkflowUnit"
+"ConfirmationForWorkflowUnit"
+"CertificationForWorkflowUnit"
+"ICMatchingForWorkflowUnit"
+"ICMatchingForWorkflowUnitMultiPlug"
+"ICMatchingForWorkflowUnitMultiPeriod"
+"ICMatchingPlugAccountsForWorkflowUnit"
+6.ClickSendandobservetheresponseatthebottompane.Ifsuccessful, aJSONdatatable
+willbereturnedotherwise adescriptive errormessagewillshow.Moredetailswillbelogged
+intheErrorandActivitylogs.
+ThisisareturnedresponsefromtherequestusingtheabovebodyexampleinPostman:
+{
+"MyResultsTable" : [
+{
+"ProfileName" : "Houston" ,
+"ProfileKey" : "2f3a719e- 8e26-4d8c-8cc7-4544a4812673" ,
+"ProfileOrder" : 1,
+"ScenarioName" : "Actual" ,
+"ScenarioKey" : 0,
+"TimeKey" : 2018003000 ,
+"TimeName" : "2018M1" ,
+"CertProfileKey" : "003e0a15- 6c9a-412c-90ba-64d31040c314" ,
+"CertName" : "Plant Certification" ,
+"CertDescription" : "Plant Certification" ,
+"CertSignOffState" : "Inprocess" ,
+"CertIsCertified" : false,
+"CertCanCertify" : false,
+RESTAPIImplementation Guide 31RESTAPIOverview
+"CertIsParentCertified" : false,
+"CertAreDependantsCertified" : false,
+"CertAllAnswered" : false,
+"CertQuestionCount" : 3,
+"CertUnansweredCount" : 3,
+"CertUnansweredRate" : 1.0,
+"GroupKey" : "7c7fedcd- f04a-4f5b-ba13-ed1097f449a9" ,
+"GroupName" : "SOX Plant Controller" ,
+"GroupDescription" : "SOX Plant Controller" ,
+"GroupSignOffState" : "Inprocess" ,
+"GroupAllAnswered" : false,
+"GroupQuestionCount" : 3,
+"GroupUnansweredCount" : 3,
+"GroupUnansweredRate" : 1.0,
+"QuestionUniqueID" : "8a92f59c- 2419-49d2-87b7-1cdfb21c7072" ,
+"QuestionName" : "Unusual Transactions" ,
+"QuestionCategory" : "InternalAudit" ,
+"QuestionRiskLevel" : "High",
+"QuestionFrequency" : "AllTimePeriods" ,
+"TimeFilterForReqtFreq" : "",
+"QuestionText" : "Any unusual transactions booked? If so, explain. " ,
+"QuestionResponse" : "-1",
+"QuestionComments" : "",
+"QuestionResponseOptional" : false,
+"QuestionDeactivated" : false,
+"QuestionDeactivationDate" : "1900-01-01T00:00:00" ,
+"QuestionDisplayOrder" : 10
+        },
+RESTAPIImplementation Guide 32RESTAPIOverview
+{
+"ProfileName" : "Houston" ,
+"ProfileKey" : "2f3a719e- 8e26-4d8c-8cc7-4544a4812673" ,
+"ProfileOrder" : 1,
+"ScenarioName" : "Actual" ,
+"ScenarioKey" : 0,
+"TimeKey" : 2018003000 ,
+"TimeName" : "2018M1" ,
+"CertProfileKey" : "003e0a15- 6c9a-412c-90ba-64d31040c314" ,
+"CertName" : "Plant Certification" ,
+"CertDescription" : "Plant Certification" ,
+"CertSignOffState" : "Inprocess" ,
+"CertIsCertified" : false,
+"CertCanCertify" : false,
+"CertIsParentCertified" : false,
+"CertAreDependantsCertified" : false,
+"CertAllAnswered" : false,
+"CertQuestionCount" : 3,
+"CertUnansweredCount" : 3,
+"CertUnansweredRate" : 1.0,
+"GroupKey" : "7c7fedcd- f04a-4f5b-ba13-ed1097f449a9" ,
+"GroupName" : "SOX Plant Controller" ,
+"GroupDescription" : "SOX Plant Controller" ,
+"GroupSignOffState" : "Inprocess" ,
+"GroupAllAnswered" : false,
+"GroupQuestionCount" : 3,
+"GroupUnansweredCount" : 3,
+"GroupUnansweredRate" : 1.0,
+RESTAPIImplementation Guide 33RESTAPIOverview
+"QuestionUniqueID" : "78e102c2- cda5-4c07-b853-416d83de5706" ,
+"QuestionName" : "Audit Transactions" ,
+"QuestionCategory" : "ExternalAudit" ,
+"QuestionRiskLevel" : "High",
+"QuestionFrequency" : "AllTimePeriods" ,
+"TimeFilterForReqtFreq" : "",
+"QuestionText" : 
+"Any transactions to be reviewed by external audit? If so, explain. " ,
+"QuestionResponse" : "-1",
+"QuestionComments" : "",
+"QuestionResponseOptional" : false,
+"QuestionDeactivated" : false,
+"QuestionDeactivationDate" : "1900-01-01T00:00:00" ,
+"QuestionDisplayOrder" : 20
+        },
+{
+"ProfileName" : "Houston" ,
+"ProfileKey" : "2f3a719e- 8e26-4d8c-8cc7-4544a4812673" ,
+"ProfileOrder" : 1,
+"ScenarioName" : "Actual" ,
+"ScenarioKey" : 0,
+"TimeKey" : 2018003000 ,
+"TimeName" : "2018M1" ,
+"CertProfileKey" : "003e0a15- 6c9a-412c-90ba-64d31040c314" ,
+"CertName" : "Plant Certification" ,
+"CertDescription" : "Plant Certification" ,
+"CertSignOffState" : "Inprocess" ,
+"CertIsCertified" : false,
+RESTAPIImplementation Guide 34RESTAPIOverview
+"CertCanCertify" : false,
+"CertIsParentCertified" : false,
+"CertAreDependantsCertified" : false,
+"CertAllAnswered" : false,
+"CertQuestionCount" : 3,
+"CertUnansweredCount" : 3,
+"CertUnansweredRate" : 1.0,
+"GroupKey" : "7c7fedcd- f04a-4f5b-ba13-ed1097f449a9" ,
+"GroupName" : "SOX Plant Controller" ,
+"GroupDescription" : "SOX Plant Controller" ,
+"GroupSignOffState" : "Inprocess" ,
+"GroupAllAnswered" : false,
+"GroupQuestionCount" : 3,
+"GroupUnansweredCount" : 3,
+"GroupUnansweredRate" : 1.0,
+"QuestionUniqueID" : "3d9c4dcc- 75fd-4568-b224-f7e428622917" ,
+"QuestionName" : "Key Data Review" ,
+"QuestionCategory" : "FinancialStatementReview" ,
+"QuestionRiskLevel" : "MediumLow" ,
+"QuestionFrequency" : "AllTimePeriods" ,
+"TimeFilterForReqtFreq" : "",
+"QuestionText" : "Have all key metrics been reviewed? " ,
+"QuestionResponse" : "-1",
+"QuestionComments" : "",
+"QuestionResponseOptional" : false,
+"QuestionDeactivated" : false,
+"QuestionDeactivationDate" : "1900-01-01T00:00:00" ,
+"QuestionDisplayOrder" : 30
+RESTAPIImplementation Guide 35RESTAPIOverview
+        }
+    ],
+"MyResultsTable_ SignOffCert" : [
+{
+"ProfileKey" : "2f3a719e- 8e26-4d8c-8cc7-4544a4812673" ,
+"ScenarioKey" : 0,
+"TimeKey" : 2018003000 ,
+"CertProfileKey" : "003e0a15- 6c9a-412c-90ba-64d31040c314" ,
+"SignOffState" : "Inprocess" ,
+"Comments" : "Sign-Off Initialized" ,
+"UserKey" : "2b61ed59- 63ae-46f2-89aa-a8ee9f14bacd" ,
+"UserName" : "TestUserOkta" ,
+"UserIPAddress" : "8d3d857e- cd62-4fd9-a2ec-43b46217a036" ,
+"TimeStamp" : "2019-11-18T14:45:00.007"
+        }
+    ],
+"MyResultsTable_ SignOffGroups" : [
+{
+"ProfileKey" : "2f3a719e- 8e26-4d8c-8cc7-4544a4812673" ,
+"ScenarioKey" : 0,
+"TimeKey" : 2018003000 ,
+"CertProfileKey" : "003e0a15- 6c9a-412c-90ba-64d31040c314" ,
+"CertProfileName" : "Plant Certification" ,
+"GroupKey" : "7c7fedcd- f04a-4f5b-ba13-ed1097f449a9" ,
+"GroupName" : "SOX Plant Controller" ,
+"SignOffState" : "Inprocess" ,
+"Comments" : "Sign-Off Initialized" ,
+"UserKey" : "2b61ed59- 63ae-46f2-89aa-a8ee9f14bacd" ,
+RESTAPIImplementation Guide 36RESTAPIOverview
+"UserName" : "TestUserOkta" ,
+"UserIPAddress" : "8d3d857e- cd62-4fd9-a2ec-43b46217a036" ,
+"TimeStamp" : "2019-11-18T14:45:00.2"
+        }
+    ]
+}
+IMPORTANT: TheAdministrator roleisrequiredforthisfunctionality.
+Authentication Execute LogonAndReturnCookie endpoint
+Returnsamessagethatindicatesauthentication state.Usedmostlytoverifytheinstallation of
+webAPIcompleted successfully.
+1.CreatenewPOSTrequestinPostman, 
+2.Url=http(s)://[servername]:
+[port]/OneStreamApi/api/Authentication/LogonAndReturnCookie?api- version=5.2.0
+3.Authorization: Type=Bearer Token.Token={{webapi_ access_token}}
+4.Headers: Content- Type=application/json
+5.Body(raw/jSON):  
+RESTAPIImplementation Guide 37RESTAPIOverview
+Arguments:
+"BaseWebServerUrl ":[OneStream ServerLogonURL],
+"ApplicationName ":[nameofApplication attempted toaccess]
+<response code="200">Returns aJSONrepresentation oftheresulting
+DataSet.</response>
+<response code="400">Bad Request.Missing Authentication arguments. </response>
+<response code="500">Error Message. Authentication Failed.PleasechecktheErrorLog
+formoredetails</response>
+ClickSendandobservetheresponseatthebottompane.Ifsuccessful, amessagethat
+indicatesauthentication statewillbereturned.Otherwise theerrormessagewillbeshown.
+MoredetailswillbeloggedintheErrorandActivitylogs.
+RESTAPIImplementation Guide 38RESTAPIOverview
+RESTAPIImplementation Guide 39RESTAPIOverview
+Configure OneStream APIfor
+External Authentication
+Forcustomers inaself-hostedenvironment, wesupportRESTAPIauthentication withAzure
+ActiveDirectory(AzureAD[Microsoft EntraID]),Okta,andPingFederate. Performthe
+configuration foryourprovider:
+lAzureAD(Microsoft EntraID)Configuration
+lOktaConfiguration
+lPingFederate Configuration
+IfyouusetheModernBrowserExperience, youmustenteraRESTAPIkeyinboththe
+OneStream Application ServerConfiguration andWebServerConfiguration toenterOneStream
+andbrowserclients.SeetheInstallation andConfiguration Guide.
+Forcustomers inaOneStream- hostedenvironment, seetheIdentityandAccessManagement
+Guideforinformation aboutauthentication withOneStream IdentityServer andusingpersonal
+accesstokens(PATs).
+AzureAD(Microsoft EntraID)Configuration
+ToconfigureOneStream RESTAPI tosupportAzureAD(Microsoft EntraID)authentication,
+followthesesteps:
+RESTAPIImplementation Guide 40Configure OneStream APIforExternal Authentication
+1.Configure theRESTAPI Application Registration inAzureAD(Microsoft EntraID).
+2.SetUptheWebServerConfiguration inOneStream .
+3.Configure theUserinOneStream .
+Toenablesinglesign-onwithAzureAD(Microsoft EntraID)fortheOneStream Desktop
+application, whichincludestheWindowsClientapplication andtheExcelAdd-In,usingOIDC
+protocol,seetheInstallation andConfiguration Guide.
+Configure theRESTAPI Application Registration in
+AzureAD(Microsoft EntraID)
+ToconfiguretheRESTAPI application registration, youneedtocopytheapplication (client)
+ID fromAzureAD(Microsoft EntraID)andpasteitintotheWebServerConfiguration in
+OneStream .
+1.LogintoyourAzureADaccount.
+2.OntheHomescreen,clicktheAppregistrations icon.
+3.OntheAppregistrations page,clickthe+Newregistration tab.
+4.OntheRegister anapplication page,completethefollowingfields:
+a.Enteranamefortheapplication.
+b.ForSupported account types,selectAccounts inthisorganizational directory
+only.
+5.ClicktheRegisterbutton.
+6.Onthepagefortheapplication, intheManagelistontheleft,selectAuthentication .
+RESTAPIImplementation Guide 41Configure OneStream APIforExternal Authentication
+7.IntheAdvanced settings,underAllowpublicclientflows,settheEnablethefollowing
+mobileanddesktop flowsoptiontoYes.
+8.ClicktheSavebutton.
+9.IntheManagelistontheleft,selectCertificates &secrets.
+10.IntheClientsecretstab,click+Newclientsecret.
+11.IntheAddaclientsecretdialogbox,enteradescription andselectanexpiration timein
+thedrop-downmenu.ClicktheAddbutton.
+12.OntheCertificates &secretspage,copythevaluefortheclientsecret.
+IMPORTANT: Theclientsecretvaluemayonlybeavailabletocopyforalimited
+time,socopyitimmediately afteritiscreated.
+13.IntheManagelistontheleft,selectExpose anAPI.
+14.InScopes defined bythisAPI,click+Addascope.
+15.IntheAddascopedialogbox,theapplication ID URI isautomatically generated. Clickthe
+Saveandcontinue button.
+NOTE:Youcanaddascopeinthisdialogboxifneeded.
+16.OntheExpose anAPI page,copytheapplication ID URI.
+SetUptheWebServerConfiguration inOneStream
+1.OpentheOneStream ServerConfiguration Utilityapplication.
+2.GotoFile>NewWebServerConfiguration File.
+NOTE:Alternatively, youcanopenanexistingfiletoeditit.
+RESTAPIImplementation Guide 42Configure OneStream APIforExternal Authentication
+3.IntheWebServerConfiguration Settingssection,clicktheellipsistotherightofSingle
+SignOnIdentity Provider.
+4.IntheUserNameLookupfield,typeaudtoincludethisclaimintheorderedlookups.
+NOTE:Theclaimaudindicatestheintendedaudienceforthetoken.
+5.ClicktheellipsistotherightofAzureIdentity Provider.
+RESTAPIImplementation Guide 43Configure OneStream APIforExternal Authentication
+6.IntheAzureIdentity Providerdialogbox,intheRESTAPI Settings section,completethe
+followingfields:
+lOneStream WebApiClientID:Entertheapplication (client)IDfromAzureAD.See
+Configure theRESTAPI Application Registration inAzureAD(Microsoft EntraID)
+step16.
+TIP:Toviewtheapplication (client)IDinAzureAD,gotothepageforthe
+application andselectOverview  inthelistontheleft.
+lOneStream WebApiAppCustom Scopes:Entercustomscopes,orleaveas
+default(blank).
+RESTAPIImplementation Guide 44Configure OneStream APIforExternal Authentication
+7.ClicktheOK button.
+8.SavechangesandresetIIS.
+NOTE:ResetIIS afteryousaveanychangestotheApplication Server
+Configuration orWebServerConfiguration.
+Configure theUserinOneStream
+1.IntheOneStream Desktopapplication, gotoSystem>Security>Users><user>.
+2.IntheAuthentication properties, completethefollowingfieldsforREST API authentication
+throughAzureAD.
+lExternal Authentication Provider:Inthedrop-downmenu,selecttheAzureAD
+configuration.
+lExternal Provider UserName: Entertheapplication (client)IDfromAzureAD.See
+Configure theRESTAPI Application Registration inAzureAD(Microsoft EntraID)
+step16.
+RESTAPIImplementation Guide 45Configure OneStream APIforExternal Authentication
+TIP:Toviewtheapplication (client)IDinAzureAD,gotothepageforthe
+application andselectOverview  inthelistontheleft.
+3.ClicktheSaveicon.
+AzureAD(Microsoft EntraID)Endpoints
+Wesupportv2.0AzureADendpoints.
+1.OnManifest,findaccessTokenAcceptedVersion .
+2.Setthevalueto2.
+3.ClickSave.
+RESTAPIImplementation Guide 46Configure OneStream APIforExternal Authentication
+SetUpPostman Access TokenRequests
+1.CreateanewPOSTrequest.Seturlto https://login.microsoftonline.com/ {Tenant
+Id}/oauth2/v2.0/token withtenantID value.
+TIP:Toviewthedirectory(tenant)IDinAzureAD,gotothepageforthe
+application andselectOverview  inthelistontheleft.
+2.IntheAuthorization tab,selectBasicAuthfortype.IntheUsername andPassword fields,
+entertheclientIDandclientsecretfromtheapplication registration, respectively. See
+Configure theRESTAPI Application Registration inAzureAD(Microsoft EntraID)step12.
+TIP:Toviewtheapplication (client)IDinAzureAD,gotothepageforthe
+application andselectOverview  inthelistontheleft.
+3.IntheHeaderstab,enterthefollowingkeys: 
+lAccept:application/json 
+lAuthorization: Basic 
+lContent-Type:application/x- www-form-urlencoded
+4.InBody,entereitheroption1oroption2: 
+a.Option1:
+i.grant_type:client_credentials 
+ii.scope:{AppIdUri}/.default formachinetomachineusecase 
+b.Option2:
+RESTAPIImplementation Guide 47Configure OneStream APIforExternal Authentication
+i.grant_type:password
+ii.username: {Azureadusername}
+iii.password: {Azureaduserpassword}
+iv.scope:{customscope}
+5.ClickSendandnoticethevalueofaccess_tokenintheresponse.
+OktaConfiguration
+ToconfigureOneStream RESTAPI tosupportOktaauthentication forM2Mapplication
+registration (grant_type=client_credentials), followthesesteps:
+1.Configure theRESTAPI Application Registration inOkta.
+2.(Optional) AddAuthorization ServersandScopesinOkta.
+3.SetUptheWebServerConfiguration inOneStream .
+4.Configure theUserinOneStream .
+RESTAPIImplementation Guide 48Configure OneStream APIforExternal Authentication
+Toenablesinglesign-onwithOktafortheOneStream Desktopapplication, whichincludesthe
+WindowsClientapplication andtheExcelAdd-In,usingOIDCprotocol,seetheInstallation and
+Configuration Guide.
+Configure theRESTAPI Application Registration in
+Okta
+ToconfiguretheRESTAPI application registration, youneedtocopytheclientID fromOktaand
+pasteitintotheWebServerConfiguration inOneStream .
+1.LogintoyourOktaaccount.
+2.IntheApplications listontheleft,selectApplications .
+3.ClickCreateAppIntegration .
+4.IntheCreateanewappintegration dialogbox,forSign-inmethod,select
+API Services .
+5.ClicktheNextbutton.
+6.OntheNewAPI Services AppIntegration page,intheAppintegration namefield,
+enterthenameoftheOktaAPI application.
+7.ClicktheSavebutton.
+8.CopytheclientID.YouwillneedtopastethisintotheWebServerConfiguration in
+OneStream .
+AddAuthorization Servers andScopes inOkta
+Toconfigureauthorization servers,copytheauthorization serverID fromtheissuerURIandthe
+customscopesfromOktaandpastethemintotheWebServerConfiguration inOneStream .
+RESTAPIImplementation Guide 49Configure OneStream APIforExternal Authentication
+1.LogintoyourOktaaccount.
+2.IntheSecuritylistontheleft,selectAPI.
+3.ClicktheAddAuthorization Serverbutton.
+4.Enteranameand,intheAudience field,entertheclientID fromtheOktaapplication. See
+Configure theRESTAPI Application Registration inOktastep8.
+5.ClicktheSavebutton.TheAPIpagedisplaysthelistofauthorization serversandthe
+corresponding issuerURIs.Youwillneedtopastetheauthorization serverIDfromthe
+issuerURIintotheWebServerConfiguration inOneStream .
+6.ToaddacustomscopetosupporttheMachine-to-Machinescenario,ontheAPIpage,
+selecttheauthorization server.
+7.SelecttheScopestab.
+8.ClicktheAddScopebutton.
+9.Entertheinformation andclicktheCreatebutton.Youwillneedtopastethesecustom
+scopesintotheWebServerConfiguration inOneStream .
+SetUptheWebServerConfiguration inOneStream
+1.OpentheOneStream ServerConfiguration Utilityapplication.
+2.GotoFile>NewWebServerConfiguration File.
+NOTE:Alternatively, youcanopenanexistingfiletoeditit.
+3.IntheWebServerConfiguration Settingssection,clicktheellipsistotherightofSingle
+SignOnIdentity Provider.
+RESTAPIImplementation Guide 50Configure OneStream APIforExternal Authentication
+4.ClicktheellipsistotherightofOktaIdentity Provider.
+5.IntheOktaIdentity Providerdialogbox,intheGeneralandRESTAPI Settings sections,
+completethefollowingfields:
+lOktaAuthorization ServerID:Entertheauthorization serverIDfromtheissuer
+URI inOkta.SeeAddAuthorization ServersandScopesinOktastep5.Alternatively,
+usethedefaultvaluebyeithertypingdefaultorleavingasdefault(blank).
+TIP:Toviewthelistofauthorization serversandthecorresponding issuer
+URIsinOkta,intheSecuritylistontheleft,selectAPI.
+RESTAPIImplementation Guide 51Configure OneStream APIforExternal Authentication
+lOktaWebApiClientID:EntertheclientIDfromtheOktaapplication. SeeConfigure
+theRESTAPI Application Registration inOktastep8.
+lOktaWebApiCustom Scopes:Entercustomscopes,orleaveasdefault(blank).
+SeeAddAuthorization ServersandScopesinOktastep9.
+lOktaWebApiAuthorization ServerID:EntertheserverIDifusingacustom
+authentication server,orleaveasdefault(blank).
+6.ClicktheOK button.
+7.SavechangesandresetIIS.
+NOTE:ResetIIS afteryousaveanychangestotheApplication Server
+Configuration orWebServerConfiguration.
+RESTAPIImplementation Guide 52Configure OneStream APIforExternal Authentication
+Configure theUserinOneStream
+1.IntheOneStream Desktopapplication, gotoSystem>Security>Users><user>.
+2.IntheAuthentication properties, completethefollowingfieldsforREST API authentication
+throughOkta.
+lExternal Authentication Provider:Inthedrop-downmenu,selecttheOkta
+configuration.
+lExternal Provider UserName: EntertheclientIDfromOkta.SeeConfigure the
+RESTAPI Application Registration inOktastep8.
+3.ClicktheSaveicon.
+PingFederate Configuration
+ToconfigureOneStream RESTAPI tosupportPingFederate authentication, followthesesteps:
+1.Configure theRESTAPI Application Registration inPingFederate .
+2.SetUptheWebServerConfiguration inOneStream .
+3.Configure theUserinOneStream .
+Toenablesinglesign-onwithPingFederate fortheOneStream Desktopapplication, which
+includestheWindowsClientapplication andtheExcelAdd-In,usingOIDCprotocol,seethe
+Installation andConfiguration Guide.
+RESTAPIImplementation Guide 53Configure OneStream APIforExternal Authentication
+Configure theRESTAPI Application Registration in
+PingFederate
+ToconfiguretheRESTAPI application registration, youneedtoenterthesameclientID in
+PingFederate andtheWebServerConfiguration inOneStream .Youalsoneedtocopytheclient
+secretfromPingFederate, whichisusedtorequestatoken.
+1.LogintoyourPingFederate account.
+2.Inthemenuontheleft,clickOAuthServer.
+3.UndertheCLIENTS list,clicktheCreateNewbutton.
+4.OntheClientpage,completethefollowingfields:
+lCLIENT ID :EnteraclientID,whichisauniquenameoridentifierfortheapplication
+registration.
+lNAME:Enterthenameoftheclient.
+lCLIENT AUTHENTICATION :SelectCLIENT SECRET .
+lCLIENT SECRET : SelectCHANGE SECRET andthenclicktheGenerate Secret
+button.
+lALLOWED GRANT TYPES :SelectClientCredentials .
+5.ClicktheSavebutton.
+SetUptheWebServerConfiguration inOneStream
+1.OpentheOneStream ServerConfiguration Utilityapplication.
+2.GotoFile>NewWebServerConfiguration File.
+NOTE:Alternatively, youcanopenanexistingfiletoeditit.
+RESTAPIImplementation Guide 54Configure OneStream APIforExternal Authentication
+3.ClicktheellipsistotherightofSingleSignOnIdentity Provider.
+4.IntheUserNameLookupfield,typeclient_idtoincludethisclaimintheorderedlookups.
+5.ClicktheellipsistotherightofPingFederate Identity Provider.
+RESTAPIImplementation Guide 55Configure OneStream APIforExternal Authentication
+6.InthePingFederate Identity Providerdialogbox,intheRESTAPI Settings section,
+completethefollowingfields:
+lOneStream WebApiClientID:EntertheclientID youenteredinPingFederate.
+SeeConfigure theRESTAPI Application Registration inPingFederate step4.
+lOneStream WebApiScopes:Entercustomscopes.
+lOneStream WebApiJWKSPath:EnterthepathonthePingFederate serverto
+publishaJSONWebKeySetwiththekeysandcertificates usedforsignature
+verification.
+RESTAPIImplementation Guide 56Configure OneStream APIforExternal Authentication
+7.ClicktheOK button.
+8.SavechangesandresetIIS.
+NOTE:ResetIIS afteryousaveanychangestotheApplication Server
+Configuration orWebServerConfiguration.
+Configure theUserinOneStream
+1.IntheOneStream Desktopapplication, gotoSystem>Security>Users><user>.
+2.IntheAuthentication properties, completethefollowingfieldsforREST API authentication
+throughPingFederate.
+lExternal Authentication Provider:Inthedrop-downmenu,selectthe
+PingFederate configuration.
+lExternal Provider UserName: EntertheclientIDyouenteredinPingFederate.
+SeeConfigure theRESTAPI Application Registration inPingFederate step4.
+3.ClicktheSaveicon.
+RESTAPIImplementation Guide 57Configure OneStream APIforExternal Authentication
+Configure theAUDValue
+Insomeinstallations, theAudience valueisnotusedintheauthentication process.Normal
+processing willcauseauthentication tofailifthisvalueisnotused.TheValidate Audience option
+allowsfordisablingaudiencevalidation fortheseinstallations.
+Bydefault,thissettingisTrue,whichmeanstheaudiencewillbevalidated.
+1.OpentheOneStream ServerConfiguration Utilityapplication.
+2.GotoFile>OpenWebServerConfiguration File.
+3.FindtheWebServerConfiguration fileandclicktheOpenbutton.
+4.ClicktheellipsistotherightofSingleSignOnIdentity Provider.
+5.InValidate Audience ,selectFalsetodisableAudience validation.
+RESTAPIImplementation Guide 58Configure OneStream APIforExternal Authentication

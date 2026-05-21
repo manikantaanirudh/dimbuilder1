@@ -1,0 +1,190 @@
+OneStream Release
+Notes
+7.1.3Release
+
+Copyright ©2022OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation
+orwarranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logo
+aretrademarks ofOneStream Software LLCintheUnitedStatesandothercountries.
+Microsoft, Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,.NET
+Framework, InternetInformation Services, Windows Communication Foundation and
+SQLServerareregistered trademarks ortrademarks ofMicrosoft Corporation inthe
+UnitedStatesand/orothercountries. DevExpress isaregistered trademark ofDeveloper
+Express, Inc.Ciscoisaregistered trademark ofCiscoSystems, Inc.Intelisatrademark
+ofIntelCorporation. AMD64isatrademark ofAdvanced MicroDevices, Inc.Othernames
+maybetrademarks oftheirrespective owners.
+TableofContents
+7.1.3Release NotesOneStream ii
+Introduction ii
+Important Notes ii
+Prerequisites ii
+Compatibility andImportant Notices ii
+Enhancements andNewFeatures iii
+Fixed v
+KnownIssues vii
+ContactSupport viii
+OneStream Release Notes iTableofContents
+7.1.3Release NotesOneStream
+Introduction
+OneStream 7.1.3isahotfixthatmaycontainspecificcodechanges toanexistingfeature,
+APIadditions oracombination ofboth.
+Framework andapplication database schemaupdates arerequired forthisupgrade. Full
+database backups arerecommended.
+Important Notes
+Prerequisites
+RefertoUpgrade OneStream forimportant noticesanddetailsregarding planning your
+upgrade.
+Compatibility andImportant Notices
+lWith7.1.3,weaddedlogicthatpermitsanearlierversionoftheExcelAdd-Into
+workwithalaterversionoftheserver.Thisenablesanyoneusing7.1.1toupgrade
+theirserverto7.1.3withoutuninstalling andreinstalling ExcelAdd-Inclientsto
+7.1.3.Alocallyinstalled Windows Application clientmusthaveamatching version
+witha7.1.3server.Windows Application clientsinitiatedusingClickOncewill
+alwaysbealignedwiththeserverversion.
+lMicrosoft hasretiredInternetExplorer (IE)inJune2022.Thisaffectsallversions
+whenIEisdisabled insideofyourorganization.
+OneStream Release Notes iiTableofContents
+lTheOneStream Studioclientforcustomreporting hasbeendeprecated starting
+with7.1.0.Reportdesigners mustusetheReportDesigner intheDashboard Report
+Component feature.ToinstalltheClientAPIgoingforward, usethenewstandalone
+ClientAPIinstaller.
+lMicrosoft isendingsupportforAzureActiveDirectory Authentication Library(ADAL)
+inDecember 2022.Asaresult,wehavemigrated totheMicrosoft Authentication
+Library(MSAL)forauthentication andauthorization.
+Enhancements andNewFeatures
+lThestageloadprocessrunsusingtheapplication server,improving performance
+andscalability. (PF5-65)
+lYoucanuseOutlineLevelsonCubeViewcolumns toindentandexpandcubeview
+columns inExcel.(PF5-445)
+lYoucanexportDrillDownresultswithheaders toExcel.(PF5-546)
+lThreesettingswereaddedtocubeviews:Include DefaultNavLink Parameters ,
+CubeBoundParameter Name,andParentBoundParameter Name.When
+IncludeDefaultNavLink Parameters issettoTrue,itautomatically recognizes the
+defaultnavigation linkparameter namesandyoudonothavetocreateseparate
+parameters. (PF5-465)
+lCubeViewReportHeaders areincluded whenusingCubeViewConnections. You
+mustselecttoenable.(PF5-890)
+lTheAggregation Controls inBI Blend settingsincludetooltips.(PF5-891)
+lIfyouchoosetoClear<All>existingdatainWorkflow, themessage includes a
+warningthatclearingalldatawillclearallfilesandassociated datainthecurrent
+workflow import.(PF5-973)
+OneStream Release Notes iiiTableofContents
+lYoucansearchbyAll,Sequence, orStepswhenyouclickthebinoculars iconand
+opentheSelectDataManagement Objectdialogbox.Youcanalsoviewin
+Hierarchy. (PF5-784)
+lYoucanexportaCubeViewtoExcelmultipletimeswithoutbeingprompted to
+renameorsave.Theversionnumbersequentially changes witheachexport.(PF5-
+627)
+lApplication andSystemAdministrators canupdatecommon application server
+configuration settingsviaanewSystemConfiguration pageontheSystemTab.
+Common requests thatpreviously resulted insupportcallscanbeaddressed
+internally byadvanced userswiththeproperaccess.AnIISrestartisnolonger
+neededforthechanges totakeplace.Assettingsarechanged andsaved,theyare
+automatically appliedeverytwominutes. (PF5-446)
+lAnewcurrency, SLE,hasbeenaddedforSierraLeone,WestAfrica.Theiroriginal
+currency, SLL,willcontinue toshowforhistorical purposes. (PF5-976)
+lYoucanwritesharedbusiness rulesinVisualBasic orCSharp(C#)insidethe
+existingBusiness RuleEditorgivingyoutheflexibility towritenewrulesinyour
+preferred language. (PF1-5500)
+lTheStudioapplication andStudioClientUpdater intheDesktop apphavebeen
+removed. TheClientAPI(forautomation jobsusingPowerShell fromamachine or
+server)wasinstalled aspartoftheStudioinstallation. ToinstalltheClientAPIgoing
+forward, usethenewstandalone ClientAPIinstaller. TheClientAPIinstaller
+includes anoptiontocreateanenvironment variablepointingtothelocationofthe
+oldClientAPI,makingitcompatible withyourcurrentStudiopathsoyoudonot
+havetoupdateexistingPowerShell scripts.(PF1-6907)
+lADesktop EXEinstallerisavailable inadditiontotheexistingDesktop MSIinstaller.
+UsetheEXEinstallerifyouneedtoinstallmorethanoneversionoftheapplication
+onthesamecomputer andifyouwanttochoosebetween aper-userorper-
+machine install.(PF1-6938)
+OneStream Release Notes ivTableofContents
+lTheOneStream Desktop application namedisplayed intheStartMenuincludes the
+versionnumber: OneStream Desktop 7.1.0.(PF1-7104)
+lAllclientandserverinstallerfilenamesidentifytheproductnameandversionitwill
+install.Forexample: OneStream Desktop- 7.1.0.13723. (PF1-6900)
+lAllactivecompiler processes arestopped beforeexecuting theserveruninstall.
+Thiseliminates theneedtorestartthemachine. (PF1-7238)
+lYoucanaddauto-calculated subtotals andchangethesubtotalbarcolorof
+Waterfall charts.(PF1-7065)
+lYoucanchangethepositionofyourlabelsintheWaterfall chart.Optionsinclude:
+Auto,Center,InsideStart, andInsideEnd.(PF1-7065)
+Fixed
+lAnissuehasbeenidentified impacting Releases 6.6.0to7.1.1whenaScenario is
+configured forConsolidation ViewasPeriodic. Inraresituations wherethenew
+Periodic Valuebeingconsolidated fromthechildEntityisthesamevalueasthe
+parentEntity’sYTDvalue,theYTDvaluemaysometimes beretained. (PF5-1523)
+lSaveworksonallSQLTableEditordashboard components thatareaccessed
+throughadialogboxfromtheFormschildinputwithinaWorkflow Profile.(PF5-399)
+lWhenclearingtheoutlinelevelsforColumnRangesandRowRangesduringa
+Refresh, theCubeViewConnection nameshouldbeusedandnottheCubeView
+Gridname.(PF5-1188)
+lToensureoptimalsecurity, thesepublicmethods wereremoved. Ifyouusedthese
+methods toencryptstringsorfiles,usetheBRApiUtilities encrypt/decrypt feature
+goingforward. (PF2-10239)
+oCryptoManager.FileEncrypt
+oCryptoManager.FileDecrypt
+OneStream Release Notes vTableofContents
+oCryptoManager.TextEncrypt
+oCryptoManager.TextDecryp
+lBIBlend's StarSchema LeveledHierarchy supports columnaliases.(PF5-689)
+lTheFXRateLockprocesscorrectly displays statusacrossserversandclients.
+(PF5-16)
+lWhenacubeviewcontains adrop-downlistandissavedoutsideofspreadsheet, it
+showsinthedatacellwhenitisopenedinSpreadsheet. (PF5-400)
+lUsetheEnableContinuous Scrolling functionintheTransformation RuleChanges
+Auditreport.(PF5-457)
+lTheIISIdleTimeout defaultsto0ifyouconfigure itthroughtheserver.(PF5-401)
+lTRXfilesinDerivative Transformation Rulesuploadcorrectly whenusingthe
+prefixesforBlendUnitAll, BlendUnitBase, andBlendUnitParent. (PF5-824)
+lLinechartsintheBIViewerthatcontainamixofvalueswithnodatareflectnodata
+insteadofzerosinthelinechartwhenrunningthedashboard. (PF5-474)
+lWhenyouchoosemulti-selectinthedashboard delimited listcombobox,the
+member namedisplays withanunderscore. (PF5-925)
+lWhensavingofflinefilesintheExcelAdd-Inforthefollowing errorcodestheywill
+retainthevaluesimilartoexcelasgeneralformatratherthanusinginternalerror
+codefunctionality. (PF5-966)
+ErrDiv0wasreturning -2146826281 andnowreturns#DIV/O!
+ErrNAwasreturning -2146826246 andnowreturns#N/A
+ErrName wasreturning -2146826259 andnowreturns#NAME?
+ErrNullwasreturning -2146826288 andnowreturns#NULL!
+ErrNumwasreturning -2146826252 andnowreturns#NUM!
+ErrRefwasreturning -2146826265 andnowreturns#REF!
+ErrValue wasreturning -2146826273 andnowreturns#VALUE!
+OneStream Release Notes viTableofContents
+KnownIssues
+lUsingthird-partylibrariesinbusiness rulescausescompileerrors.Thesolution
+depends onifunsupported NameSpaces areusedinabusiness rulefileormember
+formulas. SeeUpgrade OneStream .(PF2-8996)
+lDatamaydisappear whenyouscrollgridandpivotgridsinBIViewer.(PF5-50)
+lVB.Netrulesthatareconverted intoC#rulesrequirethefollowing importsto
+successfully compile(PF1-7495):
+oSystem
+oMicrosoft.csharp
+oSystem.linq
+oSystem.collections.generic
+oSystem.collections
+oSystem.text
+lWiththeintroduction ofC#business rules,imported snippets musthavealanguage
+typedesignation, eitherVisualBasic orCSharp. Ifyouusethecurrently available
+snippetimporttemplate, youwillreceiveanerrorwhenimporting snippets. The
+workaround istomanually addaLanguageType columntotheExceltemplate and
+defineavalue(eitherVisualBasic orCSharp) foreachsnippet.Usethefollowing
+steps:
+1.FromtheSnippetEditordashboard, download theSnippetImportTemplate
+(oropenanalreadypopulated SnippetImportExcelfile).
+2.Insertanewcolumnanywhere between theexistingModuleType fieldand
+ContentfieldandnameitLanguageType.
+3.Unhidehiddenrowsnumbered 7-10byhighlighting rows6and12,right-click,
+andselectUnhide.
+OneStream Release Notes viiTableofContents
+4.Inrow10,addthefollowing formulaforthenewlyaddedLanguageType
+column:xfText#:[LanguageType].
+5.Addsnippets asusual,andintheLanguageType column,defineeachsnippet
+aseitherVisualBasic orCSharp.
+Contact Support
+TocontactOneStream support, firstregisteratoursupportsite
+http://support.onestreamsoftware.com andthenemailsupport@onestreamsoftware.com .
+OneStream Release Notes viiiTableofContents

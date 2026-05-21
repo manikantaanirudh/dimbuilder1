@@ -39,8 +39,14 @@ The client lives under `src/client`.
 
 The server lives under `src/server`.
 
-- `index.ts` loads app config and starts Express.
-- `app.ts` creates the Express app, repositories, middleware, and route modules.
+- `index.ts` loads app config, starts Express, and registers graceful shutdown handlers for SIGTERM/SIGINT.
+- `app.ts` creates the Express app, repositories, middleware pipeline, and route modules.
+- `logger.ts` exports a Pino structured logger (level controlled by `LOG_LEVEL` env var).
+- `schemas.ts` defines Zod schemas for request body validation.
+- `middleware/basicAuth.ts` implements optional HTTP Basic Authentication.
+- `middleware/rateLimiter.ts` provides general (100/min) and heavy-operation (10/min) rate limiters.
+- `middleware/requestLogger.ts` logs method, path, status, and duration for every request.
+- `middleware/validate.ts` validates request bodies against Zod schemas, returning structured errors on failure.
 - `routes/projects.ts` handles project CRUD-adjacent operations, dimension edits, members, relationships, varying properties, bulk updates, baselines, metadata diff runs, change sets, release package creation, and issue listing.
 - `routes/import.ts` handles optional XLSX seeding.
 - `routes/export.ts` handles XML, XLSX, CSV, JSON, and snapshots.
@@ -48,6 +54,19 @@ The server lives under `src/server`.
 - `routes/config.ts` returns the client-safe config.
 - `projectBlueprints.ts` creates app-authored projects from YAML blueprints.
 - `metadataReference.ts` reads existing metadata XML to help align imports.
+
+### Middleware Pipeline
+
+The Express middleware is applied in this order (`src/server/app.ts`):
+
+1. CORS (configurable origins)
+2. JSON body parser (25 MB limit)
+3. Request logger (all routes)
+4. Health check (`/api/health` — unauthenticated)
+5. Basic Auth (all `/api/*` below health)
+6. General rate limiter (all `/api/*`)
+7. Heavy-operation rate limiter (`/api/import`, `/api/export`)
+8. Route handlers
 
 ## Shared Domain Layer
 

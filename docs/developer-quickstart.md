@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node.js compatible with the project dependencies.
+- Node.js 22 or compatible.
 - npm.
 - Windows PowerShell commands are used in this repo's current workflow.
 
@@ -32,6 +32,20 @@ Run focused tests by passing paths:
 npm.cmd test -- src/test/appConfig.test.ts
 ```
 
+### Watch Mode
+
+```powershell
+npm.cmd run test:watch
+```
+
+### Coverage
+
+```powershell
+npm.cmd run test:coverage
+```
+
+Coverage uses `@vitest/coverage-v8` with thresholds of 60% lines and 50% branches. Configuration is in `vitest.config.ts`.
+
 ## Build
 
 ```powershell
@@ -48,6 +62,20 @@ npm.cmd run docs:check
 
 Run this after source changes. If a source change affects behavior, APIs, configuration, persistence, exports, validation, or the UI workflow, update the relevant docs in `docs/` and the docs-maintainer skill if the maintenance rule itself changes.
 
+## Available Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `dev` | Run server + Vite client concurrently in watch mode |
+| `server` | Run server only in watch mode |
+| `build` | TypeScript compile + Vite production build |
+| `test` | Run Vitest once |
+| `test:watch` | Run Vitest in watch mode |
+| `test:coverage` | Run Vitest with V8 coverage |
+| `docs:check` | Validate documentation freshness |
+| `preview` | Vite production preview server |
+| `benchmark` | Run autoresearch benchmark |
+
 ## Runtime Configuration
 
 Default configuration file:
@@ -62,11 +90,13 @@ Supported environment overrides:
 - `METADATA_DIRECTORY`: overrides `paths.metadataDirectory`.
 - `DATABASE_FILE`: overrides `paths.databaseFile`.
 - `PORT`: overrides `server.port`.
+- `LOG_LEVEL`: controls Pino log verbosity (default `info`).
 
 ## Useful Paths
 
 - `src/client`: React app.
-- `src/server`: Express API and database access.
+- `src/server`: Express API, middleware, and database access.
+- `src/server/middleware`: auth, rate limiting, request logging, Zod validation.
 - `src/shared`: shared domain logic.
 - `src/test`: Vitest tests.
 - `config/dimbuilder.yaml`: central app and dimension configuration.

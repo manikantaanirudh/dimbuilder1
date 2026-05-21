@@ -1,0 +1,697 @@
+TableViewsGuide
+9.2.0Release
+
+Copyright ©2026OneStream SoftwareLLC.Allrightsreserved.
+Alltrademarks, logos,andbrandnamesusedonthiswebsitearethepropertyoftheirrespective
+owners.Thisdocument anditscontentsaretheexclusivepropertyofOneStream SoftwareLLC
+andareprotected underinternational intellectual propertylaws.Anyreproduction, modification,
+distribution orpublicdisplayofthisdocumentation, inwholeorpart,withoutwrittenpriorconsent
+fromOneStream SoftwareLLCisstrictlyprohibited.
+TableofContents
+TableViewsSpreadsheet andExcelAdd-In 1
+Overview 2
+Technical FeaturesandSetup 3
+Restrictions 3
+TableViewSizing 5
+TableViewsSpreadsheet/Excel RibbonButton 5
+TableViewBusinessRules 8
+Spreadsheet FunctionTypes 8
+Processing Order 9
+UsingParameters 9
+CanModifyData 10
+TableViewConditions 11
+TableViewSources 11
+TableViewBusinessRuleExample 12
+TableViewsGuide iTableofContents
+GetTableView FunctionType 12
+Incorporating Parameters 22
+UsingXFTVNamedRanges 23
+Security 27
+Summary 30
+SampleTableViewRulesFile 31
+TableViewsGuide iiTableofContents
+TableViewsSpreadsheet and
+ExcelAdd-In
+TheprimarypurposeofTableViewsistoprovideamethodforaccessing orupdatingrelational
+data.Thisdataispresented inadashboard orinsidetheExcelAdd-In.TheuseofTableViews
+enablesthedesignertoworkinamoreflexibleenvironment todesignaformordatacollection
+tool.
+TableViewsarenotalternatives toothertools,suchastheSQLTableEditororGridViewer,
+Dashboard Components.
+KeyUse:
+lDesigned tocollectrecordsfromrelationaltables,orothersources
+lPresenttheinformation intheSpreadsheet format
+lUtilizeclient-sidefunctionality, foundintheSpreadsheet tool,suchascalculations and
+pick-listvalidation lists
+lTableViewBusinessRulescanbedesignedtomanagethecolumnfieldrecords,suchas
+updates,insertsanddeletes.
+DesignConsiderations:
+lThecurrentfunctionality isdesignedtoupdaterecordsintargettables
+lControlling elementsmustbedesignedintotheTableViewBusinessRulebythecreatorto
+ensuredataintegrity,securityandperformance
+TableViewSizeConsiderations:
+TableViewsGuide 1TableViewsSpreadsheet andExcelAdd-In
+lTableViewsdependsuponthenumberofrowsandrowcontent
+lPagingisnotsupported. Therefore, allrowsandcontentmustbereturned
+lPerformance testinganddesignexpectations istosupportapproximately 8000KBofdata
+perTableView.
+Overview
+ATableViewdefinitionfortheWindowsApplication Spreadsheet ToolorExcelAdd-Inisdefined
+inaBusinessRule. TheAdministrator designing therulecandefinetherowsandcolumnswhich
+shouldbereturnedtotheworksheet fromthesourcetablepresented intheTableView.
+TheTableViewBusinessRulecancollectdatafrommultipledatasources.Forexample,asingle
+worksheet candisplayaTableViewwhichcollectsdatafromtwoormoresources.
+TheAdministrator hasfullcontroloverthewriteback“save”processthroughBusinessRules.
+Whendesigning theTableViewBusinessRule,theBRAPIAuthorization functionsshouldbe
+designedintotheBusinessRuletocontrolaccesstotheviewingormodifying thedata.Thiscan
+beappliedtotheentiretableortospecificcells.Aworkbook cancontainmultipleTableViews.
+Thesecanbeonthesameworksheet oracrossworksheet pages.
+AsingleBusinessRulefilecanbeusedtodefinemultipleTableViewsbycallingtheBusiness
+Ruleargument, TableViewName. Additionally, asinglenamedrangecanbeusedtomanage
+tabledatacellswithintheSpreadsheet andExcelAdd-Inusinguserdefinednamedranges
+(XFTV_*).
+TableViewsGuide 2TableViewsSpreadsheet andExcelAdd-In
+Technical Features andSetup
+Thissectionwillreviewthevariousfunctional elementsoftheTableViewsfeature.Thedesignof
+TableViewsinvolveshavingathoroughunderstanding ofthesourceandtargettablestobe
+viewedormodified.TheAdministrator developing theTableViewwillalsoberequiredto
+understand therequirements neededforthefinalSpreadsheet formtodesigntheBusinessRule
+atitsmostgranularlevel.ThiswillallowtheBusinessRulestobedesignedtothemostrestrictive
+levelwhichwillmaximize securityandgainthehighestperformance.
+Restrictions
+TableViewsshouldneverreadorwritetoOneStream Application controlling tables,suchasData
+Tables,CubeTablesorLogTables. 
+lAppProperty*
+lAttachment*
+lAudit*
+lData*
+lCalcStatus*
+lCertify*
+lConfirm*
+lCube*
+lDashboard*
+lDataAttachment*
+TableViewsGuide 3Technical Features andSetup
+lDataCellDetail*
+lDataEntry*
+lDataMgmt*
+lDataRecord*
+lDataUnit*
+lDim*
+lFileContents*
+lFileInfo*
+lFolder*
+lForm*
+lFxRate*
+lICMatchStatus*
+lJournal*
+lMember*
+lParser*
+lRelationship*
+lSecRoles*
+lStage*
+lSystem*
+lTaskflow*
+lTime*
+TableViewsGuide 4Technical Features andSetup
+lWorkflow*
+TableViewSizing
+TheoutputinterfacetotheTableViewBusinessRuleistheOneStream WindowsApplication
+Spreadsheet andExcelAdd-In.
+TableViewsshouldnotbeconsidered asareplacement forotherDashboard toolsusedwith
+databasetables,suchastheSQLTable EditorortheGridViewcomponents whichsupportvery
+largetables.
+TheSpreadsheet toolandExcelAdd-Indoesnothaveapagingfunctiontomanageverylarge
+datasets.Therefore, carefultestingisrecommended toverifythesizeandperformance ofthe
+recordsbeingmanaged withTableViews.
+Asignificant impactontheperformance ofTableViewsisthecellcontent.Alongwiththe
+physicalnumberofrows,thecontentcontained inthecellscandramatically affectperformance.
+Thecellcontentisthekeyfactorontheimpactoftheultimatesizeondisk.
+TableViewsSpreadsheet/Excel Ribbon
+Button
+TableViewsisaOneStream WindowsApplication Spreadsheet andExcelAdd-Infeatureusedto
+assignaSpreadsheet BusinessRuletoaworksheet.  AllTableViewsarederivedthroughthe
+definitionofaBusinessRule,andonlyAdministrators havetherightstocreateBusinessRules. 
+TableViewsGuide 5Technical Features andSetup
+1.OpentheOneStream WindowsApplication andselectTools/Spreadsheet orOpenyour
+ExcelAdd-In.
+2.SelectanavailablecelltobegintheTableViewrange.
+3.FromtheOneStream toolbar,choosetheTableViewsbutton.
+4.ChoosetheAddbutton. SelectingellipsisbuttonfromtheTableViewBusiness Rulefield
+allowsbrowsingtheavailableBusinessRules. Theselectionwillautomatically assignthe
+NameandRefersTocellintersection.  OnlySpreadsheet typeBusinessRuleswillrender
+asaTableView.
+TableViewsGuide 6Technical Features andSetup
+5.TheTableViewwillrenderintheworksheet andisassociated withanamedrange.
+6.Choosing theRefreshoptionswillretrievethemostcurrentresultsfromthesourcetable.
+TableViewsGuide 7Technical Features andSetup
+TableViewBusiness Rules
+AccesstoTableViewsinSpreadsheet andExcelAdd-InislimitedtotheSpreadsheet Business
+RuleType.ThepurposeoftheBusinessRuleistoestablishthesourcedatarecordstobe
+displayed. Theabilitytosavearecordorfieldwithinarecordisalsocompletely definedwithinthe
+BusinessRule. The TableViewBusinessRulesalsosupportParameters toenabletheresulting
+Worksheet tobeincludedincomplexDashboards.
+Spreadsheet Function Types
+lGetCustomSubstVarsInUse Usedtodefinetheinteraction withOneStream Dashboard
+Parameters
+lGetTableView Usedtodefinethesource(s)fortheTableView. 
+lSaveTableView Thisfunctiondefinesthetableorcellintersection thatshouldbewrittento
+atargetdatabasetable
+SelectCaseargs.FunctionType
+CaseIs=SpreadsheetFunctionType.Unknown
+CaseIs=SpreadsheetFunctionType.GetCustonSubstVarsInUse
+ReturnNothing
+CaseIs=SpreadsheetFunctionType.GetTableView
+ReturnGetEmployeeDetails (si,args.CustSubstVarsAlreadyResolved)
+CaseIs=SpreadsheetFunctionType.SaveTableView
+ReturnUpdateEmployeeDeparraent (si,args.TableView)
+EndSelect
+TableViewsGuide 8Technical Features andSetup
+Processing Order
+TheSpreadsheet FunctionTypesaredesignedtomanagetheprocesses withinacommon
+Dashboard environment.
+1.GetCustomSubstitutionVariables isexecutedfirst. 
+a.IfthedefinedParameter iscontained withintheDashboard, theselectionwillactasa
+boundparameter andwillbepassedintothebusinessrule.
+b.IfthedefinedParameter isnotcontained withintheDashboard, itwillrun/prompt the
+user.
+c.Additional conditional Parameters willbeexecuted.  TheSpreadsheet Business
+Rulescanconditionally executeadditional Parameters, basedontheresultsof
+resolvedParameters.
+2.OncealltheParameters areresolved,theGetTableView functionwillbeprocessed.  This
+sectionwillgeneratetheresultsintheTableView. TheTableViewwillalsobeevaluated to
+determine iftherewillbeanywritableconditions.  Ifthereanowriteableconditions, whichis
+thedefault,anyrefreshoftheSpreadsheet/Table Viewwillrestartatthe
+GetCustomSubstitutionVariables function.
+3.IftheGetTableView isflaggedasawriteabletable,theSaveTableView processwillbe
+executed, writingbackonlytheelementsspecifically definedintheBusinessRule.
+UsingParameters
+TheGetCustomSubstitutionVariables functionisusedincorporate Parameters intotheTable
+View. Anyparameters requiredarepassedinasalistwithintheFunctionType. IftheParameter
+isnotincludedinthesupporting Dashboard andresolved,forexampleasaCombobox,the
+Parameter willbeexecutedintheTableViewtoberesolved.
+TableViewsGuide 9Technical Features andSetup
+DimlistAsNewList(OfString) 
+list.Add ("ParamSelectEntity" )
+Additional Parameters canbeincludedintheTableViewtoactasanested,conditional
+Parameter usingthecustSubtVarsAlreadyResolved function.Thisenablesaresolved
+Parameter tobeevaluated totriggeradditional Parameters toexecute. The
+custSubstVarsAlreadyResolved canconditionally evaluateallresolvedparameters todetermine
+subsequent parameters tobeexecuted.
+IfcustSubstVarsAlreadyResolved.ContainsKey ("Param_SelectEntity" )
+  list.Add ("ParamSelectDepartment" )
+EndIf
+CanModifyData
+AllTableViewswilldefaultto“readonly”. TheTableViewconditionforCanModifyData mustbe
+settoTruetoallowwrite-backcapability.  TheCanModifyData objectissetintheGetTableView
+FunctionType. Itisonlyrequiredifanywrite-backisrequiredbasedonthecurrentTableView. 
+TheTrueconditionwillenableobjectstobepassed,andenabled,intotheSaveTableView
+FunctionType. Whenrefreshing aTableView,theSaveTableView FunctionTypewillnotbe
+executedunlesstheCanModifyData propertyissettoTrue.
+DimtableView AsNewTableView ()
+tableView.CanModifyData =True
+TableViewsGuide 10Technical Features andSetup
+TableViewConditions
+AsingleSpreadsheet BusinessRulecancontainmultipleTableViewdefinitions.  TheTableView
+NamecanbecalledusingtheArgs.TableViewName toallowconditionally callingrulefunctions.
+CaseIs=SpreedsheetFunctionType.GetTableView
+Ifargs.TableViewName. Equals("Employees" ) 
+ReturnGetAllEmployeeDetails (si,args.CustSubstVarsAlreadyResolved, False)
+EndIf
+TableViewSources
+TableViewBusinessRulescancollectavarietyofdatarecordsasasource.Typically, asourceis
+definedasatablefromadatabase. Itisnotlimitedtoasingletablebutcancollectrecordsfrom
+multipletables.TheTableViewBusinessRuledesignercandefinethesourceessentially asany
+dataaccessible totheSpreadsheet BusinessRules.Similarly,theSaveTableView rulescanbe
+definedtoanytargetaccessible bytheBusinessRules.
+TableViewsGuide 11Technical Features andSetup
+TableViewBusiness RuleExample
+ThisisanexampleonlyforthepurposeofoutliningthebasicelementsofaTableViewBusiness
+Rule. Bydefault,aTableViewis“readonly”. ASpreadsheet BusinessRulecanbedefinedto
+returnacompletetable.Alwaysconsiderthesizeandcontentofthetableasitmayimpact
+performance. Elements thatcanimpactperformance, suchasexceeding theabilitytorenderthe
+TableView,arethetotalnumberofrowsaswellasthecontentwithintherecords.
+GetTableView Function Type
+Database Connection
+Createconnections tosources,suchasadatabasetableusingbusinessrules.
+DimsqlAsNewText.StringBuilder ()
+sql.AppendLine ("Select *")
+sql.AppendLine ("FromEmployees ")
+'Create andfillthedatatable
+DimdtAsDataTable =Nothing
+UsingdbConnApp AsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo (si)
+    dt=BRApi.Database.ExecuteSql (dbConnApp, sql.ToString (),False)
+IfNotdtIsNothing Thendt.TableName ="ContentList"
+EndUsing
+Determine iftheTableViewRequires Write-Back
+IftheTableViewmustwrite-backtoatargetdatabaseortable,theCanModifyData propertymust
+besettoTrue.
+DimtableView AsNewTableView ()
+tableView.CanModifyData =True
+TableViewsGuide 12Technical Features andSetup
+DefinetheTableViewColumns
+Tablecolumnscanbereturnedfortheentiretable,orasdistinctitems. Whencolumnsare
+defined,theycanbereturnedtotheTableViewusinganaliasdescription aspartofaHeader
+section.
+'Createcolumns onTableView
+'Createacolumnheaderrow
+DimtableViewRowHeader AsNewTableViewRow ()
+'Returnallcolumns fromthedatatable
+ForEachdataColumn AsDataColumn Indt.Columns
+DimcolumnAsNewTableViewColumn ()
+        column.Name =dataColumn.ColumnName
+'Rename thetablecolumn
+Ifcolumn.Name. Equals("Employee_ Status")Then
+                column.Value ="Status"
+Else
+'Return thetablecolumnname
+                column.Value =dataColumn.ColumnName
+EndIf
+        column.IsHeader =True
+        tableView.Columns.Add (column)
+'generate columnheaders basedonthecolumnname
+        tableViewRowHeader.Items.Add (column.Name, column)
+NextdataColumn
+    tableView.Rows.Add (tableViewRowHeader)
+Createanested,parameter- drivencomboboxinaTableViewcolumnbyaddingthefollowing
+codetoyourbusinessrules: 
+1TableViewColumn  tableViewColumn1 =oTableView.CreateColumn ("ParamName1" ,"Column1" ,
+true,"Default. [pf8_1322_delimited_ h_path_1]",true);
+TableViewsGuide 13Technical Features andSetup
+Returning RowstotheTableView
+Eachrowcellisevaluated fromthedatatablecolumns.  Thedesignerhasfullcontroloverthe
+displayofthecontentofthetableusingBusinessRulefunctions.  Intheexamplebelow,the
+presentation oftheresultswillvarybycolumn,byuserusingtheBRAPISecurityAuthorization
+function.
+'CreateDataRowRecords
+ForEachdataRow AsDataRow Indt.Rows
+DimtableViewRow AsNewTableViewRow ()
+ForEachtableViewColumn AsTableViewColumn IntableView.Columns
+DimcolumnAsNewTableViewColumn ()
+DimcolumnValue AsString=""
+            column.Name =tableViewColumn.Name
+            columnValue =dataRow.Item (tableViewColumn.Name)
+'Condition tolimitviewofresults toonlyAdministrators
+Ifcolumn.Name. Equals("SSN")Then
+IfNotBRApi.Security.Authorization.IsUserInAdminGroup (si)Then
+                    columnValue ="XXX-XX-"+column.Value.Substring (7,4)
+EndIf
+EndIf
+EndIf
+        column.Value =columnValue
+        column.IsHeader =False
+        tableViewRow.Items.Add (tableViewColumn.Name, column)
+NexttableViewColumn
+    tableView.Rows.Add (tableViewRow)
+NextdataRow
+ReturntableView
+SecurityFilteringResults
+TableViewsGuide 14Technical Features andSetup
+AddNewRecords
+Addnewrecordstoatablebyassigning aspecificrangeofeditablerowsatthebottomofthe
+TableView,whichcanbeusedbyrulestocommittherecordsintoatable. Formatthe
+background areawithafillcolortovisuallyindicatetheareaisenabledforaddingnewrecords.
+UsetheInsertRowsfeaturetoinsertemptyrowsintoatableandchangethebackground color.
+lCanModifyData :SettoTruetoFalsetodetermine ifthetablecancontainemptyrows.
+lNumberofEmptyRowsToAdd :Setthenumberofemptyrowstoadd.
+lEmptyRowsBackgroundColor :Setthecolorofthebackground.
+DimtableView AsNewTableView ()
+tableView.CanModifyData =True
+tableView.NumberOfEmptyRowsToAdd =10 
+tableView.EmptyRowsBackgroundColor =XFColors.Blue
+Thefollowingexampleshowsthebusinessruleappliedtothetable.
+TableViewsGuide 15Technical Features andSetup
+DataType ObjectforColumnFields
+TheDataType objectallowsthedesignertodefinetheColumnFieldasTextorNumeric.This
+objectreferences thecurrentXFDataType object.However, notallXFDataType properties are
+validforTableViews.OnlyInt16,Int32,Int64,Float,Double,Decimal,andTextarevalid.
+Ifyoudonotspecifyadatatype,itwilldefaulttoText.
+'AddColumns totheTableView
+tableView.Columns.Add (CreateTableViewColumn ("Id","Id",True)) 
+tableView.Columns.Add (CreateTableViewColumn ("First","Firstname",True))
+tableView.Columns.Add (CreateTableViewColumn ("Last","LastName",True))
+tableView.Columns.Add (CreateTableViewColumn ("Department" ,“Department ",True))
+DimsalaryColumn =CreateTableViewColumn ("Salary" ,"Salary" ,True)
+salaryColumn.DataType =XFDataType. Decimal
+tableView.Columns.Add (salaryColumn)
+TableViewsGuide 16Technical Features andSetup
+Intheexamplebelow,theSalarycolumnisrendering theTableViewColumnfieldsasnumeric
+valuestoaccurately reflecttheirnatureandwillsupportSpreadsheet basedcalculations.
+EnableStatusColumn
+TheTableViewBusinessRulecancreateadedicated statuscolumn.Intheexamplebelow,itis
+MyStatuscolumn. Usethistoclassifyrecordsforuseinconditional businessrulelogictodrive
+behaviors.
+Inthisexample,thebusinessrulecandefinemembers foradrop-downlistdefinedasDelete,
+Archive,andInactive.Thedesignercreatesbusinessrulestoperformactionsbasedonthestatus
+oftherecords,suchasdelete,orarchivingtoanothertable.
+UsetheEnableStatusColumnoptiontomanagerecordsforyourtable.
+lstatusColumnEnabled :createsastatuscolumninthetableviewwhensettoTrue.
+lstatusColumnName :stringdefinesthenameofthecolumn.Ifleftblank,thedefaultname
+“XFTV_Status”willbeassigned. 
+TableViewsGuide 17Technical Features andSetup
+lstatusColumnIndex :zero-basedintegeridentifiesthecolumnwherethestatusiscreated.
+AvalueabovetheactualnumberofcolumnswillassigntheStatusasthelastColumn. A
+negativenumberwilassigntheStatuscolumnasthefirstcolumn.   
+lstatusColumnValues :createsalistofmembers toselectasavalidation intheStatus
+column. ItisahiddenrangeatthetopoftheTableView. Ifleftblank,nolistorvalidation
+willautomatically becreatedintheStatuscolumn,itwillneedtobecreatedmanuallybythe
+designer.  
+‘Ifmultiple SetCustomStatusColumn statements aresetonthesametableview,itwilltake
+thelaststatement.
+tableView.EnableStatusColumn (True,statusColumnName, 4,“DELETE,ARCHIVE,INACTIVE“)
+Inthescreenshot below,noticetheDelete,Archive,Inactive,whichisenteredinthebusiness
+rule.
+TableViewsGuide 18Technical Features andSetup
+WriteBack
+IftheGetTableView FunctionTypeismodifiedtosettheTableViewpropertyCanModifyData as
+True,theSaveTableView Functionwillexecute. Thissectionisusedbythedesignertodefine
+whichrecordsshouldwritebacktothetarget. Thetargettabledoesnothavetobethesameas
+thesourcetable. 
+Controlconditions shouldbedesignedintothewrite-backrulesforefficiency andperformance. 
+Forexample,MemberFunctions, suchasIsDirty()canbeincorporated towriteonlythemodified
+members withinthewriteablerecords.
+MemberFunctions
+lIsDirty–Condition Checkiftheitemhasbeenmodified
+lIsHeader–MemberrecordstatusasaHeaderrecord.
+lName–Memberlabelofthedatatable. Willnotreference analiaslabel.
+lOriginalValue –Condition reflectslaststoredvaluepriortotheTableViewrefresh
+lValue–ReflectsthecurrentvaluepresentontheSpreadsheet TableView. Thiscanbea
+changed,unsavedvalue.
+DimsqlAsString
+DimIdAsString
+Id=""
+Dimdepartment AsString
+department =""
+UsingdbConnApp AsDbConnlnfo -BRApi.Database.CreateApplicationDbConnlnfo (si)
+ForEachtableViewRow AsTableViewRow IntableView.Rows 
+IftableViewRow.IsHeader =False
+ForEachtableViewColumn AsTableViewColumn IntableView.Columns
+IftableViewColumn.Name ="Id"
+                    Id =tableViewRow.Item (tableViewColumn.Name).Value
+EndIf
+IftableViewColumn.Name ="Department"
+DimtableViewCellDepartment AsTableViewColumn
+                    tableViewCellDepartment =tableViewRow.Item (tableViewColumn.Name)
+TableViewsGuide 19Technical Features andSetup
+IftableViewCellDepartaent.IsDirty ()Then
+                        department =tableViewCellDepartment.Value
+Else
+                        department =""
+EndIf
+EndIf
+NexttableViewColumn
+IfNotString.IsNullOrEmpty (department) Then
+                    sql ="Update Employees SetDepartment ='"&department &"'WhereId=
+"&Id&""
+                    BRApi.Database.ExecuteSql (dbConnApp, sql,False)
+EndIf
+EndIf
+NexttableViewRow
+EndUsing
+CreateTableViewFromDataTable
+YoucancreateaTableViewfromDataTableusingtheTableView
+PopulateFromDataTable function.Thenewfunctionhastwoadditional Booleanproperties to
+includeaHeaderRowandtoutilizetheDataTable'sDataType.Thefunctionisabletoutilizeany
+DataTable,includingthosefromDashboard DataAdaptersusingtheGetAdoDataSetForAdapter
+function.
+Properties:
+ltableView.PopulateFromDataTable (dataTable,IncludeHeaderRow,IncludeDataTypes)
+ColumnFormatObject
+TheColumnFormat ObjectallowstheTableViewDesignertoformatthecontentareaofa
+column,whileexcluding theColumnHeaderforuseasaseparately formattable columnheader
+usingtheHeaderFormat object.
+TableViewsGuide 20Technical Features andSetup
+tableView.Columns (1).ColumnFormat.ColumnWidth =15
+lBackgroundColor
+lColumnWidth
+lFontFamily
+lFontSize
+lIsBold
+lIsItalic
+lIsUnderlined
+lTextColor
+lNumDecimals
+lAsPercentage
+HeaderFormatObject
+TheuseoftheHeaderFormat ObjectrequiresthePopulateFromDataTable toincludeaheaderor
+ascripteddatatabletodefineaTableViewRow asIsHeader=True. Thisfunctionallowsacolumn
+headerstobeformatted asarowusingalltheformatting optionsexceptNumDecimals and
+AsPercentage.
+TableViewsGuide 21Technical Features andSetup
+tableView.HeaderFormat.BackgroundColor =XFColors.Navy
+Incorporating Parameters
+CAUTION: TheOneStream Parameters tobebound,orused,intheSpreadsheet Table
+ViewaredefinedintheGetCustomSubstVarsInUse FunctionType.  TheParameters
+canberesolvedasacomponent withinaDashboard, ortheycanbeanelementofthe
+TableView. Onceresolved,theParameter ispassedtotheGetTableView Function
+Type.
+Private Function GetCustomSubstVarsInUse (ByValsiAsSessionInfo, ByVal
+custSubstVarsAlreadyResolved AsDictionary (OfString,String))
+Try
+DimlistAsNewList(OfString)
+        list.Add ("LastName" )
+IfcustSubstVarsAlreadyResolved.ContainsKey ("LastName" )Then
+            list.Add ("Department" )
+EndIf
+Returnlist
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+Private Function GetEmployeeDetails (ByValsiAsSessionInfo, ByVal
+custSubstVarsAlreadyResolved AsDictionary (OfString,String))AsTableView
+Try
+DimsqlAsNewText.StringBuilder
+        sql.AppendLine ("Select Id,First,Last,Department ")
+        sql.AppendLine ("FromEmployees ")
+IfcustSubstVarsAlreadyResolved.ContainsKey ("LastName" )Then
+            sql.AppendLine ("WhereLast='"&custSubstVarsAlreadyResolved ("LastName" )&"'
+")
+EndIf
+IfcustSubstVarsAlreadyResolved.ContainsKey ("Department" )Then
+            sql.AppendLine ("andDepartment ='"&custSubstVarsAlreadyResolved
+("Department" )&"'")
+EndIf
+TableViewsGuide 22Technical Features andSetup
+UsingXFTVNamedRanges
+ThepurposeofcreatingaSpreadsheet usingthe“XFTV”namedrangeistomanagedatacells
+withreadandwritefunctionality toaTableView. Thiseliminates muchoftheworkrelatedto
+creatingdashboards whichmayrequiremultipletextboxes,labels,comboboxes,businessrules
+andothercontrolstomanagedataacrossatable. 
+TheXFTVNamedRangecanbeusedtolinkafieldtoaTableView. Forexample,alistof
+members maybeusedinadrop-downlist. Theselecteditemwouldthenbeusedtowritebackto
+arequiredfieldinaTableView,whichwouldultimately writetoatargetdatasource.
+AcellusedasaTableViewreference mustbeprefixedwithXFTV_topassintoaTableView. 
+Thestructureofthenamedrangeis“Prefix_TableViewName_ColumnName_RowNumber” .
+Therownumberpositionisazero-basedindex.Forbestperformance whenusingXFTVNamed
+RangesinExcel,werecommended usingtheTableViewColumnNameinsteadofthedisplay
+value.
+Example
+Sheet1isdesignedasaninterfaceorformbasedonrecordssourcedfromatable.
+TableViewsGuide 23Technical Features andSetup
+Thedatacellitemsareorganized ontheprimarysheetwitheachbeingsetasaXFTVnamed
+rangereferencing Sheet2,whichisthecoreTableView.
+Sheet2isaSpreadsheet asdefinedbyaTableRuleBusinessRule
+TheTableViewisaddedtothesheetandcorresponds totheXFTVrangedefinitiononSheet1.
+TheXFTVnamedrangesassociate theirvaluetotheTableViewforreadorwriteprocessing
+dependent upontheTableViewruleconstruction.
+Modifying theSheet1“form”foranadditional fieldsimplyrequiresaddinganamedrange.
+TableViewsGuide 24Technical Features andSetup
+Asanexample,the“form”mayrequireanadditional fieldwhichmaybefoundasareferenced
+validation orfromthesourcetableview.Forexample,the“TermDate” fieldmayberequired.
+SelectingthecellandaddingthesyntaxfortheXFTVnamedrange,fortheappropriate field,will
+incorporate theresultsintothesheet.
+Thedatawillautomatically refreshfromthedefinedsource.Ifdefinedasawrite-backfield,
+changestothecellcanbewrittenbacktoatargettableusingthe“submit”function.
+TableViewsGuide 25Technical Features andSetup
+TableViewsGuide 26Technical Features andSetup
+Security
+Securityiscontrolled bytheBusinessRuleDeveloper inthreeways.Itisveryimportant thatthe
+businessruledesigner/author considerdatasecuritywhencreatingtableviews.Thesessioninfo
+objectwithintherulecanbeusedtorestrict/grant dataaccessforthecurrentuser.Second,the
+writeback functionality willalsobecontrolled withinthebusinessruletotheuserpopulation
+allowedtoperformthewriteback, aswellasthegranularlevelelementswhichmaybemodified. 
+Lastly,theTableViewBusinessRuleitselfshouldbesecuredforviewingoraccessoutsideofthe
+defineddashboard.
+Datalevel,orTablelevel,securityisincorporated withintheBusinessRulescript. VariousBRAPI
+functionscanbeconditionally includedinthescripttocontrolthereadandwritefunctionality each
+userwillencounter whenpresented withtheTableView.  UsingTableViewNamearguments in
+theBusinessRule,ratherthanrelyingonthedefaultBusinessRuleName,willalsoaddan
+additional levelofsecurityforrelatedtothetables.
+BusinessRulelevelsecurityshouldalsobeutilizedtorestrictaccesstothosewhocaneditand
+modifytheunderlying TableViewBusinessRule.ThiscanbedonebyusingBusiness Rule
+Encryption, whichrequiresspecificausersecurityrole.BusinessRuleEncryption applies
+password protection toanyBusinessRuleitisappliedto.
+TableViewsGuide 27Security
+Additionally, theBusinessRulesforTableViewsarestoredintheSpreadsheet category.  To
+controlaccesstouser’saccesstoretrievingtheTableViewsintheirApplication Spreadsheet, the
+AccessGrouponeachruleshouldexcludeanyuserwhoisnotadesigner.
+TableViewsGuide 28Security
+TheTableViewfunctionshouldbecalledusingaconditionfortheSpreadsheet TableView
+Name. ThewillcontrolallTableViewfunctionality byadefinedname,ratherthanthroughthe
+businessrulealone.
+CaseIs=SpreadsheetFunctionType.GetTableView
+Ifargs.TableViewName ="DED_TableView"
+ReturnGetPLPRegisterUsingRegisterID (si,args.Cust)
+EndIf
+TableViewsGuide 29Security
+Summary
+TheTableViewsfeatureisintendedtoprovideaflexiblesolutionforDashboard “form”
+development whenanupdatetoatableisrequired.  Thisbusinessrule-basedsolutioncan
+managerecordsfromavarietyofsources,aswellascontrolthetargetandgranularity ofthe
+write-backrecords. ThisfeaturefullysupportsDashboard basedParameters aswellasadditional
+levelsofTableViewbasedparameters tobuildrichSpreadsheet basedDashboard interfaces. 
+TableViewsGuide 30Summary
+SampleTableViewRulesFile
+Namespace OneStream.BusinessRule.Spreadsheet.TableViewSample
+PublicClassMainClass
+PublicFunction Main(
+ByValsiAsSessionInfo,
+ByValglobals AsBRGlobals,
+ByValapiAsObject,
+ByValargsAsSpreadsheetArgs
+        ) AsObject
+Try
+SelectCaseargs.FunctionType
+CaseIs=SpreadsheetFunctionType.Unknown
+CaseIs=SpreadsheetFunctionType.GetCustomSubstVarsInUse
+ReturnGetCustomSubstVarsInUse (si,
+args.CustSubstVarsAlreadyResolved)
+CaseIs=SpreadsheetFunctionType.GetTableView
+'Thesamebusiness rulecansupport multiple TableViews.
+Ifargs.TableViewName. Equals("MyTableViewName" )Then
+ReturnGetMyTableView (si,args.CustSubstVarsAlreadyResolved)
+EndIf
+CaseIs=SpreadsheetFunctionType.SaveTableView
+                        SaveMyTableView (si,args.TableView)
+EndSelect
+ReturnNothing
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+Private Function GetCustomSubstVarsInUse (
+ByValsiAsSessionInfo,
+ByValcustSubstVarsAlreadyResolved AsDictionary (OfString,String)
+        ) AsList(OfString)
+Try
+'Youwillbeprompted forthevalueofthesevariables iftheyhavenotbeen
+resolved.
+DimlistAsNewList(OfString)
+                list.Add ("MyTableViewParameterName" )
+TableViewsGuide 31SampleTableViewRulesFile
+Returnlist
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+Private Function GetMyTableView (
+ByValsiAsSessionInfo,
+ByValcustSubstVarsAlreadyResolved AsDictionary (OfString,String)
+        ) AsTableView
+Try
+DimsqlAsNewText.StringBuilder
+                sql.AppendLine ("Select *fromMyTable" )
+'Youcanusesubstitution variables thathavebeenresolved withinthe
+query.
+IfcustSubstVarsAlreadyResolved.ContainsKey ("MyTableViewParameterName" )Then
+                    sql.AppendLine (
+"WhereMyFilterColumn ='"&
+                        custSubstVarsAlreadyResolved ("MyTableViewParameterName" )&
+"'"
+                    )
+EndIf
+'Create andfillthedatatable
+DimdtAsDataTable =Nothing
+UsingdbConnApp AsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo
+(si)
+                    dt =BRApi.Database.ExecuteSql (dbConnApp, sql.ToString, False)
+IfNotdtIsNothing Thendt.TableName ="NoData"
+EndUsing
+'Create theTableViewobject
+DimtableView AsNewTableView ()
+                tableView.CanModifyData =True
+'Create Columns onTableViewusingtheDataTablecolumns.
+'Adding aheaderrowtotheTableViewisoptional
+DimtableViewRowHeader AsNewTableViewRow ()
+ForEachdataColumn AsDataColumn Indt.Columns
+DimcolumnAsNewTableViewColumn ()
+                    column.Name =dataColumn.ColumnName
+                    column.Value =dataColumn.ColumnName
+                    column.IsHeader =True
+                    tableView.Columns.Add (column)
+                    tableViewRowHeader.Items.Add (column.Name, column)
+Next
+                tableView.Rows.Add (tableViewRowHeader)
+TableViewsGuide 32SampleTableViewRulesFile
+'Create ColumnDataRows
+ForEachdataRow AsDataRow Indt.Rows
+DimtableViewRow AsNewTableViewRow ()
+ForEachtableViewColumn AsTableViewColumn IntableView.Columns
+DimcolumnAsNewTableViewColumn ()
+DimcolumnValue AsString=""
+                        column.Name =tableViewColumn.Name
+                        columnValue =dataRow.Item (tableViewColumn.Name)
+'Youcanshow/hide/mask columnconditionally (e.g.basedontheuser
+group)
+Ifcolumn.Name. Equals("MySensitiveData" )Then
+IfNotBrApi.Security.Authorization.IsUserInAdminGroup (si)Then
+                                columnValue ="NotAvailable"
+EndIf
+EndIf
+                        column.Value =columnValue
+                        column.IsHeader =False
+                        tableViewRow.Items.Add (tableViewColumn.Name, column)
+Next
+                    tableView.Rows.Add (tableViewRow)
+Next
+ReturntableView
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+Private Function SaveMyTableView (
+ByValsiAsSessionInfo,
+ByValtableView AsTableView
+        ) AsBoolean
+'Addcodetocheckiftheuserhaspermission towritedata.
+IfNottableView IsNothing Then
+DimsqlAsString=String.Empty
+DimtableViewMyPrimaryKey AsNewTableViewColumn ()
+DimtableViewMyColumnToUpdate AsNewTableViewColumn ()
+UsingdbConnApp AsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo
+(si)
+ForEachtableViewRow AsTableViewRow IntableView.Rows
+IftableViewRow.IsHeader =FalseThen
+TableViewsGuide 33SampleTableViewRulesFile
+ForEachtableViewColumn AsTableViewColumn IntableView.Columns
+IftableViewColumn.Name ="MyPrimaryKey" Then
+                                    tableViewMyPrimaryKey =tableViewRow.Item
+(tableViewColumn.Name)
+EndIf
+IftableViewColumn.Name ="MyColumnToUpdate" Then
+                                    tableViewMyColumnToUpdate =tableViewRow.Item
+(tableViewColumn.Name)
+EndIf
+Next
+'Update thecolumnvalueonlyifthevaluewaschanged.
+IftableViewMyColumnToUpdate.IsDirty ()Then
+'Create auditrecords asneededbeforeandafterupdating
+data.
+                                sql =
+"Update MyTable SetMyColumnToUpdate ='"&
+                                    tableViewMyColumnToUpdate.Value &
+"'WhereMyPrimaryKey ="&
+                                    tableViewMyPrimaryKey.Value &""
+                                BRApi.Database.ExecuteSql (dbConnApp, sql,False)
+EndIf
+EndIf
+Next
+EndUsing
+EndIf
+ReturnTrue
+EndFunction
+EndClass
+EndNamespace
+``
+TableViewsGuide 34SampleTableViewRulesFile

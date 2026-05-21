@@ -1,0 +1,2927 @@
+APIOverview Guide
+9.2.0Release
+
+Copyright ©2026OneStream SoftwareLLC.Allrightsreserved.
+Alltrademarks, logos,andbrandnamesusedonthiswebsitearethepropertyoftheirrespective
+owners.Thisdocument anditscontentsaretheexclusivepropertyofOneStream SoftwareLLC
+andareprotected underinternational intellectual propertylaws.Anyreproduction, modification,
+distribution orpublicdisplayofthisdocumentation, inwholeorpart,withoutwrittenpriorconsent
+fromOneStream SoftwareLLCisstrictlyprohibited.
+TableofContents
+Introduction 1
+Development Technologies 2
+Programming Language 2
+UserInterfaceTechnology 2
+ServerTechnology 3
+Database Technology 3
+Developer Fundamentals 4
+VB.NetandC# 4
+In-SolutionDocumentation 4
+BusinessRulesEditorOverview 5
+HelpfulResources 6
+PlatformEngines 8
+WorkflowEngine 8
+StageEngine 8
+APIOverview Guide iTableofContents
+FinanceEngine 9
+DataQualityEngine 9
+DataManagement Engine 10
+Presentation Engine 10
+BRApi 11
+APIStructureandOrganization 12
+Namespaces 12
+Namespaces Defined 13
+Namespace Hierarchy 13
+MicrosoftFinancialCalls 17
+In-SolutionDevelopment 18
+CustomDevelopment 19
+CustomWebDevelopment 19
+UsingSystemTools 20
+SystemBusinessRules 20
+Database 22
+APIOverview Guide iiTableofContents
+Tables 22
+Tools 22
+DataRecords 22
+EventListing 23
+EventHandlerBusinessRules 23
+WCFEventHandler 23
+Transformation EventHandler 23
+JournalsEventHandler 25
+SaveDataEventHandler 25
+FormsEventHandler 25
+DataQualityEventHandler 26
+DataManagement EventHandler 27
+WorkflowEventHandler 27
+EventFiringSequences 28
+ClearCubeData 29
+ClearStageData 31
+APIOverview Guide iiiTableofContents
+ExecuteDataManagement 33
+ImportDataConnection 34
+ImportExcelFile 36
+ImportTextFile 42
+ProcessForm 46
+ProcessJournal 48
+ProcessWorkflow 51
+FinanceFunctions APIs 65
+MemberID 65
+Api.Pov.Time.MemberId 65
+Api.Pov.Entity.MemberId 68
+Api.Pov.Account.MemberId 70
+Dimension PrimaryKey-DimPk 72
+DimPKUsage 73
+Dimension TypeId 73
+DimTypeID Usage 74
+APIOverview Guide ivTableofContents
+DataUnitDimension POV 75
+DataUnitDimension POVUsage 76
+TimeFunctions 77
+Api.Time.GetYearFromId 77
+Api.Time.GetPeriodNumFromId 78
+Api.Time.GetNumDaysInTimePeriod 79
+Api.Time.AddTimePeriods 80
+Api.Time.AddYears 81
+UsingMemberFunctions forCalculations 82
+GetMember 82
+GetMemberId 83
+GetBaseMembers 84
+WritingStoredCalculations 86
+OverloadFunction 87
+IsDurableCalculatedData 88
+EvalFunction 89
+APIOverview Guide vTableofContents
+Summary 91
+RemoveFunctions 91
+RemoveZeros 92
+RemoveNoData 92
+RemoveFunctions Usage 94
+GetDataBuffer Functions 95
+GetDataBuffer Function 96
+GetDataBuffer Usage 97
+Unbalanced MathFunctions 99
+GetDataBufferUsingFormula Function 101
+DataFrame Methods 103
+DataFrame NameSpace 103
+BasicDataFrame Functions 104
+GetDataFrame 105
+CreateDataFramewithColumns 106
+CreateEmptyDataFrame 107
+APIOverview Guide viTableofContents
+Quickstart DataFrame Examples 108
+ConvertDataFrame toLegacyTypes 108
+GetMetadata fromDataFrame 109
+GetDataFrame ColumnbyPosition 109
+AssignMetadata toColumns 109
+AddandRetrieveData 110
+DataFrame Conversion 111
+Logs 111
+CreateDataFrame fromDataAdapter 112
+CreateaDashboard DataSetService 113
+CreateaDynamicGrid 117
+CreateaTableView 126
+IDataFrame Interface 132
+Properties andIndexer 132
+Methods 133
+DataFrameConversionOptions 140
+APIOverview Guide viiTableofContents
+IDataFrameColumn 142
+APIOverview Guide viiiTableofContents
+Introduction
+ThepurposeoftheAPIGuideistoprovidedetailedinformation aboutthetechnologies and
+application programming interfaces availabletoconsultants anddevelopers interested in
+extending thefunctionality ofOneStream. 
+Thisdocument containsinformation aboutthetechnologies usedintheOneStream product,
+namingconventions andorganizational approaches usedbytheOneStream engineering team. It
+alsoincludesdetailedreference listingsforAPImethodsandeventsexposedbyOneStream.
+Tomaintainoptimalperformance andensuresecurity,usepublicanddocumented APIsonly.
+InternalAPIsarenotintendedforpublicgeneraluseandmaybechangedorremovedwithout
+notice.Supportcannotprovideassistance forissuesresultingfromtheusesofnonpublic
+features.
+Forcustomers inaOneStream- hostedenvironment, seetheIdentityandAccessManagement
+Guideforinformation aboutauthentication withOneStream IdentityServer andusingpersonal
+accesstokens(PATs).
+APIOverview Guide 1Introduction
+Development Technologies
+Programming Language
+TheOneStream platformisbasedon.NetCore.OneStream’s underlying codebase is
+predominately madeupofC#librarieswithafewVB.Netlibrariesinuseaswell. C#andVisual
+Basic.NETarethetwoprimaryprogramming languages usedtocodeagainst.NETCore.C#and
+VB.NEThaveverydifferentsyntaxelements, butMicrosoftdeveloped theselanguages
+simultaneously aspartofacommon.NETCoredevelopment platform.BothC#andVB.Netare
+developed, managed, andsupported bythesamelanguagedevelopment teamatMicrosoft. They
+compiletothesameintermediate language (IL)whichrunsagainstthesame.NETCoreruntime
+libraries.Althoughprogramming syntaxisdifferentforeachlanguage, almosteverycommand in
+VBhasanequivalent command inC#andviceversa. Both languages reference thesame
+underlying .NETCoreBaseClassestoextendtheirfunctionality.
+UserInterface Technology
+TheOneStream userinterfaceisbasedontheWindowsPresentation Foundation (WPF)inorder
+toprovideatrulyrichenduserexperience.  WPFemploysXAML,anXMLbasedlanguage, to
+defineandlinkvariousinterfaceelements.  WPFapplications canbedeployedasstandalone
+desktopprograms, orhostedasanembedded objectinawebsite.Windows10Storeapplication
+development providesanotheropportunity forWPFbasedapplications tobedeployed, butas
+Windowsonlyapplications.
+APIOverview Guide 2Development Technologies
+ServerTechnology
+AllOneStream codeishostedandexecutedwithMicrosoftInternetInformation Services (IIS).
+ThismeansthatboththeWebServer(servicecode)andApplication Server(servicecode)are
+executedwithinanIISApplication Poolprocesshost. Thecodeisrunningontheapplication
+servertierhostedwithintheapplication severIISapplication pool. Thisisaveryimportant
+concepttokeepinmindbecausetherewillbetimeswhenaBusinessRulemustinteractwith
+differentelementsofthesystem. ThecontextinwhichtheBusinessRuleisrunningneedstobe
+understood inordertoestablishcommunication and/orinteractwiththoseothersystemelements.
+Database Technology
+OneStream wasdesignedtorunonallversionsoftheMicrosoftSQLServerrelationaldatabase
+engine(Express, Standard, DataCenter,Enterprise andAzureDatabase asaService). For
+largerorganizations, theSQLServerEnterprise editionisrecommended becauseOneStream
+makesuseoftablepartitioning.  Thisenablesmaximum throughput duringheavilymulti-threaded
+operations suchasdatatransformation andconsolidation.  TheOneStream engineering teamis
+committed tofullyutilizingthecapabilities ofthemostrecentversionsofSQLServerandto
+keepingtheOneStream platformoptimized fornewversionsofSQLServerastheybecome
+available.
+APIOverview Guide 3Development Technologies
+Developer Fundamentals
+VB.NetandC#
+TheOneStream platformisbasedentirelyon.NetCoreasistheBusinessRulesengine.
+Therefore, VB.NetandC#arethelogicalchoiceforBusinessRulesyntax.Atexecution time,all
+BusinessRulesarecompiledondemandandcachedforfastandreliableexecution. Writinga
+BusinessRuleinVB.NetorC#providestheenduserwithmanyadvantages overolderproducts
+basedonVBScript. BusinessRulewriterscanexpectexceptional codeperformance, bettererror
+messaging, andbettererrorhandlingbecauseVB.NetandC#areafullfeaturedprogramming
+language. Intheend,thesecapabilities resultinamorereliableBusinessRulecode.
+NOTE:TherearetwobroadBusinessRuleClassifications: SharedBusinessRulesand
+ItemSpecificBusinessRules.SharedBusinessRulescanbewrittenineitherVB.NET
+orC#,ItemSpecificBusinessRulescanbewritteninVB.NETonly.
+In-Solution Documentation
+TheBusinessRuleEditorincludescontextsensitivehelpforAPIproperties andmethodsaswell
+asSnippets (codeexamples). In-solutiondocumentation makestheprocessofwritingaBusiness
+RulemoreefficientbecausebothAPIDocumentation, Objects,andSamplesarepresented within
+theBusinessRuleEditorwindow. Inaddition,usefulcodingexamples accumulated bythe
+OneStream engineering andconsulting teamsarealsopresented incontextsensitivemanner
+withintheBusinessRuleeditor. Companies andpartnerscanauthortheirownSnippetsand
+includethemintheirapplication asanextension oftheOneStream predefined Snippets(Snippet
+EditorOneStream Solution required). 
+APIOverview Guide 4Developer Fundamentals
+Business RulesEditorOverview
+TheBusinessRuleeditorisapowerfulin-solutionscreenthatprovidesintegrated APIcontext
+help,syntaxeditingwithintelli-sense,andfulloutliningcapabilities.  Theactualsyntaxcontent
+andBusinessRulestructurewillbediscussed atlengthinsubsequent sectionsofthisdocument.
+TheimagebelowexplainsthemajorregionsandelementsoftheBusinessRuleeditor. 
+APIOverview Guide 5Developer Fundamentals
+HelpfulResources
+VB.Net
+VB.Netisoneofthemostpopularprogramming languages inusetoday. Thislanguageis
+especially popularamongstbusinessusersbecausethesyntaxisperceived tobemorereadable
+andbusinessuserfriendlythanotherprogramming languages.  VB.Netstillsharesmanyofthe
+samesyntaxelementsofolderVBdialectssuchasVB6,VBAandVBScript.  Thismeansthat
+userswhohavewrittenMacrosinMicrosoftExcelorusedVBScripttowriteBusinessRulesinfirst
+generation CPMsolutionsshouldfeelcomfortable withthecoresyntaxelementsofVB.Net. The
+mainlearningchallenge businessusersfacewhenmigratingtoVB.Netisunderstanding the
+objectorientednatureofthelanguage.  Incomparison toVBScript, VB.Netoffersmoreelegant
+codingopportunities.  Manyofthestatements andprocesses aremanuallycreatedinVBScript,
+butinVB.Nettheyareencapsulated inobjectlibrariesonwhichuserscansimplycall. 
+Microsoft VB.NetLearning
+Gettingcomfortable withVB.Nettakesalittleawareness ofthebasiclibrariesandobjects
+providedby.NetCore. Thelinkbelowpointstosomeresources thatbusinessusersmayfind
+helpfulduringtheVB.Netlearningprocess.
+Microsoft VisualBasic
+https://msdn.microsoft.com/en- us/library/2x7h1hfk.aspx
+APIOverview Guide 6Developer Fundamentals
+C#
+C#(pronounced "SeeSharp")isamodern,object-oriented,andtype-safeprogramming
+language. Thislanguageisespecially popularamongstdevelopers asitenabledthemtobuild
+manytypesofsecureandrobustapplications thatrunin.NET.C#hasitsrootsintheCfamilyof
+languages andwillbeimmediately familiartoC,C++,Java,andJavaScript programmers.
+Microsoft C#Learning
+Thelinkbelowpointstosomeresources thatbusinessusersmayfindhelpfulduringtheC#
+learningprocess.
+https://docs.microsoft.com/en- us/dotnet/csharp/
+APIOverview Guide 7Developer Fundamentals
+Platform Engines
+Theplatformiscomprised ofmultipleprocessing engines. Theseengineshavedistinct
+responsibilities withrespecttosystemprocessing andconsequently theyexposedifferentAPI
+interfaces totheBusinessRulestheycall. Thissectionprovidesabriefoverviewofeachengine
+intheplatformanddescribes theengine’scoreresponsibilities.
+Workflow Engine
+TheWorkflowEngineisthoughtofasthecontrolling engineorthepuppeteer.  Themain
+responsibility ofthisengineistocontrolandtrackthestatusofthebusinessprocesses definedin
+theWorkflowhierarchies.  Thisengineisprimarilyaccessed throughtheBRApiandcanbecalled
+fromotherenginesinordertocheckWorkflowstatusduringprocessexecution.  TheWorkflow
+EngineprovidesaveryricheventmodelallowingeachWorkflowprocesstobeevaluated and
+reinforced withcustomerspecificbusinesslogicifrequired(seeAppendix 2:EventListing).
+StageEngine
+TheStageEngineperformsthetaskofsourcingandtransforming externaldataintovalidanalytic
+datapoints. Themainresponsibility ofthisengineistoreadsourcedata(filesorsystems)and
+parsetheinformation intoatabularformat. Thisallowsthedatatobetransformed ormappedto
+validMembers definedbytheFinanceEngine. TheStageEngineisanin-memory,multi-
+threadedenginethatprovidestheopportunity tointeractwithsourcedataasitisbeingparsed
+andtransformed.  Inadditiontoparsingandtransforming data,theStageEnginealsohasa
+sophisticated calculation thatenablesdatatobederivedandevaluated basedonincoming
+sourcedata. TheStageEngineprovidesqualityservicestosourcedatabyvalidating, mapping,
+andexecuting Derivative CheckRules.
+APIOverview Guide 8Platform Engines
+Finance Engine
+TheFinanceEngineisanin-memoryfinancialanalyticengine. Themainresponsibility ofthis
+engineistoenrichandaggregate basedatacellsintoconsolidated multi-Dimensional
+information.  TheFinanceEngineprovidestheopportunity todefinesophisticated financial
+calculations throughcentralized BusinessRulesaswellasmemberspecificBusinessRules
+(Member Formulas). Itworksconcurrently withtheStageEnginetovalidateincoming
+intersections andworkswiththeDataQualityEnginetoexecuteConfirmation Ruleswhichare
+usedtovalidateanalyticdatavalues.
+DataQualityEngine
+TheDataQualityEngineisresponsible forcontrolling dataconfirmation andcertification
+processes.  ThisConfirmation Engineisusedtodefineandcontrolthesequence ofdatavalue
+checksrequiredtoasserttheinformation submitted fromasourcesystemiscorrect. The
+Certification Engineisresponsible formanaging usercertifications anddetermining theWorkflow
+dependents’ completion status. Thisengineisprimarilyaccessed throughtheBRApiandmaybe
+calledfromotherenginesinordertocheckdataqualitystatusduringprocessexecution.
+APIOverview Guide 9Platform Engines
+DataManagement Engine
+TheDataManagement Engineprovidestaskautomation servicestotheplatform. Thisengine
+executesbatchesofcommands thatareorganized intosequences whichcontainsteps. Steps
+represent entrypointsormechanisms toexecutefeaturesofotherengines. Forexample,the
+ClearDataStepusestheservicesoftheFinanceEngine. Inaddition,theDataManagement
+EnginehastheabilitytoexecuteaBusinessRuleStepwhichexecutesacustomBusinessRule
+aspartofaDataManagement Sequence.  Thisisanincredibly powerfulcapability becauseit
+providestheabilitytostringtogetheranycombination ofpredefined processing stepswithcustom
+BusinessRulesteps.
+Presentation Engine
+ThePresentation Engineprovidesextensive datavisualization servicestoplatform. The
+Presentation Engineismadeupofthefollowingcomponent engines:CubeViewEngine,
+Dashboard Engine,Parameter Engine,BookEngineandExtensible Document Engine. The
+Presentation Engineisresponsible formanaging anddelivering contenttotheenduseraswellas
+providingadevelopment environment forcustomuserinterfaceelements.  Thisengineenables
+OneStream Solutionapplication development capabilities andcontinues toevolvewitheach
+productrelease. LiketheDataManagement Engine,thePresentation Engineinteractswithand
+cancalltheservicesofallotherenginesintheproduct.
+APIOverview Guide 10Platform Engines
+BRApi
+TheBRApiiscommonacrossallBusinessRules,enginesandAPIsbeingrun,soitisnotan
+engineitself.ABRApifunctionrunsoutsideoftheotherenginesandcanorchestrate certain
+functionsfromwithinotherengines.Inotherwords,aBRApifunctionberunfromoneengine(for
+example,Parser)totellotherengines(forexample,Finance)toruntheirownAPIs(forexample,
+API.Data.GetDataCellUsingMemberScript). Foranotherexample,whilethe
+API.Data.GetDataCell functionisavailablefromwithintheFinanceengine,asimilarBRApicalled
+GetDataCellUsingMemberScript canberunfromanyengineifgiventheappropriate arguments.
+AcommonuseisBRApi.ErrorLog.LogMessage fromanyengine.
+APIOverview Guide 11Platform Engines
+APIStructure andOrganization
+Namespaces
+.NetCoreorganizes codelibrariesintosubjectareascalledNamespaces. Theprocessbegins
+withidentifying theNamespaces (libraries) requiredfortheprocedure beingcreated.
+Namespaces providedistinction totheobjectsandmethodsthatexistinacodelibrary. As abest
+practice,Namespaces typicallystartwiththenameofthecompanythatcreatedthecodelibrary.
+Thispreventsnamingconflictsforobjectsthatshareacommonname,butwerecreatedby
+differentsoftwareproviders.
+Inanefforttokeepcodingsyntaxasterseaspossible,.NetCoreallowstheusertospecify
+commonNamespaces touseatthetopofaBusinessRule.Theselinesarepreceded bythekey
+wordImports.AddingImportsStatements preventshavingtotypeanobject’sfullyqualifiedname
+withinaNamespace.
+AllBusinessRulesareprepopulated withboththecommonly usedMicrosoftNamespaces aswell
+astheOneStream specificNamespaces. Forexample,addingthestatement Imports
+System.Math toaBusinessRuleenablesaccesstoobjectsintheSystem.Math Namespace. 
+InsteadoftypingSystem.Math.Round (100.05,0), typeRound(100.05,0).
+TheexamplebelowshowstheNamespace references usedinastandardExtensibility Rule.
+APIOverview Guide 12APIStructure andOrganization
+Namespaces Defined
+OneStream isalargeandsophisticated softwareplatformandconsequently agreatdealofeffort
+wentintoorganizing thecodebaseintoahierarchical setofNamespaces. Thissectiondefines
+theNamespace hierarchyandexplainstheprimarypurposeofthecodelibrariesineach
+Namespace. It isimportant tounderstand structureandmeaningoftheplatformNamespaces
+becausemostAPImethodsacceptandreturnobjectsdefinedwithinspecificNamespaces. By
+understanding thestructureoftheNamespace hierarchy, developers canbrowseforobjects
+usingintelli-senseinthesyntaxeditor. 
+Namespace Hierarchy
+ThehierarchybelowdenotestheplatformNamespaces andtheobjectlibrariescontained within
+them. This hierarchyisexploredfromwithintheBusinessRulesyntaxeditorbytyping
+OneStream. andnavigating throughtheintelli-sensepopuplists. Thistechnique helpsfindobjects
+topassintoanAPIfunction,objectsreturnedfromanAPIfunction,orcommonhelperclasses
+availableintheplatform.
+APIOverview Guide 13APIStructure andOrganization
+lOneStream (RootNamespace)
+lOneStream.BusinessRule
+lOneStream.BusinessRule.Finance
+lOneStream.BusinessRule.Parser
+lOneStream.BusinessRule.Connector
+lOneStream.BusinessRule.ConditionalRule
+lOneStream.BusinessRule.DerivativeRule
+lOneStream.BusinessRule.DashboardDataSet
+lOneStream.BusinessRule.DashboardExtender
+lOneStream.BusinessRule.DashboardStringFunction
+lOneStream.BusinessRule.Extender
+lOneStream.Client
+lOneStream.Client.SharedUI
+lOneStream.Client.SharedUI.FinanceMsgStrings
+lOneStream.Client.SharedUI.FinanceUIStrings
+lOneStream.Client.SharedUI.GeneralMsgStrings
+lOneStream.Client.SharedUI.GeneralUIStrings
+lOneStream.Client.SharedUI.StageMsgStrings
+lOneStream.Client.SharedUI.StageUIStrings
+lOneStream.Client.SharedUI.StringResourceFileType
+lOneStream.Client.SharedUI.StringResourceHelper
+APIOverview Guide 14APIStructure andOrganization
+lOneStream.Client.SharedUI.XFStrings
+lOneStream.Finance
+lOneStream.Finance.Engine
+lOneStream.Finance.Engine.DataApi
+lOneStream.Finance.Engine.EvalDataBufferDelegate
+lOneStream.Finance.Engine.FinanceRulesApi
+lOneStream.Finance.Engine.IAccountApi
+lOneStream.Finance.Engine.ICalcStatusApi
+lOneStream.Finance.Engine.IConsApi
+lOneStream.Finance.Engine.ICubesApi
+lOneStream.Finance.Engine.IDimensionsApi
+lOneStream.Finance.Engine.IEntityApi
+lOneStream.Finance.Engine.IFlowApi
+lOneStream.Finance.Engine.IFunctionsApi
+lOneStream.Finance.Engine.IFxRatesApi
+lOneStream.Finance.Engine.IMembersApi
+lOneStream.Finance.Engine.IPovApi
+lOneStream.Finance.Engine.IScenarioApi
+lOneStream.Finance.Engine.ITimeApi
+lOneStream.Finance.Engine.IUDApi
+lOneStream.Finance.Engine.IViewApi
+APIOverview Guide 15APIStructure andOrganization
+lOneStream.Finance.Engine.IWorkflowApi
+lOneStream.Stage
+lOneStream.Stage.Engine
+lOneStream.Stage.Engine.Parser
+lOneStream.Stage.Engine.ParserDimension
+lOneStream.Stage.Engine.TransformerDataCache
+lOneStream.Stage.Engine.Transformer
+lOneStream.Stage.Engine.TransformerDimension
+lOneStream.Stage.Engine.TransformRuleCache
+lOneStream.Shared
+lOneStream.Shared.Engine
+lOneStream.Shared.Engine.ExternalWcfClient
+lOneStream.Shared.Engine.TaskActivityStepWrapperItem
+lOneStream.Shared.Database
+lOneStream.Shared.Database.DbConnInfo
+lOneStream.Shared.Common
+lOneStream.Shared.Common (VariousConstants, HelperClasses&DataTransfer
+Objects‘DTO’)
+lOneStream.Shared.Wcf
+lOneStream.Shared.Wcf (VariousConstants &DataTransferObjects‘DTO’)
+APIOverview Guide 16APIStructure andOrganization
+Microsoft Financial Calls
+FinancialcallsarepartoftheMicrosoft.VisualBasic namespace, andcanbeusedtofor
+calculations suchas:
+lDepreciation
+lPresentandfuturevalues
+lInterestrates
+lRatesofreturn
+lPayments
+ThesefunctionsareavailabletoanyonewithaccesstoBusinessRules.Theycanbeexplored
+withintheBusinessRulesyntaxeditorbytypingMicrosoft.VisualBasic.Financial thennavigating
+throughtheintelli-sensepopuplists.
+ToviewallmethodsfromtheMicrosoft.Visual BasicFinancialclassusedinaBusinessRule:
+1.NavigatetotheBusinessRuleEditor:
+a.IntheOneStream Softwareapplication, clicktheApplication tab.
+b.UnderTools,clickBusiness Rules.
+c.Expandtheappropriate BusinessRulescategoryorclickSearchonthetoolbar.
+2.ClicktheFormulatab.
+3.Intheeditorwindow,typeMicrosoft.Visualbasic.Financial .
+Alistofmethodsdisplays.
+APIOverview Guide 17APIStructure andOrganization
+In-Solution Development
+In-solutiondevelopment istheprocessofcreatingOneStream BusinessRulestodeliverdomain
+specificsolutions.  ThismeansthatallBusinessRulesareexecutedwithintheapplication server
+processspace. Thecodewrittenisonlyexecutedontheapplication serverswhereOneStream is
+deployed. 
+Developing withintheapplication serverenvironment enablessolutiondevelopers tofocusonthe
+businessprobleminsteadofcommonprogramming concerns.  Theplatformtakescareof
+managing connections, movingdatabetweenapplication tiers,andloadbalancing server
+activities.
+APIOverview Guide 18APIStructure andOrganization
+Insomecases,in-solutiondevelopment isseenasalimitationbecausethedeveloper isrestricted
+tocodingwithintheapplication servertier. However, inmostcasestheefficiency andquality
+gainedbydeveloping withintheplatformoutwaysanylimitations imposedbycodingatthe
+application servertier.
+Custom Development
+Customdevelopment referstostandaloneapplication development thatinteractswiththe
+platformatthewebservertier. 
+Custom WebDevelopment
+TheplatformhastheabilitytodisplaywebpageswithinacustomDashboard.  Thisallows
+completely customwebapplications tosurfacewithintheOneStream Solution.OneStream can
+passinformation abouttheuser’sPOVandWorkflowasURLParameters enablingthecustom
+webapplication toactaspartofanintegrated solution.
+Withthiscapability, developers arefreetocreateandincorporate anysolutiontheycanimagine.
+APIOverview Guide 19APIStructure andOrganization
+UsingSystem Tools
+System Business Rules
+SystemExtenderBusinessRulesareusedincoordination withAzureServerSetsforelastic
+scalability attheAzureDatabase andServerSetslevel.ServerandeDTUscalingcanbe
+accomplished manuallyorviaSystemBusinessRules. IfSystemBusinessRulesisselectedasa
+ScalingType,thenOneStream willcallauser-definedSystemExtenderBusinessRuleto
+determine ifscalingisneeded. Theuserisresponsible forimplementing thescalingfunctionand
+returningtheproperscalingobjecttoOneStream. Thiscanbeaccomplished byaddingaSystem
+ExtenderBusinessRuleandassigning itappropriately.
+UndereachCasestatement, theserulesandrelatedArgsandBRApiscanbeusedtocheckthe
+currentServerSetcapacity,querymetricsaboutaServerSetorAzureDatabase andimpactthe
+volumeofServerSetsorlevelofAzureDatabase deployed.
+RefertotheInstallation andConfiguration GuideunderAzureDatabase Connection Settingsand
+ServerSetsforwheretorefertotheseBusinessRules.ExamplestartingpointofemptySystem
+ExtenderBusinessRuleuponcreation:
+Namespace OneStream.BusinessRule.SystemExtender.Test
+PublicClassMainClass
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals, ByValapi
+AsObject,ByValargsAsSystemExtenderArgs) AsObject
+Try
+SelectCaseargs.FunctionType
+CaseIs=SystemExtenderFunctionType.Unknown
+CaseIs=SystemExtenderFunctionType.GetDesiredServerSetCapacity
+CaseSystemExtenderFunctionType.GetDesiredElasticDatabasePoolCapacity
+CaseSystemExtenderFunctionType.GetDesiredExternalServerSetCapacity
+APIOverview Guide 20UsingSystem Tools
+EndSelect
+ReturnNothing
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+EndClass
+EndNamespace
+Sample System Business Rule
+Metricsdataispassedtothisfunctiontohelptheuserdetermine whethertheserverordatabase
+needstobescaledornot. Depending onwhatisbeingscaled,differentmetricdataispassedin. 
+Forserverscaling,Environment metricsandScaleSetmetricsarepassedintohelpdetermine
+scaling. Fordatabasescaling,Environment metricsandSQLServerElasticPoolmetricsare
+passedintohelpdetermine scaling.
+SelectCaseargs.FunctionType
+CaseIs=SystemExtenderFunctionType.Unknown
+CaseIs=SystemExtenderFunctionType.GetDesiredScaleSetCapacity
+DimsystemExtenderScaleSetResult AsNewSystemExtenderScaleSetResult
+        systemExtenderScaleSetResult.Capacity =args.ScaleSetArgs.CurrentScaleSetCapacity
+If(args.ScaleSetArgs.ScaleSetMetricValues.AvgCPUUtilization >50)Then
+            systemExtenderScaleSetResult.Capacity =
+args.ScaleSetArgs.CurrentScaleSetCapacity +1
+EndIf
+ReturnsystemExtenderScaleSetResult
+CaseIs=SystemExtenderFunctionType.GetDesiredElasticDatabasePoolCapacity
+DimsystemExtenderSQLServerElasticPoolResult AsNew
+SystemExtenderSQLServerElasticPoolResult
+        systemExtenderSQLServerElasticPoolResult.AzureElasticPoolDTU =
+args.SQLElasticPoolArgs.DatabaseAndPoolDTU.AzureElasticPoolDTU
+If(args.SQLElasticPoolArgs.AzureElasticPoolLevelMetricValues.DTUConsumptionPercent
+>90)Then
+            systemExtenderSQLServerElasticPoolResult.AzureElasticPoolDTU =1600
+EndIf
+ReturnsystemExtenderSQLServerElasticPoolResult
+APIOverview Guide 21UsingSystem Tools
+CaseIs=SystemExtenderFunctionType.GetDesiredExternalScaleSetCapacity
+EndSelect
+Database
+TheDatabase screenallowsSystemAdministrators toviewallofOneStream’s databasetables
+andprovidestoolsformanaging storeddataandotherinformation.
+Tables
+Thisgivesread-onlyaccesstoalldatatablesinthedatabaseandcanbeusedfortaskssuchas
+tryingtodebugissueswithouthavingaccesstothedatabase, ordeletionlogging.
+Tools
+Database ToolsallowSystemAdministrators tomanagethedatabase.
+DataRecords
+EnteraMemberFilterinordertoviewdatafortheentiresystem.
+APIOverview Guide 22UsingSystem Tools
+EventListing
+EventHandler Business Rules
+WCFEventHandler
+Thisallowsdirectinteraction withtheMicrosoftWindowsCommunication Foundation which
+meansitlistenstocommunication betweentheclientandthewebserver.Therulewillintercept
+thecommunication, analyzeit,andifcertaincriteriaismet,itwillrunitslogic. Thisisquiteflexible
+andhasavarietyofusessuchascreating,reading,deleting,andupdatingdifferenttypesof
+objectsinthesystemforusersinagrouporTransformation Rulechanges.Forexample,arule
+canbecreatedtoe-mailanauditorabouteverymetadata changeasithappens.
+Transformation EventHandler
+ThiscanberunatvariouspointsfromImportthroughLoad.Availableoperations:
+lStartParseAndTransForm
+lInitializeTransFormer
+lParseSourceData
+lLoadDataCacheFromDB
+lProcessDerivativeRules
+lProcessTransformationRules
+lDeleteData
+APIOverview Guide 23EventListing
+lDeleteRuleHistory
+lWriteTransFormedData
+lSummarizeTransFormedData
+lCreateRuleHistory
+lEndParseAndTransForm
+lFinalizeParseAndTransForm
+lStartRetransForm
+lEndRetransForm
+lFinalizeRetransForm
+lStartClearData
+lEndClearData
+lFinalizeClearData
+lStartValidateTransForm
+lValidateDimension
+lEndValidateTransForm
+lFinalizeValidateTransForm
+lStartValidateIntersect
+lEndValidateIntersect
+lFinalizeValidateIntersect
+lLoadIntersect
+lStartLoadIntersect
+APIOverview Guide 24EventListing
+lEndLoadIntersect
+lFinalizeLoadIntersect
+Journals EventHandler
+Thiscanberunbefore,during,orafteraJournaloperation suchasSubmission, Approval, or
+Post.Availableoperations:
+lSubmitJournal
+lApproveJournal
+lRejectJournal
+lPostJournal
+lUnpostJournal
+lStartUpdateJournalWorkflow
+lEndUpdateJournalWorkflow
+lFinalizeUpdateJournalWorkflow
+SaveDataEventHandler
+Thisisruninordertotrackallsaveeventsinanapplication.
+FormsEventHandler
+Thiscanberunbefore,during,orafteranoperation suchasFormSave.Availableoperations:
+APIOverview Guide 25EventListing
+lSaveForm
+lCompleteForm
+lRevertForm
+lStartUpdateFormWorkflow
+lEndUpdateFormWorkflow
+lFinalizeUpdateFormWorkflow
+DataQualityEventHandler
+Thiscanberunbefore,during,orafterdataqualityeventslikeConfirmation andCertification.
+Availableoperations:
+lStartProcessCube
+lCalculate
+lTranslate
+lConsolidate
+lEndProcessCube
+lFinalizeProcessCube
+lPrepareICMatch
+lStartICMatch
+lPrepareICMatchData
+lEndICMatch
+lStartConfirm
+lEndConfirm
+APIOverview Guide 26EventListing
+lFinalizeConfirm
+lSaveQuestionResponse
+lStartSetQuestionairreState
+lSaveQuestionairreState
+lEndSetQuestionairreState
+lStartSetCertifyState
+lSaveCertifyState
+lEndSetCertifyState
+lFinalizeSetCertifyState
+DataManagement EventHandler
+ThiscanberunbeforeorafteraDataManagement Sequence orStepruns.Availableoperations:
+lStartSequence
+lExecuteStep
+lEndSequence
+Workflow EventHandler
+ThiscanberunbeforeorafteraWorkflowexecution step.Availableoperations:
+lUpdateWorkflowStatus
+lWorkflowLock
+lWorkflowUnlock
+APIOverview Guide 27EventListing
+EventFiringSequences
+OneStream firesaseriesofeventswhencompleting tasksviaEventHandlerBusinessRules. 
+Theexamplebelowexplainshowtoreadthetablewhichprovidesthefiringsequence when
+runningaspecifictask.
+APIOverview Guide 28EventListing
+ClearCubeData
+APIOverview Guide 29EventListing
+APIOverview Guide 30EventListing
+ClearStageData
+APIOverview Guide 31EventListing
+APIOverview Guide 32EventListing
+Execute DataManagement
+APIOverview Guide 33EventListing
+ImportDataConnection
+APIOverview Guide 34EventListing
+APIOverview Guide 35EventListing
+ImportExcelFile
+APIOverview Guide 36EventListing
+APIOverview Guide 37EventListing
+APIOverview Guide 38EventListing
+APIOverview Guide 39EventListing
+APIOverview Guide 40EventListing
+APIOverview Guide 41EventListing
+ImportTextFile
+APIOverview Guide 42EventListing
+APIOverview Guide 43EventListing
+APIOverview Guide 44EventListing
+APIOverview Guide 45EventListing
+Process Form
+APIOverview Guide 46EventListing
+APIOverview Guide 47EventListing
+Process Journal
+APIOverview Guide 48EventListing
+APIOverview Guide 49EventListing
+APIOverview Guide 50EventListing
+Process Workflow
+APIOverview Guide 51EventListing
+APIOverview Guide 52EventListing
+APIOverview Guide 53EventListing
+APIOverview Guide 54EventListing
+APIOverview Guide 55EventListing
+APIOverview Guide 56EventListing
+APIOverview Guide 57EventListing
+APIOverview Guide 58EventListing
+APIOverview Guide 59EventListing
+APIOverview Guide 60EventListing
+APIOverview Guide 61EventListing
+APIOverview Guide 62EventListing
+APIOverview Guide 63EventListing
+APIOverview Guide 64EventListing
+Finance Functions APIs
+Member ID
+TherearemanyfunctionsthatuseMemberID asanintegertopassinasaproperty.These
+functionsgetthecurrentPOVofthespecificDimension membertoperformavarietyoftasks,
+suchas:
+lGetCurrentYearbasedonTimePOV
+oExample:Api.Time.GetYearFromId (api.Pov.Time.MemberId)
+lGetTextfieldvaluefromEntityPOV
+oExample:Api.Entity.Text (api.Pov.Entity.MemberId, 1)
+lGetAccountTypebasedoncurrentAccountPOV
+oExample:Api.Account.GetAccountType (api.Pov.Account.MemberId)
+Whenworkingwithformulasandcalculations, itisbettertoworkwithMemberId versusMember
+Name.
+Api.Pov.Time.MemberId
+Api.Pov.Time.MemberId isobtainedfromtheTimeMemberIdforthecurrentPOVbeing
+executedduringthecalculation. The Time.MemberId isstoredasanuniqueintegertorepresent
+asingleTimemember.Theuniqueness isdetermined bythecombination oftheYearandPeriod.
+APIOverview Guide 65Finance Functions APIs
+lH1=001
+lQ1=002
+lM1=003
+lM2=004
+lM3=005
+lQ2=006
+lM4=007
+lM5=008
+lM6=009
+APIOverview Guide 66Finance Functions APIs
+lH2=010
+lQ3=011
+lM7=012
+lM8=013
+lM9=014
+lQ4=015
+lM10=016
+lM11=017
+lM12=018
+TheTimeMemberId isconstructed likethis:2019003000
+Theapi.Pov.Time.MemberId isusedasapropertyinmanyfunctions. Here aresomeofthe
+mostcommonfunctions:
+lapi.Time.GetYearFromId
+lapi.Time.GetPeriodNumFromId
+lapi.Time.GetNumDaysInTimePeriod
+lapi.Time.AddTimePeriods
+lapi.Time.AddYears
+Api.Pov.Time.MemberId Usage
+Exampleusingapi.Pov.Time.MemberId :
+DimtimeIdAsInteger =api.Pov.Time.MemberId
+    BRApi.ErrorLog.LogMessage (si,"timeId ="&timeId)
+APIOverview Guide 67Finance Functions APIs
+ErrorLogresult:
+Exampleusingapi.Pov.Time.MemberId inaworkingformula:
+'GetCurrent YearasInteger BasedonCurrent POVTimeId
+DimcurYear AsInteger =api.Time.GetYearFromId (api.Pov.Time.MemberId)
+'Execute Formula onlyifCurrent YearisGreater ThanorEqualto2023
+IfcurYear >=2023Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+``
+Api.Pov.Entity.MemberId
+Api.Pov.Entity.MemberId isobtainedfromtheEntityMemberIdforthecurrentEntityPOVbeing
+executedduringthecalculation. The Entity.MemberId isstoredasauniqueintegertorepresent a
+singleEntitymember. The EntityMemberIdisalsofoundusingtheGridViewintheEntity
+Dimension Library.
+APIOverview Guide 68Finance Functions APIs
+Api.Pov.Entity.MemberId isusedasapropertyinmanyfunctions.  Herearesomeofthemost
+commonfunctions:
+lGetLocalCurrencyIdforcurrentEntityPOV.
+oExample: api.Entity.GetLocalCurrencyId (api.Pov.Entity.MemberId)
+lGetLocalCurrencyConsMemberNameforcurrentEntityPOV.
+oExample:
+api.Entity.GetLocalCurrencyConsMember (api.Pov.Entity.MemberId).Name
+lGetvalueinTextFieldforDimension Members priortoexecuting formulacalculation.
+oExample: api.Entity.Text (api.Pov.Entity.MemberId, 1)
+lGetPercentConsolidation forParentChildRelationship andspecifictouser
+localization. Can alsodetermine byScenarioTypeandTime.
+oExample: api.Entity.PercentConsolidation (api.Pov.Entity.MemberId,
+api.Pov.Parent.MemberId, api.Pov.ScenarioTypeId,
+api.Pov.Time.MemberId).XFToStringForFormula
+lGetPercentOwnership forParentChildRelationship andspecifictouserlocalization. Can
+alsodetermine byScenarioTypeandTime.
+oExample: api.Entity.PercentOwnership (api.Pov.Entity.MemberId,
+api.Pov.Parent.MemberId, api.Pov.ScenarioTypeId,
+api.Pov.Time.MemberId).XFToStringForFormula
+Api.Pov.Entity.MemberId Usage
+Exampleusingapi.Pov.Entity.MemberId:
+DimentityId AsInteger =api.Pov.Entity.MemberId
+BRApi.ErrorLog.LogMessage (si,"EntityId ="&entityId)
+APIOverview Guide 69Finance Functions APIs
+ErrorLogResult:
+Exampleusingapi.Pov.Entity.MemberId inaworkingformula:
+'GetTextValueinEntityText1FieldforCurrent EntityPOV
+DimentityText AsString=api.Entity. Text(api.Pov.Entity.MemberId, 1)
+'OnlyRunForBaseEntities AndatLocalCurrency
+If(Notapi.Entity.HasChildren ())And(api.Cons.IsLocalCurrencyforEntity ())Then
+'Execute Formula ifEntityhasNAintheEntityText1Field
+IfentityText.XFEqualsIgnoreCase ("NA")Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+Api.Pov.Account.MemberId
+Api.Pov.Account.MemberId isobtainedfromtheAccountMemberIdforthecurrentAccountPOV
+beingexecutedduringthecalculation. The Account.MemberId isstoredasauniqueintegerto
+represent asingleAccountmember. The AccountMemberIdisalsofoundusingtheGridViewin
+theAccountDimension Library.
+APIOverview Guide 70Finance Functions APIs
+Api.Pov.Account.MemberId isusedasapropertyinmanyfunctions. Here aresomeofthemost
+commonfunctions:
+lGetAccountTypebasedoncurrentAccountPOV
+oExample: api.Account.GetAccountType (api.Pov.Account.MemberId)
+lGetvalueinTextFieldforDimension Members priortoexecuting formulacalculation
+oExample: api.Account.Text (api.Pov.Account.MemberId, 1)
+Api.Pov.Account.MemberId Usage
+Exampleusingapi.Pov.Account.MemberId :
+DimaccountType AsAccountType =api.Account.GetAccountType (api.Pov.Account.MemberId)
+BRApi.ErrorLog.LogMessage (si,"AccountType ="&accountType.ToString)
+ErrorLogResult:
+Exampleusingapi.Pov.Account.MemberId inaworkingformula:
+APIOverview Guide 71Finance Functions APIs
+'GetAccount TypeofAccount andUseSpecific FXRateTypeforSpecific Account Types.Used
+inFinanceFunctionType.FXRate orDynamic Calc
+DimaccountType AsString=api.Account.GetAccountType (api.Pov.Account.MemberId).ToString
+DimrateType AsString="ClosingRate"
+IfaccountType ="Asset" Then
+DimrateAsDecimal =api.FxRates.GetCalculatedFxRate (rateType, api.Pov.Time.MemberId,
+args.FxRateArgs.SourceCurrencyId, args.FxRateArgs.DestCurrencyId)
+ReturnNewFxRateResult (rate)
+EndIf
+Dimension Primary Key-DimPk
+DimPkisknownasDimension PrimaryKey.Thisisauniqueprimarykeythatisassignedto
+Dimensions whentheyarecreated.Itisacombination oftheDimTypeId andtheDimId.
+DimPkiscommonly usedtoidentifywhichDimension shouldbeusedwhencheckingfor
+members asbasemembers ordescendants inaspecificDimension. DimPkiscommonly usedin
+thefollowingfunctions:
+lGetDimension PrimaryKeyofaSpecificDimension
+oExample: api.Dimensions.GetDim ("UD1DimName").DimPk
+lCheckifitisaBaseMemberofaSpecificAncestor
+oExample: api.Members.IsBase (dimPk,ancestorMemberId, baseMemberId,
+dimDisplayOptions)
+lGetBaseMembers ofParentfromGetMember
+oExample: api.Members.GetBaseMembers (api.Pov.UD1Dim.DimPk,
+parent.MemberId, Nothing)
+APIOverview Guide 72Finance Functions APIs
+DimPKUsage
+ExampleusingDimPK:
+DimdimPkAsDimPk=api.Dimensions.GetDim ("CostCenters" ).DimPk
+    BRapi.ErrorLog.LogMessage (si,"DimPkforCostCenters ="&dimPk.ToString)
+ErrorLogResult:
+Exampleusingapi.Pov.UD1Dim.DimPk inaworkingformula:
+'Retrieve BaseMembers ofServices inUD1toUseinGetDataCell Loop
+DimparentAsMember=api.Members.GetMember (DimType.UD1.Id, "Services" )
+DimserviceNames AsList(OfMember) =api.Members.GetBaseMembers (api.Pov.UD1Dim.DimPk,
+parent.MemberId, Nothing)
+'Loopthrough alltheService BaseMembers
+IfNotserviceNames IsNothing Then
+ForEachserviceName AsMemberInserviceNames
+'GetDataCell forAllService BaseMembers asStringandDecimal
+DimserviceNameCellString AsString=
+("#EHousehold:C#Local:$#Actual:T#2019M1:W#Periodic:A#Dept_
+Intersection:F#None:O#Forms:I#None:U1#" &serviceName.Name &"")
+DimserviceNameCell AsDecimal =api.Data.GetDataCell
+(serviceNameCellString).CellAmount
+Next
+EndIf
+Dimension TypeId
+Dimension TypeIdisapropertyofDimPk. The Dimension TypeIdisauniqueintegerIdthatis
+assignedtoaDimension. The DimTypeId isfoundintheDimtableandtheDimTypeId represents
+eachDimension.
+APIOverview Guide 73Finance Functions APIs
+lEntity=0
+lScenario=2
+lAccount=5
+lFlow=6
+lUD1=9
+lUD2=10
+lUD3=11
+lUD4=12
+lUD5=13
+lUD6=14
+lUD7=15
+lUD8=16
+TheDimTypeId isusedinvariousfunctions. DimTypeId ismostcommonly usedwiththe
+GetMember orGetMemberId functionswherethefirstpropertyinthefunctionisDimTypeId. In
+thiscase,GetMember andGetMemberId needstoknowwhichDimension Idtouseforthe
+memberthefunctionislookingfor.
+lGetaspecificMemberinaspecificDimension
+oExample: api.Members.GetMember (DimType.Account.Id, "AcctMemberName")
+lGetMemberIdforaspecificMemberinaspecificDimension
+oExample: api.Members.GetMemberId (DimType.Account.Id, "AcctMemberName")
+DimTypeID Usage
+ExampleusingDimTypeId :
+APIOverview Guide 74Finance Functions APIs
+DimdimTypeId AsInteger =DimType.Account.Id
+    BRApi.ErrorLog.LogMessage (si,"DimTypeID forAccount ="&dimTypeId.ToString)
+ErrorLogResult:
+ExampleusingDimType.Account.Id inaworkingformula:
+'GetCashAccount MemberandStoreasaVariable toPassintoApi.Data.Calculate
+DimacctMember AsMember=api.Members.GetMember (DimType.Account.Id, "10000")
+    api.Data.FormulaVariables.SetMemberVariable ("variableAccount" ,acctMember)
+    api.Data.Calculate ("A#CashCalc =A${variableAccount}" )
+DataUnitDimension POV
+Storedcalculations runbasedontheDataUnitPOV. The DataUnitDimension consistsofCube,
+Entity,Parent,Consolidation, Time,andScenario. 
+Becausestoredcalculations runoffDataUnitDimensions, theseDimensions areusedaspartof
+IfStatements toexecutecalculations onconditions. The DataUnitDimensions shouldnotbe
+usedasdestination databuffers,andshouldnotbeusedonthelefthandsideoftheequationina
+api.Data.Calculate formula.
+AccountrelatedDimensions suchasAccount,Flow,andUD’sarenotavailableatrun-timeofthe
+calculations. Therefore, theycannotbeusedintheIfStatements forstoredcalculations.
+However, theyareavailableforDynamicCalculations. 
+RunforPOVandCheckMemberNamesforDataUnitDimensions BeforeExecuting Calculation:
+APIOverview Guide 75Finance Functions APIs
+lIfapi.Pov.Cube.Name.XFEqualsIgnoreCase ("CubeName") Then
+lIfapi.Pov.Entity.Name.XFEqualsIgnoreCase ("EntityName") Then
+lIfapi.Pov.Scenario.Name.XFEqualsIgnoreCase ("ScenarioName") Then
+lIfapi.Pov.Cons.Name.XFEqualsIgnoreCase ("USD")Then
+DataUnitDimension POVUsage
+Exampleusingapi.Pov.Entity.Name :
+DimentityPovName AsString=api.Pov.Entity.Name
+    BRApi.ErrorLog.LogMessage (si,"Entity PovName="&entityPovName)
+ErrorLogResult:
+Exampleusingapi.Pov.Entity.Name inaworkingformula:
+'OnlyRunCalculation ForHouston Heights
+Ifapi.Pov.Entity.Name.XFEqualsIgnoreCase ("Houston Heights" )Then
+    api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+'OnlyRunCalculation ForHouston Heights
+DimentityPovName AsString=api.Pov.Entity.name
+IfentityPovName.XFEqualsIgnoreCase ("Houston Heights" )Then
+    api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+APIOverview Guide 76Finance Functions APIs
+TimeFunctions
+ThefollowingAPIsaresomeofthemostcommontimefunctions:
+lapi.Time.GetYearFromId
+lapi.Time.GetPeriodNumFromId
+lapi.Time.GetNumDaysInTimePeriod
+lapi.Time.AddTimePeriods
+lapi.Time.AddYears
+Api.Time.GetYearFromId
+ThisfunctiongetstheyearfromthecurrentPOVTimeId. Itevaluates theyearandthen
+introduces logictoexecutetheformula. 
+Exampleusingapi.Pov.Time.MemberId inaworkingformula:
+'GetCurrent YearasInteger BasedonCurrent POVTimeId
+DimcurYear AsInteger =api.Time.GetYearFromId (api.Pov.Time.MemberId)
+'Execute Formula onlyifCurrent YearisGreater ThanorEqualto2023
+IfcurYear >=2023Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+``
+APIOverview Guide 77Finance Functions APIs
+Api.Time.GetPeriodNumFromId
+ThisfunctiongetstheperiodnumberfromthecurrentPOVTimeId.Theperiodisstaticandis
+configured witheithermonthsorweeksfollowedbytheperiodnumber. For example:M1–M12or
+W1–W54.Itevaluates theperiodnumberandthenintroduces logictoexecutetheformula.
+Api.Time.GetPeriodNumFromId Usage
+Exampleusingapi.Time.GetPeriodNumFromId :
+'GetCurrent PeriodAsInteger BasedOnCurrent POVTimeId
+DimcurPeriod AsInteger =api.Time.GetPeriodNumFromId (api.Pov.Time.MemberId)
+    BRApi.ErrorLog.LogMessage (si,"Period Number="&curPeriod)
+ErrorLogResult:
+Exampleusingapi.Time.GetPeriodNumFromId inaworkingformula:
+'GetTimeMemberIdtoGetYearandPeriod
+DimtimeIdAsInteger =api.Pov.Time.MemberId
+'GetCurrent YearAsInteger BasedOnCurrent POVTimeId
+DimcurYear AsInteger =api.Time.GetYearFromId (api.Pov.Time.MemberId)
+'GetCurrent PeriodAsInteger BasedOnCurrent POVTimeId
+DimcurPeriod AsInteger =api.Time.GetPeriodNumFromId (api.Pov.Time.MemberId)
+'Execute Formula onlyifCurrent YearisGreater thanorEqualto2018
+'ANDCurrent PeriodNumberisGreater thanorEqualto1
+IfcurYear >=2018AndcurPeriod >=1Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+APIOverview Guide 78Finance Functions APIs
+Api.Time.GetNumDaysInTimePeriod
+ThisfunctiongetsthenumberofdaysfromthecurrentPOVTimeId.Thenumberofdaysare
+alreadyprogrammed depending onthemonththatisselected. It evaluates thenumberofdaysfor
+aperiodandthenintroduces logictoexecutetheformula. 
+Api.Time.GetNumDaysInTimePeriod Usage
+Exampleusingapi.Time.GetNumDaysInTimePeriod:
+'GetCurrent NumberofDaysinTimePeriod
+DimnumDays AsInteger =api.Time.GetNumDaysInTimePeriod (api.Pov.Time.MemberId)
+    BRApi.ErrorLog.LogMessage (si,"Number ofDaysinPeriod="&numDays)
+ErrorLogResult:
+Exampleusingapi.Time.GetNumDaysInTimePeriod inaworkingformula:
+'GetTimeMemberIdtoGetYearandPeriod
+DimtimeIdAsInteger =api.Pov.Time.MemberId
+'GetCurrent YearAsInteger BasedOnCurrent POVTimeId
+DimcurYear AsInteger =api.Time.GetYearFromId (api.Pov.Time.MemberId)
+'GetCurrent PeriodAsInteger BasedOnCurrent POVTimeId
+DimcurPeriod AsInteger =api.Time.GetPeriodNumFromId (api.Pov.Time.MemberId)
+'GetCurrent NumberofDaysinTimePeriod
+DimnumDays AsInteger =api.Time.GetNumDaysInTimePeriod (api.Pov.Time.MemberId)
+'Execute Formula onlyifCurrent YearisGreater thanorEqualto2018
+'ANDCurrent PeriodNumberisGreater thanorEqualto1
+'ANDNumberofDaysisGreater thanorEqualto30Days
+IfcurYear >=2018AndcurPeriod >=1AndnumDays >=30Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+APIOverview Guide 79Finance Functions APIs
+EndIf
+Api.Time.AddTimePeriods
+ThisfunctionaddstimeperiodstothecurrentPOVTimeId.Itpassesthatdatatodifferent
+functionslikeGetPeriodNumFromId andthenintroduces logictoexecutetheformula.
+Api.Time.AddTimePeriods Usage
+Exampleusingapi.Time.AddTimePeriods:
+'GetCurrent TimeMemberId,Add2Periods, andOktoSpanYears
+'Example:  Current TimeMemberId=2018003000.  Add 2Periods, ThenMemberId=2018005000
+DimaddTime AsInteger =api.Time.AddTimePeriods (api.Pov.Time.MemberId, 2,True)
+    BRApi.ErrorLog.LogMessage (si,"AddTimePeriods ="&addTime)
+ErrorLogResult:
+Exampleusingapi.Time.AddTimePeriods inaworkingformula:
+'GetTimeMemberIdtoGetYearandPeriod
+DimtimeIdAsInteger =api.Pov.Time.MemberId
+'GetCurrent TimeMemberId,Add2Periods, andOktoSpanYears
+'Example:  Current TimeMemberId=2018003000.  Add 2Periods, ThenMemberId=2018005000
+DimaddTime AsInteger =api.Time.AddTimePeriods (api.Pov.Time.MemberId, 2,True)
+'GetPeriodfromAddTimePeriodandPassinGetPeriodNumFromId
+DimperiodNum AsInteger =api.Time.GetPeriodNumFromId (addTime)
+'Execute Formula OnlyinMarPeriod
+IfperiodNum =3Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+APIOverview Guide 80Finance Functions APIs
+Api.Time.AddYears
+ThisfunctionaddsyearstothecurrentPOVTimeId.Itpassesthatdatatodifferentfunctionslike
+GetYearFromId orGetPeriodNumFromId andthenintroduces logictoexecutetheformula. 
+Api.Time.AddYears Usage
+Exampleusingapi.Time.AddYears:
+'GetCurrent TimeMemberIdandAdd2Years
+'Example:  Current TimeMemberId=2018003000.  Add 2Years,ThenMemberId=2020003000
+DimaddYears AsInteger =api.Time.AddYears (api.Pov.Time.MemberId, 2)
+    BRApi.ErrorLog.LogMessage (si,"Added2YearsToCurrent TimePOV="&addYears)
+ErrorLogResult:
+Exampleusingapi.Time.AddYears inaworkingformula:
+'GetCurrent TimeMemberIdandAdd2Years
+'Example:  Current TimeMemberId=2018003000.  Add 2Years,ThenMemberId=2020003000
+DimaddYears AsInteger =api.Time.AddYears (api.Pov.Time.MemberId, 2)
+'GetYearfromaddYears andPassitinforGetYearFromId function
+DimfutureYear AsInteger =api.Time.GetYearFromId (addYears)
+'Execute Formula onlyinYear2020
+IffutureYear =2020Then
+'OnlyRunforBaseEntities andatLocalCurrency
+If(Notapi.Entity.HasChildren ()And(api.Cons.IsLocalCurrencyforEntity ()))Then
+        api.Data.Calculate ("A#CashCalc =A#10000" )
+EndIf
+EndIf
+APIOverview Guide 81Finance Functions APIs
+UsingMember Functions forCalculations
+Calculation Memberfunctionsarecommonly usedthroughtheFinanceApi’sforaccessing
+generalinformation foranyspecifiedMemberwithinadimension. TheMemberfunctionsallowa
+rulewritertoidentifymembers, getmemberinformation, andidentifybaseandparentmembers to
+executewithinMemberFormulas andBusinessRules.
+ThefollowingaresomeofthemostcommonMemberfunctionsforcalculations:
+lGetMember
+lGetMemberID
+lGetBaseMembers
+GetMember
+Thisfunctiongetsaspecificdimension member.Itisusedfordifferentfunctionslike
+api.Data.FormulaVariables, GetBaseMembers function,custommemberlists,andwhenworking
+withMemberIdwithindatabuffersforprocesses likecustomconsolidation.
+GetMember Usage
+ExampleusingGetMember:
+DimgetMember AsMember=api.Members.GetMember (DimType.Account.Id, "10000")
+    BRApi.ErrorLog.LogMessage (si,"Member Property Info="&getMember.ToString)
+ErrorLogResult:
+APIOverview Guide 82Finance Functions APIs
+ExampleusingGetMember inaworkingformula:
+'GetCashAccount MemberandStoreasaVariable toPassintoApi.Data.Calculate
+DimacctMember AsMember=api.Members.GetMember (DimType.Account.Id, "10000")
+    api.Data.FormulaVariables.SetMemberVariable ("variableAccount" ,acctMember)
+    api.Data.Calculate ("A#CashCalc =A${variableAccount}" )
+GetMemberId
+Thisfunctiongetsaspecificdimension memberId.Thistechnique iscommonly usedwhen
+workingwithsourceDataBufferswherethecellsforaspecificmemberIdneedtobechanged.
+GetMemberID Usage
+ExampleusingGetMemberId:
+DimgetMemberId AsInteger =api.Members.GetMemberId (DimType.Account.Id, "10000")
+    BRApi.ErrorLog.LogMessage (si,"Member Idfor10000="&getMemberId.ToString)
+ErrorLogResult:
+ExampleusingGetMemberId inaworkingformula:
+'GetMemberIdforCashCalc Account
+DimcashCalcId AsInteger =api.Members.GetMemberId (DimType.Account.Id, "CashCalc" )
+'Create adatabufferwiththecellsfrom$Actual:A#10000 andcopythecellsto
+$ActualCopy:A#CashCalc
+DimdestinationInfo AsExpressionDestinationInfo =api.Data.GetExpressionDestinationInfo
+("$#ActualCopy" )
+DimsourceDataBuffer AsDataBuffer =api.Data.GetDataBuffer
+(DataApiScriptMethodType.Calculate, "$#Actual:A#10000" ,destinationInfo)
+'CheckthatthesourceDataBufferexists
+IfNotsourceDataBuffer IsNothing Then
+APIOverview Guide 83Finance Functions APIs
+'Create anewresultdatabufferfordatacells
+DimresultDataBuffer AsDataBuffer =NewDataBuffer ()
+'Loopthrough sourcedatacellsfromthesourcedatabuffer
+ForEachsourceCell AsDataBufferCell InsourceDataBuffer.DataBufferCells.Values
+'Onlygetsourcecellsthathavedata
+If(NotsourceCell.CellStatus.IsNoData) Then
+'Copythecellfrom10000-PettyCashtoCashCalc Account inActualCopy
+Scenario
+'Thesourcedatabuffercontains sourcedatacellswith10000-PettyCash
+AccountId
+'Change thesourceAccount Idfor10000-PettyCashwiththeCashCalc Account
+Id
+DimresultCell AsNewDataBufferCell (sourceCell)
+            resultCell.DataBufferCellPk.AccountId =cashCalcId
+            resultDataBuffer.SetCell (api.DbConnApp.SI, resultCell)
+EndIf
+Next
+'SetDestination DataBufferwithnewDataBufferwithnewcellsincluding theCashCalc
+AccountId
+    api.Data.SetDataBuffer (resultDataBuffer, destinationInfo)
+EndIf
+GetBaseMembers
+Thisfunctiongetsbasemembers fromaspecificparentmember.Itiscommonly usedwhen
+workingwithMemberListsaspartofFinanceFunctionType.MemberList, ortogetbasemembers
+toloopthroughspecificdimensions forapi.Data.GetDataCell.
+GetBaseMembers Usage
+ExampleusingGetBaseMembers:
+'Retrieve BaseMembers ofServices inUD1toUseinGetDataCell Loop
+DimparentAsMember=api.Members.GetMember (DimType.UD1.Id, "Services" )
+DimserviceNames AsList(OfMember) =api.Members.GetBaseMembers (api.Pov.UD1Dim.DimPk,
+parent.MemberId, Nothing)
+'Loopthrough alltheService BaseMembers
+IfNotserviceNames IsNothing Then
+ForEachserviceName AsMemberInserviceNames
+APIOverview Guide 84Finance Functions APIs
+        BRApi.ErrorLog.LogMessage (si,"ListofBaseMembers ="&serviceName.ToString)
+ErrorLogResult:
+ExampleusingGetBaseMembers inaworkingformula:
+'Retrieve BaseMembers ofServices inUD1toUseinGetDataCell Loop
+DimparentAsMember=api.Members.GetMember (DimType.UD1.Id, "Services" )
+DimserviceNames AsList(OfMember) =api.Members.GetBaseMembers (api.Pov.UD1Dim.DimPk,
+parent.MemberId, Nothing)
+'Loopthrough alltheService BaseMembers
+IfNotserviceNames IsNothing Then
+ForEachserviceName AsMemberInserviceNames
+'GetDataCell forAllService BaseMembers asString, Decimal, andforInternational
+RuleWriting
+DimserviceNameCellString AsString=
+("#EHousehold:C#Local:$#Actual:T#2019M1:W#Periodic:A#Dept_
+Intersection:F#None:O#Forms:1#None:U1#" &serviceName.Name &":U2#UD1Default" )
+DimserviceNameCell AsDecimal =api.Data.GetDataCell
+(serviceNameCellString).CellAmount
+DimserviceNameCellText AsString=serviceNameCell.ToString ("G",
+CultureInfo.InvariantCulture)
+'Checkcellamountforintersection andthenintroduce logicbasedoncellamount
+'UseDataBufferlogicorapi.Data.Calculate withSetDataBufferVariable function
+wheninloop
+Next
+EndIf
+APIOverview Guide 85Finance Functions APIs
+WritingStoredCalculations
+WhenwritingaMemberFormulaoraBusinessRuleforaStoredCalculation, thenewcalculated
+numbersstoredataforthatCube,Entity,Parent,Cons,Scenario, andTimecombination. For
+example,aDataUnit.
+ReturnisneverseeninaMemberFormulaforFormulaPass. Instead ofbeingreturned,many
+numbersarecalculated andstored.WhenrunningaCalculation, Translation, orConsolidation, it
+callstheMemberFormulaonceforanentireDataUnit. OneStream doesnottellwithwhich
+Account,Flow,orUserDefinedthenumbersarebeingsaved.
+Initially,thismaybeconfusing becauseMemberFormulas areoftenwritteninanaccount’s
+Formulaproperty,andadministrators believeOneStream willonlyallowthatspecificMember
+Formulatowritetothatspecificaccount. However, puttingaMemberFormulainanaccount’s
+Formulapropertyisonlyfororganizational purposes. When OneStream callsthatformula,itis
+currentlycalculating aDataUnitandwillinitializetheAPIenginewithonlytheDataUnit
+Dimensions.
+Basicstoredformulasarecommonly usedviatheApi.Data.Calculate apifunction.
+Api.Data.Calculate isusedinthreedifferentways:
+lApi.Data.Calculate usingFormula asString, Overload Functions,
+EvalFunction, andIsDurableCalculatedData
+lApi.Data.Calculate usingFormula asStringand
+IsDurableCalculatedData
+APIOverview Guide 86Finance Functions APIs
+lApi.Data.Calculate usingFormula asStringandEvalFunction
+Overload Function
+ThemostcommonfunctionisApi.Data.Calculate, whichsetsthevalueofoneormoredimension
+values(leftsideofformula)equaltoanother(rightside).Finalarguments (optional) areaddedto
+theformulaforOverloadFunctions, Evals,andDurableData. 
+TheApi.Data.Calculate functionmustabidebythedataexplosion rules,whichmeansthattheleft
+sideandtherightsideoftheformulasarebalancedwiththesamedimension valuesonboth
+sides. IfaMemberisspecifiedforaDimension anywhere ontherightsideoftheequation,you
+mustexplicitlyspecifysomething forthatDimension ontheleftsideoftheequation.
+ThisvariationoftheApi.Data.Calculate providesMemberFilters(alloptional)whichcanbeused
+tofiltertheresultsbeforesavingthemtothetargetordestination. This functionisthemost
+powerfuloftheApi.Data.Calculate functionsasitallowsyoutofilterintersections. In addition,the
+Evalfunctionaddstheabilitytofilterdownthenumberofindividual datacellsprocessed bydata
+cellattributessuchasCellAmount orCellStatus.
+Thisfunctioniscommonly usedtofilterthesourcedatabufferbybasemembers ofanAccount
+relateddimension. For example,A#Salesmaybethesourcedatabufferbuttheneedforall
+productsisnotrequiredforthecalculation. Instead, A#Salesmayneedtobecalculated bythe
+basemembers ofClubs. By usingClubs.Base forA#Sales,theA#Salesdatabufferhasbeen
+reducedtoonlyincludeClubs.Base. 
+APIOverview Guide 87Finance Functions APIs
+Api.Data.Calculate Usage
+ExampleusingOverloadFunctioninaworkingformula:
+IsDurableCalculatedData
+ThisvariationofApi.Data.Calculate letsyoudefinewhetherdataisdurableornot.Durabledatais
+notclearedautomatically whenaDataUnitisre-calculated. It canonlybeclearedbycalling
+api.Data.ClearCalculatedData withtheclearDurableCalculatedData Booleanpropertysetto
+True. AspartofthestandardCalculation sequence thatrunsduringaCalculate orConsolidate,
+Durabledatawillbeignoredfromprocessing theclear,unlesstheclearisspecifically defined
+withintheBusinessRuleorMemberFormula.
+ThemostcommonreasontosettheIsDurableCalculatedData toTrueisforseedingpurposes. As
+partofthefirstseeding,thegoalmaybetoseedfromoneScenariotoanotherjustonceand
+neverseeditagain. Inthiscase,theseededdatashouldnotbeclearedatanypointduringthe
+Calculate orConsolidate process. This technique iscommonly usedinBudgetorForecast
+processes whereyouareexecuting theseedingthroughaDashboard. Theformulamaybe
+appliedasaFinanceFunctionType.CustomCalculate oraFinanceFunctionType.Calculate ina
+BusinessRule.
+IsCurableCalculatedData Usage
+ExampleusingIsDurableCalculatedData inaworkingformula:
+APIOverview Guide 88Finance Functions APIs
+CaseIs=FinanceFunctionType.CustomCalculate
+'Define auniqueFunction NamethatwillbepassedintoCustomCalculate process
+Ifargs.CustomCalculateArgs.FunctionName.XFEqualsIgnoreCase ("CopyScenario" )Then
+'Declare variables thatwillbepassedintoapi.Data.Calculate.
+'Selected valuesfromparameters willbepassedintoapi.Data.Calculate formula
+DimselectedTime AsString=args.CustomCalculateArgs.NameValuePairs ("SelectedTime" )
+DimsourceScenario AsString=args.CustomCalculateArgs.NameValuePairs
+("SourceScenario" )
+DimtargetScenario AsString=args.CustomCalculateArgs.NameValuePairs
+("TargetScenario" )
+'Onlyrunforbaseentities andlocalcurrency
+If((Notapi.Entity.HasChildren ())And(api.Cons.IsLocalCurrencyforEntity ()))Then
+'Usingapi.Data.Calculate function withformula andIsDurableCalculatedData set
+toTRUEAsBoolean.
+'Canusefilters aswell.UseRemoveNoData function orEVALtoeliminate
+processing datacellswithNODATA
+            api.Data.Calculate ("$F["&targetScenario &"]:T#["&selectedTime &"]=
+RemoveNoData ($F["&sourceScenario &"]:T#["&selectedTime &"])",True)
+EndIf
+EndIf
+EvalFunction
+Evalhasanadvanced capability thatletsyougetattheindividual DataCellsinanyDataUnit
+createdwhileprocessing anapi.Data.Calculate script.ItallowsEval()tobewrappedarounda
+subsetoftheformula’smathinordertoevaluatetheDataBufferthatwasjustcreatedbyrunning
+thatmath.
+Priortothe5.0versionandtheintroduction oftheRemoveNoData function,Evalwascommonly
+usedtoevaluateindividual datacellsinasourcedatabuffertoprocessbasedoncellamountor
+cellstatus.Evaluating thenumberofNoDataCellsforaDataUnitisanimportant factorfor
+performance andcalculation efficiencies. 
+Evalwasinitiallyanimportant functiontoevaluateindividual datacellsbutithasbeenreplaced
+withnewertechniques suchasGetDataBuffer andGetDataBufferUsingFormula, andlooping
+throughcellswithinthedatabuffer,aswellastheRemovefunctions.
+APIOverview Guide 89Finance Functions APIs
+EvalFunction Usage
+ExampleusingEvalinaworkingformula:
+Private SubOnEvalDataBuffer (ByValapiAsFinanceRulesApi, ByValevalName AsString,ByVal
+eventArgs AsEvalDataBufferEventArgs)
+Try
+'Startwithanemptylistofresultcells.
+'Goodpractice -ClearoutDataBufferResults beforeexecuting
+        eventArgs.DataBufferResult.DataBufferCells.Clear ()
+'Loopoverthesourcecellsandassignabonus%basedonlevel
+ForEachsourceCell AsDataBufferCell In
+eventArgs.DataBuffer1.DataBufferCells.Values
+'Onlygetsourcecellsthathavedataandaregreater thanorequalto0
+If(NotsourceCell.CellStatus.IsNoData) And(sourceCell.CellAmount >=0.00)Then
+'Create newdatabufferwiththefiltered datacells
+DimresultCell AsNewDataBufferCell (sourceCell)
+'Condition iflevelisgreater thanorequalto1andlessthan2
+If(sourceCell.CellAmount >=1.00)And(sourceCell.CellAmount <2.00)Then
+'Return 10%tomultiply bySalaryorA#50200
+                    resultCell.CellAmount =0.10
+'Condition iflevelisgreater thanorequalto2andlessthan3
+ElseIf(sourceCell.CellAmount >=2.00)And(sourceCell.CellAmount <3.00)
+Then
+'Return 20%tomultiply bySalaryorA#50200
+                    resultCell.CellAmount =0.20
+'Condition iflevelisgreater thanorequalto3andlessthan4
+ElseIf(sourceCell.CellAmount >=3.00)And(sourceCell.CellAmount <4.00)
+Then
+'Return 30%tomultiply bySalaryorA#50200
+                    resultCell.CellAmount =0.30
+Else
+'Allotherconditions
+'Return 5%tomultiply bySalaryorA#50200
+                    resultCell.CellAmount =0.05
+EndIf
+'Setthefinalresults ofthedatacellsfortheDataBuffer
+                eventArgs.DataBufferResult.SetCell (api.SI, resultCell, False)
+EndIf
+Next
+CatchexAsException
+ThrowErrorHandler.LogWrite (api.SI, NewXFException (api.SI, ex))
+EndTry
+APIOverview Guide 90Finance Functions APIs
+EndSub
+Summary
+TheApi.Data.Calculate istheeasiestandsimplestwaytowriteaformulaasaMemberFormula
+oraBusinessRule. The construction ofanApi.Data.Calculate formulamustbebalancedoneach
+sideoftheformulawiththeappropriate dimensions topreventdataexplosion. Therearethree
+differentwaystousetheApi.Data.Calculate function:FormulawithOverload, Formulawith
+IsDurableCalculatedData, andFormulawithEval.
+Fromaperformance perspective:
+1.NeverusetheApi.Data.Calculate inaloopwhenusingvariables.
+2.UseRemovefunctionswhenever possibleespecially forsparsedatamodelswithlotsof
+NODATA cells.
+3.GetDataBuffer andGetDataBufferUsingFormula mayhaveabetterperformance
+impact. Try replacingApi.Data.Calculate whendoingmathwithGetDataBuffer math. In
+somecases,performance isbetterbyusingGetDataBuffer functionsinplaceof
+Api.Data.Calculate.
+Remove Functions
+RemoveFunctions wereintroduced inthe5.0release. They replacedthereasonstousetheEval
+function.ThebasicneedoftheEvalfunctionwastoevaluatetheindividual datacellswithina
+sourcedatabuffertoapplylogicforprocessing. Inmanycases,OneStream didnotwantto
+processdatacellsinsourcedatabuffersthathadaCellStatusofNODATA orCellAmount=0.
+Withthe5.0release,functionsdothatwithouttheneedforwritingadditional logic.
+APIOverview Guide 91Finance Functions APIs
+TheRemoveNoData andRemoveZeros functionsprovidetheabilitytonotprocessindividual
+datacellswithinasourcedatabuffer.TheywraptheRemove()aroundasubsetoftheformulato
+preventprocessing ofindividual datacellsfromwithinasourcedatabuffer. Remove functionsare
+usedinMemberFormulas orBusinessRules.
+Removefunctionsareusedforperformance reasons. Data Unitsmaycontainagreatamountof
+NODATA datacellsor0valuedatacells.Thesecellscouldbeneedlessly processed during
+calculation execution ifthesefunctionsarenotusedinaApi.Data.Calculate formula.
+RemoveZeros
+RemoveZeros isusedtoremovedatacellswithacellamountof0fromthesourcedatabuffer. In
+addition,thisfunctionremovesdatacellswithacellstatusofNODATA fromthesourcedata
+buffer. Itisimportant toevaluateifthe0sareneededfortheApi.Data.Calculate formuladuring
+calculation execution.
+RemoveNoData
+RemoveNoData removesdatacellswithacellstatusofNODATA ONLYfromthesourcedata
+buffer. Unlike theRemoveZeros function,thisfunctiondoesnotremovedatacellswithacell
+amountof0.
+NODATA cellsand0cellscanbefoundusingthefollowingmethods:
+1.ReviewtheDataUnitStatisticswhenyouright-clickonacellinCubeView.
+2.ReviewtheApplication AnalysisDashboard andchecktheEntityDataStatisticsReport.
+APIOverview Guide 92Finance Functions APIs
+ThisisbasedontheDataUnitandEntityDataStatistics. TheremaybemanyMemberFormulas
+andBusinessRulesthataredrivingdatacreation.Therefore, allformulaswouldneedtobe
+evaluated todetermine whethertheseRemovefunctionsareused. The higherthepercentage
+ratioofNODATA cellstoTotalNumberofStoredRecords,themoreimportant itistousethese
+Removefunctions.
+Example= 3,203StoredRecordswith2,019ofthoseStoredRecordsasNODATA cells. Nearly
+65%oftheDataUnithasNODATA cellstoprocesswhichcausesextracalculation time.
+TheReviewfunctionscanbefoundinKeyFunctions underSnippets.
+APIOverview Guide 93Finance Functions APIs
+Remove Functions Usage
+ExampleusingRemoveZeros inaworkingformula:
+'Declare variable ToGetperiodnumberFromthecurrent timeperiod
+DimcurMonth AsInteger =api.Time.GetPeriodNumFromId (api.Pov.Time.MemberId)
+'RunforEntityBaseMembers Only
+If(Notapi.Entity.HasChildren ())Then
+'Checktoseeifcurrent monthisM1.
+'Ifso,pullEndingBalances fromM12prioryear.  We areusingF#Noneforthisexercise
+'IfM2-M12,pullEndingBalances orF#Nonefrompriorperiodincurrent year
+'Onlyrunthecalculation forBalance Sheetbaseaccounts
+'Remove datacellswithcellamountof0andcellstatusofNoData
+IfcurMonth =1Then
+        api.Data.Calculate ("F#BegBalCalcRemove =RemoveZeros (F#None:T#PovPriorYearM12)" ,"A#
+[Balance Sheet].Base" )
+Else
+        api.Data.Calculate ("F#BegBalCalcRemove =RemoveZeros (F#BegBalCalc:T#PovPrior1)" ,"A#
+[Balance Sheet].Base" )
+EndIf
+EndIf
+ExampleusingRemoveNoData inaworkingformula:
+'Declare variable togetperiodnumberfromthecurrent timeperiod
+DimcurMonth AsInteger =api.Time.GetPeriodNumFromId (api.Pov.Time.MemberId)
+'RunforEntityBaseMembers Only
+If(Notapi.Entity.HasChildren ())Then
+'Checktoseeifcurrent monthisM1.
+'Ifso,pullEndingBalances fromM12prioryear.  We areusingF#Noneforthisexercise
+'IfM2-M12,pullEndingBalances orF#Nonefrompriorperiodincurrent year
+'Onlyrunthecalculation forBalance Sheetbaseaccounts
+'Remove datacellswithcellstatusofNoDataONLY
+IfcurMonth =1Then
+        api.Data.Calculate ("F#BegBalCalcRemove =RemoveNoData (F#None:T#PovPriorYearM12)" ,
+"A#[Balance Sheet].Base" )
+Else
+        api.Data.Calculate ("F#BegBalCalcRemove =RemoveNoData (F#BegBalCalc:T#PovPrior1)" ,
+"A#[Balance Sheet].Base" )
+EndIf
+EndIf
+APIOverview Guide 94Finance Functions APIs
+GetDataBuffer Functions
+AMemberScriptmaynotbedefinedfortheApi.Data.Calculate functionbecausemultipleData
+Cells,whichseemcompletely unrelated toeachother,arebeingprocessed andnoneofthe
+Dimension Members areconstant. For thosesituations, usetheGetDataBuffer and
+SetDataBuffer functions.
+GetDataBuffer andSetDataBuffer aremorefundamental thanusinganEvalfunction. They allow
+youtoreadnumbersusingaMemberScript,processormodifyeachcellintheresult,andthen
+savethechanges. Common GetDataBuffer functionsinclude:
+lGetDataBuffer
+lGetDataBufferForCustomShareCalculation
+lGetDataBufferForCustomElimCalculation
+lGetDataBufferUsingFormula
+lSetDataBuffer
+Whenusingapi.Data.Calculate functions, itisimportant toknowwhichMemberaformulais
+attachedto.Forexample,iftheformulastartswithApi.Data.Calculate (“A#Sales1 =…”),putthe
+formulaintheSales1accountMember’s Formulasetting.
+However, whenusingGetDataBuffer functions, theformulamaynotbewritingtoaspecific
+Member.EveryDataCellsavedispossiblywrittentoadifferentdimension member. In thiscase,
+thelogiccanbedeveloped inaBusinessRuleandcouldbecreatedasaSubroutinetoexecute
+throughout FinanceBusinessRules.
+APIOverview Guide 95Finance Functions APIs
+GetDataBuffer Function
+GetDataBuffer retrievesaDataUnit’svaluesduringaparticularconsolidation, calculation, or
+translation. When usingGetDataBuffer, thisisequivalent tothesourcedatabufferortotheright
+sideoftheequationforApi.Data.Calculate. Depending onwhichGetDataBuffer functionyouare
+using,threeorfourproperties canbeused. 
+ForthebasicGetDataBuffer, threeproperties areused:
+lScriptMethodType AsDataApiScriptMethodType
+lSourceDataBufferScript AsString
+lExpressionDestinationInfo AsExpressionDestinationInfo
+ThescriptMethodType typicallyusestheCalculate optionforDataApiScriptMethodType.
+ThesourceDataBufferScript isequivalent totherightsideoftheequationforthe
+Api.Data.Calculate.
+TheexpressionDestinationInfo isequivalent totheleftsideoftheequationforthe
+Api.Data.Calculate. Frequently, thisgetsmanipulated usingtheDimension Id,passinginthe
+Dimension MemberIdforthedatabufferprimarykey.
+TheGetDataBuffer canbeusedinvariousways,andisnotlimitedtothefollowing:
+1.UseDataBufferstoperformDataBuffermath.Insomecases,thiscanperformbetterthan
+anApi.Data.Calculate.
+2.UseGetDataBuffer inplaceofApi.Data.Calculate touseinSubroutineswhichexecute
+codeandinstructions, arestoredinmemory,andareusedwithinFunctions throughout
+FinanceBusinessRules.
+APIOverview Guide 96Finance Functions APIs
+GetDataBuffer Usage
+ExampleusingGetDataBuffer withDataBufferMathinaworkingformula:
+'Alternate waytoapi.Data.Calculate ("A#DataBufferMath:UD2#None =A#60999:UD2#Top -
+A#54500:UD2#Top").  May havebetterperformance impact.
+'RunonlyforLocalCurrency andBaseEntities
+If(Notapi.Entity.HasChildren ())And(api.Cons.IsLocalCurrencyforEntity ())Then
+'Declare Variable forDestination Buffer
+DimdestinationInfo AsExpressionDestinationInfo =api.Data.GetExpressionDestinationInfo
+("A#DataBufferMath:UD2#None" )
+'GetSourceDataBufferforNetSales
+DimnetSales AsDataBuffer =api.Data.GetDataBuffer (DataApiScriptMethodType.Calculate,
+"RemoveNoData (A#60999:UD2#Top)" ,destinationInfo)
+'GetSourceDataBufferforOperating Expenses
+DimoperatingExpenses AsDataBuffer =api.Data.GetDataBuffer
+(DataApiScriptMethodType.Calculate, "RemoveNoData (A#54500:UD2#Top)" ,destinationInfo)
+'Create NewDataBufferWiththeEndResultofNetSales-Operating Expenses
+DimdataBufferExample AsDataBuffer =(netSales -operatingExpenses)
+'SettheDestination DataBuffer
+    api.Data.SetDataBuffer (dataBufferExample, destinationInfo)
+EndIf
+ExampleusingGetDataBuffer andSetDataBuffer inBusinessRuleUsingSubRoutineina
+workingformula:
+CaseIs=FinanceFunctionType.Calculate
+'Execute SubRoutine intheFunction toReturnResults
+Me.CalculateBonusUsingGetDataBuffer (api)
+Private SubCalculateBonusUsingGetDataBuffer (ByValapiAsFinanceRulesApi)
+Try
+'Define Destination DataBufferforleftsideoftheequation
+'WillcopytoA#Bonus whileprocessing thedatabufferinmemory
+DimdestinationInfo AsExpressionDestinationInfo =
+api.Data.GetExpressionDestinationInfo ("")
+APIOverview Guide 97Finance Functions APIs
+'Readthenumbers forA#Salary intoasourceDataBuffer
+DimsourceDataBuffer AsDataBuffer =api.Data.GetDataBuffer
+(DataApiScriptMethodType.Calculate, "A#Salary" ,destinationInfo)
+'ChecktomakesurethesourceDataBufferexists
+IfNotsourceDataBuffer IsNothing Then
+'Create anewdatabufferfortheresultcells
+DimresultDataBuffer AsDataBuffer =NewDataBuffer ()
+'LoopoverthesourcecellsinthesourceDataBuffer
+ForEachsourceCell AsDataBufferCell InsourceDataBuffer.DataBufferCells.Values
+'Onlyprocess cellsthathavedataandcellamountthatisgreater than0
+If((NotsourceCell.CellStatus.IsNoData) And(sourceCell.CellAmount >0.00))
+Then
+'Create newdatabuffercellsfromthefiltered sourcecellsfromsource
+DataBuffer
+DimresultCell AsNewDataBufferCell (sourceCell)
+'Define A#Bonus asthetargetaccount tocopyto
+'Multiply datacellamounts by5%
+'Setthemanipulated datacellstothedatabuffer
+                    resultCell.DataBufferCellPk.AccountId =api.Members.GetMemberId
+(DimType.Account.Id, "Bonus")
+                    resultCell.CellAmount =sourceCell.CellAmount *0.05
+                    resultDataBuffer.SetCell (api.SI, resultCell)
+EndIf
+Next
+'Savetheresults tothedestination databuffer
+            api.Data.SetDataBuffer (resultDataBuffer, destinationInfo)
+EndIf
+CatchexAsException
+ThrowErrorHandler.LogWrite (api.si, NewXFException (api.si, ex))
+EndTry
+EndSub
+APIOverview Guide 98Finance Functions APIs
+Unbalanced MathFunctions
+Unbalanced MathFunctions
+Unbalanced mathfunctionsarerequiredwhenperforming mathwithtwoDataBuffers,wherethe
+secondDataBufferneedstospecifyadditional dimensionality. ThetermUnbalanced isused
+becausethescriptforthesecondDataBuffercanrepresent adifferentsetofDimensions fromthe
+otherDataBufferintheapi.Data.Calculate text. These functionspreventdataexplosion. The four
+Unbalanced Mathfunctionsare:
+lAddUnbalanced
+oExample: api.Data.Calculate ("A#TargetAccount =AddUnbalanced
+(A#OperatingSales, A#DriverAccount:U2#Global, U2#Global)")
+lSubtractUnbalanced
+oExample: api.Data.Calculate ("A#TargetAccount =SubtractUnbalanced
+(A#OperatingSales, A#DriverAccount:U2#Global, U2#Global)")
+lMultiplyUnbalanced
+oExample: api.Data.Calculate ("A#TargetAccount =MultiplyUnbalanced
+(A#OperatingSales, A#DriverAccount:U2#Global, U2#Global)")
+lDivideUnbalanced
+oExample: api.Data.Calculate ("A#TargetAccount =DivideUnbalanced
+(A#OperatingSales, A#DriverAccount:U2#Global, U2#Global)")
+APIOverview Guide 99Finance Functions APIs
+WhenusingUnbalanced Mathfunctions, thefirsttwoparameters represent thefirstandsecond
+DataBuffersonwhichtoperformthefunction. The thirdparameter represents theMembers to
+usefromthesecondDataBufferwhenperforming mathwitheveryintersection inthefirstData
+Buffer.Themathfavorstheintersections inthefirstDataBufferwithoutcreatingadditional
+intersections.
+Itisimportant thatthedimensionality oftheTarget(leftsideoftheequation) matchesthe
+dimensionality ofthefirstdatabufferontherightsideoftheequation(argument 1).
+Often,thesefunctionswouldbeusedwhenonesourcedatabufferisdoingmathwithaspecific
+datacellintersection. This couldbearate,driver,orsomedatacellinput.
+Unbalanced MathFunctions Usage
+ExampleusingMultiplyUnbalanced inaworkingformula:
+'Calculate Salary(A#50200) timesBonusPercent tocreateBonusnumber.  Use
+MultiplyUnbalanced formula tocalculate.
+'Useatechnique toNotProcess NoDataCellsand0DataCellsforSalaryaccount
+'1stproperty isthedatabufferwiththeleastdimensions andmatches dimensionality of
+destination databuffer. FollowDataExplosion rules
+'2ndProperty isthedatabufferwiththemostdimensions
+'3rdProperty isthelistofaccount related dimensions thatmakeitunbalanced
+'RunforonlyBaseEntities andLocalCurrency
+If(Notapi.Entity.HasChildren ())And(api.Cons.IsLocalCurrencyforEntity ())Then
+    api.Data.Calculate ("A#BonusUnbalanced =MultiplyUnbalanced (RemoveZeros (A#50200),
+A#BonusPercent:F#None:O#Forms:I#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None:U8#Non
+e,F#None:O#Forms:I#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None:U8#None)" )
+EndIf
+APIOverview Guide 100Finance Functions APIs
+GetDataBufferUsingFormula Function
+TheGetDataBufferUsingFormula functionusesanentiremathexpression tocalculateafinaldata
+buffer. GetDataBufferUsingFormula canperformthesamedatabuffermathas
+Api.Data.Calculate, buttheresultisassignedtoavariable,whereApi.Data.Calculate actually
+savesthecalculated data. 
+GetDataBufferUsingFormula calculates multiplesourcedatabuffersfirst. Then, theresultofthe
+mathisstoredinmemoryusingaFormulaVariable. Finally, theFormulaVariableisused
+anywhere withintheMemberFormulaorBusinessRule.Thisfunctioniscommonly usedduring
+rulewritingforPlanningBusinessRulesusingMultiplyUnbalanced,  DivideUnbalanced, Trailing
+functionssuchastrailing12months,andAllocations. 
+WhenusingGetDataBufferUsingFormula, FilterMembers andRemoveMembers areusedin
+conjunction toshrinkdowndimensional members inthesourceDataBuffer.
+FilterMembers
+FilterMembers changeadatabufferandonlyincludenumbersforthespecifiedDimensions. The
+firstparameter isthestartingdatabuffer.Thiscanbeavariablenameoranentiremathequation
+inparentheses. There canbeasmanyparameters asneededtospecifyMemberFiltersand
+differentMemberFilterscanbeusedformultipleDimension types. The resultingfiltereddata
+bufferwillonlycontainnumbersthatmatchtheMembers inthefilters.
+GetDataBufferUsingFormula Usage
+ExampleusingGetDataBufferUsingFormula inaworkingformula:
+'Alternate waytoapi.Data.Calculate ("A#DataBufferMathUsingFormula:UD2#None =
+A#60999:UD2#Top -A#54500:UD2#Top").  May havebetterperformance impactusing
+GetDataBufferUsingFormula
+APIOverview Guide 101Finance Functions APIs
+'Standard GetDataBufferUsingFormula formula
+If((Notapi.Entity.HasChildren ())And(api.Cons.IsLocalCurrencyforEntity ()))Then
+'GetDataBufferbyusingGetDataBufferUsingFormula todothemath
+DimdataBufferExample AsDataBuffer =api.Data.GetDataBufferUsingFormula ("RemoveNoData
+(A#60999:UD2#Top) -RemoveNoData (A#54500:UD2#Top)" )
+'SetDataBufferVariable topassintoapi.Data.Calculate formula.  Can beusedfor
+multiple instances ofapi.Data.Calculate
+'Create auniquenametonametheDataBufferasaformula Variable
+    api.Data.FormulaVariables.SetDataBufferVariable ("dataBufferExample" ,dataBufferExample,
+False)
+'Passvariable intoapi.Data.Calculate usinga$
+'Canpassthisvariable tootherapi.Data.Calculate, GetDataBufferUsingFormula, orSub
+routines
+    api.Data.Calculate ("A#DataBufferMathUsingFormula:UD2#None =$dataBufferExample" )
+EndIf
+ExampleusingGetDataBufferUsingFormula withFilterMembers andMultipleUnbalanced ina
+workingformula:
+'UseDataBufferUsingFormula tofilterspecific members
+'1stargument inside()isthestarting databuffer
+'2ndargument isthefilterbasedonthestarting databuffer
+'Cancontinue toaddfilters separated byacomma
+DimsalesExp AsDataBuffer =api.Data.GetDataBufferUsingFormula ("RemoveZeros (FilterMembers
+(A#All,A#TotalExp.Base))" )
+'SetDataBufferVariable topasssalesExp toanyotherformula
+api.Data.FormulaVariables.SetDataBufferVariable ("salesExp" ,salesExp, False)
+'UseMultiplyUnbalanced tomultiply allExpense Accounts byaspecific datacell
+intersection anddivideby12
+'1stargument isformula variable multiplied by2ndargument whichisanindividual data
+cellintersection
+'3rdargument isthedimensions thatmakeitunbalanced
+DimresultAsDataBuffer =api.Data.GetDataBufferUsingFormula ("MultiplyUnbalanced ($salesExp,
+(#EGlobal:W#YTD:A#RateAccount:C#USD:F#None:O#BeforeAdj:I#None:U1#None:U2#None:U3#None:U4#Non
+e/12),E#Global:W#YTD:C#USD:F#None:O#BeforeAdj)" )
+'SetDataBufferVariable topassresulttoanyothermemberformula
+api.Data.FormulaVariables.SetDataBufferVariable ("result" ,result, True)
+'Calculate usingDataBufferVariable.  Can doadditional mathinsideapi.Data.Calculate
+api.Data.Calculate ("W#Periodic =$result" )
+APIOverview Guide 102Finance Functions APIs
+DataFrame Methods
+ADataFrame isanin-memory,tabulardatastructuredesignedforflexibledatamanipulation
+outsideofthecube.Itprovidesapowerfulwaytoretrieve,transform, andanalyzedatafrom
+multiplesources,includingSQLqueries,DataAdapters, anddynamicsystemobjects.
+DataFrames supportoperations similartotraditional tablesbutoptimized forOneStream’s
+analyticsworkflows, allowinglargedatasetstobeprocessed efficiently. DataFrames canalsobe
+converted tolegacytypessuchasDataTable orDataSetforcompatibility withexistingandlegacy
+processes.
+Thistopiccoversthefollowing:
+lDataFrame NameSpace
+lBasicDataFrame Functions
+lQuickstart DataFrame Examples
+Forinformation aboutIDataFrame, seeIDataFrame Interface.
+DataFrame NameSpace
+TouseaDataFrame inarule,makesuretheOneStream.Data.DataFrame and
+OneStream.Data.DataFrame.Abstractions NameSpaces areincluded.
+C#:
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+APIOverview Guide 103DataFrame Methods
+VB:
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+BasicDataFrame Functions
+ThefollowingBRApi.Database functionsareavailabletocreateDataFrame objects::
+lGetDataFrame :CreatesaDataFrame andpopulates itusingadatabasequery.See
+GetDataFrame .
+lCreateDataFramewithColumns :Createsanemptytablewithcolumnnames.See
+CreateDataFramewithColumns .
+lCreateDataFrame :Createsanemptytableinmemorythatcanbepopulated. See
+DataFrame Methods.
+lCreateEmptyDataFrame :Createsanemptytable.SeeCreateEmptyDataFrame .
+APIOverview Guide 104DataFrame Methods
+GetDataFrame
+BRApi.Database.GetDataFrame (dbConn, dataFrameName, sqlStatement,
+dbParamsInfos, useCommandTimeoutLarge)
+ExecuteanSQLqueryandreturnaDataFrame instance.Theseparameters areused:
+Parameter Type Description
+dbConn DbConnInfo Database connection torun
+theSQLselectstatement
+against.
+dataFrameName string NameoftheDataFrame.
+sqlStatement string SQLstatement tobe
+executed.
+dbParamInfos (optional) List<DbParamInfo> AlistofDbParamInfo objects
+thatcanbeusedtosubstitute
+SQLparameter names
+prefixedwith@usingthe
+associated parameter value.
+useCommandTimeoutLarge bool Switchusedtoindicateifthe
+standardsystemlargetimeout
+valueshouldbeusedforthe
+statement execution.
+APIOverview Guide 105DataFrame Methods
+ExampleinC#
+//getDataFrame usingaquery
+varmyFrame =BRApi.Database. GetDataFrame (dbConn, "myFrame" ,"SELECT *FROMMyTable" ,
+useLargeTimeout);
+varmyFrame =BRApi.Database. GetDataFrame (dbConn, "myFrame" ,"SELECT *FROMMyTable where
+E=@entity" ,myDbParamInfos, useLargeTimeout);
+ExampleinVB:
+'getDataFrame usingaquery
+DimmyFrame =BRApi.Database.GetDataFrame (dbConn, "myFrame" ,"SELECT *FROMMyTable" ,
+useLargeTimeout)
+DimmyFrame =BRApi.Database.GetDataFrame (dbConn, "myFrame" ,"SELECT *FROMMyTable WHERE
+E=@entity" ,myDbParamInfos, useLargeTimeout)
+CreateDataFramewithColumns
+BRApi.Database.CreateDataFramewithColumns (dataFrameName, columnsInfo)
+CreateaDataFrame withaspecifiedsetofcolumns.Ifthetypeofcolumndataisnotspecified, it
+defaultstoString.Theseparameters areused:
+Parameter Type Description
+dataFrameName string NameoftheDataFrame.
+columnsInfos List<string> or
+Dictionary<string,
+XFDataType>Alistofcolumnnamesusedforthe
+DataFrame, oradictionary wherekeysare
+columnnamesandvaluesareXFDataType
+constants thatspecifythetypeofdatafor
+eachcolumn.
+APIOverview Guide 106DataFrame Methods
+ExampleinC#:
+//createemptyDataFrame withcolumns
+varmyFrame =BRApi.Database. CreateDataFrameWithColumns ("myFrame" ,colNames);
+varmyFrame =BRApi.Database. CreateDataFrameWithColumns ("myFrame" ,colNamesAndTypesDict);
+ExampleinVB:
+'createemptyDataFrame withcolumns
+DimmyFrame2 =BRApi.Database.CreateDataFrameWithColumns ("myFrame" ,colNames)
+DimmyFrame2 =BRApi.Database.CreateDataFrameWithColumns ("myFrame" ,colNamesAndTypesDict)
+CreateEmptyDataFrame
+BRApi.Database.CreateEmptyDataFrame (dataFrameName)
+ProduceanemptyDataFrame withdefaultproperties. Theseparameters areused:
+Parameter Type Description
+dataFrameName string NameoftheDataFrame.
+ExampleinC#:
+//createemptyDataFrame
+varmyFrame =BRApi.Database. CreateEmptyDataFrame ("myFrame" );
+ExampleinVB:
+'createemptyDataFrame
+DimmyFrame1 =BRApi.Database.CreateEmptyDataFrame ("myFrame" )
+APIOverview Guide 107DataFrame Methods
+Quickstart DataFrame Examples
+Thefollowingsnippetsshowasetofcommontechniques toworkwithDataFrames. Consultthe
+classreference forthecompleteapidescription.
+Convert DataFrame toLegacyTypes
+UsetoDataTable (),toDataTable (),toDataTable (),andtoDataTable ()toconvert
+datatoaDataTable, XFDataTable, DataSetorRowsArray.
+ExampleinC#:
+//convert toDataTable
+DataTable myDataTable =myDataFrame. toDataTable ();
+//convert toXFDataTable
+XFDataTable myXFDataTable =myDataFrame. toXFDataTable ();
+//convert toDataSet
+DataSet myDataSet =myDataFrame. toDataSet ();
+//convert toRowsArray
+object[][]myNestedArray =myDataFrame. toRowsArray ();
+ExampleinVB:
+'convert toDataTable
+DimDataTable AsmyDataTable =myDataFrame.toDataTable ()
+'convert toXFDataTable
+DimXFDataTable AsmyXFDataTable =myDataFrame.toXFDataTable ()
+'convert toDataSet
+DimDataSet AsmyDataSet =myDataFrame.toDataSet ()
+'convert toRowsArray
+object[][]myNestedArray =myDataFrame.toRowsArray ()
+APIOverview Guide 108DataFrame Methods
+GetMetadata fromDataFrame
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+//metadata
+intnumColumns =myDataFrame.ColumnsCount;
+intnumRows =myDataFrame.RowCount;
+string[]columnNames =myNewFrame. GetAllColumnNames ();
+GetDataFrame Column byPosition
+Getcolumndatabynameorordinalposition.
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+//getcolumns bynameorbyordinal position
+DataFrameColumn myColumn =myNewFrame. GetColumn ("Price");
+DataFrameColumn myColumn =myNewFrame. GetColumn (3);
+AssignMetadata toColumns
+UseaddColumn ()towritemetadata tocolumns.
+ExampleinC#
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+//columns carrymetadata
+TypecolType =myColumn.Type;
+stringcolName =myColumn.Name;
+//definecolumns
+myFrame. AddColumn (newDataFrameColumn< string>("colA"));
+myFrame. AddColumn (newDataFrameColumn< int>("colB"));
+APIOverview Guide 109DataFrame Methods
+ExampleinVB:
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+'columns carrymetadata
+DimcolType AsType=myColumn.Type
+DimcolName AsString=myColumn.Name
+'definecolumns
+myFrame.AddColumn (NewDataFrameColumn (OfString)("colA"))
+myFrame.AddColumn (NewDataFrameColumn (OfInteger)("colB"))
+AddandRetrieve Data
+UseaddRow()towritenewrowswithvaluestoaDataFrame orGetColumn (),GetValue (),
+GetValueAsString (),orGetColumnOrdinal ()toretievedatafromaDataFrame.
+ExampleinC#
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+//addandretrieve data
+object[]inValues ={ "valueField1" ,23};
+myFrame. addRow(inValues);
+for(intc=0;c<df.ColumnsCount; c++){
+for(intr=0;r<df.RowCount; r++){
+intmyInt=(int)myFrame. GetColumn (c).GetValue (r)
+stringmyStr=(string)myFrame. GetColumn (c).GetValueAsString (r);  
+}};
+intmyInt=(int)myFrame. GetValue (0,myFrame. GetColumnOrdinal ("colB"));
+ExampleinVB:
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+'addandretrieve data
+DiminValues AsObject()={"valueField1" ,23}
+myFrame.addRow (inValues)
+ForcAsInteger =0Todf.ColumnsCount -1
+APIOverview Guide 110DataFrame Methods
+ForrAsInteger =0Todf.RowCount -1
+DimmyIntAsInteger =CType(myFrame.GetColumn (c).GetValue (r),Integer)
+DimmyStrAsString=CType(myFrame.GetColumn (c).GetValueAsString (r),String)
+Next
+Next
+DimmyIntAsInteger =CType(myFrame.GetValue (0,myFrame.GetColumnOrdinal ("colB")),Integer)
+DataFrame Conversion
+DataFrames canbeslicedthroughconversion.
+ExampleinC#:
+varmyFrame =BRApi.Database. GetDataFrame (...)
+varoptions =DataFrameConversionOptions ()
+options.MaxRows =100
+options.StartRow =10
+varmyXfDataTable =myFrame. ToXFDataTable (options)
+ExampleinVB:
+DimmyFrame =BRApi.Database.GetDataFrame (...)
+Dimoptions AsNewDataFrameConversionOptions ()
+options.MaxRows =100
+options.StartRow =10
+DimmyXfDataTable =myFrame.ToXFDataTable (options)
+Logs
+UseErrorLog.LogMessage ()towriteDataFrame contenttothelog.
+ExampleinC#:
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+APIOverview Guide 111DataFrame Methods
+//Convert thefirst10rowstostringforlogging
+BRApi.ErrorLog. LogMessage (si,"DataFrame TestOutput",myFrame. Peek(10));
+ExampleinVB:
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+'Convert thefirst10rowstostringforlogging
+BRApi.ErrorLog.LogMessage (si,"DataFrame TestOutput",myFrame.Peek (10))
+CreateDataFrame fromDataAdapter
+ExampleinC#:
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+//LookupaDataAdapter anduseitsquery–9.1+
+//note:requires PowerBI Connector support enabled
+varmyFrame =BRApi.Analytics. GetDataFrameForAdapter (si,isSystemLevel, 
+"myWorkspace" ,"myAdapter" ,"myResultTable" ,customSubstVars, null);
+ExampleinVB:
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+'LookupaDataAdapter anduseitsquery–9.1+
+'note:requires PowerBI Connector support enabled
+DimmyFrame =BRApi.Analytics.GetDataFrameForAdapter (si,isSystemLevel, 
+"myWorkspace" ,"myAdapter" ,"myResultTable" ,customSubstVars, null)
+APIOverview Guide 112DataFrame Methods
+CreateaDashboard DataSet Service
+Thefollowingexampleimplements aDashboard DataSetusingafewdifferenttechniques. The
+firstandseconddatasetsaregenerated byretrievingatableusingGetDataFrame ()andcalling
+ToDataSet ()toreturnaDataSetobject.ThelastonecreatesaDataFrame using
+CreateDataFrameWithColumns ()andthenusesToDataTable ()toexportadatatable.
+ExampleinC#:
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingMicrosoft.CSharp;
+usingOneStream.Finance.Database;
+usingOneStream.Finance.Engine;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingOneStream.Stage.Database;
+usingOneStream.Stage.Engine;
+usingOneStreamWorkspacesApi;
+usingOneStreamWorkspacesApi.V800;
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+{
+publicclassDatasetWithDataFrame :IWsasDataSetV800
+{
+publicobject GetDataSet (SessionInfo si,BRGlobals brGlobals, DashboardWorkspace
+workspace, DashboardDataSetArgs args)
+{
+try
+{
+if((brGlobals !=null)&&(workspace !=null)&&(args!=null))
+{
+if(args.DataSetName. XFEqualsIgnoreCase ("HelloDataFrame" )){
+//simplequery
+booluseLargeCommandTimeout =false;
+stringframeName  = "MyOutFrame" ;
+stringsql="SELECT *FROMDim";//listallDimensions
+APIOverview Guide 113DataFrame Methods
+using(DbConnInfo dbConn=BRApi.Database. CreateApplicationDbConnInfo
+(si)){    
+//***maincall-execute SQLandreturnadataframe ***
+varmyFrame =BRApi.Database. GetDataFrame (dbConn, frameName,
+sql,useLargeCommandTimeout);
+//oncewegetthedataframe, convert ittolegacytypethatthe
+ruleexpects
+//Hereyoucanuse.ToDataTable ()or.ToDataSet ()
+returnmyFrame. ToDataSet ();
+                        }
+                    } elseif(args.DataSetName. XFEqualsIgnoreCase ("QueryWithParams" )){
+//  query withparameters
+//basicsettings
+booluseLargeCommandTimeout =false;
+stringframeName  = "MyOutFrame" ;
+stringdimTypeStr =args.NameValuePairs. XFGetValue ("Dim","A");
+boolisParent, isCube, isBRFN;
+                        DimType dimTypeObj =DimType. GetItemFromAbbreviation (dimTypeStr, 
+outisParent, outisCube, outisBRFN);
+//defineparameters asnamesstarting with@
+stringsql="SELECT *FROMDimWHEREDimTypeId =@dTypeId" ; 
+//associate yourvaluestotheparamnames
+varmyParams =newList<DbParamInfo> {
+newDbParamInfo ("dTypeId" ,dimTypeObj.Id)};
+//execute
+using(DbConnInfo dbConn=BRApi.Database. CreateApplicationDbConnInfo
+(si)){        
+//***maincall-execute SQLandreturnadataframe ***
+varmyFrame =BRApi.Database. GetDataFrame (dbConn, frameName,
+sql,myParams, useLargeCommandTimeout);
+//convert toexpected legacytype
+returnmyFrame. ToDataSet ();
+                        }
+                    } elseif(args.DataSetName. XFEqualsIgnoreCase ("FromScratch" )){
+//specify typeforeachcolumn(optional)
+varcolumns =newDictionary< string,XFDataType> {
+{"Strings" ,XFDataType.Text},
+{"Ints",XFDataType.Int32},
+{"Bools",XFDataType.Boolean},
+{"Datetimes" ,XFDataType.DateTime},
+{"Decimals" ,XFDataType.Decimal},
+{"Guids",XFDataType.Guid},
+{"WeirdosAsString" ,XFDataType.WorkflowTrackingFrequency}
+                            };
+//createandpopulate dataframe
+varmyDf=BRApi.Database. CreateDataFrameWithColumns ("Output Frame",
+columns);
+                        myDf. AddRow(newobject[]{ "MyText",42,true,DateTime.Now, 10.3m,
+Guid.Empty, WorkflowTrackingFrequency.HalfYearly });
+//convert toexpected legacytype
+APIOverview Guide 114DataFrame Methods
+returnmyDf.ToDataTable ();
+                    } 
+                }
+return null;
+            }
+catch(Exception ex)
+{
+thrownewXFException (si,ex);
+            }
+        }
+    }
+}
+ExampleinVB:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports Microsoft.VisualBasic
+Imports OneStream.Finance.Database
+Imports OneStream.Finance.Engine
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Database
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Wcf
+Imports OneStream.Stage.Database
+Imports OneStream.Stage.Engine
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+Imports OneStreamWorkspacesApi
+Imports OneStreamWorkspacesApi.V800
+Namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+PublicClassDatasetWithDataFrame
+Implements IWsasDataSetV800
+PublicFunction GetDataSet (ByValsiAsSessionInfo, ByValbrGlobals AsBRGlobals,
+ByValworkspace AsDashboardWorkspace, _
+ByValargsAsDashboardDataSetArgs) AsObjectImplements
+IWsasDataSetV800.GetDataSet
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)AndAlso (args
+IsNotNothing)Then
+'simplequery
+APIOverview Guide 115DataFrame Methods
+Ifargs.DataSetName.XFEqualsIgnoreCase ("HelloDataFrame" )Then
+DimuseLargeCommandTimeout AsBoolean =False
+DimframeName AsString="MyOutFrame"
+DimsqlAsString="SELECT *FROMDim" 'Listall
+Dimensions
+UsingdbConnAsDbConnInfo =
+BRApi.Database.CreateApplicationDbConnInfo (si)
+'***maincall-execute SQLandreturnadataframe ***
+DimmyFrame =BRApi.Database.GetDataFrame (dbConn, frameName,
+sql,useLargeCommandTimeout)
+'Oncewegetthedataframe, convert ittolegacytypethatthe
+ruleexpects
+'Hereyoucanuse.ToDataTable ()or.ToDataSet ()
+ReturnmyFrame.ToDataSet ()
+EndUsing
+ElseIfargs.DataSetName.XFEqualsIgnoreCase ("QueryWithParams" )Then
+'querywithparameters
+'basicsettings
+DimuseLargeCommandTimeout AsBoolean =False
+DimframeName AsString="MyOutFrame"
+DimdimTypeStr AsString=args.NameValuePairs.XFGetValue ("Dim",
+"A")
+DimisParent, isCube, isBRFNAsBoolean
+DimdimTypeObj AsDimType =DimType.GetItemFromAbbreviation
+(dimTypeStr, _
+                                                                            isParent,
+isCube, isBRFN)
+'defineparameters starting with@
+DimsqlAsString="SELECT *FROMDimWHEREDimTypeId =@dTypeId"
+'associate yourvaluestoparamnames
+DimmyParams =NewList(OfDbParamInfo) From{
+NewDbParamInfo ("dTypeId" ,dimTypeObj.Id)
+                        }
+'execute
+UsingdbConnAsDbConnInfo =
+BRApi.Database.CreateApplicationDbConnInfo (si)
+'***maincall-execute SQLandreturnadataframe ***
+DimmyFrame =BRApi.Database.GetDataFrame (dbConn, frameName,
+sql,myParams, useLargeCommandTimeout)
+'convert toexpected legacytype
+ReturnmyFrame.ToDataSet ()
+EndUsing
+ElseIfargs.DataSetName.XFEqualsIgnoreCase ("FromScratch" )Then
+'specify typeforeachcolumn(optional, defaults tostring
+otherwise)
+Dimcolumns =NewDictionary (OfString,XFDataType) From{
+{"Strings" ,XFDataType. Text},
+{"Ints",XFDataType.Int32},
+{"Bools",XFDataType. Boolean},
+APIOverview Guide 116DataFrame Methods
+{"Datetimes" ,XFDataType.DateTime},
+{"Decimals" ,XFDataType. Decimal},
+{"Guids",XFDataType.Guid},
+{"WeirdosAsString" ,XFDataType.WorkflowTrackingFrequency}
+                        }
+'createandpopulate dataframe
+DimmyDf=BRApi.Database.CreateDataFrameWithColumns ("Output Frame",
+columns)
+                        myDf.AddRow (NewObject(){"MyText",42,True,DateTime.Now, 10.3D,
+Guid.Empty, WorkflowTrackingFrequency.HalfYearly})
+'convert toexpected legacytype
+ReturnmyDf.ToDataTable ()
+EndIf
+EndIf
+ReturnNothing
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+EndClass
+EndNamespace
+CreateaDynamic Grid
+ThefollowingexampleshowshowtocreateaDynamicGridServiceby:
+lUsingacustomtable.
+lPopulating defaultvaluesifthetabledoesnotexist.
+lWritingdatabacktothetableonedit.
+ExampleinC#:
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingSystem.Text;
+APIOverview Guide 117DataFrame Methods
+usingMicrosoft.CSharp;
+usingOneStream.Finance.Database;
+usingOneStream.Finance.Engine;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingOneStream.Stage.Database;
+usingOneStream.Stage.Engine;
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+usingOneStreamWorkspacesApi;
+usingOneStreamWorkspacesApi.V800;
+namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+{
+publicclassDynamicGridWithDataFrame :IWsasDynamicGridV800
+{
+private stringcustomTable ="XXX_DataFrameSamples" ;
+publicXFDynamicGridGetDataResult GetDynamicGridData (SessionInfo si,BRGlobals
+brGlobals, DashboardWorkspace workspace, DashboardDynamicGridArgs args)
+{
+try
+{
+if((brGlobals !=null)&&(workspace !=null)&&(args!=null))
+{
+//createourdataframe
+vardf=GetOrCreateCustomTable (si,brGlobals, workspace, args);
+//smallhacktoforceformatting onDecimal column
+//**onlynecessary ifdataframe ismanually populated andusedwith
+Dynamic Grid
+varamountColumnFormat =newXFDynamicGridColumnDefinition ();
+                    amountColumnFormat.ColumnName ="Amount" ;
+                    amountColumnFormat.DataFormatString ="{0:C2}";  //currency, culture-
+specific symbol, 2decimals
+//amountColumnFormat.DataFormatString ="{0:N2}"; //generic number, no
+currency symbol, 2decimals
+varcolumnDefs =newList<XFDynamicGridColumnDefinition>
+{amountColumnFormat};
+//convert toXFDataTable tosetextraproperties forourgrid
+                    XFDataTable xfDt=df.ToXFDataTable ();
+                    xfDt.Columns [0].IsPrimaryKeyColumn =true;
+                    xfDt.HasPrimaryKeyColumns =true;
+                    XFDynamicGridGetDataResult result=newXFDynamicGridGetDataResult (
+                        xfDt, columnDefs, DataAccessLevel.AllAccess );
+returnresult;
+                }
+APIOverview Guide 118DataFrame Methods
+return null;
+            }
+catch(Exception ex)
+{
+thrownewXFException (si,ex);
+            }
+        }
+publicXFDynamicGridSaveDataResult SaveDynamicGridData (SessionInfo si,BRGlobals
+brGlobals, DashboardWorkspace workspace, DashboardDynamicGridArgs args)
+{
+try
+{
+if((brGlobals !=null)&&(workspace !=null)&&(args!=null))
+{
+                       DashboardDynamicGridGetDataArgs getDataArgs =args.GetDataArgs;
+                    DashboardDynamicGridSaveDataArgs saveDataArgs =args.SaveDataArgs;
+if((getDataArgs ==null)||(saveDataArgs ==null))
+{
+return null;
+                    }
+                    List<XFEditedDataRow> editedDataRows =saveDataArgs.EditedDataRows;
+if(editedDataRows !=null)
+{
+using(DbConnInfo dbConn=
+BRApi.Database. CreateApplicationDbConnInfo (si))
+{        
+                            XFDataTableHelper. SaveRows (dbConn, "dbo",customTable,
+args.SaveDataArgs.Columns, true,
+                                editedDataRows, true,true,true);
+                        }
+                    }
+                    XFDynamicGridSaveDataResult result=newXFDynamicGridSaveDataResult ();
+                    result.DataTable =GetDynamicGridData (si,brGlobals, workspace,
+args)?.DataTable;
+                    result.PageIndex =(getDataArgs.StartRowIndex /getDataArgs.PageSize);
+                    result.IndexOfSelectedRowOnPage =0;
+                    result.SaveDataTaskResult =newXFDynamicGridSaveDataTaskResult ()
+{
+                        IsOK =true,
+                        ShowMessageBox =false,
+                        Message ="SaveFinished"
+                    };
+returnresult;
+                }
+return null;
+            }
+catch(Exception ex)
+APIOverview Guide 119DataFrame Methods
+{
+thrownewXFException (si,ex);
+            }
+        }
+/**utility method-Retrieve thecontents ofourcustomtable,orcreateand
+populate itwithdefault values*/
+private IDataFrame GetOrCreateCustomTable (SessionInfo si,BRGlobals brGlobals,
+DashboardWorkspace workspace, DashboardDynamicGridArgs args)
+{
+stringsqlCheck =@"SELECT
+    CASE
+        WHEN EXISTS(
+            SELECT 1
+            FROM INFORMATION_ SCHEMA.TABLES
+            WHERE TABLE_CATALOG =DB_NAME()
+              AND TABLE_NAME=@customTableName
+        ) THEN1
+        ELSE 0
+ENDasTableExists" ;    
+varsqlCheckParams =newList<DbParamInfo> {
+newDbParamInfo ("customTableName" ,customTable)
+            };
+using(DbConnInfo dbConn=BRApi.Database. CreateApplicationDbConnInfo (si)){
+//checkiftablealready exists
+vardfCheck =BRApi.Database. GetDataFrame (dbConn, "tableCheck" ,sqlCheck,
+sqlCheckParams, false);
+if(Convert. ToBoolean (dfCheck.GetValue< int>(0,0))){
+//tableexists, returncontents
+returnBRApi.Database. GetDataFrame (dbConn, "tableData" ,$"SELECT *FROM
+{customTable} ",false);
+                } else{
+//tabledoesnotexist,createit
+vardf=BRApi.Database. CreateDataFrameWithColumns (customTable, 
+newDictionary< string,XFDataType> {
+{"SKU",XFDataType.Int32},
+{"Item",XFDataType.Text},
+{"Amount" ,XFDataType.Decimal},
+{"AddedOn",XFDataType.DateTime},
+{"Available" ,XFDataType.Boolean},
+{"RefreshFreq" ,XFDataType.WorkflowTrackingFrequency}
+                        }
+                    );
+stringsqlCreate =BuildSqlCreate (df,"SKU");            
+varcreateResult =BRApi.Database. ExecuteSql (dbConn, sqlCreate, false);
+//populate itinmemory
+                    df. AddRow(1,"Lightsaber (green)" ,1000m,DateTime.Now, true,
+WorkflowTrackingFrequency.Monthly);
+                    df. AddRow(2,"DarthHelmet",10000m,DateTime.Now, false,
+WorkflowTrackingFrequency.Yearly);
+                    df. AddRow(3,"Bounty HunterJetPack" ,500m,DateTime.Now, true,
+WorkflowTrackingFrequency.Quarterly);
+APIOverview Guide 120DataFrame Methods
+                    df. AddRow(4,"X-Wing",200000000 m,DateTime.Now, true,
+WorkflowTrackingFrequency.AllTimePeriods);
+                    df. AddRow(5,"Sleaveless Vest",50m,DateTime.Now, false,
+WorkflowTrackingFrequency.HalfYearly);
+//convert itinordertouseconvenience callsforsaving.
+vardt=df.ToDataTable ();
+                    BRApi.Database. SaveCustomDataTable (si,"Application" ,customTable, dt,
+true,false);
+//returncontents
+returndf;
+                }
+            }
+        }
+/**utility method-givenaDataFrame, generate aCREATEstatement */
+private string BuildSqlCreate (IDataFrame df,stringprimaryColumn =null)
+{
+varsb=newStringBuilder ();
+            sb. AppendLine ($"CREATE TABLE[{df.Name} ](");
+stringprimaryKeyCol =null;
+foreach(varcolindf.Columns)
+{
+//probably incomplete mapping, butcoversthebasics
+stringsqlType =col.Type ==typeof(int)?"INT"
+                    : col.Type ==typeof(string)?"NVARCHAR (MAX)"
+                    : col.Type ==typeof(decimal)?"DECIMAL (18,2)"
+                    : col.Type ==typeof(DateTime) ?"DATETIME"
+                    : col.Type ==typeof(bool)?"BIT"
+                    : "NVARCHAR (MAX)";//default fallback
+                sb. Append($"    [{col.Name} ]{sqlType} ");
+//Ifthisistheprimary keycolumnandinteger, setasIDENTITY andNOT
+NULL
+if((primaryColumn !=null)&&col.Name. XFEqualsIgnoreCase (primaryColumn))
+{
+                    sb. Append("IDENTITY (1,1)NOTNULL");
+                    primaryKeyCol =col.Name;
+                }
+elseif(!col.Nullable)
+{
+                    sb. Append("NOTNULL");
+                }
+                sb. Append(",");
+                sb. AppendLine ();
+            }
+//removelast",\n"--cross-platform way
+inttrimLength =Environment.NewLine.Length +1;
+        sb. Remove(sb.Length -trimLength, trimLength );
+if(!string.IsNullOrEmpty (primaryKeyCol))
+{
+APIOverview Guide 121DataFrame Methods
+                sb. AppendLine ($",    CONSTRAINT [PK_{df.Name} ]PRIMARY KEY
+([{primaryKeyCol} ])");
+            }
+            sb. Append(");");
+returnsb.ToString ();
+        }
+    }
+}
+ExampleinVB:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports Microsoft.VisualBasic
+Imports OneStream.Finance.Database
+Imports OneStream.Finance.Engine
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Database
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Wcf
+Imports OneStream.Stage.Database
+Imports OneStream.Stage.Engine
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+Imports OneStreamWorkspacesApi
+Imports OneStreamWorkspacesApi.V800
+Namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+PublicClassDynamicGridWithDataFrame
+Implements IWsasDynamicGridV800
+Private customTable AsString="XXX_DataFrameSamples"
+PublicFunction GetDynamicGridData (ByValsiAsSessionInfo, ByValbrGlobals As
+BRGlobals, ByValworkspace AsDashboardWorkspace, _
+ByValargsAsDashboardDynamicGridArgs) AsXFDynamicGridGetDataResult Implements
+IWsasDynamicGridV800.GetDynamicGridData
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)AndAlso (args
+IsNotNothing)Then
+'createourdataframe --seefunction further down
+Dimdf=GetOrCreateCustomTable (si,brGlobals, workspace, args)
+APIOverview Guide 122DataFrame Methods
+'smallhacktoforceformatting onDecimal column
+'**onlynecessary ifdataframe ismanually populated andused
+DimamountColumnFormat =NewXFDynamicGridColumnDefinition ()
+                amountColumnFormat.ColumnName ="Amount"
+                amountColumnFormat.DataFormatString ="{0:C2}" 'currency, culture-
+specific symbol, 2decimals
+'amountColumnFormat.DataFormatString ="{0:N2}";  ' generic number, nocurrency symbol,
+2decimals
+DimcolumnDefs =NewList(OfXFDynamicGridColumnDefinition) From{
+                    amountColumnFormat
+                }
+'Convert toXFDataTable tosetextraproperties forourgrid
+'Hopefully unnecessary infuturereleases...
+DimxfDtAsXFDataTable =df.ToXFDataTable ()
+                xfDt.Columns (0).IsPrimaryKeyColumn =True
+                xfDt.HasPrimaryKeyColumns =True
+DimresultAsXFDynamicGridGetDataResult =NewXFDynamicGridGetDataResult
+(xfDt,columnDefs, DataAccessLevel.AllAccess)
+Returnresult
+EndIf
+ReturnNothing
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+PublicFunction SaveDynamicGridData (ByValsiAsSessionInfo, ByValbrGlobals As
+BRGlobals, ByValworkspace AsDashboardWorkspace, _
+ByValargsAsDashboardDynamicGridArgs) AsXFDynamicGridSaveDataResult Implements
+IWsasDynamicGridV800.SaveDynamicGridData
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)AndAlso (args
+IsNotNothing)Then
+DimgetDataArgs AsDashboardDynamicGridGetDataArgs =args.GetDataArgs
+DimsaveDataArgs AsDashboardDynamicGridSaveDataArgs =args.SaveDataArgs
+If(getDataArgs IsNothing)OrElse(saveDataArgs IsNothing)Then
+ReturnNothing
+EndIf
+DimeditedDataRows AsList(OfXFEditedDataRow) =saveDataArgs.EditedDataRows
+IfeditedDataRows IsNotNothing Then
+UsingdbConnAsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo
+(si)
+                        XFDataTableHelper.SaveRows (dbConn, "dbo",customTable,
+args.SaveDataArgs.Columns, True,editedDataRows, True,True,True)
+EndUsing
+EndIf
+DimresultAsXFDynamicGridSaveDataResult =NewXFDynamicGridSaveDataResult
+()
+                result.DataTable =GetDynamicGridData (si,brGlobals, workspace,
+APIOverview Guide 123DataFrame Methods
+args)?.DataTable
+                result.PageIndex =(getDataArgs.StartRowIndex /getDataArgs.PageSize)
+                result.IndexOfSelectedRowOnPage =0
+                result.SaveDataTaskResult =NewXFDynamicGridSaveDataTaskResult ()With{
+                    .IsOK =True,
+                    .ShowMessageBox =False,
+                    .Message ="SaveFinished"
+                }
+Returnresult
+EndIf
+ReturnNothing
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+'**utility method-Retrieve thecontents ofourcustomtable,orcreateandpopulate it
+withdefault values.
+Private Function GetOrCreateCustomTable (ByValsiAsSessionInfo, ByValbrGlobals As
+BRGlobals, ByValworkspace AsDashboardWorkspace, ByValargsAsDashboardDynamicGridArgs) As
+IDataFrame
+DimsqlCheck AsString="SELECT
+CASE
+WHENEXISTS(
+SELECT1 
+FROMINFORMATION_ SCHEMA.TABLES 
+WHERETABLE_CATALOG =DB_NAME()
+ANDTABLE_NAME=@customTableName
+        ) THEN1
+ELSE0
+ENDasTableExists "
+DimsqlCheckParams =NewList(OfDbParamInfo) From{
+NewDbParamInfo ("customTableName" ,customTable)
+        }
+UsingdbConnAsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo (si)
+'checkiftablealready exists
+DimdfCheck =BRApi.Database.GetDataFrame (dbConn, "tableCheck" ,sqlCheck,
+sqlCheckParams, False)
+IfConvert.ToBoolean (dfCheck.GetValue (OfInteger)(0,0))Then
+'tableexists, returncontents
+ReturnBRApi.Database.GetDataFrame (dbConn, "tableData" ,$"SELECT *FROM
+{customTable}" ,False)
+Else
+'tabledoesnotexistyet,createit
+Dimdf=BRApi.Database.CreateDataFrameWithColumns (customTable, New
+Dictionary (OfString,XFDataType) From{
+{"SKU",XFDataType.Int32},
+{"Item",XFDataType. Text},
+{"Amount" ,XFDataType. Decimal},
+{"AddedOn",XFDataType.DateTime},
+{"Available" ,XFDataType. Boolean},
+{"RefreshFreq" ,XFDataType.WorkflowTrackingFrequency}
+                })
+APIOverview Guide 124DataFrame Methods
+DimsqlCreate AsString=BuildSqlCreate (df,"SKU")
+DimcreateResult =BRApi.Database.ExecuteSql (dbConn, sqlCreate, False)
+'populate itinmemory
+                df.AddRow (1,"Lightsaber (green)" ,1000D,DateTime.Now, True,
+WorkflowTrackingFrequency.Monthly)
+                df.AddRow (2,"DarthHelmet",10000D, DateTime.Now, False,
+WorkflowTrackingFrequency.Yearly)
+                df.AddRow (3,"Bounty HunterJetPack" ,500D,DateTime.Now, True,
+WorkflowTrackingFrequency.Quarterly)
+                df.AddRow (4,"X-Wing",200000000D, DateTime.Now, True,
+WorkflowTrackingFrequency.AllTimePeriods)
+                df.AddRow (5,"Sleaveless Vest",50D,DateTime.Now, False,
+WorkflowTrackingFrequency.HalfYearly)
+'convert itinordertouseconvenience callsforsaving
+Dimdt=df.ToDataTable ()
+                BRApi.Database.SaveCustomDataTable (si,"Application" ,customTable, dt,True,
+False)
+'returncontents
+Returndf
+EndIf
+EndUsing
+EndFunction
+'utility method-givenaDataFrame, generate aCREATEstatement
+Private Function BuildSqlCreate (ByValdfAsIDataFrame, ByValOptional primaryColumn
+AsString=Nothing)AsString
+Dimsb=NewStringBuilder ()
+        sb.AppendLine ($"CREATE TABLE[{df.Name}] (")
+DimprimaryKeyCol AsString=Nothing
+ForEachcolIndf.Columns
+'probably incomplete mapping, butcoversthebasicswell
+DimsqlType AsString=_
+If(col.Type =GetType(Integer),"INT",_
+If(col.Type =GetType(String),"NVARCHAR (MAX)",_
+If(col.Type =GetType(Decimal),"DECIMAL (18,2)",_
+If(col.Type =GetType(DateTime), "DATETIME" ,_
+If(col.Type =GetType(Boolean),"BIT",_
+"NVARCHAR (MAX)")))))'default fallback
+            sb.Append ($"    [{col.Name}] {sqlType}" )
+'Ifthisistheprimary keycolumnandinteger, setasIDENTITY andNOTNULL
+If(primaryColumn IsNotNothing)AndAlso col.Name.XFEqualsIgnoreCase
+(primaryColumn) Then
+                sb.Append ("IDENTITY (1,1)NOTNULL")
+                primaryKeyCol =col.Name
+ElseIfNotcol.Nullable Then
+                sb.Append ("NOTNULL")
+EndIf
+            sb.Append (",")
+            sb.AppendLine ()
+Next
+'removelast",\n"--cross-platform way
+DimtrimLength asInteger =Environment.NewLine.Length +1
+APIOverview Guide 125DataFrame Methods
+  sb.Remove (sb.Length -trimLength, trimLength )
+IfNotString.IsNullOrEmpty (primaryKeyCol) Then
+            sb.AppendLine ($",    CONSTRAINT [PK_{df.Name}] PRIMARY KEY([{primaryKeyCol}])" )
+EndIf
+        sb.Append (");")
+Returnsb.ToString ()
+EndFunction
+EndClass
+EndNamespace
+CreateaTableView
+ThefollowingexamplecreatesaTableView ServiceusingaDataFrame
+ExampleinC#
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingMicrosoft.CSharp;
+usingOneStream.Finance.Database;
+usingOneStream.Finance.Engine;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingOneStream.Stage.Database;
+usingOneStream.Stage.Engine;
+usingOneStream.Data.DataFrame;
+usingOneStream.Data.DataFrame.Abstractions;
+usingOneStreamWorkspacesApi;
+usingOneStreamWorkspacesApi.V800;
+/**
+ Sample TableView implemented withDataFrame.
+**/
+namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+{
+publicclassTableViewWithDataFrame :IWsasTableViewV800
+{
+APIOverview Guide 126DataFrame Methods
+publicTableView GetTableView (SessionInfo si,BRGlobals brGlobals,
+DashboardWorkspace workspace, stringtableViewName, Dictionary< string,string>
+customSubstVars, Dictionary< string,string>nameValuePairs)
+{
+try{
+if((brGlobals !=null)&&(workspace !=null)){
+if(tableViewName. XFEqualsIgnoreCase ("DataFrame" )){
+using(DbConnInfo dbConn=BRApi.Database. CreateApplicationDbConnInfo (si)){
+//retrieve yourdata
+       IDataFrame df=BRApi.Database. GetDataFrame (dbConn, 
+"MyTableView" ,"SELECT *FROMDim",false);
+//buildthetableview
+       TableView tv=newTableView ();
+//setupheaders
+foreach(varcolindf.Columns) {
+//setbasicinfo
+vartvCol=newTableViewColumn ();
+        tvCol.Name =col.Name;
+        tvCol.Value =col.Name;
+        tvCol.IsHeader =true;
+//setthedatatype
+        tvCol.DataType =XFDataTypeHelper. GetXFDataTypeFromDotNetDataType (si,col.Type);
+//addtotable
+        tv.Columns. Add(tvCol);
+       }
+//Loopthrough rowstopopulate table
+//Notehowwekeeptrackoftherowindex:
+//   values belongto*columns*, sotofindthemweaskacolumnto"godownXcells".
+//  Alternatively, wecouldkeeptrackofthecolumnposition too,
+//   and usedf.GetValue (colIndex, rowIndex), butit'smorework.
+foreach(varitemindf.Rows. Select((row,index)=>new{row,index})) {
+vartvr=newTableViewRow ();
+foreach(varcolindf.Columns) {
+//TableViews wantstrings everywhere, soweuseGetValueAsString.
+//Inothersituation, wecoulduseGetValueAsObject andcastittotherighttype.
+vartvrc=tv.CreateColumn (col.Name, col.GetValueAsString (item.index), false,
+true);
+         tvr.Items. Add(col.Name, tvrc);
+        }
+        tv.Rows. Add(tvr);
+       }
+returntv; 
+      }
+                    }
+                }
+return null;
+            }
+catch(Exception ex)
+{
+thrownewXFException (si,ex);
+            }
+        }
+publicList<string>TableViewGetCustomSubstVarsInUse (SessionInfo si,BRGlobals
+brGlobals, DashboardWorkspace workspace, stringtableViewName, Dictionary< string,string>
+APIOverview Guide 127DataFrame Methods
+custSubstVarsAlreadyResolved)
+{
+try
+{
+if((brGlobals !=null)&&(workspace !=null))
+{
+if(tableViewName. XFEqualsIgnoreCase ("DataFrame" ))
+{
+                    }
+                }
+return null;
+            }
+catch(Exception ex)
+{
+thrownewXFException (si,ex);
+            }
+        }
+public boolSaveTableView (SessionInfo si,BRGlobals brGlobals, DashboardWorkspace
+workspace, stringtableViewName, TableView tableView)
+{
+try
+{
+if((brGlobals !=null)&&(workspace !=null)&&(tableView !=null))
+{
+if(tableViewName. XFEqualsIgnoreCase ("MyTableView" ))
+{
+                    }
+                }
+return false;
+            }
+catch(Exception ex)
+{
+thrownewXFException (si,ex);
+            }
+        }
+ }
+}
+ExampleinVB:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports Microsoft.VisualBasic
+APIOverview Guide 128DataFrame Methods
+Imports OneStream.Finance.Database
+Imports OneStream.Finance.Engine
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Database
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Wcf
+Imports OneStream.Stage.Database
+Imports OneStream.Stage.Engine
+Imports OneStream.Data.DataFrame
+Imports OneStream.Data.DataFrame.Abstractions
+Imports OneStreamWorkspacesApi
+Imports OneStreamWorkspacesApi.V800
+Namespace Workspace._ _WsNamespacePrefix._ _WsAssemblyName
+PublicClassTableViewWithDataFrame
+Implements IWsasTableViewV800
+PublicFunction GetTableView (ByValsiAsSessionInfo, ByValbrGlobals AsBRGlobals,
+ByValworkspace AsDashboardWorkspace, ByValtableViewName AsString,ByValcustomSubstVars
+AsDictionary (OfString,String),_
+ByValnameValuePairs AsDictionary (OfString,String))AsTableView Implements
+IWsasTableViewV800.GetTableView
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)Then
+IftableViewName.XFEqualsIgnoreCase ("DataFrame" )Then
+UsingdbConnAsDbConnInfo =BRApi.Database.CreateApplicationDbConnInfo
+(si)
+'retrieve yourdata
+DimdfAsIDataFrame =BRApi.Database.GetDataFrame (dbConn, _
+"MyTableView" ,"SELECT *FROMDim",False)
+'buildthetableview
+DimtvAsTableView =NewTableView ()
+'setupheaders
+ForEachcolIndf.Columns
+'setbasicinfo
+DimtvCol=NewTableViewColumn ()
+                            tvCol.Name =col.Name
+                            tvCol.Value =col.Name
+                            tvCol.IsHeader =True
+'setdatatype
+                            tvCol.DataType =
+XFDataTypeHelper.GetXFDataTypeFromDotNetDataType (si,col.Type)
+'addtotable
+                            tv.Columns.Add (tvCol)
+Next
+'Loopthrough rowsTopopulate table
+'NotehowwekeeptrackOftherowindex:
+'   values belongTo*columns*, sot'findthemweaskacolumnto"godownXcells".
+'  Alternatively, wecouldkeeptrackofthecolumnposition too,
+'   and usedf.GetValue (colIndex, rowIndex), butit'smorework.
+ForEachitemIndf.Rows. [Select](Function (row,index)NewWith
+{row,index
+                        })
+APIOverview Guide 129DataFrame Methods
+Dimtvr=NewTableViewRow ()
+ForEachcolIndf.Columns
+'  TableViews wantstrings everywhere, soweuseGetValueAsString.
+'  Inothersituations, wecoulduseGetValueAsObject andcastittotherighttype.
+Dimtvrc=tv.CreateColumn (col.Name, col.GetValueAsString
+(item.index), False,True)
+                                tvr.Items.Add (col.Name, tvrc)
+Next
+                            tv.Rows.Add (tvr)
+Next
+Returntv
+EndUsing
+EndIf
+EndIf
+ReturnNothing
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+PublicFunction TableViewGetCustomSubstVarsInUse (ByValsiAsSessionInfo, ByVal
+brGlobals AsBRGlobals, ByValworkspace AsDashboardWorkspace, ByValtableViewName
+AsString,ByValcustSubstVarsAlreadyResolved AsDictionary (OfString,String))_
+AsList(OfString)Implements IWsasTableViewV800.TableViewGetCustomSubstVarsInUse
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)Then
+IftableViewName.XFEqualsIgnoreCase ("DataFrame" )Then
+'implement thisasyouneed
+EndIf
+EndIf
+ReturnNothing
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+PublicFunction SaveTableView (ByValsiAsSessionInfo, ByValbrGlobals AsBRGlobals,
+ByValworkspace AsDashboardWorkspace, ByValtableViewName AsString,_
+ByValtableView AsTableView) AsBoolean Implements IWsasTableViewV800.SaveTableView
+Try
+If(brGlobals IsNotNothing)AndAlso (workspace IsNotNothing)AndAlso
+(tableView IsNotNothing)Then
+IftableViewName.XFEqualsIgnoreCase ("DataFrame" )Then
+'implement thisasyouneed
+EndIf
+EndIf
+APIOverview Guide 130DataFrame Methods
+ReturnFalse
+CatchexAsException
+ThrowNewXFException (si,ex)
+EndTry
+EndFunction
+EndClass
+EndNamespace
+APIOverview Guide 131DataFrame Methods
+IDataFrame Interface
+Thisinterfacerepresents anin-memory,tabulardatastructurecomposed ofnamedcolumnsand
+rowvalues.
+Forinformation aboutDataFrame Methods,includingNameSpaces, basicfunctions, and
+examples, seeDataFrame Methods.
+Properties andIndexer
+Property Type Description
+ColumnsCount int Numberofcolumns.
+Name string? Optional
+name/identifier forthe
+DataFrame.
+RowCount int Numberofrowsinthe
+frame.Thisshouldbe
+preferredto
+.Rows.Count ,since
+thelatterwillforce
+loopingthroughall
+rows,affecting
+performance.
+APIOverview Guide 132
+Property Type Description
+Columns IEnumerable<IDataFrameColumn> Enumerable ofcolumn
+descriptors/objects in
+columnordinalorder
+(zero-basedcount).
+Rows IEnumerable<object []> Enumerable ofrows;
+eachrowis
+represented asan
+arrayofobjectsin
+columnorder(zero-
+basedcount).
+this[int
+columnIndex]object Returnsa
+representative value
+forthegivencolumn
+index.
+Methods
+Property Type Description
+AddColumn (IDataFrameColumn
+dataFrameColumn)int Addsacolumn;returnsthe
+columnordinalofthenewly
+addedcolumn.
+APIOverview Guide 133
+Property Type Description
+AddColumn (IDataFrameColumn
+dataFrameColumn, bool
+bypassColumnShrink)int Addsacolumnwithan
+optiontobypassany
+column-capacity
+shrinking/resizing logic.
+Returnsthecolumn
+ordinal.
+AddRow(paramsobject[]items) void Appendsasinglerow.
+itemsshouldmatchthe
+numberandorderof
+Columns.
+AddRowsFromColumnRowArray
+Async(object[][]items)Task Asynchronously appends
+multiplerowsfroma
+jaggedarray.Expected
+shapeisa2Darray,where
+outer(first)keysspecify
+columnsandinner
+(second)keysspecify
+rows.
+Append(IDataFrame dataFrame) void Appendsallrows/columns
+fromanotherIDataFrame
+intothisone.
+APIOverview Guide 134
+Property Type Description
+GetAllColumnsNames () string[] Returnsanarrayofall
+columnnamesinordinal
+order.
+GetColumn (intcolumnOrdinal) IDataFrameColumn Returnsthe
+IDataFrameColumn atthe
+specifiedzero-based
+ordinal.
+GetColumnOrdinal (stringname) int Returnsthezero-based
+ordinalofthecolumnwith
+thespecifiedname.
+GetRowArray (introwIndex) object[] Returnstherowat
+rowIndexasanobject[]in
+columnorder.
+GetValue<T> (intcolumnOrdinal,
+introwIndex)T Returnsthevalueatthe
+specifiedcolumnandrow,
+casttoT.Maythrowan
+invalidcastexception ifthe
+storedvaluecannotbe
+converted toT.
+APIOverview Guide 135
+Property Type Description
+GetValueAsObject (int
+columnOrdinal, introwIndex)object Returnsthevalueas
+object.
+Optimize() void Triggersoptimizations
+(e.g.,compacting storage,
+trimmingbuffers,
+compressing sparsedata).
+Usetoreducememory
+footprintorimprove
+subsequent read
+performance. Useafter
+creatingtheobject
+manually.
+Peek(intmaxRecords =1000) string Produces ahuman-
+readablepreview(string)of
+uptomaxRecords rows.
+Usefulfor
+debugging/logging.
+GetParquetStreamAsync () Task<MemoryStrea
+m>Serializes theframeto
+Parquetformatandreturns
+aMemoryStream
+containing thecontent.
+APIOverview Guide 136
+Property Type Description
+GetParquetByteArrayAsync () Task<byte []?> Serializes toParquetand
+returnsthebytes,ornullif
+serialization isnotpossible
+orfails.
+ToDataSet () DataSet Convertstheframetoa
+DataSet.
+ToDataTable () DataTable Convertstoasingle
+DataTable.
+ToRowsArray () object[][] Returnsallrowsasa2D
+jaggedarray(object[][])—
+eachinnerarrayisarow.
+Split(intmaxRowsPerDataFrame) IDataFrame [] Splitstheframeinto
+multipleIDataFrame
+segments, eachwithupto
+maxRowsPerDataFrame
+rows.Usefulfor
+batching/parallel
+processing.
+APIOverview Guide 137
+Property Type Description
+ToXFDataTable (thisIDataFrame
+dataFrame, stringtableName =
+null)XFDataTable ConvertsaDataFrame to
+anXFDataTable using
+defaultoptions.Table
+namedefaultsto
+"DataFrame" ifnot
+provided.
+ToXFDataTable (thisDataFrame
+dataFrame,
+Dictionary<string,string>
+columnMappings, string
+tableName =null)XFDataTable ConvertsaDataFrame
+withexplicitcolumnname
+mapping.columnMappings
+mustbeamapofsource
+column-name->XF
+column-name.Ifasource
+nameisnotpresent,the
+originalnameisused.
+Valuetypesdefaultto
+Stringifnotspecified.
+APIOverview Guide 138
+Property Type Description
+ToXFDataTable (thisDataFrame
+dataFrame,
+DataFrameConversionOptions
+options)XFDataTable ConvertsaDataFrame
+controlling conversion to
+excludecolumns,rename
+columns,overridecolumn
+datatypes,mark
+primary/read- only
+columns,limitrows,set
+start-row,andapplyper-
+columnvalue
+transformations. Ifoptions
+isnull,adefault
+DataFrameConversionOpti
+onsiscreatedand
+TableName defaultstothe
+DataFrame nameor
+"DataFrame".
+APIOverview Guide 139
+DataFrameConversionOptions
+Thisclassisawrappertospecifyoptionsforconverting DataFrames.
+Property Type Description
+TableName string Customtable
+name(default
+string.Empty;
+conversion will
+choosethe
+DataFrame name
+or"DataFrame" if
+leftempty).
+MaxRows int Maximum
+amountsofrows
+toconvert.
+Defaultsto0,
+whichmeans"all
+rows".
+StartRow int Convertrows
+startingfromthe
+rowsatthe
+specifiedposition.
+Defaultsto0.
+APIOverview Guide 140
+Property Type Description
+ExcludeColumns HashSet<string> Columnsto
+exclude.
+ColumnNameMappings Dictionary<string,string> Renamecolumn
+namesfrom
+sourcekeysto
+values.
+DataTypeMappings Dictionary<string,XFDataType> OverrideXFdata
+typesin
+converted output.
+PrimaryKeyColumns HashSet<string> Columnsflagged
+asprimarykeys.
+ReadOnlyColumns HashSet<string> Columnsflagged
+read-only.
+APIOverview Guide 141
+Property Type Description
+ValueTransformations Dictionary<string, Func<T,
+TResult>>Per-column
+transform
+functions. The
+passedfunction
+willreceivea
+valueoftypeT
+andoutputa
+valueoftype
+TResultforeach
+elementinthe
+columnspecified
+askey.
+IDataFrameColumn
+Thisinterfacerepresents asinglenamedcolumninanin-memoryDataFrame. Itistypically
+accessed throughthecollection.
+ColumnsfoundonIDataFrame instances.
+Property Type Description
+Name string Columnname(usedasthekeywhenconverting
+toothertabularformats).
+APIOverview Guide 142
+Property Type Description
+Type Type CLRtyperepresenting thestoredvalues
+(nullablewrappersareusuallyunwrapped by
+callers).
+Length int Numberofvaluesinthecolumn(maybeless
+thantheparentframe'sRowCount forsparseor
+streaming implementations).
+GetValueAsObject (int
+rowIndex)object Returnstherawobjectstoredatthespecified
+zero-basedrowindex,ornullifmissing/invalid.
+APIOverview Guide 143

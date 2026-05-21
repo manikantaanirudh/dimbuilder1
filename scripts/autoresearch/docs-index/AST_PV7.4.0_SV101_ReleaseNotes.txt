@@ -1,0 +1,63 @@
+Administrator Solution
+ToolsRelease Notes
+PV740SV101
+
+Copyright ©2024OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,.NETFramework, Internet
+Information Services, Windows Communication Foundation andSQLServerareregistered
+trademarks ortrademarks ofMicrosoft Corporation intheUnitedStatesand/orothercountries.
+DevExpress isaregistered trademark ofDeveloper Express, Inc.Ciscoisaregistered trademark
+ofCiscoSystems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark of
+Advanced MicroDevices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+Release PV740SV101 1
+Deployment 1
+NewFeatures andEnhancements 1
+Changed 1
+Fixed 1
+KnownIssues 1
+Contacting Support 1
+Release PV740SV100 2
+Deployment 2
+NewFeatures andEnhancements 2
+Changed 2
+Fixed 2
+KnownIssues 2
+Administrator Solution ToolsRelease Notes iTableofContents
+Release PV740SV101
+Thethemeofthisreleaseisabugfix.
+Deployment
+lThissolutioniscompatible withOneStream Platform v8.
+NewFeatures andEnhancements
+None
+Changed
+None
+Fixed
+lWhenperforming theUninstall UIorFullfunctionintheAdministrator Solution Tools
+upgrade package, onlyAdministrator Solution Toolsrelateddatamanagement stepsare
+deleted. (MP3-4782)
+KnownIssues
+None
+Contacting Support
+ContactOneStream Supportbyregistering at:
+Support-OneStream Software
+Administrator Solution ToolsRelease Notes 1Release PV740SV101
+Release PV740SV100
+Thethemeofthisreleaseisv8compatibility.
+Deployment
+lThissolutioniscompatible withOneStream Platform v8.
+NewFeatures andEnhancements
+None.
+Changed
+None.
+Fixed
+None.
+KnownIssues
+None.
+Administrator Solution ToolsRelease Notes 2Release PV740SV100

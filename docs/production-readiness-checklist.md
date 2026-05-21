@@ -44,20 +44,31 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 
 ## Security
 
-- [ ] Authentication is implemented.
+- [x] Authentication is implemented (HTTP Basic Auth via `src/server/middleware/basicAuth.ts`).
+- [x] CORS is configurable (`server.corsOrigins` in config).
+- [x] Rate limiting is applied (general 100/min, heavy ops 10/min via `src/server/middleware/rateLimiter.ts`).
+- [x] Request body validation uses Zod schemas (`src/server/middleware/validate.ts`).
 - [ ] Authorization is project-aware.
-- [ ] CORS is restricted.
 - [ ] Upload size and file type are enforced.
 - [ ] Audit user id comes from authenticated identity.
 - [ ] Sensitive paths are not exposed.
 
 ## Reliability
 
-- [ ] Health checks cover server and database.
-- [ ] Logs are structured and collected.
+- [x] Health checks cover server (`GET /api/health` is unauthenticated).
+- [x] Logs are structured and collected (Pino via `src/server/logger.ts`).
+- [x] Graceful shutdown on SIGTERM/SIGINT with 10s timeout (`src/server/index.ts:13`).
 - [ ] Export failures are reported clearly.
 - [ ] Backup and restore have been tested.
 - [ ] Error responses avoid leaking internals.
+
+## CI/CD
+
+- [x] GitHub Actions CI runs type-check, tests, and build on push/PR to main (`.github/workflows/ci.yml`).
+- [x] Docker multi-stage build produces a minimal production image (`Dockerfile`).
+- [ ] Container health check is configured in orchestration.
+- [ ] Image is pushed to a container registry.
+- [ ] Deployment automation is defined.
 
 ## Documentation
 

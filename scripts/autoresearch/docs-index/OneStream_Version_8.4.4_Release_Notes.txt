@@ -1,0 +1,596 @@
+OneStream Release
+Notes
+8.4.4Release
+
+Copyright ©2024OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,InternetInformation
+Services, Windows Communication Foundation andSQLServerareregistered trademarks or
+trademarks ofMicrosoft Corporation intheUnitedStatesand/orothercountries. DevExpress isa
+registered trademark ofDeveloper Express, Inc.Ciscoisaregistered trademark ofCisco
+Systems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark ofAdvanced Micro
+Devices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+8.4.4ReleaseNotes iii
+Highlights iii
+Prerequisites iv
+Important Notes v
+Documentation vii
+NewFeatures viii
+Dynamic CubeServices (LimitedAvailability) viii
+SavefromExceltoOneStream viii
+Docking viii
+FinanceBusiness RulesinWorkspaces viii
+Enhancements ix
+IdeaStream Enhancements xi
+FixedIssues xiii
+8.4.4 xiii
+8.4.3 xiii
+8.4.1 xiii
+8.4.0 xiv
+KnownIssues xviii
+Solutions MovingtoOpenPlace orSunset xxii
+OneStream Release Notes iTableofContents
+Contact Support xxiv
+OneStream Release Notes iiTableofContents
+8.4.4Release Notes
+OneStream 8.4.4isahotfixreleasethataddresses SmartIntegration Connector security.
+Clickonasectionheading belowtogodirectlytothatsection:
+lHighlights
+lPrerequisites
+lImportant Notes
+lDocumentation
+lNewFeatures
+lEnhancements
+lIdeaStream Enhancements
+lFixedIssues
+lKnownIssues
+lSolutions MovingtoOpenPlace orSunset
+lContact Support
+Highlights
+lWehaverebranded ourPlatform. Ournewlookprovides amodernexperience, thoughtfully
+craftedtoimprove yourexperience.
+Ournewlogoandnewlookhavebeenappliedto:
+OneStream Release Notes iiiTableofContents
+oModernBrowser Experience
+oWindows Application
+oExcelAdd-In
+oSmartIntegration Connector (SIC)
+oIdentity&AccessManagement (IAM)
+oDocumentation
+oUtilities
+lTheModernBrowser Experience isnowGenerally Available withthereleaseof8.4.The
+ModernBrowser Experience offersthefullEndUserExperience. Thismeansthatuserscan
+accesstheOnePlace tabtointeractwiththeirWorkflow, CubeViews,Dashboards, and
+Documents. SeetheModernBrowser Experience guidetolearnmore.
+Prerequisites
+RefertoRequirements forimportant noticesanddetailsregarding planning yourupgrade.
+lFramework andapplication database schema updates arerequired forthisupgrade. Full
+database backups arerecommended.
+lReviewtheUpgrade Guide.
+OneStream Release Notes ivTableofContents
+Important Notes
+lMicrosoft hasannounced endofsupportfor.NET6on12November 2024.Furtherdetails
+areavailable athttps://dotnet.microsoft.com/en- us/platform/support/policy. OneStream
+planstoadoptMicrosoft's Long-TermSupport (LTS).NETversions, whicharereleased
+everytwoyearsandsupported byMicrosoft forthreeyears.OneStream Platform v8.4uses
+the.NET8development framework.
+lOneStream recommends thatanycredentialed integration withOneStream Platform
+shouldchangepasswords regularly.
+lPlatform codemigrated fromSystem.Data.SqlClient toMicrosoft.Data.SqlClient. For
+additional information, seePlatform Version8.0+Readiness intheUpgrade Guide.(PF7-
+1295)
+lThefollowing BRAPIsarescheduled forremoval inafuturereleaseinamannerconsistent
+withoursunsetpolicy:BRApi.Utilities.EncryptText andBRApi.Utilities.DecryptText. Please
+updateyourbusiness rulestouseKeyManagement -SecretsfoundwithintheCloud
+Administration ToolsMarketplace Solution, orintegrate withyourownthird-partysecrets
+provider. (PF7-4417)
+lVPNorExpressRoute usedwithOneStream cloudonPlatform Releases priorto8.0.0will
+reachEndofServiceon31August2024.Allcustomers usingVPNorExpressRoute whoare
+upgrading toPlatform Release8.0orlaterwillberequired tomigratetoSmartIntegration
+Connector tointegrate withlocaldatasources. Cloudcustomers remaining onPlatform
+Releases priorto8.0.0cancontinue touseVPNorExpressRoute throughtheEndof
+Servicedate,afterwhichVPNwillbeoutofsupport. SmartIntegration Connector provides
+secureconnectivity between aOneStream SaaSinstance andcustomer datasources
+residingwithinalocalnetwork. SeetheSmartIntegration Connector Guideformore
+information aboutenabling thisfeatureinyourenvironment.
+lTheSmart Integration Connector hasbeenvalidated tosupporttheupdated versionofthe
+SAPsapnwrfc.dll andsupporting dlls.(PF7-7608)
+OneStream Release Notes vTableofContents
+lTheSmartIntegration Connector LocalGateway Serverversion8.4isrequired tousewith
+OneStream 8.4.Previous versions ofLocalGateway Serverwillnotcommunicate with
+OneStream 8.4.Upgrade yourLocalGateway Servertov8.4tocontinue usingSmart
+Integration Connector. (PF7-6449)
+lTheOneStream Roadmap forCloudInfrastructure hasidentified WINSCP, typically usedin
+SecureFileTransfer Protocol (SFTP)dataintegration processes, willbedeprecated ina
+futurerelease. A morespecifictimeframewillbeannounced whenavailable. As ofAugust
+2024,bothWINSCP andSSH.Net willbesupported forSFTPfiletransfers. The best
+practice fornewcustomers istouseSSH.Net forSFTPtasks. Existing customers are
+recommended todetermine iftheirenvironments makeuseofSFTPand begin theprocess
+oftransitioning anyWINSCP operations toSSH.Net. For assistance inevaluating an
+environment, contactOneStream Support. Additional information onSSH.Net canbefound
+intheSmartIntegration Connector Guide.
+lERPConnect45.dll isnolongerincluded withOneStream andSmartIntegration Connector.
+SeetheSmartIntegration Connector Guideforreferencing andintegrating withthenew
+ERPConnectStandard20.dll, available onthe"DLLPackages" tileonthePlatform pageof
+Solution Exchange.
+lOneStream supports Windows Server2019and2022.
+lOneStream Clientoperation supports Windows 10and11.
+l.NET8Desktop Runtime mustbeinstalled tolocaldesktops andlaptopstosuccessfully
+operatetheWindows Application ClientinaPlatform Release8.4environment. Seethe
+Platform v8+Upgrade GroupinONECommunity. (PF7-3087)
+lWhenreferring tofilepaths,itisbestpractice toensurecross-platform compatibility.
+Insteadofmanually using‘\’forfilepathlocations, werecommend theuseof
+Path.Combine. Thisfunction seamlessly handlesthepathseparators ('\'forWindows, '/'for
+Unix-basedsystems), makingyourcodeconsistently functional regardless ofthe
+operating system.
+lCustomers intheOneStream -hostedenvironment willuseOneStream IdentityServer for
+authentication andcanmanage identityproviders (IdPs)andpersonal accesstokens
+(PATs)intheIdentity&AccessManagement Portal.SeetheIdentityandAccess
+Management Guide.
+OneStream Release Notes viTableofContents
+lIfyouareinaself-hostedenvironment, OneStream strongly encourages singlesign-on
+withanexternal identityprovider. Toconfigure singlesign-onwithanexternal identity
+provider, seetheInstallation andConfiguration Guide.(PF7-8083,PF7-8086)
+lTousetheModernBrowser Experience forPlatform Version8.4+,younolongerneedto
+logaticketorcontactyourCustomer Success Manager. OnPlatform versions 8.4+and
+later,theModernBrowser Experience willbeincluded witheveryrelease.
+lOneStream hasprovided authentication capabilities toincrease securityagainstsocial
+engineering vulnerabilities.
+oCloudcustomers
+Theseenhancements areincluded inv8.4OneStream IdentityServer (OIS)withno
+impacttoexistingOISsetuporend-userloginflow.
+OneStream cloudcustomers withlegacyauthentication upgrading toPlatform v8.4
+willassumetheseincreased securityenhancements withtheirOISmigration during
+thePlatform v8.4upgrade.
+oSelf-hostedcustomers
+Self-hostedcustomers (alloperatewithlegacySSOauthentication) mayoptinto
+thesesecurityenhancements throughWebServerconfiguration changes. Seethe
+Installation andConfiguration Guidefordetails.Theseauthentication enhancements
+aredisabled forself-hostedinstallations bydefault,resulting innoimpactupon
+upgrading toPlatform v8.4.(PF7-6193,PF7-5868)
+Documentation
+lInstructions forconfiguring authentication inaself-hostedenvironment usingtheModern
+Browser Experience areintheInstallation andConfiguration Guide.
+lInstructions foraddingakeyforencrypting RESTAPIcallsinaself-hostedenvironment
+usingtheModernBrowser Experience areintheRESTAPIImplementation Guide.
+OneStream Release Notes viiTableofContents
+NewFeatures
+Dynamic CubeServices (Limited Availability)
+Providenewfunctionality tostructure external dataintomulti-dimensional cubeswithouthaving
+tobuildtraditional cubesanddimensions. Usingworkspace assemblies andreal-time
+connectivity, Dynamic CubeServices allowexternal datatobesurfaced inallreporting capacities
+byreferencing datastoredoutsideoftheOneStream datalayer.
+NOTE:Participation intheDCSLimitedAvailability Program isrestricted toSaaS
+customers demonstrating a'gotoproduction' usecasethatalignswith
+OneStream targets.Candidates mustadoptv8.4(andsubsequently adopttheQ4
+2024R3Platform release)andhavesufficient resources dedicated toasuccessful
+implementation. PleasecontacttheProductGrowthteamat
+productgrowth@onestream.com tolearnmoreaboutpreferred DCSusecases
+andtoexpressinterestintheDCSLimitedAvailability program.
+SavefromExceltoOneStream
+Open,modify,andsavefilestotheOneStream serverdirectlyfromtheExcelAdd-In.(PF8-359)
+Docking
+Docking improves yourexperience inOneStream byallowing youtoclick,drag,anddrop
+OneStream application tabsintospecificdocking areasanddocument groups.(PF6-5178)
+Finance Business RulesinWorkspaces
+FinanceBusiness Rulesareintegrated intoWorkspace Assemblies tomakeiteasiertowriteand
+maintain business rules.(PF6-5589)
+OneStream Release Notes viiiTableofContents
+Enhancements
+lSQLTableEditorRowBackground Colors:Administrators havetheoptiontoapplya
+background colortoallrowsoralternate rowsofaSQLtableinSQLTableEditorgrids.This
+makesiteasiertodistinguish between rowsofdataataglanceandcanreduceeyestrain.
+(PF1-9991)
+lSQLTableEditorandGridViewStylingUpdate:ThevisualdesignoftheSQLTableEditor
+andtheGridViewdashboard components hasbeenrefreshed toprovideasleeker,more
+contemporary look.Thetitleheadernowsupports alightgraybackground witha
+transparent columnheaderbackground. Textinthecolumnheaderisboldandthefilter
+funneliconisreplaced withanewfunnelicon.(PF1-10015)
+lAddandDeleteActions onContext MenuofSQLTableEditor:Youcaninsertand
+deleterowsdirectlyfromacontextmenu.Previously, youusedtheInsertandDelete
+buttonslocatedonthetoolbar.
+lDirtyCellFormatting forQuickViews: InQuickViews,dirtycellformatting supersedes
+conditional formatting. (PF8-1183)
+lMicrosoft EntraGalleryApplication :IfyouuseMicrosoft EntraID(Microsoft AzureAD)
+SAML2.0forexternal singlesign-onwithOneStream IdentityServer, youcanusethe
+OneStream application intheMicrosoft EntraGalleryforidentityprovider configuration.
+(PF7-7454)
+lScaleFactor:YoucanadjustthescaleofareporttoprintanentireCubeViewononepage
+usinganewreportsettingcalledScaleFactor.(PF6-5614)
+lRichTextComponent :Youcanaddformatted textusingtheAllowRichTextproperty in
+theTextBoxcomponent. Thisallowsyoutocreateformatted textusingtheformatting
+toolbarintheTextBoxDashboard component. (PF6-5469)
+lDefaultCompiler Language inWorkspaces :Thecompiler language fieldwilldefaultto
+C#whencreating anApplication orSystemWorkspace Assembly. (PF6-5287)
+OneStream Release Notes ixTableofContents
+lUpdatePOVPaneToCurrent Page:ToactivatethePOVonthedocked, floatingwindow
+ormaindocument groupcontent, selectthenewUpdatePOVPaneToCurrentPage
+toolbarbutton.Whenyouhoveroverthetoolbarbutton,itwillhighlight inyellowasan
+activeicon.(PF6-5980)
+lLeftNavigation :TheLeftNavigation Pane'sOnePlace, Application, andSystemtabswillno
+longerbeautomatically selected depending onwhatpageisopeninthemain,docking, or
+floatingwindow. (PF6-5984)
+lRebranding :Thefollowing colorsareaddedaspartoftherebranding colorscheme:
+OSLighterGray: #EAEAEA, OSLightGray: #E9E9E9, OSDarkGray: #D4D4D4,
+OSCharcoalGray: #373737, andOSOffwhite: #FAFAFA. (PF6-6438)
+lSmartIntegration Connector :BRApi.Utilities.IsGatewayOnline (gwName) addedtocheck
+thehealth(onlineoroffline)forenvironments. (PF7-7759)
+lSmart Integration Connector :TheOneStream LocalGateway Utilityincludes theability to
+exportandimporttheconfiguration toabackupgateway server.(PF7-5508)
+lSmartIntegration Connector :Activeserverisdisplayed forDatabase Gateways. (PF7-
+3937)
+lSmartIntegration Connector :Updated Whitelisting oftheAzureRelaytousethe
+Microsoft bestpractice oflimitingbynamespace <*.servicebus.windows.net>. (PF7-7646)
+lRedundant andFail-overGateways: Traffictoredundant fail-overgateways isnowload
+balanced acrosstheLocalGateway Servers. (PF7-7646)
+lRetryLogic:Implemented retrylogicforBatchHarvestandCreateAuditFile toreduce
+failuresduetoissuesencountered whenreadingfromtheAzureFileSystem. (PF5-3760)
+lTaskScheduler :TaskScheduler logicchanges toaccount forthedifferences between a
+user'slocaltimezoneandtheserverUTCtimezonetoimprove thescheduling oftasks.
+(PF5-3779)
+OneStream Release Notes xTableofContents
+lDataBuffer:Anewdatabuffermethod, DescribeDataBuffer, provides theabilitytologthe
+contents ofadatabuffertoalocalstring.Akeydifference between DescribeDataBuffer
+andLogDataBuffer isthatitisnotlimitedtooutputusingtheErrorLog.Usingthe
+DescribeDataBuffer method, thereisflexibility todesignthecontentbeingloggedaswell
+havingoptionsforoutput,suchasafileoremail.(PF5-3734)
+lSupported Currencies :Zimbabwe Gold(ZWG)isasupported currency. Theprevious
+currency, ZWL,isstillavailable forhistorical data.YoucanenableZWGinyourapplication
+throughtheapplication properties. (PF1-10228)
+lDynamic Dashboards :TheIWsasDynamicDashboardsApiV820 interface usedindynamic
+dashboards isremoved andtheGetDynamicParametersForDynamicComponent function
+isaddedtotheIWsasDynamicDashboardsApiV800. Contact yourSolution Network
+contacttoworkwithyouonthebestsolutionapproach.
+IdeaStream Enhancements
+WatchtoseetheIdeaStream enhancements inthisrelease(5:00)
+lICMatching ReportPlugAccount Description :TheICMatching Reportplugaccount
+treeviewandreportsummary headerdisplaytheplugaccount description alongside the
+plugaccount name.Thisstreamlines theaccount matching process byproviding
+additional contextwhereyouneedit.Withtheplugaccount description visible,reviewsare
+moreefficient because youcaneasilyidentifymatching accounts. Priortothisupdate,you
+couldonlyviewtheplugaccount name,whichcouldhaveledtoconfusion oruncertainty
+whenselecting theappropriate accounts forviewing. (PF1-9548)
+OneStream Release Notes xiTableofContents
+lInputintoC#Aggregated whenFlowisConfigured withAlternate InputCurrency :You
+cannowinputdataforbasemember valuesthroughtheC#Aggregated member whenthe
+Flowmember isconfigured withanAlternate InputCurrency. Previously, datacouldbe
+inputintotheC#Aggregated member onlyiftheFlowmember wasnotconfigured withan
+Alternate InputCurrency. ButiftheFlowmember wasconfigured withanAlternate Input
+Currency, theintersections between theC#Aggregated member andthatFlowmember
+wereshowing asinvalid,preventing youfrominputting data.Thislimitedcompanies that
+areusingtheFlow’sAlternate InputCurrency functionality fromfullyadopting theEntity
+Aggregated Inputfeatureforalloftheirplanning business needs.(PF1-9529)
+lComplete andRevertWorkflow Buttons:AddednewWorkspace Dashboard Button
+TypeforWorkflow Complete andRevertactions,removing theneedforacustombusiness
+rule.(PF5-3393)
+lClearerXFGetCell ErrorMessages :Errormessages forlockedworkflows, usersecurity
+issues,orwrongdimension intersections areclearertohelpyoulocateandresolveissues
+whenreferencing XFSetCell functions intheExcelAdd-InandSpreadsheet. (PF8-805)
+lExcelandSpreadsheet RibbonUpdates : Therevamped ribbonminimizes accidental
+refreshes orsubmissions. Locatethemostcommonly usedactionsquicklyandefficiently.
+(PF8-373)
+lCreateIn-SheetActions inExceland Spreadsheet :BuildIn-sheetactionbuttonsdirectly
+intheExcelAdd-InandSpreadsheet toquicklyperform datamanagement sequences,
+refresh,andsubmityourworksheets andworkbooks. (PF8-916,PF8-660,PF8-913)
+lPreserve Formatting inExcelandSpreadsheet :Youcanpreserve nativeformatting
+changes inExcelandSpreadsheet forCubeViews,TableViews,andQuickViews.Simply
+enablethePreserve ExcelFormatsettingwhenyoucreateormodifyaviewtokeepany
+formatting modifications afteryourefreshthesheetorworkbook. (PF8-1029,PF8-791,
+PF8-768,PF8-352)
+lDisplayCellAttachment forExcelandSpreadsheet : EnabletheIncludeCellAttachment
+Statussettingtodisplayaredindicator onExcelAdd-InandSpreadsheet cellsforCube
+Viewswhentheycontaincellattachments orcomments. (PF8-1042)
+OneStream Release Notes xiiTableofContents
+lCopyandPasteQuickViewstoOtherWorkbooks inExcel: Copyandpasteexisting
+QuickViewsandQuickViewformatting toseparate worksheets andworkbooks inthe
+ExcelAdd-In.(PF8-782)
+FixedIssues
+8.4.4
+lSmartIntegration Connector Security :SmartIntegration Connector platform endpoints
+aremoresecure,ensuring thatSmartIntegration Connector gateway settings cannotbe
+readormodified withoutproperaccesstotheSmartIntegration Connector AdminPage
+systemsecurityrole.
+8.4.3
+lPlatform andSIC:Appliedaversioning updatetotheWinSCP DLLfile(WinSCP version
+6.5.3)usedintheOneStream platform andSmartIntegration Connector (SIC)installation
+package. Removed theRoslyncompiler fromtheSICinstallation package. AlllocalSIC
+gateway compilations usetheserver'sbuilt-in.NETFramework compiler. (PF2-16065)
+lPlatform :Updates toPlatform helppreventrareandunexpected threadpoolexhaustion
+onservers.(PF7-10104)
+lErrorLogRedaction :Potentially sensitive information suchasusernames,IDs,keys,and
+passwords printedtotheErrorLogthroughbusiness rulesareredacted fromviewinthe
+ErrorLog.(PF7-10119)
+8.4.1
+lAuthentication :Improved securityagainstmultipleuserlogins.(PF11-472)
+OISnowsupports RESTAPIauthentication throughprivatekeyJWTassertion. (PF11-495)-
+ForCiticustomers only.
+OneStream Release Notes xiiiTableofContents
+Forcloud-hostedcustomers onv8.0andabove,afixforthisissuewillbeincluded inthe
+operation maintenance releaseonFeb.15,2025.Forself-hostedcustomers, afixforthis
+issuewillbeavailable fordownload fromtheSolution Exchange onFeb.14,2025.
+Customers usingOIDCExternal SSO(Okta,PingFed, orAzure)shouldupgrade tothehotfix
+fromtheSolution Exchange. OneStream recommends enabling localredirectintheserver
+configuration. Customers usingSAMLareadvisedtoupgrade withthecorresponding
+hotfix.
+8.4.0
+lSQLTableEditor(STE)GridFiltering BugFix:WhentheSQLTableEditorgriddisplayed
+resultsspanning multiplepages,columnfiltersappliedtotheresultsetcausedfiltereddata
+tobeshownoneachpageindividually. Thisbehavior resulted inafragmented viewofthe
+filtereddata.Thisissueiscorrected. Whencolumnfiltersareapplied,filtereddatais
+consolidated ontoasinglepage,providing aseamless andcoherent viewoftheresults.
+NOTE:Consolidated columnfilteringisnotsupported onsomedatatypes.
+Applying filtersonthesedatatypeswillnotyieldconsolidated filteredresults.
+Unsupported datatypes:binary,char,date,datetime2, datetimeoffset, float,
+geography, geometry, hierarchyid, image,filestream, money,nchar,ntext,
+numeric, nvarchar, real,rowversion, smalldatetime, smallmoney, sql_variant,
+text,time,timestamp, tinyint,varbinary, xml.
+lICMatching ReportIncludes Thousands Separator :Thedisplayformatfornumerical
+valuesintheReportCurrency, EntityCurrency, andPartnerCurrency columns includes a
+thousands separator forbetterreadability. (PF1-9882)
+lExcelAdd-inCompatibility :Anewcompatibility settingisavailable topreventOneStream
+Add-Infrombeingdisabled programmatically. (PF8-842)
+lExported CubeViewHeaders Automatically Sized:CubeViewswillautomatically size
+whenexported toExcelwhenthevaluefortheRowHeaderWidthsettingissetto-1.(PF8-
+801)
+lCubeViewsinExcelRetainFormulas :WhentheRetainFormulas inCubeViewContent
+settingisenabled, formulas areretained inSpreadsheet andExcel.(PF8-818)
+OneStream Release Notes xivTableofContents
+lQuickViewsFunctionality : QuickViewsembedded intablesremainfunctional after
+upgrading fromPlatform Release7.0.1.(PF8-826)
+lCubeViewHeaderSubtitle Formatting : CubeViewHeaderandHeaderSubtitle
+formatting applywhenIncludeCubeViewHeaderisenabled forCubeViewConnections in
+Excel.(PF8-825)
+lSpecialCharacters Handling forCreateCopyofQuickViewinExcel:CreateCopyof
+QuickViewfunctions whenworksheet namescontainspecialcharacters. (PF8-412)
+lXFGetCell Formulas Correctly LinkedPostUpgrade :Whenyouupgrade theOneStream
+ExcelAdd-In,XFGetCell formulas remainlinked.(PF8-834)
+lEnvironment NameDisplayinExcelContext Pane:WhenmorethanoneExcelsheetis
+openandeachsheetisloggedintoauniqueenvironment, thesheetdisplays thenameof
+theenvironment intheExcelcontextpane.(PF8-1045)
+lOpening ExcelReportBooks:Whenyoulaunchafilewithan.xfbookextension, itopensin
+Excelwithoutcausinganerror.(PF8-1559)
+lPersonal AccessTokens(PATs):YoucanusePATscreatedinOneStream IdentityServer
+(OIS)inPlatform Release8.2orlater.Youdonotneedtore-generate thosePATs.(PF7-
+6475)
+NOTE:AnyPATscreatedinOISinaPlatform Releasebefore8.2cannotbe
+used.Youneedtore-generate thosePATs.SeetheIdentityandAccess
+Management Guide.
+lClientModule:InSystem>Logging >LogonActivity,thecolumnforClientModuledisplays
+theclientmodulethatwasusedtologontoOneStream .Forexample, ifyoulogonfromthe
+ExcelAdd-In,theClientModulecolumndisplays Excel.(PF7-7415)
+lScenarioID andScenarioKey :Whenusingthedashboard buttontonavigate toadifferent
+scenario andyear,thebutton’s specificWorkflow timeupdates withthesetScenarioID
+andScenarioKey. (PF6-5237)
+OneStream Release Notes xvTableofContents
+lModifyDynamic Dashboard Service toUseOneAPI:AnyWorkspace Assemblies that
+reference V8.2.0mustbecommented out.V8.2.0APIhasbeenmergedintotheV.8.0.0
+API.AnyWorkspace Assembly thatreferences V8.2.0mustbeupdated touseV.8.0.0
+sinceonlyoneversionoftheAPIcanbeused.Thedefaultcodeisprovided ifyouuseanew
+dynamic dashboard service.(PF6-5129)
+lRefresh Document :YoucanclickRefreshDocument forthesameCubeViewReportinan
+XFDocandCubeViewReportswithanXFDocthathavechanges madetotheminText
+Editor.(PF6-5465)
+lExcelFileswithGraphs:ExcelFileswithgraphsdisplayinTextEditor.(PF6-5004)
+lDelimited Parameters withXFBRinWorkspaces :Delimited parameters withXFBRthat
+existintheshareable DefaultandNon-DefaultWorkspace canalsobereferenced ina
+Non-DefaultWorkspace forSQLTableEditorcolumnformat.(PF6-5914)
+lSubstitution Variables behindSQLTableEditor:Substitution variables resolveon
+parameters behindaSQLTableEditorColumn. (PF6-5243)
+lCopyandPasteItemsinWorkspaces :YoucannotcopyandpasteNon-Default
+Workspace items,suchasWorkspace Components, Button,Chart(Advanced), Combo
+Box,Embedded Dashboard, Supplied Parameter, Parameters, DataAdapters, Files,String
+Resource, andAssemblies intheDefaultWorkspace >DefaultMaintenance Unit.(PF6-
+5233)
+lSystem Administrator AccessinWorkspaces :Youwillnolongerencounter anerror
+whileaccessing SystemWorkspaces intheSystemAdministration application. (PF6-5169)
+lDeleteRowsinSQLTableEditor:ThelastrowinaDashboard SQLTableEditor
+Component deletesafterusingtheDeleteRowtoolbarbutton.(PF6-5138)
+lDynamic Dashboard Service Type:IfyouarewritingaDynamic Dashboard ServiceFile
+usingVB.Netanditimplements IWsasDynamicDashboardsApiV800 fromPlatform Release
+8.2orprevious versions, youmustaddthecodethatstartswith
+GetDynamicParametersForDynamicComponent totheservicefiletocompile. See
+Dynamic Dashboard ServiceType.(PF6-5044)
+OneStream Release Notes xviTableofContents
+lDocument Variable FieldShading :IftheDocument Variable contentisshadedafter
+processing andopening inMicrosoft Word,updateyoursettings underFile>Options>
+Advanced >Fieldshading: Never.(PF6-5135)
+lSystem.IO.Packaging.dll :TheSystem.IO.Packaging assembly hasbeenaddedto
+referenced assemblies whencompiling legacybusiness rules.Youmayrunintoanerror
+whenrunningUTM_DocMgrHelper oranybusiness rulethatreferences
+System.IO.Packaging.dll. Youwillneedtoremoveallreferences toSystem.IO.Packaging.dll
+andWindowsBase.dll.  (PF6-6432)
+lSmartIntegration Connector: LongerrunningparalleljobsusingSmartIntegration
+Connector nolongerfailundercertainconditions. (PF7-5876,PF7-7651)
+lSmartIntegration Connector :TheEnd-UserLicenseAgreement (EULA)isnolonger
+shownduringinstallation. (PF7-6197)
+lSmartIntegration Connector :Additional textisnolongerreturned whenthereareerrors
+intheRemoteBusiness Rules.(PF7-7284)
+lSmartIntegration Connector :PostgreSQL Npgsqlhasbeenupdated toversion8.0.3.
+(PF7-7511)
+lSmartIntegration Connector :Timestamp datatypes arenowreturned withoutneeding to
+useaCAST.(PF7-7519)
+lSmartIntegration Connector :Dataisnolongerreturned forelements withoutacolumn
+name.(PF7-7633)
+lInvalidDatabase ServerError:Whencreating anewCustomDatabase Server
+Connection, invalidconnection stringsaresavedwithoutanerrormessage whileallowing a
+correction. (PF5-3692)
+lTaskScheduler Parameters :ForTaskScheduler incustomWorkspaces, Parameter
+NameandValuedonotdisplayintheCreate/Edit Taskdialogboxaftersaving.(PF5-3592)
+OneStream Release Notes xviiTableofContents
+lCopyJournals TimePeriods:TimePeriodsshownintheCopyJournals dialogbox
+accurately reflecttheworkflow profilestatusineachtimeperiod.Previously, whenajournal
+profilewaslockedinagiventimeperiod,thesametimeperiodincorrectly appeared as
+lockedforotherjournalprofilesonthesameworkflow channel. Similarly, incaseswherea
+journalprofilewascompleted inaspecifictimeperiod,thattimeperiodincorrectly showed
+ascompleted foralljournalprofilesunderthesameparent.(PF1-10233)
+KnownIssues
+lPersonal accesstokens(PATs)createdinOneStream IdentityServer (OIS)inaPlatform
+Releasebefore8.2cannotbeused.Youneedtore-generate thosePATs.SeetheIdentity
+andAccessManagement Guide.(PF7-6475)
+lUseofCubeViewMember FilterWhereClausewithHasChildren=True isonlysupported on
+dimensions assigned totheDefaultScenario Type.(PF-21833)
+lTheLargeDataPivotGridduplicates itemsinthefieldlistontheinitiallaunch.Afterafieldis
+dragged toacolumnorrow,duplicate fieldsnolongerdisplay.(PF-31427)
+lTheWhitelisted Domains settingintheApplication ServerConfiguration fileonlyallowsfor
+httpandhttpsformatted domains. References tonon-httpornon-httpsfileschemes will
+nolongerbeallowed. (PF2-15004)
+lForPlatform Releases from8.0.Xto8.4.X,customers inself-hostedenvironments usinga
+Microsoft AzureAD(Microsoft EntraID)identityprovider forauthentication thathave
+different emailaddresses intheirOneStream userprofileforExternal Provider UserName
+andinMicrosoft AzureADforemailmayencounter thefollowing error:Azuredidnot
+provideavalidusernameclaim.
+Toresolvethiserror,seeOneStream Knowledge BasearticleKB0013254 .(PF7-7867)
+lIfyouareinaself-hostedenvironment usinganOIDCidentityprovider forlegacy
+authentication withtheModernBrowser Experience, addtheOpenIdRedirect Urlinthe
+WebServerConfiguration fileinOneStream .Forconfiguration instructions, seethe
+Installation andConfiguration GuideandtheUpgrade Guide.(PF7-7764,PF7-7261)
+OneStream Release Notes xviiiTableofContents
+lIfyouareinaself-hostedenvironment thathasupgraded toPlatform Release8.1orlater
+andyourNetwork Security settings blockloopbacks, youwillencounter anerrorwithyour
+RESTAPIcalls.Toresolvethiserror,seeOneStream Knowledge BasearticleKB0012911.
+(PF7-4202)
+lIfyouareinaself-hostedenvironment usingaSAML2.0external identityprovider for
+authentication andencounter anerror,updatetheACSURLbothintheWebServer
+Configuration fileinOneStream andintheapplication registration fortheexternal identity
+provider. Usethisformat:
+https://<domainname>/OneStreamWeb/OneStreamLogonCallback.aspx/
+SeeOneStream Knowledge BasearticleKB0012777. (PF2-15177)
+lIfyouareinaself-hostedenvironment usingaMicrosoft AzureAD(Microsoft EntraID)
+identityprovider forauthentication andencounter anerror,addthetenantIDintheWeb
+ServerConfiguration fileinOneStream .SeeOneStream Knowledge Basearticle
+KB0012778. (PF2-15181)
+lIfyouareacommercial customer inaself-hostedenvironment usingMicrosoft AzureAD
+(Microsoft EntraID)forauthentication andencounter anerror,updatetheredirectURLboth
+intheWebServerConfiguration fileinOneStream andintheapplication registration in
+Microsoft AzureAD(Microsoft EntraID)fromhttps://onestreamclient to
+https://<domainname>/OneStreamWeb/OneStreamLogonCallback.aspx
+SeeOneStream Knowledge BasearticleKB0012781. (PF2-14668)
+lIfyouareinaself-hostedenvironment usingaMicrosoft AzureAD(Microsoft EntraID)
+identityprovider forRESTAPIauthentication andencounter anerror,addtheclaimaudin
+theorderedlookupsintheWebServerConfiguration fileinOneStream .SeeOneStream
+Knowledge BasearticleKB0012779. (PF2-15031)
+lIfyouareinaself-hostedenvironment usingaPingFederate identityprovider forRESTAPI
+authentication andencounter anerror,addtheclaimclient_idintheorderedlookupsinthe
+WebServerConfiguration fileinOneStream .SeeOneStream Knowledge Basearticle
+KB0012780. (PF2-15027)
+lIntheTaskScheduler Calendar View,weeklyandmonthly taskscreatedtoruninthe
+eveningornightlydisplayadditional days.(PF5-3538)
+OneStream Release Notes xixTableofContents
+lTheiconsintheWindows OneStream Searchbaratthebottomleftofthescreenmaynot
+updateafterinstallation. Youmustclearouttheiconcachetoseetheupdated logointhat
+specificlocation. (PF6-6363)
+lWhenusingtheNavigate RecentPagesdialogboxtoopenatabinamaximized floating
+window, docking willrestorethefloatingwindowsize(notmaximized). (PF6-6068)
+lIntheNavigate RecentPagesdialogbox,theOKbuttonisenabled evenwhenanitemis
+notselected. ClicktheOKbuttonwhennooptionisselected toclosethedialogbox.(PF6-
+6065)
+lWhenyouminimize andattempttore-openafloatingwindowonaseparate monitoror
+screen,thefloatingwindowopensonthemainapplication screen.Youwillneedtodrag
+thefloatingwindowbacktotheseparate monitororscreeneverytimeyoure-openthat
+minimized window. (PF6-5911)
+lTheClosePagebuttonwillalwaysappearontheLogonpage.Forexample, whenyoulog
+off,selectChangeApplication, andthenclicktheClosePagebuttoninthetoprightcorner
+oftheLogonpage.Ablankscreenwilldisplay.Youmustrestarttheapplication tologin
+again.(PF6-5805)
+lIfyouhaveaworkflow pageinaminimized floatingwindowandthentrytolaunchanother
+workflow pagefromthemainapplication page,theminimized floatingwindowwilldisplaya
+blackflashbeforeloading.(PF6-5712)
+lAlistboxmaydisplaywhenyouopenmultipletabsorpagesandclicktheleftmost taband
+thenright-clickatabclosertotherightendofthetabbar.Thelistboxwilldisplayadrop-
+downlistwithallcurrently openedtabsinsteadofthecontextmenu.(PF6-5906)
+lTheUpdatePOVPaneToCurrentPagetoolbarbuttonappears ineverydockedorfloating
+windowevenifthedockedorfloatingwindowdoesnotreference thePOVpanesettings.
+(PF6-6322)
+lClickOnce shortcuts maynotdisplaytheOneStream logocorrectly. Thiscouldaffectnewly
+createdshortcuts oronesfrompriorreleases. Desktop MSIandEXEshortcut iconswill
+displaycorrectly. (PF6-6448)
+OneStream Release Notes xxTableofContents
+lForWindows Application andExcelAdd-In,serverdisconnect willnolongerworkifyoulog
+off.Ifyouneedtodisconnect fromyourexistingserverandreconnect toanother, donot
+clicktheLogoffbuttonontheLogonpagebeforeyouclicktheDisconnect button.(PF6-
+6516)
+lIfyouhavemultipletabsopenandmakechanges toyourWorkflow whileintheData
+Explorer tab,youmayencounter issueswithdisplaying datainDataExplorer andwith
+Workflow andDataExplorer tabcolors.Toresolvethis,clickontheactivepage.(PF6-6534)
+lIfyouhaveanExtensible Document withalargenumberofCubeViewsandclickthe
+RefreshDocument button,itwilldisplaytheembedded content. Ifyoureprocess the
+document, itwilltakesometimetoreprocess. (PF6-5088)
+lIfyouarereturning multipleDataTables inaDataSet fromaRemoteBusiness Ruleusing
+SmartIntegration Connector, themaximum numberofcombined rowsandsizearearound
+2millionrowsand2GBofdata.(PF7-5132)
+lThemaximum character countforConnection StringsandConnection StringPasswords in
+SmartIntegration Connector is245characters. (PF7-7612)
+lInSmartIntegration Connector, theWhitelisting instructions withMicrosoft bestpractices
+forwhitelisting AzureRelaytoafirewallhavebeenadjusted. (PF7-7646)
+lYoucansendemailthroughSmartIntegration Connector overCustomConnections
+("Notification Connection" inDataManagement jobs).(PF7-6783)
+lSmartIntegration Connector queriesreturnnumeric valueswithupto38totaldigits:20
+integerdigitstoleftofthedecimalpointand18fractional digitstotherightofthedecimal
+point.(PF7-7583)
+lTheExcelcontextpanedoesnotfunction properly whenopening .csvor.txtfiles. To
+resolve,openanewworkbook andre-enablethecontextpanefromtheOneStream
+ribbon.(PF8-1480)
+lUsingIn-SheetactionsinExcelwhileAutoSave isenabled causesscreenflickering. Disable
+AutoSave touseIn-SheetActionsandmanually savechanges. (PF8-1540)
+OneStream Release Notes xxiTableofContents
+lWhenusingIn-Sheetactions,parameters canonlybeusediftheyhavebeenresolved inan
+existingCubeVieworTableViewinthesheetorworkbook. SeeIn-SheetActionsinthe
+DesignandReference Guide.(PF8-1547)
+lTheGeneralServerproperty “WhiteListFileExtensions”, isreadandappliedonlyduring
+serverstartup.Editingthisproperty usingtheApplication Configuration FileortheSystem
+Configuration pagerequires anIISRecycleoftheenvironment toapplythesettings. (PF5-
+3997)
+lADBconnect stringstoredintheSystemConfig database tablefortheBIBlendReporting
+database, whenmanually edited,causesloadingissues.Theconnection stringmustbe
+encrypted usingtheXFDatabase Configtool.Settings fromthedatabase, environment,
+andotherconfigsettings maynotbereadfromthedatabase andappliedtothe
+environment. Environment name,environment color,fullwidthbanner,orpreviewfeature
+settingchanges maynotbereflected intheUI.(PF5-3879)
+lUploaded filesmaynotimmediately displayintheFileExplorer view.Youcannavigate toa
+different folderthenbacktoseetheuploaded files.(PF-32468)
+lTaskManager usersmustupgrade toPlatform 8.4asversions ofTaskManager priorto8.4
+arenotcompatible withthisPlatform release.Reinstall TaskManager, notingthatwe
+recommend uninstalling theTaskManager UI,andthenupgrade toPlatform 8.4.Seethe
+TaskManager ReleaseNotesfordetails.
+lConnections inPowerBIcanbreakwhenaddingapplications toaOneStream
+environment. (PF8-1606)
+Solutions MovingtoOpenPlace orSunset
+Thefollowing solutions willbemovingtoOpenPlace inAugust2025:
+lExcelAdd-InInstaller(XLI)
+lDataEntry123(DFM)
+Thefollowing solutions willbemovingtoOpenPlace inAugust2024:
+OneStream Release Notes xxiiTableofContents
+lActorWorkspace
+lCloseManager
+lDimension Comparison Utility
+lHelpDesk
+lPowerShell Scripting
+lProcess Blocker
+lProcess ControlManager
+lProvision Request Manager
+lTaxProvision
+lTrainMe(VideoHelp)
+lStandard CubeViewStyles
+Thefollowing solutions willbesunsetinAugust2025andwillnolongerbesupported by
+OneStream :
+lLoadTestSuite(LTS)
+Thefollowing solutions willbesunsetinAugust2024andwillnolongerbesupported by
+OneStream :
+lEndUserTraining-CubeView
+lEndUserTraining-ExcelAnalysis
+lEndUserTraining-Extensible Docs
+lEndUserTraining-ReportBooks
+lEndUserTraining-Spreadsheet Analysis
+OneStream Release Notes xxiiiTableofContents
+lEndUserTraining-Videos
+lEndUserTraining-Workflow
+Contact Support
+Contact OneStream Support byregistering at:
+Support -OneStream Software
+OneStream Release Notes xxivTableofContents

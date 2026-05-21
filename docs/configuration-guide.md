@@ -38,11 +38,22 @@ Controls local storage locations.
 
 ### `server`
 
-Controls host and ports.
+Controls host, ports, and CORS.
 
 - `host`
 - `port`
 - `clientDevPort`
+- `corsOrigins`: optional string array of allowed CORS origins. When set, the server restricts `Access-Control-Allow-Origin` to these values. When absent, CORS is open (see `src/server/app.ts:25`).
+
+### `auth`
+
+Controls HTTP Basic Authentication.
+
+- `enabled`: boolean, default `false`. When true, all `/api/*` routes (except `/api/health`) require Basic Auth credentials.
+- `username`: string, default `"admin"`.
+- `password`: string, default `"changeme"`.
+
+The auth middleware is defined in `src/server/middleware/basicAuth.ts`. When disabled, it is a no-op passthrough. The `auth` section is server-only and excluded from the client config payload (`src/shared/appConfigValidation.ts:262`).
 
 ### `features`
 

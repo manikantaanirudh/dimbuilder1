@@ -8,6 +8,25 @@ The project uses Vitest for unit, integration, and rendered markup tests. Browse
 npm.cmd test
 ```
 
+## Watch Mode
+
+```powershell
+npm.cmd run test:watch
+```
+
+## Coverage
+
+```powershell
+npm.cmd run test:coverage
+```
+
+Coverage is provided by `@vitest/coverage-v8` and configured in `vitest.config.ts`:
+
+- Provider: V8
+- Included: `src/shared/**/*.ts`, `src/server/**/*.ts`
+- Excluded: `src/server/index.ts`
+- Thresholds: 60% lines, 50% branches
+
 ## Build Verification
 
 ```powershell
@@ -28,6 +47,7 @@ npm.cmd run docs:check
 - `src/test/blueprintStudio.test.ts`
 
 Covers config merging, YAML loading, blueprint validation, Blueprint Studio draft normalization/YAML generation/derivation helpers, severities, regex validation, and environment-sensitive loader behavior.
+Also covers auth config validation and client config exclusion of server-only fields.
 
 ### Schema And Parsing
 
@@ -74,8 +94,15 @@ Export guard coverage verifies server-side blocking for XML, JSON, CSV, XLSX, an
 - `src/test/api.test.ts`
 - `src/test/projectRoutes.test.ts`
 - `src/test/projectBlueprints.test.ts`
+- `src/test/basicAuth.test.ts`
+- `src/test/cors.test.ts`
+- `src/test/gracefulShutdown.test.ts`
+- `src/test/logger.test.ts`
+- `src/test/rateLimiter.test.ts`
+- `src/test/validateMiddleware.test.ts`
 
 Covers repositories, route behavior, project creation, API workflows, and the OneStream schema dictionary endpoint.
+Production-readiness coverage includes Basic Auth middleware (enabled/disabled, valid/invalid credentials), CORS origin restriction, graceful shutdown signal handling, structured Pino logging, rate limiter enforcement, and Zod request body validation middleware.
 Repository and route coverage includes varying-property CRUD, duplicate-context upsert behavior, `POST /api/import/xml`, and project baseline/diff run persistence.
 It also covers change set persistence, lifecycle routes, validation-gated approval, and directory-based release package file creation.
 Bulk update route coverage verifies preview/apply/list/detail behavior. Repository coverage verifies job/item persistence and transaction rollback when an apply workflow fails partway through.

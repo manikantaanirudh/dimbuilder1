@@ -1,0 +1,388 @@
+OneStream  
+Release  Notes
+9.0.1Release
+
+Copyright©2025OneStreamSoftwareLLC.Allrightsreserved.
+Alltrademarks,logos,andbrandnamesusedonthiswebsitearethepropertyoftheirrespective
+owners.ThisdocumentanditscontentsaretheexclusivepropertyofOneStreamSoftwareLLC
+andareprotectedunderinternationalintellectualpropertylaws.Anyreproduction,modification,
+distributionorpublicdisplayofthisdocumentation,inwholeorpart,withoutwrittenpriorconsent
+fromOneStreamSoftwareLLCisstrictlyprohibited.
+TableofContents
+Release9.0.1 1
+Highlights 2
+NewFeatures 2
+BIViewerDesigner 2
+DynamicCubeViews 2
+MapsComponent 3
+SavefromaDashboard ButtonforTextEditorandSpreadsheet 3
+SaveAsfromaDashboard ButtonforTextEditorand
+Spreadsheet 3
+XFCellandXFBRinDocument Variables 3
+DynamicExtensible Documents Parameter 4
+DynamicGridComponent 4
+Enhancements 4
+Dashboards 4
+OneStream Release Notes iTableofContents
+SmartIntegration Connector 5
+Spreadsheet andExcelAdd-In 5
+Dashboard FilterEditorComponent 6
+WebContentComponent 6
+IdeaStream Enhancements 6
+FixedIssues 7
+9.0.1 7
+Utilities 7
+9.0.0 7
+ModernBrowserExperience 7
+SQLTableEditor 8
+ClickOnce Shortcuts 8
+SmartIntegration Connector 8
+SystemTools 9
+Miscellaneous 9
+Deprecation 10
+OneStream Release Notes iiTableofContents
+UpgradeInformation 11
+Compatibility 13
+SaaSServiceUpdates 14
+SecurityUpdates 14
+Documentation 15
+Recommendations 15
+Notes 16
+KnownIssues 17
+ContactSupport 17
+OneStream Release Notes iiiTableofContents
+Release 9.0.1
+OneStream 9.0.1isahotfixreleasethataddresses theDatabase Configuration Utility.
+Formoreinformation, seethe9.0.0ReleaseHighlights courseonOneStream Navigator.
+Clickalinktogodirectlytothatsection:
+lHighlights
+lNewFeatures
+lEnhancements
+lFixedIssues
+lDeprecation
+lUpgradeInformation
+lCompatibility
+lSaaSServiceUpdates
+lSecurityUpdates
+lDocumentation
+lRecommendations
+lNotes
+lKnownIssues
+lContactSupport
+OneStream Release Notes 1Release 9.0.1
+Highlights
+lTheModernBrowserExperience wasenhanced thisreleasethroughavarietyofbugfixes
+aswellasperformance, security,andaccessibility improvements. Additionally, theBI
+ViewerDesignerandMapcomponent arenowavailableforuse.
+lDynamicCubeServicesisnowGenerally Availableandprovidesthefullend-user
+experience. See"AbouttheFinancialModel"> "Dynamic CubeServices" intheDesignand
+Reference Guide.
+NewFeatures
+BIViewerDesigner
+BIViewernowletsyoumodifycomponents directlyintheModernBrowserExperience without
+navigating backtotheWindowsApplication. SimplyselectthepencilicononaBIViewertoopen
+BIViewerDesigner.
+Dynamic CubeViews
+DynamicCubeViewsenablesdevelopers tobuildandmodifyCubeViewsthroughcodeto
+configurewhatispresented atruntime.Anypropertyadeveloper cansetforaCubeViewinthe
+userinterfacecanalsobesetintheAssembly filewhenconfiguring aDynamicCubeView.See
+"Dynamic CubeViews"intheDesignandReference Guide.(PF6-6983)
+OneStream Release Notes 2Release 9.0.1
+MapsComponent
+TheMapscomponent fordashboards isnowsupported intheModernBrowserExperience, but
+hover-overimagesforshapesonMapsarenotcurrentlyavailable.
+SavefromaDashboard ButtonforTextEditorand
+Spreadsheet
+TheButtonComponent cansubmitdataandsavefileswithinTextEditorandSpreadsheet,
+eliminating theneedtonavigatetotheSavebuttonintheribbon.Thisfeaturefunctionsinthe
+ModernBrowserExperience. See"Parameter Components" intheDesignandReference Guide.
+(PF6-4407)
+SaveAsfromaDashboard ButtonforTextEditorand
+Spreadsheet
+WhenyousaveanewfileinSpreadsheet orTextEditor,thedashboard buttondisplaysaSave
+NewFileOptionswindowwheninitiallyselected,eliminating theneedtonavigatetotheSaveAs
+buttonintheribbon.ThisfeaturefunctionsintheModernBrowserExperience. See"Parameter
+Components" intheDesignandReference Guide.(PF6-4407)
+XFCellandXFBRinDocument Variables
+XFCellandXFBRaresupported indocument variables, andtheircontentwillupdatewhenthe
+document isrefreshed. TheObjectLookupincludesXFCellandXFBRsyntaxunderExtensible
+Document Settings.(PF6-4407)
+OneStream Release Notes 3Release 9.0.1
+Dynamic Extensible Documents Parameter
+Theparameter FormatAsString =TruewilldisplayyourExcelnamedrangeasastringinsteadof
+atableinTextEditororaWorddocument. Thisoptionalparameter defaultstoFalse.TheObject
+Lookupincludestheparameter syntaxunderExtensible Document Settings.See"InsertExcel
+SheetsandExcelNamedRangesinMicrosoftWord"intheDesignandReference Guide.(PF6-
+4407)
+Dynamic GridComponent
+TheDynamicGridComponent displaysdatainagridfromaWorkspace Assembly- drivendata
+source.Itenablesyoutoreaddatafromvarioussources,transform thatdata,andwriteitbackto
+anyspecifiedtarget.Thisoffersaflexibleandhigh-performance featureformanaging large
+datasets.See"Dynamic Grid"intheDesignandReference Guide.
+Enhancements
+Dashboards
+lNewDashboard Types:TheDashboard Properties includethefollowingoptionsfor
+Dashboard Type:Embedded TopLevelandEmbedded TopLevelWithoutParameter
+Prompts.Thesetop-leveldashboards havetheirownparameter resolution andrendering
+stages.TheyalsoallowfortheirownLoadDashboard ServerTasktoberunapartfromthe
+TopLeveldashboard. (PF10-82)
+OneStream Release Notes 4Release 9.0.1
+SmartIntegration Connector
+lEnhanced Remote Business RuleDebugging :Added
+BRApi.Utilities.IsRemoteDtoSucessful tovalidateasuccessful requestisreceivedbefore
+furtherprocessing. SeeBusinessRulesintheSmartIntegration Connector Guide.(PF7-
+8518)
+Spreadsheet andExcelAdd-In
+lAddParameter Selectors toSheet:WhencreatinganewCubeViewConnection, select
+AddParameter Selectors toSheettoautomatically createparameter selectorsfromthe
+chosenCubeViewandaddthemtothesheet.Theseparameter selectors(intheformof
+bothdrop-downmenusandfreeforminputs)willinteractwithyourCubeViewandrefresh
+theworksheet inrealtimeastheyarechanged.Nestedparameters willautomatically
+changetomatchtheparameters theyaredependent on.(PF8-997,PF8-1822)
+lEnablePreserve ExcelFormatting :InPreferences, usetheDefaultSettingsforPreserve
+ExcelFormatting sectiontodefinewhetherExcelformatting ispreserved bydefaultfor
+QuickViews,CubeViews,orTableViews.(PF8-1102,PF8-1700,PF8-1701)
+lOneStream  Ribbon andContext PaneTurnedOffinExcelWheninRead-Only:When
+viewingaworkbook withread-onlypermissions, certainfunctionalities arerestricted. Both
+theOneStream  ribbonandtheContextPanearepartiallyturnedoff,limitingtheabilityto
+performcertainactionsandaccessspecificfeatures.(PF8-1696,PF8-2696)
+lUseMultithreading forRetainFormulas inExcelAdd-In:InGeneralPreferences, the
+optiontoUseMultithreading forRetainFormulas hasbeenadded.WhensettoTrue,
+processing stepsforcollecting andapplyingformulasforeachworksheet willrun
+concurrently andallowforafasterrefreshrate.(PF8-2307)
+OneStream Release Notes 5Release 9.0.1
+Dashboard FilterEditorComponent
+lPicklist Filter:Thisnewfilterupdatesthebehaviorofpickliststoimproveloadtimesifyou
+havelargetablesasasource.Thefiltercanbesettodisableallfieldsfromusingthepicklist
+ortoallowonlystringornumberfields.SeeDashboard FilterEditor.(PF5-4502)
+WebContent Component
+lShowBorders Property:YoucanaddorremovetheborderaroundaWebContent
+dashboard component usingtheShowBordersproperty.(PF6-7109)
+IdeaStream Enhancements
+lCreateQuickViewUsingPOVfromSelected CellforXFGetCell :Right-clickonacell
+containing anXFGetCell, orusetheQuickViewsmenufromtheribbontocreateaQuick
+ViewusingthePOVfromthehighlighted XFGetCell function.(PF8-1074,PF8-1915)
+lCreateQuickViewUsingPOVfromSelected CellinDrillDownView:Whenworking
+ontheDrillDownpagefromanXFGetCell, DataExplorer,CubeViewConnection, orQuick
+View,youcanright-clickonacellfortheoptiontocreateaQuickViewusingthePOVfrom
+theselectedcell.(PF8-1819,PF8-1908)
+OneStream Release Notes 6Release 9.0.1
+FixedIssues
+9.0.1
+Utilities
+lDatabase Configuration Utility:UpdatestotheDatabase Configuration Utilityprovide
+betterperformance andreliability. (PF7-10076)
+9.0.0
+Modern Browser Experience
+lTimeout:Userswillnolongerbeloggedoutunexpectedly whiletheyareactive.(PF4-
+11319,PF4-11324)
+lCubeViews:TheCanModifyDatasettingisconsistent intheWindowsClientandWebUI.
+WhensettoFalse,dataisnolongereditable.(PF4-11443)
+lBIViewer:Parameters passasexpectedfromCubeViewstoBIViewerandtriggera
+refresh.(PF3-14317)
+lSearch:Parameters containtheentirevalueenteredinsearch.(PF3-14766)
+lWorkspaces : ToachieveparitybetweentheModernBrowserExperience andthe
+WindowsApplication FilterEditorDashboard Component, thefollowingfilterswere
+removedfromtheWindowsApplication version:IsNotBetween, NotAnd,andNotOr.
+(PF5-4467,PF5-4466)
+OneStream Release Notes 7Release 9.0.1
+SQLTableEditor
+lSQLTableEditorandGridView:Whenhidingandreordering columns ingridsettings, the
+orderthatyousetistheorderthatdisplays inthegridaftersaving.Priortothisfix,ifyouhid
+acolumnandthenreordered columns belowthehiddencolumn,reordered columns would
+displayattheendofthegridaftersaving.(PF1-10835)
+ClickOnce Shortcuts
+lClickOnce Shortcut Icon:TheOneStream  logowillbedisplayed onClickOnce Windows
+Shortcuts createdusingversion9.0andhigher.See"Deployment usingClickOnce" inthe
+Installation andConfiguration Guide.(PF7-9630)
+SmartIntegration Connector
+lCreating aNewGateway:AftercreatinganewGateway, thefocusremainsonthenew
+Gateway. TheattributesofthenewGatewayaredisplayed. (PF7-4065)
+lMultiple Redundant LocalGateway Servers:Supportaddedforqueriesover1million
+rowsandtheuseofSmartIntegration Connector Functions thatqueryforlong-running
+jobs.(PF7-8499)
+lRemote Business RulesMaxRows:RemoteBusinessRuleswillreturngreaterthan1
+millionrowswithoutadjustingthepagingthresholddefault.(PF7-9902)
+lRemote JobStatus:Processing timetocompletehasbeenincreased from30secondsto
+3minutes.(PF7-9904)
+OneStream Release Notes 8Release 9.0.1
+System Tools
+lDatabase :Schemaaddedtodatabasetablenamesthatallowsforalltablestobeviewed.
+See"UsingSystemTools"> "Database" intheDesignandReference Guide.(PF7-8658)
+Miscellaneous
+lParameters :Nestedparameters withinCubeViewsandDashboard CubeView
+Components willrender.TheWorkspaces containing theseCubeViewsandNested
+Parameters mustbesettoShareable. (PF6-7518,PF6-7561)
+lDataManagement :DataManagement Sequences andStepsusingLiteralParameter
+substitutions willresolve.(PF6-7104)
+lDynamic Extensible Documents :Thereisnounexpected extraspacinginthecellswhen
+youareembedding ExcelcontentwithinXFDocsthroughDocument Variables. (PF6-7484)
+lWorkspaces :UpdatesweremadetotheCopyOrMoveRelationship BRApitoreducethe
+timeneededformembers toupdate.(PF6-7576)
+lWorkspace Assemblies :BusinessRulesthatreference aWorkspace Assembly witha"."
+initsname,forexample,Core.Extensions, willcompilesuccessfully. (PF6-5581)
+lLargeDatePivotGrid:TheLargeDataPivotGridfieldhasbeenenhanced tomore
+efficiently handlelargedatasourcesandaddressissueswithloading.(PF5-4560)
+lBRApiGetCalculatedFXRate :ThedefaultbehaviorofBRApiGetCalculatedFXRate to
+returncalculated amountshasbeencorrected toproperlyretrieveInverse,Triangulated,
+andsamesourceanddestination currencyrates.(PF5-4558)
+OneStream Release Notes 9Release 9.0.1
+Deprecation
+lOneStream Softwarehasintentions todeprecate theBasicChartDashboard Component
+targetedfor2026R3.Werecommend allcustomers analyzetheirapplications todetermine
+ifanydashboards areutilizingtheBasicChart.AnyaffectedDashboards shouldmakeuse
+ofthemoreversatile,andbrowser-compatible, Advanced Chart,orBIViewerComponents.
+lOpenXMLPowerTools willbedeprecated inafuturerelease.Applications thatcurrently
+reference OpenXMLPowerTools librariesshouldbeginplanningtotransitiontoMicrosoft
+OpenXML librariestoensurecontinued supportandcompatibility withfutureplatform
+versions.(PF1-10998)
+lVPNorExpressRoute usedwithOneStream cloudonPlatformReleases priorto8.0.0
+reachedEndofServiceon31August2024.Allcustomers usingVPNorExpressRoute who
+areupgrading toPlatformRelease8.0.0orlaterwillberequiredtomigratetoSmart
+Integration Connector tointegratewithlocaldatasources.Cloudcustomers remaining on
+PlatformReleases priorto8.0.0cancontinuetouseVPNorExpressRoute throughtheEnd
+ofServicedate,afterwhichVPNwillbeoutofsupport.SmartIntegration Connector
+providessecureconnectivity betweenaOneStream SaaSinstanceandcustomerdata
+sourcesresidingwithinalocalnetwork.SeetheSmartIntegration Connector Guidefor
+moreinformation aboutenablingthisfeatureinyourenvironment.
+lTheOneStream Roadmap forCloudInfrastructure hasidentifiedWINSCP, typicallyusedin
+SecureFileTransferProtocol(SFTP)dataintegration processes, willbedeprecated ina
+futurerelease. A morespecifictimeframewillbeannounced whenavailable. As ofAugust
+2024,bothWINSCPandSSH.Netwillbesupported forSFTPfiletransfers. The best
+practicefornewcustomers istouseSSH.NetforSFTPtasks. Existing customers are
+advisedtodetermine iftheirenvironments makeuseofSFTPand begin theprocessof
+transitioning anyWINSCPoperations toSSH.Net. For assistance inevaluating an
+OneStream Release Notes 10Release 9.0.1
+environment, contactOneStream Support. Additional information onSSH.Netcanbefound
+intheSmartIntegration Connector Guide.
+lThefollowingBRApisarescheduled forremovalinthenextOneStream  releaseina
+mannerconsistent withoursunsetpolicy:BRApi.Utilities.EncryptText and
+BRApi.Utilities.DecryptText. PleaseupdateyourBusinessRulestouseKeyManagement -
+SecretsfoundwithintheCloudAdministration ToolsMarketplace Solution,orintegratewith
+yourownthird-partysecretsprovider.(PF7-4417)
+lCustomers currentlyonPlatformRelease8.0.0and8.1.0shouldbeadvisedthatMicrosoft
+hasannounced endofsupportfor.NET6on12November 2024.Clickhereformore
+information. FutureOneStream versions,beginning withPlatformRelease8.2.0,willbe
+basedonthecurrentlong-termsupported release.NET8.RefertothePlatformv8+
+UpgradeForuminONECommunity formoreinformation.
+ThefollowingsolutionswillbemovingtoCommunity SolutionsinAugust2025:
+lExcelAdd-InInstaller(XLI)
+lDataEntry123(DFM)
+ThefollowingsolutionswillbesunsetinAugust2025andwillnolongerbesupported by
+OneStream :
+lLoadTestSuite(LTS)
+Upgrade Information
+RefertoRequirements forimportant noticesanddetailsregarding planningyourupgrade.
+OneStream Release Notes 11Release 9.0.1
+lTheMicrosoftOpenXML librarywasupgraded to3.1.Changesmightberequiredto
+BusinessRulesthatreference thislibrary.(PF1-10984)
+lTheDatabase UpgradeUtilitynowsupportstheoptionUseDatabaseProcessing90 (thisis
+thedefaultifnotspecified), anditsoppositeUseServerProcessing90, whichdetermines
+wherethebulkoftheworkwillberunwhenupgrading tothe9.0schema.Iftheoptionisnot
+specified, adefaultvalueisused.(PF9-1553)
+lFramework andapplication databaseschemaupdatesarerequiredforthisupgrade.Full
+databasebackupsarerecommended. SeetheUpgrade Guide.
+lPlatformcodemigratedfromSystem.Data.SqlClient toMicrosoft.Data.SqlClient. See
+"PlatformVersion8.0+Readiness" intheUpgrade Guide.(PF7-1295)
+l.NET8DesktopRuntimemustbeinstalledtolocaldesktopsandlaptopstosuccessfully
+operatetheWindowsApplication ClientinaPlatformRelease9.0environment. Seethe
+Platformv8+UpgradeGroupinONECommunity. (PF7-3087)
+lTousetheModernBrowserExperience forPlatformVersion8.4+,younolongerneedto
+logaticketorcontactyourCustomer SuccessManager. OnPlatformVersion8.4+,the
+ModernBrowserExperience willbeincludedwitheveryrelease.
+lTheIPaddressofyourOneStream environment willchangewhenyouupgradetoversion
+9.0+.IfyourIThasanoutbound allowlist(forexample,usingnetworksecuritysystems),
+youmaynotbeabletoaccessthenewversion9.0+environment untilyourOneStream
+domainsareallowed.Werecommend allowingallyourOneStream domainsinsteadofIPs
+inrelevantnetworksecuritysystemsbecausetheIPswillbedynamicgoingforward.
+Domains:
+o<sitename>.onestreamcloud.com
+o<sitename- dev>.onestreamcloud.com
+Ifyouhavequestions orneedassistance, openacase.
+OneStream Release Notes 12Release 9.0.1
+Compatibility
+lOneStream supportsWindowsServer2019and2022.
+lOneStream Clientoperation supportsWindows10and11.
+lMicrosofthasannounced endofsupportfor.NET6on12November 2024.Furtherdetails
+areavailableathttps://dotnet.microsoft.com/en- us/platform/support/policy. OneStream
+planstoadoptMicrosoft's Long-TermSupport(LTS).NETversions,whicharereleased
+everytwoyearsandsupported byMicrosoftforthreeyears.OneStream Platformv8.4+
+usesthe.NET8development framework.
+lTaskManagerPV8.4.0SV100iscompatible withPlatformRelease8.4+.Toupgrade,itis
+recommended toperformanUninstallUIofpreviousTaskManagerversions,upgradeto
+Platform8.4+,theninstallTaskManagerPV8.4.0SV100.SeetheTaskManager Release
+Notes.
+lStandardApplication ReportsPV6.4.0SV100isnotcompatible withPlatformVersion9.
+OneStream recommends usingNavigation Center,whichcomespackaged withPlatform
+Version9,foryourreportingneeds.SeetheNavigation CenterGuide.
+OneStream Release Notes 13Release 9.0.1
+SaaSService Updates
+lWebApplication Firewall (WAF):Afterupgrading toV9,SaaScustomers will
+automatically havetheirOneStream V9instances protected byourWAF:OneStream’s
+WebApplication Firewall.TheWAFenhances thesecuritypostureofOneStream’s SaaS
+Servicebyprovidingmoreadvanced real-timeprotection againstcommonweb-based
+threats.TheWAFisalignedwithindustrybestpractices, includingtheOpenWeb
+Application SecurityProject(OWASP) top10attacktypes,tofurtherstrengthen the
+OneStream SaaSServicefromexploits,vulnerabilities, andmalicious attacks.
+lDataTierExpansion :PlatformV9accommodates SaaScustomers thathavestorage
+needsthatexceed4TBperinstance.Customers shouldengageCustomer Successwith
+storageinquiries.
+Security Updates
+lForcloud-hostedenvironments, JSONWebEncryption (JWE)andDemonstrated Proofof
+Possession (DPoP)havebeenaddedtoenhanceauthentication securitybyencrypting
+sensitivetokendataandbindingaccesstokenstoclients,reducingtheriskoftoken
+interception andmisuse.(PF11-179,PF11-181)
+lForOneStream IdentityServer (OIS),theOIDCLocalRedirectPortsecurityfeatureis
+required.Thissecurityenhancement willbeautomatically appliedtoallcloud-hostedOIS
+environments. Ifyouhavequestions, contactOneStream Support.
+OneStream Release Notes 14Release 9.0.1
+Documentation
+lThefollowingtermshavebeenupdatedthroughout thedocumentation:
+oMarketPlace SolutiontoOneStream Solution
+oPartnerPlace SolutiontoPartnerSolution
+oOpenPlace SolutiontoCommunity Solution
+Recommendations
+lAvoidfileoperations directlyontheserverduringcustomizations suchasBusinessRules,
+BRAPIs,andsolutions. Thispreventsdataloss,maintains fileintegrity,andavoidssecurity
+andmaintenance issues.
+lOneStream willnolongerprovidesupportforauthentication usingMSADandLDAP.MSAD
+andLDAPauthentication configurations willcontinuetofunction.However, intheeventof
+anerror,OneStream Supportwillnolongerbeavailableforthisfeature.
+Cloudorself-hostedcustomers usingMSADorLDAParerecommended toupgradetothe
+currentreleasetoensurecompatibility withthelatestauthentication librariesandprotocols.
+Self-hostedcustomers canfindadditional information onexternalsinglesign-on(SSO)
+configuration intheInstallation andConfiguration Guide.Cloud-hostedcustomers canrefer
+tothe"IdentityProviders" sectionoftheIdentityandAccessManagement Guidefor
+configuration instructions.
+OneStream Release Notes 15Release 9.0.1
+Customers alreadyusingexternalSSOplatforms, suchasMicrosoftEntraorOkta,should
+considerusingthoseplatformswithOneStream .Forself-hostedcustomers, analternative
+solutiontoupgrading tothecurrentreleaseistoselectfromavarietyofself-hosted
+systems,suchasADFS,PingFederate, andKeycloakforfederating MSADorLDAP,and
+ActiveDirectoryoversupported protocols, suchasOpenIDConnect.
+lIfyouareinaself-hostedenvironment, OneStream stronglyencourages singlesign-onwith
+anexternalidentityprovider.Toconfiguresinglesign-onwithanexternalidentityprovider,
+seetheInstallation andConfiguration Guide.(PF7-8083,PF7-8086)
+lOneStream recommends thatanycredentialed integration withOneStream Platform
+shouldchangepasswords regularly.
+lWhenreferringtofilepaths,itisbestpracticetoensurecross-platformcompatibility.
+Insteadofmanuallyusing‘\’forfilepathlocations, werecommend theuseof
+Path.Combine. Thisfunctionseamlessly handlesthepathseparators ('\'forWindows, '/'for
+Unix-basedsystems), makingyourcodeconsistently functional regardless oftheoperating
+system.
+lReferencing parameters withthesamenameinseparateWorkspaces willoftenresultin
+incorrectvaluesdisplaying intheprocessed UI.Asabestpractice,keepparameter names
+uniquewhenreferencing parameters acrossWorkspaces. Ifwhatneedstoberunis
+contained withinoneWorkspace, thenthisisnotaconcern.(PF6-6555)
+Notes
+lCustomers intheOneStream -hostedenvironment willuseOneStream IdentityServer for
+authentication andcanmanageidentityproviders(IdPs)andpersonalaccesstokens
+(PATs)intheIdentity&AccessManagement Portal.SeetheIdentityandAccess
+Management Guide.
+OneStream Release Notes 16Release 9.0.1
+KnownIssues
+SeeKnownIssues.
+Contact Support
+ContactOneStream Supportbyregistering at:
+Support-OneStream Software
+OneStream Release Notes 17Release 9.0.1

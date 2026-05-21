@@ -1,0 +1,213 @@
+OneStream Release
+Notes
+7.3.6Release
+
+Copyright ©2024OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,.NETFramework, Internet
+Information Services, Windows Communication Foundation andSQLServerareregistered
+trademarks ortrademarks ofMicrosoft Corporation intheUnitedStatesand/orothercountries.
+DevExpress isaregistered trademark ofDeveloper Express, Inc.Ciscoisaregistered trademark
+ofCiscoSystems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark of
+Advanced MicroDevices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+7.3.6Release NotesOneStream ii
+Introduction ii
+Important Notes ii
+Prerequisites ii
+Compatibility andImportant Notices ii
+Enhancements andNewFeatures iii
+Fixed v
+7.3.6 v
+7.3.3 v
+7.3.2 vi
+KnownIssues vi
+ContactSupport viii
+OneStream Release Notes iTableofContents
+7.3.6Release NotesOneStream
+Introduction
+OneStream 7.3.6isahotfixreleasethataddresses queryperformance degradation and
+dashboard tablecontrols.
+Framework andapplication database schemaupdates arerequired forthisupgrade. Full
+database backups arerecommended.
+Important Notes
+Prerequisites
+RefertoRequirements forimportant noticesanddetailsregarding planning yourupgrade.
+Compatibility andImportant Notices
+lMicrosoft endedsupportforAzureActiveDirectory Authentication Library(ADAL)in
+December 2022.Asaresult,wehavemigrated totheMicrosoft Authentication Library
+(MSAL)forauthentication andauthorization.
+lMicrosoft retiredInternetExplorer (IE)inJune2022.Thisaffectsallversions startingwith
+7.0.1whenIEisdisabled insideofyourorganization.
+lTheOneStream Studioclientforcustomreporting wasdeprecated startingwith7.1.0.
+Reportdesigners mustusetheReportDesigner intheDashboard ReportComponent
+feature.ToinstalltheClientAPIgoingforward, usethenewstand-aloneClientAPIinstaller.
+OneStream Release Notes iiTableofContents
+Enhancements andNewFeatures
+lTheOneStream Glossary PDFandHTMLareliveonourdocumentation site.
+lUpdated contentfortheCubeViews,ExcelAdd-in,Parameters, andReportBookssections
+intheDesignandReference Guide.
+lStartingwithversion7.3.0oftheOneStream application, Workspaces provideasandboxed
+environment inwhichengineers candevelopmultiple, complex financial scenarios and
+organize dashboard objects.Workspaces storedashboard maintenance units(DMUs)and
+facilitate community development. Theyarethefoundation fordashboards andwill
+continue toevolveinfotheframework thatencapsulates artifactsneededtodevelop
+business solutions.
+lWhendownloading drillresultsintoaCSVfilefromtheDrillDownpage,thelistseparator in
+theCSVfileisdetermined bytheculturesetonyouruserprofile.Ifthecultureonyouruser
+profilematches thatoftheoperating system's regional settings, thefileopenscorrectly in
+Excelwithoutfirsthavingtosavethefileandthenimporting itintoExcel.(PF1-8009)
+lThe“TableColumnNames”property isaddedtotheSQLTableEditordashboard
+component. Itletsyouspecifyacomma-separated listofdatabase tablecolumns tousein
+theSQLSelectstatement. Asaresult,onlytheenteredcolumns aredisplayed inthe
+control.(PF1-8267)
+lUsethenew.Treeproperty inCubeViewRowHeaderdesigntoexpressbetween 0and4
+levelsofhierarchical expansion intheinitialdisplayofdesignated rowmembers. (PF5-594)
+oTreeExpansionLevel1- 4:Setthenumberofrowsfrom0to4torevealtheamountof
+nesteddataavailable inthecubeview.Avaluesettozerowillcollapse alldata.A
+valuesettogreaterthantheexpansion levelwillexpandall.Ifnovalueissetforan
+expansion level,itdefaultstothenormalRowExpansionMode behavior.
+NOTE:ForTreeExpansionLevel towork,RowExpansionMode fromthe
+DefaultHeadermustbesetto"UseDefault"andcontaina.Tree
+Member Expansion. UsingCollapse AllorExpandAlloverrides this
+setting.
+OneStream Release Notes iiiTableofContents
+lSankeyDiagram isanewDashboard Component usedtoenhance visualization fordata
+flowanalysis. (PF5-1840).
+lAccesstoapplication helpnowrequires authentication. (PF5-917)
+lOneStream ServerConfiguration Utilityconfigurations havebeenaddedtosetmaximum
+threshold forfilescontained inazipfileandthetotalsizeofallextracted files.(PF5-1649)
+lEnabletheCompatibility filtertolimitsomeconflicts withconnections andperformance
+between theOneStream ExcelAdd-Inandthird-partyaddins.(PF5-1608)
+lNon-Administrators, assigned properApplication Security RolesandTransformation Rules
+Groupsecurity, arenowgrantedtheabilitytoImportorExportTransformation Rules
+*.TRX/CSV files..(PF5-1618)
+•Enhanced Timeout andProxyConfigurations allowforusewithshortertimeoutsessions.
+(PF5-1784)
+Limited Availability
+LimitedAvailability programs controlthereleaseofdesignated newfunctionality toenable
+ourCloudandSupportteamstomanage setupandoperational tasks.
+oOneStream IdentityServer (OIS)isanauthentication platform thatsupports SSO
+integration withOIDCandSAML2P compliant identityproviders (IdPs),including
+multipleIdPssourced toasingleOneStream cloudinstance. Additionally, OIS
+provides generation ofpersonal accesstokens(PATs)forRESTAPIauthentication
+andhasextended functionality fornativeloginIDsincluding supporttoreseta
+forgotten password andenhanced securitythroughpassword saltingandhashing.
+OISisthestandard authentication platform fornewcustomers adopting version7.3.
+Ifyouareanexistingcustomer andrequiremultipleauthentication sources, theuse
+ofPAT,orsecurenativeloginIDs,youcanrequestOISinyourversion7.3upgrade.
+General availability ofOISwillbeavailable inthefuture.
+oSmartIntegration Connector provides secureconnectivity between aOneStream
+SaaSinstance andcustomer datasourcesresidingwithina local network. With
+SmartIntegration Connector youcan:
+OneStream Release Notes ivTableofContents
+oEstablish connectivity between OneStream Cloudanddatasourcesinyour
+networkwithoutaVPNconnection.
+oCreateandmanage networkdatasourceintegration usingOneStream
+administration interfaces.
+oLocallymanage database credentials.
+ContactyourCustomer Success Manager ifyouareinterested inlearning more.
+Fixed
+7.3.6
+lTheperformance ofconsolidation processing isnegatively impacted whenrunconcurrently
+withaconsolidation processfromanotherapplication onthesameApplication server.This
+issueispredicated ontheuseofcomplex Entitydimensions withseveralthousand entities
+markedasInter-company. Defectcorrection PF-3041resolves thisissuethroughthe
+segmentation oftheservercachebyapplication topreventconflicts between concurrently
+operating consolidation processes.
+7.3.3
+lQueryperformance degradation incubeviewsanddatamanagement cubeexportsisfixed.
+Performance issueswereobserved inqueriesthatincluded emptydataunits,whereall
+amounts werenull.Emptydataunitscouldincludeunusedornewlyaddedentities,
+scenarios, years,orcurrencies. Themorecellsinthequerydefinition represented byan
+emptydataunit,thegreatertheperformance impact.(PF5-2236andPF5-2203)
+lUnexpected columnfilterbehavior withDashboard tablecontrols(gridsandSQLTable
+Editor)isfixed.Resolved columnfilterirregularities includemissingfiltercontrolsorvalid
+filterlogicreturning incorrect results.(PF5-2227)
+OneStream Release Notes vTableofContents
+7.3.2
+lEnhancement PF5-1020wasbackedouttoalleviate aWindows Clientrendering
+performance issue.Theissueoccurswhenperforming dimension member maintenance
+(insert/update/delete) when~1500+members aredisplayed inanexpanded state.Asthe
+numberofexpanded displayed members increases, thepost-saverefreshperformance
+worsens andmayrequireforce-closingtheWindows Client.Thiscondition doesnotimpact
+metadatamaintenance tothedatabase –justrendering performance. (PF5-1996)
+lCorrective coderesolves thisrendering performance issuesodimension maintenance may
+beperformed withoutregardtothenumberofexpanded displayed members.
+lTheselected member fromaTreeViewcomponent isretained astheselected member
+whennavigating acrossatabbeddashboard. (PF1-7996)
+lSMTPconnection stringmodified throughOneStream ServerConfiguration Utilitywillsave
+withoutalterations intheconnection string.(PF5-1753)
+lTheDateTime errorwhenperforming Timeanalysis, “TasksRunning WithinTimeRange”
+and“TasksQueued WithinTimeRange”ontheSystemEnvironment pageisresolved.
+(PF5-1625)
+lMultipleExcelworkbooks canbeopenedusingQuickViewsandContextPanewillremain
+open.(PF5-1539)
+KnownIssues
+lOneStream Release 7.2.1introduced anenhancement totheplatform (PF5-1663)that
+refineshowCalcStatus isevaluated. Thisenhancement addresses multi-server
+environments wheredataentryoccurswithinmilliseconds ofaCalcStatus beingupdated
+duetoacalculation orconsolidation.
+Thesystemnowfavorsover-impacting theCalcStatus to“CA.”Implementors needto
+accountforthisissuewhentriggering acalculation orconsolidation immediately aftera
+DataUnit’scalcstatusisimpacted.
+OneStream Release Notes viTableofContents
+Youmayseethisissuewhencreating aDashboard ButtonorEventHandlerrulethatrunsa
+calculation orconsolidation immediately afterdataissaved.Thecurrentworkaround isto
+incorporate a1secondsleepintothebeginning ofyourbusiness ruleusingthislogic:
+“Threading.Thread.Sleep (1000))”.
+lWithplatform version7.1.0andnewer,youmayencounter anerrorwhenloadingthe
+MarketPlace solutions CashPlanning, CapitalPlanning, SalesPlanning, andThing
+Planning. Ifyouencounter thiserror,loadPeoplePlanning first,thensubsequent planning
+solutions. Onceyourplanning solutions areloadedsuccessfully, uninstall PeoplePlanning
+ifnotusing.(PF-27430)
+lUsingthird-partylibrariesinbusiness rulescausescompileerrors.Thesolutiondepends on
+ifunsupported NameSpaces areusedinabusiness rulefileormember formulas. (PF2-
+8996)
+lDatamaydisappear whenyouscrollgridandpivotgridsinBIViewer.(PF5-50)
+lThetimeneededtosaveormodifyaconnection increases asnumerous connections
+increase inSystem>System Configuration>Database ServerConnections>Custom. (PF5-
+1926)
+lVB.Netrulesthatareconverted intoC#rulesrequirethefollowing importstosuccessfully
+compile(PF1-7495):
+oSystem
+oMicrosoft.csharp
+oSystem.linq
+oSystem.collections.generic
+oSystem.collections
+oSystem.text
+lWiththeintroduction ofC#business rules,imported snippets musthavealanguage type
+designation, eitherVisualBasic orCSharp. Ifyouusethecurrently available snippetimport
+template, youwillreceiveanerrorwhenimporting snippets. Theworkaround istomanually
+addaLanguageType columntotheExceltemplate anddefineavalue(eitherVisualBasic
+orCSharp) foreachsnippet.Usethefollowing steps:
+OneStream Release Notes viiTableofContents
+1.FromtheSnippetEditordashboard, download theSnippetImportTemplate (oropen
+analreadypopulated SnippetImportExcelfile).
+2.Insertanewcolumnanywhere between theexistingModuleType fieldandContent
+fieldandnameitLanguageType.
+3.Unhidehiddenrowsnumbered 7-10byhighlighting rows6and12,right-clicking,
+andselecting Unhide.
+4.Inrow10,addthefollowing formulaforthenewlyaddedLanguageType column:
+xfText#:[LanguageType].
+5.Addsnippets asusual,andintheLanguageType column,defineeachsnippetas
+eitherVisualBasic orCSharp.
+lBeginning inrelease7.1.1,thestageenginenolongersummarizes rowsthataremapped
+to(bypassed) .Ifaworkflow importsdatathatallgetsbypassed, thesummarization stepno
+longergenerates summary stagerecords. Asaresult,theimportfails,preventing
+completion oftheworkflow.
+Toworkaround thisissue,settheIsOptional DataLoadworkflow settingtoTrue.This
+allowstheworkflow tobecompleted iftheimportfails,withoutneeding tocomplete the
+Import-Validate- Loadsteps.However, thisdoesnotavoidtheinitialimporterrorwhenall
+recordsaremapped to(bypassed) .Toworkaround ausecasethatdealswithanImport
+(StageOnly)workflow thatfailsduetobypassed mappings, changethetransformation
+rulestouse*to*mappings toavoidthesummarization error.(PF-26143)
+Contact Support
+Ifyouwouldlikeassistance withyourupgrade, contactSupportthroughtheServiceNow portal.If
+youdonothaveaccesstoServiceNow ,contactyourcustomer success representative.
+OneStream Release Notes viiiTableofContents

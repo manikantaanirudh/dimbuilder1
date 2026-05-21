@@ -1,0 +1,264 @@
+OneStream Release
+Notes
+7.4.4Release
+
+Copyright ©2024OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,InternetInformation
+Services, Windows Communication Foundation andSQLServerareregistered trademarks or
+trademarks ofMicrosoft Corporation intheUnitedStatesand/orothercountries. DevExpress isa
+registered trademark ofDeveloper Express, Inc.Ciscoisaregistered trademark ofCisco
+Systems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark ofAdvanced Micro
+Devices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+7.4.4Release NotesOneStream ii
+Introduction ii
+Important Notes ii
+Prerequisites ii
+Compatibility andImportant Notices iii
+Enhancements andNewFeatures iii
+Fixed vi
+7.4.4 vi
+7.4.3 vi
+7.4.2 vi
+7.4.1 vii
+7.4.0 vii
+KnownIssues viii
+ContactSupport x
+OneStream Release Notes iTableofContents
+7.4.4Release NotesOneStream
+Introduction
+OneStream 7.4.4isahotfixreleasethataddresses ExcelAdd-Incompatibility.
+Ifyouareupgrading fromaversionpriorto7.4,framework andapplication database schema
+updates arerequired forthisupgrade. Fulldatabase backups arerecommended. Ifyouare
+upgrading fromversion7.4.0or7.4.1to7.4.2,framework andapplication database schema
+updates arenotrequired.
+Self-Hosted:
+lCustomers onv7.2.x,v7.3.x,orv7.4.xcanaccessthehotfixfromSolution Exchange.
+lCustomers onaversionpriorto7.2.xarerequired toupgrade tov7.4.4.
+lCustomers needtoupdatetheWindows Desktop ClientandExcelAdd-in.
+lThishotfixisnotbackwards compatible.
+Cloud-Hosted:
+lCustomers needtoinstalltheWindows Desktop Client&ExcelAdd-In.
+lClick-Onceisnotupdated aspartofthishotfix.
+lThishotfixisnotbackwards compatible.
+lIfyouwouldliketohavethishotfixappliedtoyourenvironment, pleasesubmitaCustomer
+Upgrade CatalogRequest inServiceNow.
+Important Notes
+Prerequisites
+RefertoRequirements forimportant noticesanddetailsregarding planning yourupgrade.
+OneStream Release Notes iiTableofContents
+Compatibility andImportant Notices
+lMicrosoft endedsupportforAzureActiveDirectory Authentication Library(ADAL)in
+December 2022.Asaresult,wehavemigrated totheMicrosoft Authentication Library
+(MSAL)forauthentication andauthorization.
+lMicrosoft retiredInternetExplorer (IE)inJune2022.Thisaffectsallversions startingwith
+7.0.1whenIEisdisabled insideofyourorganization.
+lTheOneStream Studioclientforcustomreporting wasdeprecated startingwith7.1.0.
+Reportdesigners mustusetheReportDesigner intheDashboard ReportComponent
+feature.ToinstalltheClientAPIgoingforward, usethenewstand-aloneClientAPI
+installer.
+lOneStream supports Windows Server2022.
+lOneStream Clientoperation supports Windows 11.
+Enhancements andNewFeatures
+lUpdates weremadetoPowerShell references forusewiththeClientAPI,removing the
+needtodirectlyreference OneStreamClientApi.dll inPowerShell scripts.Youwillneedto
+updatePowerShell scriptscreatedbefore7.4.(PF7-495)
+lWorkflow configuration isstreamlined toallowmorethantwolevelsofextended cubes.
+Thiswasupdated totightlyintegrate imported datawithintheWorkflow TopLevelcube.
+Application architects andimplementors cannowminimize managing datamovement and
+validation processes between cubes.(PF5-2066)
+lThedashboard contains anewproperty calledDashboard Type.Thisproperty wascreated
+todesignate howadashboard isused.TheDashboard Typecanchangewhether the
+dashboard isvisibleinOnePlace orifparameters areresolved, resulting inaslight
+performance impact.(PF6-1894)
+lYoucanusecustomcontroldashboards andembedded components whentheDashboard
+TypeCustomControlisselected. Thisallowsone-to-manyrelationships toexistbetween
+thedashboard andtheembedded component. (PF6-1894)
+OneStream Release Notes iiiTableofContents
+lYoucannowwriteinlinedashboard business rulesusingthenewAssemblies nodewithina
+givendashboard maintenance unit.Thesebusiness rulesarestoredinthemaintenance
+unitanddonothavetobeeditedorextracted separately. Thisnewfeatureappliesto
+XFBRString, Dashboard DataSet, Dashboard Extender, andspreadsheet ruletypes.(PF6-
+2010)
+lTosupportthenewWorkspace Assemblies features, asecurityproperty called
+AdministerApplicationWorkspaceAssemblies wasaddedtoApplication Security Roles.A
+securityproperty calledAdministerSystemWorkspaceAssemblies wasaddedtoSystem
+Security Roles.Theseproperties accountforthenewworkspace assemblies features. You
+cannowaddandeditworkspace assemblies insystemdashboards andapplication
+dashboards.
+lWatermarks canbeincorporated intoTextEditordocuments. Thishelpsyouprotect
+company documents fromunauthorized use.Youcanuseimagesortexttocreate
+watermarks. (PF1-8456)
+lTheaggregated member foundintheConsolidation dimension isnowavailable fordata
+input.Thiscanbeenabled onindividual scenario members throughanewproperty called
+AllowInputintoAggregated Consolidation Member. Thisimproves thedesignofdata
+collection mechanisms whenusingtheaggregated member. (PF1-8329)
+lYoucanautomatically reducetextsizetofitinsideaspreadsheet cell.Thiseliminates the
+needtoresizethecolumnwidthandprevents textfrombeingcutoffwhenitexceeds the
+cellwidth.(PF1-8468)
+lIntheSQLTableEditorDashboard Component, thedrop-downlistissearchable to
+improve theefficiency offindingtheappropriate item.Asyoutype,searchoptionsare
+narrowed downtothosethatcontainthetypedtextandyounolongerhavetoscrollthrough
+alonglist.(PF1-7941)
+lTheExcelAdd-Inlogserrorsintheuser'sAppData folderlocatedontheC:drive.(PF5-
+1903)
+LimitedAvailability
+LimitedAvailability programs controlthereleaseofdesignated newfunctionality toenable
+ourCloudandSupportteamstomanage setupandoperational tasks.
+OneStream Release Notes ivTableofContents
+oOneStream IdentityServer (OIS)isanauthentication platform thatsupports SSO
+integration withOIDCandSAML2.0compliant identityproviders (IdPs),including
+multipleIdPssourced toasingleOneStream cloudinstance. Additionally, OIS
+provides generation ofpersonal accesstokens(PATs)forRESTAPIauthentication
+andhasextended functionality fornativeloginIDsincluding supporttoreseta
+forgotten password andenhanced securitythroughpassword saltingandhashing.
+OIS includes aself-servicefeaturethatenablesyoutomanage OIDC identity
+providers.
+OISisthestandard authentication platform fornewcustomers adopting version7.4.
+Ifyouareanexistingcustomer andrequiremultipleauthentication sources, theuse
+ofPAT,orsecurenativeloginIDs,youcanrequestOISinyourversion7.4upgrade.
+General availability ofOISwillbeavailable inthefuture.
+Notethefollowing limitations forOIS:
+oOISiscurrently onlyavailable intheOneStream HostedCloudandisnot
+intended foron-premise deployment.
+oFedRamp supportforOISisinprogress.
+oOISdoesnotsupporttheClientAPI.
+oOISdoesnotsupportauthentication usingMicrosoft ActiveDirectory (MSAD)
+orLightweight Directory AccessProtocol (LDAP).
+oCurrently, OISonlysupports self-servicemanagement forOIDCcompliant
+identityproviders. Futureplansincludeself-servicemanagement forSAML2.0
+compliant identityproviders.
+oSmartIntegration Connector provides secureconnectivity between aOneStream
+SaaSinstance andcustomer datasourcesresidingwithinalocalnetwork. Smart
+Integration Connector isthestandard dataintegration technology forallnew
+customers adopting Platform 7.4andhigher,replacing VPN.WithSmartIntegration
+Connector youcan:
+oEstablish connectivity between OneStream Cloudanddatasourcesinyour
+networkwithoutaVPNconnection.
+OneStream Release Notes vTableofContents
+oCreateandmanage networkdatasourceintegration usingOneStream
+administration interfaces.
+oLocallymanage database credentials.
+oDeleteGateways fromdevelopment instances. (PF2-13797).
+ContactyourCustomer Success Manager ifyouareinterested inlearning more.
+Fixed
+7.4.4
+lAnewcompatibility settingisavailable topreventtheOneStream ExcelAdd-Infrombeing
+disabled programmatically. (PF8-896)
+7.4.3
+lPlatform jobprocessing performance isnegatively impacted whenrunconcurrently witha
+jobprocessing fromanotherapplication onthesameapplication server.Thedegreeofthe
+performance issueisrelativetotheoverallsizeandcountofinter-company designations in
+theentitydimensions. Multipleparentage entityrelationships arealsoacontributing factor
+totheissue.Defectcorrection PF5-3664resolves thisissuethroughsegmentation ofthe
+servercachebyapplication topreventconflicts between concurrently operating
+consolidation processes. Nochanges totheentitydimension structure arenecessary.
+7.4.2
+lDuringadetailedsecurityreview,OneStream discovered avulnerability inthenative
+authentication processinversions 7.4and7.4.1. This hasbeenaddressed in
+7.4.2. OneStream advisesallcustomers runningversion7.4and7.4.1toupgrade to
+version7.4.2immediately toremediate thisvulnerability.
+lDerivative transformation rulesusing<<(prefix)and>>(suffix)arefixed.Framework and
+application database schemaupdates arenotrequired forthisupgrade.
+OneStream Release Notes viTableofContents
+lOutofmemory errorsthatwereoccurring duringupgrades oflargedatabases whenusing
+theOneStream Database Configuration Utilityarefixed.
+7.4.1
+lQueryperformance degradation incubeviewsanddatamanagement cubeexportsisfixed.
+Performance issueswereobserved inqueriesthatincluded emptydataunits,whereall
+amounts werenull.Emptydataunitscouldincludeunusedornewlyaddedentities,
+scenarios, years,orcurrencies. Themorecellsinthequerydefinition represented byan
+emptydataunit,thegreatertheperformance impact.(PF5-2236andPF5-2203)
+7.4.0
+lIntheReportViewer’s ExportandSendlistofdocument filestochoosefrom,the
+description oftheDOCXfiletypeisfixed.Itcorrectly says“DOCXFile”insteadof“Send.”
+(PF1-25050)
+lClickingCancelnolongergivesanerrorwheninserting apictureinthespreadsheet. (PF1-
+25195)
+lIfyouarecurrently usingtheSQLTableEditororGridViewcomponent inDashboards, you
+cannowfilterontheStoredValue(PF5-2091).
+lCloudCustomers with“CloudTelemetry Settings” enabled nolongerreceiveanobject
+reference errorwhenvalidating orretransforming data.(PF5-2026)
+lPerformance nolongerslowswhensavingchanges withinSystem>SystemConfiguration
+>Database ServerConnections >Customifnumerous connections exist.Thiswasa
+knownissueinrelease7.3.(PF5-1926)
+lPreviously lostconnection intheExcelAdd-InwhenusingCubeViewConnections has
+beenresolved whensettingApplication.EnableEvents toTrue.(PF5-1620)
+OneStream Release Notes viiTableofContents
+KnownIssues
+lOneStream Release 7.2.1introduced anenhancement totheplatform (PF5-1663)that
+refineshowCalcStatus isevaluated. Thisenhancement addresses multi-server
+environments wheredataentryoccurswithinmilliseconds ofaCalcStatus beingupdated
+duetoacalculation orconsolidation.
+Thesystemnowfavorsover-impacting theCalcStatus to“CA.”Implementors needto
+accountforthisissuewhentriggering acalculation orconsolidation immediately aftera
+DataUnit’scalcstatusisimpacted.
+Youmayseethisissuewhencreating aDashboard ButtonorEventHandlerrulethatruns
+acalculation orconsolidation immediately afterdataissaved.Thecurrentworkaround isto
+incorporate a1secondsleepintothebeginning ofyourbusiness ruleusingthislogic:
+“Threading.Thread.Sleep (1000))”.
+lWhena3Dversionofachartisselected intheReportDesigner, thechartflipsits
+orientation upsidedown.Thisbehavior islimitedtotheReportDesigner only.The3D
+versionofthechartrenderswiththecorrectorientation outsideoftheDesigner suchas
+whenviewingonadashboard. (PF1-8607)
+lTheWatermark dialogboxinsidetheReportdashboard component ismissingtheClearAll
+button.Thisbuttonremoved allwatermarks inthedocument atonce.Asaworkaround,
+removeeachwatermark individually byclearingthewatermark textorpictureandclicking
+OK.(PF1-27974)
+lThefontinsidetheReportDesigner’s ChartOptionscannotbechanged. Selecting thefield
+tochangethefontresultsinanerror:Unabletocastobjectoftype
+‘DevExpress.Drawing.DXFont’ tothetype‘System.Drawing.Font’. (PF1-27911)
+lWithplatform version7.1.0andnewer,youmayencounter anerrorwhenloadingthe
+MarketPlace solutions CashPlanning, CapitalPlanning, SalesPlanning, andThing
+Planning. Ifyouencounter thiserror,loadPeoplePlanning first,thensubsequent planning
+solutions. Onceyourplanning solutions areloadedsuccessfully, uninstall PeoplePlanning
+ifnotusing.(PF-27430)
+lUsingthird-partylibrariesinbusiness rulescausescompileerrors.Thesolutiondepends
+onifunsupported NameSpaces areusedinabusiness rulefileormember formulas. (PF2-
+8996)
+OneStream Release Notes viiiTableofContents
+lDatamaydisappear whenyouscrollgridandpivotgridsinBIViewer.(PF5-50)
+lVB.Netrulesthatareconverted intoC#rulesrequirethefollowing importstosuccessfully
+compile(PF1-7495):
+oSystem
+oMicrosoft.csharp
+oSystem.linq
+oSystem.collections.generic
+oSystem.collections
+oSystem.text
+lWiththeintroduction ofC#business rules,imported snippets musthavealanguage type
+designation, eitherVisualBasic orCSharp. Ifyouusethecurrently available snippetimport
+template, youwillreceiveanerrorwhenimporting snippets. Theworkaround istomanually
+addaLanguageType columntotheExceltemplate anddefineavalue(eitherVisualBasic
+orCSharp) foreachsnippet.Usethefollowing steps:
+1.FromtheSnippetEditordashboard, download theSnippetImportTemplate (oropen
+analreadypopulated SnippetImportExcelfile).
+2.Insertanewcolumnanywhere between theexistingModuleType fieldandContent
+fieldandnameitLanguageType.
+3.Unhidehiddenrowsnumbered 7-10byhighlighting rows6and12,right-clicking,
+andselecting Unhide.
+4.Inrow10,addthefollowing formulaforthenewlyaddedLanguageType column:
+xfText#:[LanguageType].
+5.Addsnippets asusual,andintheLanguageType column,defineeachsnippetas
+eitherVisualBasic orCSharp.
+lBeginning inrelease7.1.1,thestageenginenolongersummarizes rowsthataremapped
+to(bypassed) .Ifaworkflow importsdatathatallgetsbypassed, thesummarization stepno
+longergenerates summary stagerecords. Asaresult,theimportfails,preventing
+completion oftheworkflow.
+OneStream Release Notes ixTableofContents
+lSelf-hostedcustomers usingNativeID(asopposed toanexternal SSOID)can
+authenticate withversion7.3.1and7.4.0.Thisappliesonlywhenaccessing theClickOnce
+TilespagewithaNativeIDthatrequires aresetpassword (first-timeuser,adminforceda
+password reset,newpassword validation rulescauseoldpassword tofail).Underthis
+limitedscenario, theissueencountered isthatyouwillnotbeabletologin. See OneStream
+Knowledge BasearticleKB0012607 forasimpleproactive solution.  (PF2-14247)
+Contact Support
+Ifyouwouldlikeassistance withyourupgrade, contactSupportthroughtheServiceNow portal.If
+youdonothaveaccesstoServiceNow ,contactyourcustomer success representative.
+OneStream Release Notes xTableofContents

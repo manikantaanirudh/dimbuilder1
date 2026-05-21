@@ -1,6 +1,6 @@
 # Current State Baseline
 
-This baseline describes the application state as of 2026-05-19.
+This baseline describes the application state as of 2026-05-21.
 
 ## Implemented
 
@@ -31,7 +31,17 @@ This baseline describes the application state as of 2026-05-19.
 - XLSX, CSV, JSON, and snapshots are available when enabled.
 - Export routes block server-side when stored validation issues match `validation.exportBlockedBySeverities`, with optional audited bypass disabled by default.
 - Audit logs record major actions.
-- Tests cover config, parsing, validation, exports, repositories, routes, project blueprints, Blueprint Studio helpers/endpoints, and UI view models.
+- HTTP Basic Authentication is available and configurable (`auth.enabled`, disabled by default).
+- CORS origins are configurable via `server.corsOrigins`.
+- Rate limiting protects all API routes (100/min general, 10/min for import/export).
+- Request body validation uses Zod schemas on mutation routes.
+- Structured logging via Pino with configurable level.
+- Request logging middleware records method, path, status, and duration.
+- Graceful shutdown on SIGTERM/SIGINT with 10-second timeout.
+- GitHub Actions CI pipeline runs type-check, tests, and build.
+- Docker multi-stage build produces a production image.
+- Vitest coverage with V8 provider and threshold enforcement.
+- Tests cover config, parsing, validation, exports, repositories, routes, project blueprints, Blueprint Studio helpers/endpoints, UI view models, auth, CORS, rate limiting, graceful shutdown, logging, and Zod validation middleware.
 
 ## Intentionally Local-First
 
@@ -42,8 +52,7 @@ This baseline describes the application state as of 2026-05-19.
 
 ## Known Gaps
 
-- No authentication.
-- No authorization.
+- No per-user authorization (auth is available but not project-aware).
 - No database migrations.
 - Blueprint Studio returns YAML fragments only; visual nested editing and automatic config writes are intentionally not implemented.
 - XML import supports the current app export shape and common property nodes, not every possible OneStream XML variant.
@@ -53,7 +62,6 @@ This baseline describes the application state as of 2026-05-19.
 - Baseline import from multipart XML upload is not yet exposed; XML baseline support currently accepts XML text through the project baseline endpoint.
 - Release package XML is currently full current metadata for every package mode; mode-specific XML subsets and rollback XML are not yet generated.
 - No background export job lifecycle.
-- Limited operational monitoring.
 - No formal release process.
 
 ## Documentation Baseline

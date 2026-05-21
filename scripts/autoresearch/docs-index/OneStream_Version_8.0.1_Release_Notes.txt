@@ -1,0 +1,445 @@
+OneStream Release
+Notes
+8.0.1Release
+
+Copyright ©2025OneStream SoftwareLLC.Allrightsreserved.
+Anywarrantywithrespecttothesoftwareoritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftwareLicenseandServicesAgreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warrantywithrespecttothesoftwareoranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality, andtheOneStream logoare
+trademarks ofOneStream SoftwareLLCintheUnitedStatesandothercountries. Microsoft,
+MicrosoftAzure,MicrosoftOffice,Windows, WindowsServer,Excel,InternetInformation
+Services,WindowsCommunication Foundation andSQLServerareregistered trademarks or
+trademarks ofMicrosoftCorporation intheUnitedStatesand/orothercountries. DevExpress isa
+registered trademark ofDeveloper Express,Inc.Ciscoisaregistered trademark ofCisco
+Systems,Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark ofAdvanced Micro
+Devices,Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+8.0.1ReleaseNotesOneStream ii
+Highlights ii
+SmartIntegration Connector iv
+IdentityandAccessManagement iv
+CopyJournals iv
+ValidateJournals v
+ExportJournalstoXSLX v
+StageSummary RowsandStageRatioValues v
+CopyCubeViews v
+Encrypting Workspace Assemblies v
+Assemblies Reference OpenXML Packages v
+CubeViewsMovedtoWorkspaces vi
+Documentation vi
+8.0.1 xi
+8.0.0 xi
+Platformv8UpgradeProcess xvi
+OneStream Release Notes iTableofContents
+8.0.1Release NotesOneStream
+OneStream 8.0.1isahotfixreleasethataddresses userauthentication issueswheremultiple
+usersareauthenticating simultaneously.
+Highlights
+lWemigratedthedevelopment framework from.NET4to.NET6.Youwillseeimmediate
+benefitsfromperformance improvements formemoryintensiveoperations, suchas
+consolidation andcomplexcubeviewprocessing. However, businessrulecompilation
+failuresmayresultduetoincompatible rulesyntaxordllfilereferences.
+lOneStream IdentityServer (OIS)andSmartIntegration Connector (SIC)aregenerally
+availableandrepresent thestandardauthentication anddataintegration technologies for
+version8.0.0.
+lWecontinuetoupgradeWorkspaces withmorefeaturesinworkspace assemblies. Also,
+youcanbuildcubeviewswithinworkspaces.
+lManyideasresultedfromIdeaStream, suchasformtemplates, businessruleuserinterface
+improvements, anddatamanagement. ContinuetovoteonIdeaStream toparticipate in
+whatcomesnext.
+lJournalswereupdatedtoimprovetheuserexperience ofpostingjournalsandenablefiner
+granularity oversegregation ofduties.
+lOneStream Documentation isnowpublic.Gotohttps://documentation.onestream.com/ to
+seeversion8.0.0.Documentation previously providedinOneStream releaseshasbeen
+removedandallavailabledocumentation isonthepublicsite.
+lYoucancontinuetousetheservicecatalogtoindicateinterestinupgrading toPlatformv8.
+Customer SuccessRepresentatives willengageallinterested Platformv8candidates to
+reviewpreparation activitiesrequiredforasuccessful upgrade.RefertothePlatformv8+
+UpgradeGroupinONECommunity forinformation anddiscussion.
+Prerequisites
+OneStream Release Notes iiTableofContents
+RefertoRequirements forimportant noticesanddetailsregarding planningyour
+upgrade.
+lFramework andapplication databaseschemaupdatesarerequiredforthis
+upgrade.Fulldatabasebackupsarerecommended.
+lReviewtheUpgrade OneStream Guide.
+Important Notes
+l.NET6DesktopRuntimemustbeinstalledtolocaldesktopsandlaptopsto
+successfully operatetheWindowsApplication ClientinaPlatformv8.0
+environment. RefertothePlatformv8+upgradegroupinONECommunity for
+moreinformation.
+lVPNorExpressRoute usewithOneStream cloudonPlatformversionspriorto
+8.0.0willreachEndofServiceonAugust31,2024.Allcustomers usingVPNor
+ExpressRoute whoareupgrading toPlatform8.0.0orhigherwillberequiredto
+migratetoSmartIntegration Connector tointegratewithlocaldatasources.Cloud
+customers remaining onPlatformreleaseversionspriorto8.0.0cancontinueto
+useVPNorExpressRoute throughtheEndofServicedate,afterwhichVPNwill
+beoutofsupport.
+lERPConnect45.dll isnolongerincludedwithOneStream andSmartIntegration
+Connector. SeetheSmartIntegration Connector Guideforreferencing and
+integrating withthenewERPConnect20.dll, availableontheDLLtileonthe
+PlatformpageofSolutionExchange.
+lCustomers intheOneStream -hostedenvironment willuseOneStream
+IdentityServer forauthentication withOneStream Platformv8.0.SeetheIdentity
+andAccessManagement Guide.
+lClientAPIisnotsupported withOneStream Platformv8.0.
+lOneStream supportsWindowsServer2022.
+lOneStream Clientoperation supportsWindows11.
+OneStream Release Notes iiiTableofContents
+lResource OwnerPassword Credentials (ROPC)arenolongersupported.
+Customers inaOneStream -hostedenvironment arerequiredtouseOneStream
+IdentityServer personalaccesstokens.Customers inaself-hostedenvironment
+arerequiredtouseSSOtokens.Ifyouarecurrentlynotusingeitherofthese
+tokens,seeVisualBasicforApplications (VBA)Procedures intheDesignand
+Reference Guideformoreinformation.
+NewFeatures
+SmartIntegration Connector
+SmartIntegration Connector isaGeneralAvailability feature.SmartIntegration
+Connector providessecureconnectivity betweenaOneStream SaaSinstanceand
+customerdatasourcesresidingwithinalocalnetwork.SeetheSmartIntegration
+Connector Guideformoreinformation aboutenablingthisfeatureinyourenvironment.
+Identity andAccess Management
+OneStream IdentityServer isaGeneralAvailability feature.TheIdentity&Access
+Management Portalincludesanenhanced self-servicefeaturethatenablesyouto
+independently addSAML2.0compliant identityprovidersthroughamanual
+configuration andtest,edit,view,andremovethoseidentityproviders. SeetheIdentity
+andAccessManagement Guideformoreinformation aboutauthentication with
+OneStream IdentityServer.
+CopyJournals
+Youcancopyexistingjournalsintoothertimeperiods.Thisisusefulwhenyouare
+creatingjournalssimilartoonesalreadycreatedandishelpfulwhenmanaging recurring
+journals.(PF1-8815)
+OneStream Release Notes ivTableofContents
+Validate Journals
+Youcanensurethatdimension members selectedinthejournalarevalidcube
+intersections basedonconstraints configured inthedimension library.Ifvalidation
+errorsexist,theywilldisplayinaValidation paneallowingyoutoviewthemasyoumake
+editstothejournal.Thishelpsyousavetimebyvalidating entriesearlierintheprocess.
+(PF1-8813)
+ExportJournals toXSLX
+Youcanexportjournalsassociated withdefinedparameters toanXSLXfileusingthe
+ExportJournalsToXSLX BRApi.Itcanbeeasiertoreadandmodifyjournaldatainan
+XSLXformatcompared toCSVfilesthataregenerated bytheexisting
+ExportJournalsToCSV BRApi.(PF1-8755)
+StageSummary RowsandStageRatioValues
+Integration SettingsareaddedtotheApplication ServerConfiguration Utilitytoenable
+themodifications oftheStageSummary RowsandStageRatiovalues.MinimumData
+RecordCount,Summarized RowRatio,andAlwaysUseDatabase Server
+configurations increaseperformance efficiency. (PF5-2095)
+CopyCubeViews
+CubeViewAdministrators canselectmultiplecubeviewstocopy.UsetheCtrlkeyto
+selectmultiplecubeviewsthatarenotgroupedtogether.(PF6-2365)
+Encrypting Workspace Assemblies
+Youcanencryptworkspace assemblies atthefilelevel.(PF6-2371)
+Assemblies Reference OpenXML Packages
+Assemblies allowreferences toknownpackages thatarealreadypartofthestandard
+serverinstall,suchasOpenXML. (PF6-2201)
+OneStream Release Notes vTableofContents
+CubeViewsMovedtoWorkspaces
+CubeviewscanbecreatedandeditedintwolocationsontheApplication tab:through
+theCubeViewspageandtheWorkspaces page.Currentcubeviewscanbefoundinthe
+DefaultMaintenance UnitundertheDefaultWorkspace. (PF6-2093)
+Documentation
+Intheuserinterface,clicktheHelpbuttontoviewthedocumentation fromapublic
+website.
+Enhancements
+lShowDimension Member Descriptions inJournal LineItems:Dimension
+memberdescriptions areshownnexttothemembernamesinJournalLineItems.
+Thisprovidesclarityandaccuracy. Ifdimension members containlanguage-
+specificdescriptions, thedescriptions areshowninyourchosenlanguage(culture
+issetinyouruserprofile).(PF1-8696)
+lJournals Prevent LoadtoUnrelated Entities:TheCanLoadUnrelated Entities
+propertyisaddedtoAdjustment WorkflowProfiletypestopreventloadingjournal
+datatoEntitiesnotassignedinitsInputParentWorkflowProfile.(PF1-8814)
+lDeleteJournals: Youcanquicklyandefficiently deletemultiplejournalsatthe
+sametime.(PF1-8796)
+lRequire Journal Template :Anewsecurityproperty,RequireJournalTemplate,
+isintheAdjustment WorkflowProfiletypethatenforcesthecreationofnew
+journalsfromexistingjournaltemplates only.Administrators (systemand
+application) canstillcreatefree-formjournals.(PF1-8756)
+lPrevent Self-Approval andSelf-Posting ofJournals:Youcanpreventusers
+fromapproving journalstheyhavecreatedorsubmitted andpostingjournalsthey
+havecreated,submitted, orapproved withtwonewsecurityproperties onthe
+Adjustment WorkflowProfile.ThisfeaturedisablestheQuickPostfunctionality.
+Preventing self-approvalandself-postingofjournalssupportsthecompliance of
+segregation ofduties.(PF1-8371)
+OneStream Release Notes viTableofContents
+lShowUDdescriptions inJournals:Showthedescriptions fortheeightUD
+Dimension TypesnexttotheUDdimension intheJournalPOVandthelineitem
+headersusingthenewcheckboxinthejournaltoolbar.Descriptions aredefined
+intheApplication Properties andcanprovideclarityonthepurposeofthe
+dimensions. (PF1-8698)
+lRemove Resource OwnerPassword Credentials (ROPC):Personalaccess
+tokens(PATs)arenowsupported forcustomers inOneStream -hosted
+environments. (PF7-2498)
+lClickOnce Usage:TheClickOnce processisenhanced tolaunchtheapplication
+withasingleclickoftheOpenbuttonwhileeliminating thetilespage.(PF7-2350)
+lBusiness RuleAccess andMaintenance Groups:TheAdministrators groupis
+thenewdefaultforthesegroups.Thedefaultgroupcanbechangedbyselecting
+accessandmaintenance groupsforBusinessRulesintheApplication Server
+Configuration. (PF7-2221)
+lDataManagement Toolbar:Allowsfortheuseoftheuserinterfacelocatedatthe
+topofthetoolbarforRenameSelectedItem,Copy,andPastealongwitharight-
+clickoptionwhenselectingacurrentsequence orsteptoCopy/Paste. (PF5-1574)
+lFormTemplate Rename:Application >DataCollection >FormTemplates allows
+fortheuseoftheuserinterfacelocatedatthetopofthetoolbarforRename
+SelectedItem,Copy,andPasteandaright-clickoptionwhenselectedona
+currentFormTemplate toCopy/Paste. (PF5-2083)
+lWorkflow DrillBack:WorkflowDrillBacktoBrowserallowsforspecial
+characters inaURL.(PF5-2116)
+lDataManagement andStageLoadRetry:WhenrunningDataManagement or
+StageLoadprocesswhenanetworknameisnolongeravailable, thesystemwill
+retryat1,3,and5seconds.Anerrormessagewilldisplayafterthethirdattemptif
+thenetworkpathisnotfound.(PF5-2144)
+lLoadOverlapped Siblings:WhenBaseInputSettingoptionLoadOverlapped
+SiblingsissettoTrue,onlyloadfilesthathaveanoverlapwillreprocess. (PF5-
+2207)
+OneStream Release Notes viiTableofContents
+lConfirmation whenSavingBusiness RulesandAssemblies : Added
+confirmation toCancelAllChangesSinceLastSavebuttonforBusinessRules
+andWorkspaces platformuserinterface.(PF5-2073)
+lCubeViewShortcuts :Cubeviewshavebeenenhanced forscaling,shortcuts,
+andhotkeys.SeeShortcuts, Scaling,andHotKeysformoreinformation. (PF8-57)
+lRename Objects UsingDifferent Cases:Youcanrenamedimensions,
+dimension members, confirmation rules,profiles,andmoreusingdifferentcases.
+Forexample,TBtesttoTBTEST.(PF6-2767)
+lDashboards TermRemoved fromMaintenance Units:Thetermdashboards is
+removedfrommaintenance units.(PF6-3044)
+lSystem Security Roles: 
+oManageSystemDashboards isrenamedtoManageSystemWorkspaces at
+System>Administration >Security>System Security Roles.
+oSystemDashboardAdminPage isrenamedto
+SystemWorkspaceAdminPage atApplication >Tools>Security Roles.
+(PF6-2784)
+lApplication Security Roles:
+oManageApplicationDashboards isrenamedto
+ManageApplicationWorkspaces atApplication >Tools>Security Roles.
+oDashboardAdminPage isrenamedtoWorkspaceAdminPage at
+Application >Tools>Security Roles.(PF6-2777)
+lSystem ToolsLoad/Extract :SystemDashboards isrenamedtoSystem
+Workspaces atSystem>Tools>Load/Extract .(PF6-2700)
+lApplication ToolsLoad/Extract :Application Dashboards isrenamedto
+Application Workspaces atApplication >Tools>Load/Extract .(PF6-2693)
+lSystem TabWorkspaces Update:UndertheSystemtab,Dashboards is
+renamedtoWorkspaces. (PF6-2623)
+OneStream Release Notes viiiTableofContents
+lTitleBarUpdate:IntheWorkspaces branch,thetitlebarisrenamedfrom
+ApplicationDashboards toApplicationWorkspaces. (PF6-2396)
+lCubeViewsAcrossWorkspaces :Youcancreatecubeviewswiththesame
+nameacrossmultipleworkspaces. (PF6-2578)
+lNewCubeViewGroups Properties :Workspace andMaintenance Unitsare
+newcubeviewgroupsproperties. (PF6-2939)
+lWorkspaces Toolbar Buttons:Toolbarbuttonsaccommodate movingcube
+viewsundertheworkspaces umbrella.(PF6-2220)
+lRemoved Access GroupProperty fromDashboard Groups:InDashboard
+Groups,thesecuritysectionhasbeenremovedfromtheuserinterfaceandthe
+database. Thischangeappliesforalldashboard groupsincludinginthedefault
+workspace ornon-defaultworkspace.
+lCubeViewGroups Security Properties :CubeViewGroupsatApplication >
+Presentation >CubeViewshavethesecurityproperties AccessGroupand
+Maintenance Group.Youcanedittheseproperties ifyouhavethe
+ManageCubeViews role.
+CubeViewGroupsatDefaultWorkspace /DefaultMaintenance Unithavethe
+securityproperties AccessGroupandMaintenance Group.Youcaneditthese
+properties ifyouhavetheManageCubeViews role.
+CubeViewGroupslocatedoutsideDefaultWorkspace /DefaultMaintenance
+Unithavethesecurityproperties AccessGroupandMaintenance Groupandare
+hiddenfromusers.
+TheApplication securityroleManageCubeViews givesyoufullrightstoeditCube
+ViewGroupsincubeviewsandthedefaultWorkspace/Default Maintenance Unit
+cubeviewgroups.
+TheApplication securityroleManageApplicationWorkspaces givesyoufullrights
+tomakeeditsanywhere outsidethedefaultWorkspace/Default Maintenance Unit.
+(PF6-2751)
+lUpdated Workspaces Icon:AnewicondisplaysforWorkspaces, wherethe
+Dashboard iconwaspreviously displayed. (PF6-2271)
+OneStream Release Notes ixTableofContents
+lXMLExtract/Load :Youcanextractandloadnewlycreatedcubeviews,cube
+viewgroups,andcubeviewprofilesusingthetraditional XMLprocessunderthe
+Application Workspaces filetypeoption.
+ForXMLextract,ifyouselectthefiletypeofApplication Workspaces, thesystem
+updatesthethirdlineofcodefrom<applicationDashboardsRoot> to
+<applicationWorkspacesRoot> ontheextract.
+ForXMLload,thesystemproperlyloads<applicationWorkspacesRoot>. To
+supportbackward compatibility, ifyouhaveanXMLextractthatcontains
+<applicationDashboardsRoot>, thesystemstillloadstheolderversion.
+lForXFProject,whenextracting afile,thefolderstructureisupdatedfrom
+Application Dashboards toApplication Workspaces. (PF6-2808)
+lWhitelisted Domains:TheWhitelisted DomainssettingintheApplication Server
+Configuration fileinOneStream givesyoumorecontrolovertheURLsand
+domainsallowedtobereferenced. Customers inaself-hostedenvironment can
+updatethissettingintheApplication ServerConfiguration file.Customers ina
+OneStream -hostedenvironment cancontactCustomer Supporttoupdatethis
+setting.(PF2-15004)
+lLogging:Tostandardize andimprovetheloggingstrategyacrossserver
+applications, theloggingconfiguration settingshavebeenremovedfromthe
+OneStream ServerConfiguration Utilityapplication andareincludedintheJSON
+files.(PF2-14996)
+lAuthentication inaSelf-hostedEnvironment :Authentication settingsare
+updatedandstreamlined intheOneStream ServerConfiguration Utility
+application. Instructions forauthentication inaself-hostedenvironment areinthe
+Installation andConfiguration Guide.Instructions forconfiguring externalidentity
+providersforRESTAPIinaself-hostedenvironment areintheRESTAPI
+Implementation Guide.(PF2-14546)
+lSmartIntegration Connector :The2GB.NETlimitand1millionreturnrowsis
+increased toathreshold5millionrowsand5GB.(PF2-14372)
+OneStream Release Notes xTableofContents
+lSmartIntegration Connector :Businessrulesdecompress automatically. Ifyou
+areusingSmartIntegration Connector businessrules,seetheBusinessRules
+sectionoftheSmartIntegration Connector Guideforupdatedbusinessrulesthat
+previously usedInflateJSonObject. (PF7-2140)
+lOneStream DesktopClientsarenowcompatible withupdatedpatchrelease
+versions.Forexample,v8.0.0willbecompatible withv8.0.1andv8.0.2.(PF7-
+2637)
+lXFAspSessionState :TableremovedfromFramework database. (PF7-1058)
+lBackward Compatibility forNavigation Actions:Backward compatibility is
+ensuredwhereDashboardAdmin isrenamedtoWorkspaceAdmin andwhere
+SystemDashboardAdmin isrenamedtoSystemWorkspaceAdmin. (PF6-3199)
+FixedIssues
+8.0.1
+lAuthentication :Improved securityagainstmultipleuserlogins.(PF11-472)
+Forcloud-hostedcustomers onv8.0andabove,afixforthisissuewillbeincluded
+intheoperation maintenance releaseonFeb.15,2025.Forself-hosted
+customers, afixforthisissuewillbeavailablefordownload fromtheSolution
+Exchange onFeb.14,2025.
+Customers usingOIDCExternalSSO(Okta,PingFed,orAzure)shouldupgrade
+tothehotfixfromtheSolutionExchange. OneStream recommends enablinglocal
+redirectintheserverconfiguration. Customers usingSAMLareadvisedto
+upgradewiththecorresponding hotfix.
+8.0.0
+lDashboard BIViewerGridFilterEditor:ThefiltereditordisplaysforBIViewer
+andBIDesigner. (PF6-3261)
+OneStream Release Notes xiTableofContents
+lUnderscores inAssembly FileNames:Withinworkspaces assemblies, ifyou
+createanassembly fileusingC#orVisualBasic,underscores replacespaces.
+(PF6-3210)
+lWorkflows andWorkspace Dashboard Names:Workflows thatcontain
+dashboard namesthatarenotinthedefaultworkspace loadsuccessfully and
+updatethepropertypageinthefollowingformat:
+WorkspaceName.DashboardName. (PF6-3133)
+lDashboard Profiles:Dashboard Profileproperties removedinversion7.4are
+addedbackinversion8.0.(PF6-2881)
+lWorkspace Assemblies withBlankDependency Names:Ifyoutrysavinga
+blankworkspace assembly dependency file,youwillbeprompted toenteravalid
+name.(PF6-2866)
+lTogglePageSize:Thetogglebuttonletsyouexpandandcontractscreens
+properly(forexample,viewingoreditinganassembly filepage).(PF6-2848)
+lChange Display Gridlines inAdvanced Tab:UpdatestotheDisplayGridlines
+property,locatedunderthecubeviewsorworkspaces cubeviewsonthe
+Advanced tabundertheCubeViewProperties tab,areallowedandarenot
+grayedout.(PF6-2552)
+lSavingWhileintheAssembly Editor:WhenyouclickSavewhileeditinga
+workspace assembly, thecursorremainsinitscurrentlocation.(PF6-2382)
+lXFProjectAssembly Descriptions :IfyouareusingXFProjectforanassembly
+andyouextractit,thecontenttagcontainseverything inthepropertygrid
+includingthedescription. (PF6-2026)
+lRefreshing Content inanUnselected Tab:Unnecessary redrawing of
+dashboards duringtabswitchinghasbeenaddressed. (PF6-2239)
+lComplexity ofWorkflow Hierarchy Impacting Dashboard Performance :
+Runningdashboards onlyresolvepredefined substitution variablesorparameters
+asneededtoimproveperformance. (PF6-2053)
+OneStream Release Notes xiiTableofContents
+lNoDataLock :Settingametadata member(AccountandUDx)andWorkflow
+ChanneltoNoDataLock willnotcauseawarningtodisplayuponsaveinanInput
+Form.(PF5-2025)
+lDashboard SaveButton:Dashboard buttonswillrunaservertaskoninitialclick.
+ABusinessRulepausesteporsecondclickisnotrequired.  (PF5-2339)
+lProcessing UD Dimension Members :WhenUDdimension members are
+configured asUDattributes, attributeUDmembers thatareinvalidforagiven
+scenariotypewillnotbeprocessed. (PF5-1477)
+lQuickViewKeepOnly:WhenusingaQuickViewwiththeKeepOnlyfeature,
+dataremainsintactwhenPrimaryandDataStylearebothsettoComma[0].
+(PF5-2119)
+lFXRateScreen:Whenagridcellisineditmodeandtheuserscrollsthecolumn
+outofthevisibleareaofthegrid,itwillnotcauseablankscreentodisplay.(PF5-
+2269)
+lQuickViewPerformance :Performance enhancement whensubmitting or
+refreshing valuesinaQuickView.(PF5-2372)
+lSpreading :YoucanuseSpreading TypesFactorandAccumulate alongwith
+addingaRate.(PF5-2237)
+lRefresh Spreadsheet :IntheOneStream WindowsApplication, cellvalues
+populatewhenselectingRefreshSheetinSpreadsheet. (PF5-2294)
+lJournal ImportandIsSingleEntity :Whenusingacsvorxslxfiletoimport
+journals,ifIsSingleEntity issettoTrue,theEntityandCubeproperties inthe
+JournalPOVwillbesettoEntityandCubevaluesdefinedinthefirstlineitemof
+thatjournal.Previously, theEntityandCubeproperties intheJournalPOVwere
+setto(NotSelected), requiringyoutomanuallysettheproperties. (PF1-8922)
+lManageData Application Security Role:UserswiththeManageData
+application securityrolecanloadorextractdatamanagement jobs.Theyarenot
+requiredtoalsohavetheManageSmartIntegration application securityroleto
+performthesetasks.(PF2-15253)
+OneStream Release Notes xiiiTableofContents
+KnownIssues
+lTheWhitelisted DomainssettingintheApplication ServerConfiguration fileonly
+allowsforhttpandhttpsformatted domains.References tonon-httpornon-https
+fileschemeswillnolongerbeallowed.(PF2-15004)
+lIfyouareinaself-hostedenvironment usingaSAML2.0externalidentityprovider
+forauthentication andencounter anerror,updatetheACSURLbothintheWeb
+ServerConfiguration fileinOneStream andintheapplication registration forthe
+externalidentityprovider.Usethisformat:
+https://<domainname>/OneStreamWeb/OneStreamLogonCallback.aspx/
+SeeOneStream Knowledge BasearticleKB0012777. (PF2-15177)
+lIfyouareinaself-hostedenvironment usingaMicrosoftAzureADidentity
+providerforauthentication andencounter anerror,addthetenantIDintheWeb
+ServerConfiguration fileinOneStream .SeeOneStream Knowledge Basearticle
+KB0012778. (PF2-15181)
+lIfyouareacommercial customerinaself-hostedenvironment usingMicrosoft
+AzureADforauthentication andencounter anerror,updatetheredirectURLboth
+intheWebServerConfiguration fileinOneStream andintheapplication
+registration inAzureADfromhttps://onestreamclient to
+https://<domainname>/OneStreamWeb/OneStreamLogonCallback.aspx
+SeeOneStream Knowledge BasearticleKB0012781. (PF2-14668)
+lIfyouareinaself-hostedenvironment usingaMicrosoftAzureADidentity
+providerforRESTAPIauthentication andencounter anerror,addtheclaimaudin
+theorderedlookupsintheWebServerConfiguration fileinOneStream .See
+OneStream Knowledge BasearticleKB0012779. (PF2-15031)
+lIfyouareinaself-hostedenvironment usingaPingFederate identityproviderfor
+RESTAPIauthentication andencounter anerror,addtheclaimclient_idinthe
+orderedlookupsintheWebServerConfiguration fileinOneStream .See
+OneStream Knowledge BasearticleKB0012780. (PF2-15027)
+lSmartIntegration Connector transfersdatainparquetformatfromtheLocal
+GatewayServicetoOneStream. Ifyouaretransferring adatatypethatis
+unsupported byparquet,thedatareturnsasastring.(PF2-15235)
+OneStream Release Notes xivTableofContents
+lXFProjectReplaceisnotworkingcorrectlywhenloadingmaintenance unitsor
+workspaces withincludeDescendants =trueforCubeViewsandCubeView
+Groups.Theworkaround istomanuallydeletethecubeviewsandthenthecube
+viewgroupsifusingtheXFProjectReplacefeature.
+lWhenusingtheSQLTableEditorwithinaDynamicDashboard, theSaveEvent
+doesnotexecuteproperly.Thisissuewillbefixedinthe8.1Release.(PF6-3564)
+lBasicandAdvanced ChartsmaynotappearinReportBooksandGuided
+Reports.Download thePDFtoviewcharts.(PF7-2914)
+lWhenusingRESTAPIs,theJSONresponsekeytagsarereturnedincamelCase.
+Tobeconsistent withourstandards andpriorversions,theseresponsekeytags
+willbeupdatedinthe8.1ReleasebacktoPascalCase. (PF7-4441)
+Solutions MovingtoOpenPlace orSunset
+ThefollowingsolutionswillbemovingtoOpenPlace inAugustof2024.
+lActorWorkspace
+lCloseManager
+lDimension Comparison Utility
+lHelpDesk
+lPowerShell Scripting
+lProcessControlManager
+lProvisionRequestManager
+lTaxProvision
+lTrainMe(VideoHelp)
+lStandardCubeViewStyles
+OneStream Release Notes xvTableofContents
+ThefollowingsolutionswillbesunsetinAugustof2024andwillnolongerbesupported
+byOneStream :
+lEndUserTraining-CubeView
+lEndUserTraining-ExcelAnalysis
+lEndUserTraining-Extensible Docs
+lEndUserTraining-ReportBooks
+lEndUserTraining-Spreadsheet Analysis
+lEndUserTraining-Videos
+lEndUserTraining-Workflow
+lProcessBlocker
+Platform v8Upgrade Process
+Youcancontinuetousetheservicecatalogtoindicateinterestinupgrading toPlatformv8.
+Customer SuccessRepresentatives willengageallinterested Platformv8candidates toreview
+preparation activitiesrequiredforasuccessful upgrade.RefertothePlatformv8+UpgradeGroup
+inONECommunity forinformation anddiscussion.
+OneStream Release Notes xviTableofContents

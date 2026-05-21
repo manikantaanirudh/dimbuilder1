@@ -1,0 +1,4425 @@
+Smart  Integration  
+Connector  
+Guide
+9.2.0Release
+
+Copyright ©2026OneStream SoftwareLLC.Allrightsreserved.
+Alltrademarks, logos,andbrandnamesusedonthiswebsitearethepropertyoftheirrespective
+owners.Thisdocument anditscontentsaretheexclusivepropertyofOneStream SoftwareLLC
+andareprotected underinternational intellectual propertylaws.Anyreproduction, modification,
+distribution orpublicdisplayofthisdocumentation, inwholeorpart,withoutwrittenpriorconsent
+fromOneStream SoftwareLLCisstrictlyprohibited.
+TableofContents
+RevisionHistory 1
+AboutThisGuide 8
+Overview 9
+UserConsiderations 10
+RequiredUsers 10
+Recommended Users 10
+Prohibited Users 10
+Alternatives 11
+Benefits 11
+CommonTerms 13
+OneStream ClientApplication Terms 13
+OneStream LocalGatewayConfiguration Terms 16
+Architecture 17
+TLS/SSLCertificate 20
+SmartIntegration Connector Guide iTableofContents
+Additional Considerations 21
+Requirements 23
+OneStream SmartIntegration Connector Environment Setup 23
+Installation andSetup 25
+SetupOverview 25
+SmartIntegration Connector Terms 26
+LocalGatewayServerInstallation 31
+CreateaGatewayConnection 33
+CreateaDirectConnection 35
+ExportandImporttheConnection Configuration 39
+NewKeyGeneration 41
+ConnectaLocalGatewaytoaDataSource 42
+MicrosoftSQLServer 44
+MySQLDataProvider 45
+OracleDatabase Examples 46
+PostgreSQL (NpgsqlDataProvider) 49
+SmartIntegration Connector Guide iiTableofContents
+OleDbDataProvider 50
+ODBCDataProvider 51
+(Optional) RemoveUserID and Passwords byIntegrated
+Security 52
+MicrosoftEntraAuthentication forAzureSQL 56
+RestarttheGateway 57
+LoadBalanced LocalGatewayServers 58
+CreateaLoadBalanced LocalGatewayServer 59
+DefineCustomDatabase Connections 62
+UpgradeSmartIntegration Connector 65
+Upgradefrom: 65
+SmartIntegration Additional Settings 68
+LocalApplication DataSettings 68
+Referenced Assemblies Folder 69
+AllowRemoteCodeExecution 70
+WebAPIBoundPort 70
+SmartIntegration Connector Guide iiiTableofContents
+Maximum RecordstoReturnwhenPaging 70
+Maximum RecordstoReturn 70
+RowCounttoBeginPagingOperations 72
+LocalConfiguration Parameters 72
+LogSettings 73
+Networking andWhitelisting 76
+RestrictTraffictotheAzureRelay 77
+WhitelistOutbound Traffic 78
+AllowTrafficusingWildcardDomain(BestPractice) 78
+AllowTrafficusingIPaddresses (NotRecommended) 78
+UseSmartIntegration Connector 79
+DataAdaptersExample 80
+SQLTableEditorExample 81
+GridViewExample 83
+PerformaDrillBack 85
+PerformaWriteBack 89
+SmartIntegration Connector Guide ivTableofContents
+SupportforSFTP 92
+C#SFTPExample 94
+VB STFPExample 95
+TransferFilesfromLocalFileShare 97
+Step1-SetuptheRemoteServer/RemoteShare 97
+Step2-PullfilefromExtenderBusinessRule 98
+Step3-Automate fromDataManagement /TaskScheduler 101
+ObtainDatathroughaWebAPI 102
+HostHeaders 102
+AccessaSingleWebAPI 103
+AccessMultipleWebAPIs 105
+SendEmailsthroughDirectConnections 107
+SupportforDLL Migration 110
+SAPConnections 111
+BusinessRules 115
+ExecRemoteGatewayBusinessRule 116
+SmartIntegration Connector Guide vTableofContents
+ExecRemoteGatewayCachedBusinessRule 125
+ExecRemoteGatewayRequest 128
+ExecRemoteGatewayJobAndWait 131
+ExecRemoteGatewayJob 132
+GetRemoteGatewayJobStatus 137
+IsRemoteDtoSuccessful 140
+GetGatewayConnectionInfo 142
+GetSmartIntegrationConfigValue 143
+GetRemoteDataSourceConnection 145
+BRApi.Utilities.IsGatewayOnline 146
+CheckOneStream Version 148
+BusinessRulesCompatibility 149
+BRApi.Database.SaveCustomDataTable 149
+BRApi.Database.InsertOrUpdateRowBRApi.Database.DeleteRow
+s 151
+BRApi.Database.ExecuteActionQuery 151
+SmartIntegration Connector Guide viTableofContents
+SQLBulkCopy 152
+SQLTransactions 152
+Limitations 153
+Supported DLLs 153
+BusinessRuleCompatibility 154
+.NETTypeCodes 154
+ParquetFormatTransfer 155
+CustomEmailConnections 155
+FTP Transfers 155
+InternalCertificate Trust 156
+SQLTableEditor 156
+PrecisionusingDecimals 156
+Receiving DatafromSmartIntegration Connector 156
+SendingDatatoSmartIntegration Connector 157
+Troubleshooting 160
+ErrorLog 160
+SmartIntegration Connector Guide viiTableofContents
+CommonErrors 161
+MemoryIssues 161
+GatewayVersionisEmpty 162
+CustomDataSourceNames 162
+ArraycannotbenullError 163
+OpeningandSavingConfiguration Errors 163
+IncorrectorMissingLibraryReferences 164
+ScriptErrorDuringUpgrade 165
+DataReturnedasaString 165
+ManualStartandStop 166
+RemoteEndpointNotFound/Could NotDecrypt 167
+ERPConnect ModuleorDependency NotFound 167
+Connections Requiring aSignedCertificate 169
+TrustedCertificate Chain 169
+UnabletoConnect 170
+Communication Error 170
+SmartIntegration Connector Guide viiiTableofContents
+HostHeaderCommunication Error 171
+GatewayTestingIssueResolution 172
+Automatic BusinessRuleDecompression (PriortoVersion
+8.0) 174
+Frequently AskedQuestions 176
+SecurityandNetworkConfiguration 176
+Configuration andConnectivity 177
+DataHandlingandQueryBehavior 179
+Integration andAPIUsage 180
+Maintenance andReliability 182
+HostHeaders 182
+MigrationfromVPN 183
+Troubleshooting 184
+SmartIntegration Connector Guide ixTableofContents
+Revision History
+IMPORTANT: Forbestperformance andreliability, upgradeSmartIntegration
+Connector tomatchyourOneStream version.WhileSmartIntegration Connector Local
+GatewayServersupportsthemostrecentpreviousversionofOneStream ,full
+functionality isnotguaranteed.
+Date Release Summary ofChanges
+09December,
+20259.2.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lRemoteBRsupportfordatasetsthatcontain
+morethanonedatatable.
+lSupportforSQLTableEditorwrite-backstoSQL
+Serverwithoutneedingadditional BRs.
+lAutomatically createlongrunningjobprocesses
+usingsingleBRAPI.
+SmartIntegration Connector Guide 1Revision History
+Date Release Summary ofChanges
+19August,
+20259.1.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lRemoved WinSCPfromtheSICLocalGateway
+Installer.BestpracticeistouseSSH.NET for
+SFTPtransfers. SeeSupportforSFTP.
+lRevisedphrasingof"Database Connection" to
+"Gateway Connection" andadjustedrelated
+gatewaytermstoalignwithnewuserinterface
+andtooltips.
+lUpdateConnection iconsforGateway
+Connections andDirectConnections.
+lSplit"UseSmartIntegration Connector"
+subheadings intoseparatesectionsforimproved
+document navigation.
+lMovethefollowingsettingstoApplication Data
+Settings:
+o"AllowRemoteCodeExecution"
+o"WebAPIBindPort"
+SmartIntegration Connector Guide 2Revision History
+Date Release Summary ofChanges
+29April,2025 9.0.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lLoadBalanced GatewayServerssupportqueries
+over1millionrowsandSmartIntegration
+Functions thatqueryforlongrunningjobs.
+lEnhanced debugging capabilities ofSmart
+Integration Functions /RemoteBusinessRules.
+lSmartIntegration Functions /RemoteBusiness
+Rulessupportreturningmorethan1millionrows
+bydefault.
+09Dec,2024 8.5.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lAddedabilitytomaskandencryptConfiguration
+Parameter Values.
+lConnection stringsgreaterthan245characters
+nowwillencrypt.
+lRemoved redundant copyingofDLLsinthe
+"Referenced Assembly" folderuponservice
+startup.
+lVersionnumberisnowdisplayed inthetitlebar.
+lAddedFrequently AskedQuestions tothe
+documentation. SeeFrequently AskedQuestions .
+SmartIntegration Connector Guide 3Revision History
+Date Release Summary ofChanges
+22Aug,2024 8.4.0CAUTION: SmartIntegration Connector
+version8.4isrequiredwhenrunning
+OneStream version8.4.
+Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lImproved performance andreliabilityofmulti-
+threaded/parallelprocessing forlargerpayloads.
+lStreamlined processofsettinguparedundant
+GatewayServer.
+lTheactiveGatewayServerisnowdisplayed
+withintheGatewaySetupintheWindowsApp.
+lForRemoteBusinessRules,thenumberofrows
+returnedperquerythresholdhasincreased to5M
+/5GBofdata.
+lAddedabilitytocheckifthegatewayisonlinevia
+aBRAPI.
+SmartIntegration Connector Guide 4Revision History
+Date Release Summary ofChanges
+17Mar.2024 8.2.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lQueryresultsthatcontainNULLvaluesarenow
+beingreturned.
+lAddedabilitytomaskthepassword when
+creatingadatabaseconnection string.
+lQueriesthatrunlongerthan10minuteswill
+consistently returndata.
+lImproved thereliabilityofmulti-threaded
+connections.
+lSmartIntegration Connector LocalGateway
+Configuration Utilitywillautomatically openthe
+configuration filefornon-defaultinstalllocations.
+lDataTable /Datasetscannowbesentviaa
+RemoteBusinessRule.
+21Nov.2023 8.1.0 UpdatedtoaddWebAPIexamples.
+SmartIntegration Connector Guide 5Revision History
+Date Release Summary ofChanges
+17Nov.2023 8.1.0 Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lCustomers cantesttheirSmartIntegration
+Connector Gateways duringset-uptoensure
+thereisnothingblockingport443.
+lThedefaultReferenced Assemblies folderisin
+C:\Program Files\OneStream
+Software\OneStream Gateway\Referenced
+Assemblies.
+lThedatabaseconnection stringsinthe
+OneStream LocalGatewayConfiguration are
+encrypted whensaved.
+lSpecificIPsorCIDRs(arangeofIPs)canbe
+whitelisted fromtheOneStream WindowsClient
+Application.
+lTheOneStream LocalGatewayConfiguration
+utilityautomatically openstheconfiguration filefor
+theuser.
+SmartIntegration Connector Guide 6Revision History
+Date Release Summary ofChanges
+21Aug.2023 8.0.0 Withthisrelease,SmartIntegration Connector isa
+GeneralAvailability feature.
+Updatedforreleasefeatures,includingthefollowing
+enhancements:
+lThe2GB.NETlimitand1millionreturnrowsis
+increased to5GBand5millionreturnrows.
+lBusinessrulesdecompress automatically.
+SmartIntegration Connector Guide 7Revision History
+AboutThisGuide
+ThisguideisintendedforOneStream administrators andITprofessionals. Itdescribes howto
+manageSmartIntegration Connector toconnectlocaldatasourcestoyourOneStream Cloud
+instance. OneStream CloudOperations andSupportcanassistwiththetasksneededtosetup
+SmartIntegration Connector:
+lInstallingorupgrading toOneStream platformversion9.2.0Release.
+IMPORTANT: Forbestperformance andreliability, upgradeSmartIntegration
+Connector tomatchyourOneStream version.WhileSmartIntegration Connector
+LocalGatewayServersupportsthemostrecentpreviousversionofOneStream ,
+fullfunctionality isnotguaranteed.
+lInstallingSmartIntegration Connector LocalGatewayServerinyourenvironment.
+SmartIntegration Connector Guide 8AboutThisGuide
+Overview
+OneStreamapplicationsarestrategiccomponentsinyourfinancialenvironment.Datafrom
+financialsystemsisimportedtoOneStreamandcontributestofinancialclosingandreporting
+processes.Whileperforminganalysis,youleveragedatalineagecapabilitiestomakecontextual
+associationstodatasourcesinyournetwork.
+ThegoalsforSmartIntegrationConnectoraretoestablishallrequireddatasourceconnections
+withoutaVPNandestablishresidencyandmanagementofdatasourceconnectionssolelyin
+yournetwork.
+WithSmartIntegrationConnector,youcan:
+lSecurelyestablishconnectivitybetweenOneStreamCloudanddatasourcesinyour
+networkwithoutaVPNconnection.
+lCreateandmanagenetworkdatasourceintegrationusingOneStreamadministration
+interfaces.
+lLocallymanagedatabasecredentialsandancillaryfiles.
+Thefollowingsectionsexplorecustomerusecases,benefits,commonterms,andstructural
+informationtohelpyouevaluateSmartIntegrationConnectorforyourbusinessneeds:
+lUserConsiderations
+lBenefits
+lCommonTerms
+lArchitecture
+SmartIntegrationConnectorGuide 9Overview
+UserConsiderations
+TheSmartIntegration Connector providessecureconnectivity betweenOneStream
+SaaS environments andcustomer- managed datasources.ThispageexplainswhenSmart
+Integration Connector isrequired,recommended, orprohibited, andoutlinesthestepstorequest
+theappropriate connection type.
+Required Users
+SmartIntegration Connector isrequiredifyouareacommercial andnon-DoDcustomerinthe
+followingcases.
+lYouusethesedataconnection points:ODBC,SAP,DirectSQLadapters, FTP/SFTP, or
+similarconnections.
+lYouareupgrading OneStream andhaveanexistingVPNorExpressRoute connection.
+Recommended Users
+SmartIntegration Connector isstronglyrecommended ifyouareacommercial andnon-DoD
+Government customerwhousesanydataconnections. Thisrecommendation ensuressecure,
+reliableconnectivity asyoumoveforwardwithneworexpanded integrations.
+NOTE:IfyouareanewcustomerusingaDLL, youwillneedtoimplement Smart
+Integration Connector.
+Prohibited Users
+SmartIntegration Connector isnotapproved forusebyDepartment ofDefensecustomers.
+SmartIntegration Connector Guide 10Overview
+Alternatives
+IfyouarenotaDepartment ofDefensecustomeranddonotimplement SmartIntegration
+Connector, considerthesealternatives:
+lIP Whitelisting :SeeNetworking andWhitelisting fordetailsaboutthisprocess.
+lDirectConnection :Requestadirectconnection byopeningaSupportcaseatCloud
+Customer Portal>OpenaCase>Customer Support/Remote Consulting .
+IfyouareaDepartment ofDefensecustomer, usethesealternatives:
+lDirectConnection :Requestadirectconnection byopeningaSupportcaseatCloud
+Customer Portal>OpenaCase>Customer Support/Remote Consulting .
+lREST API :EnableREST API integration byopeningaSupportcaseatCloudCustomer
+Portal>OpenaCase>Customer Support/Remote Consulting .
+Benefits
+Thetablebelowdetailskeybenefitsofimplementing SmartIntegration Connector.
+BenefitswithSmartIntegration
+ConnectorDrawbacks withoutSmart
+Integration Connector
+Changein
+IP AddressesPreventsdisruptions causedby
+OneStream IPchangesbecauseall
+connections originatefromthe
+customer’s environment, eliminating
+theneedtofrequently updatefirewall
+rulesCanbreakcustomer-side
+firewallrulesandrequire
+frequentupdates,creating
+repeatedmaintenance and
+potentialoutages
+SmartIntegration Connector Guide 11Overview
+BenefitswithSmartIntegration
+ConnectorDrawbacks withoutSmart
+Integration Connector
+Networking Staysfullywithinthecustomer’s
+control,allowingthemtomanage
+security,routing,andaccesswithout
+relyingonOneStreamRelieson
+OneStream -managed
+routing,access,andfirewall
+dependencies, reducing
+autonomy andincreasing
+coordination overhead
+Credentials and
+Sensitive
+InformationRemainsinsidethecustomer’s
+environment, reducingsecurityriskand
+keepingsensitiveauthentication data
+outofvendorsystemsMustbesharedwith
+OneStream ,reducing
+customerownership of
+sensitiveauthentication data
+Changesand
+UpdatesCanbeself-serviced,enablingfaster
+andmoreflexiblechangesCannotbeself-serviced,
+requiringsupportticketsand
+longerturnaround timesfor
+updates
+SmartIntegration Connector Guide 12Overview
+Common Terms
+Usethereference chartsbelowtounderstand commontermsusedthroughout theproductand
+thisdocument.
+OneStream ClientApplication Terms
+Term Definition
+OneStream WindowsApplication
+clientTheWindowsclientfacilitating userinterface
+accessforalluserpersonastoOneStream
+applications.
+OneStream WindowsApplication
+Server(AppServer)Theapplication serverexecuting allOneStream
+businesslogicandprocessing.
+Connection
+(Gateway Connection, Direct
+Connection)Connections definedirectchannelsofintegration
+betweentheOneStream Cloudandalocal
+customernetwork.Connections arerepresented
+byauniquekeyandareconfigured for
+communication toanAzureRelayendpoint.
+Connections carrya1:1correlation toalocal
+gatewayontheSICLocalGatewayServer.The
+channelofcommunication isestablished fromthe
+OneStream connection andalocalgatewayis
+createdinSmartIntegration Connector Local
+GatewayServer.
+SmartIntegration Connector Guide 13
+Term Definition
+GatewayServer Agatewayservercarriesnouniquetechnical
+definitionorconfiguration address.Itisanodein
+thetreecontrolUItoorganizeconnections and
+typicallycorresponds toaninstalledlocalgateway
+servername.
+CustomDatabase Connections
+(SystemConfiguration)Customdatabaseconnections defineanamed
+datasourcetowhichOneStream mayconnect
+usingSmartIntegration Connector forthepurpose
+ofdataimport,dataexport,ordrillthrough
+querying.Thenamedcustomdatabase
+connection isreferenced inOneStream business
+logic(datamanagement objectsorbusinessrules)
+toinitiatedatasourceconnectivity. Credentials
+andancillaryfilesrequiredforadesignated data
+sourceconnection areconfigured toandresideon
+thecorresponding localgatewayserver.
+DirectConnection /PortForwarding
+(e.g.SFTP,WebAPI)Adirectconnection represents apoint-to-point
+channeltodesignated resources suchasan
+SFTPserverorWebAPI(including iPaaS
+services). TheOneStream LocalGatewayServer
+Configuration UtilityUIfacilitates configuration of
+mappedconnections toresources wheretheon-
+premisesTCPportismappedtoaserver
+(hostname/IP).
+SmartIntegration Connector Guide 14
+Term Definition
+GatewayConnection (e.g.DBs,DLL
+Integrations)Agatewayconnection represents theultimate
+datasource destination forSmartIntegration
+Connector, andistypicallyassociated withalocal
+gatewayconnection thatconnectstoadesignated
+database. TheOneStream LocalGatewayServer
+Configuration Utilityfacilitates configuration of
+requiredcredentials andsupporting files.The
+identification ofalocalgatewayconnection must
+correspond toacustomdatabaseconnection
+established totheOneStream Application Server.
+SmartIntegration Function
+(RemoteBusinessRule)ASmartIntegration Function(RemoteBusiness
+Rule)iscreatedintheWindowsDesktopClient
+andcompiledandexecutedonthelocalgateway
+server.
+IPv4Whitelist(Whitelisting) Whitelisting canbeappliedtotheRelayviaIP
+addresses intheOneStream WindowsApplication
+clientandalsoappliedtoyourfirewallvia
+namespaces throughyourITAdmin.
+SmartIntegration Connector Guide 15
+OneStream LocalGateway Configuration Terms
+Term Definition
+LocalGatewayServer SmartIntegration Connector requiresaclient
+installation onWindowsserverstoestablisha
+localgatewayserver.Thelocalgatewayserver
+housesoneormorelocalgateways whichare
+configured throughtheOneStream Local
+GatewayConfiguration.
+LocalGateway Localgateways definethelocalcustomer
+endpointfordistinctchannelsofcommunication
+usedbySmartIntegration Connector. Alocal
+gatewayfacilitates connections tolocal
+databases, WebAPIconnections, iPaaSservers,
+orSFTPserversandcorresponds 1:1witha
+gatewaydefinitionontheOneStream Application
+Server.Toensureavalidconnection, alocal
+gatewaymustbeconfigured byimportingthe
+corresponding gatewaydefinitionexportedfrom
+theOneStream WindowsApplication client.
+LocalGatewayConnections Localgatewayconnections aretypicallydatabase
+connections definedintheutilityandconfirmthe
+connection betweenthelocalgatewayandthe
+localdatasources.
+SmartIntegration Connector Guide 16
+Term Definition
+OneStream LocalGateway
+ConfigurationThisutilityiswhereyouconfigurethelocal
+gatewayserver,localgateways andlocalgateway
+connections todatasources.
+Architecture
+Incontrasttoadirectdatasourceconnection established usingaVPN,SmartIntegration
+Connector makesanindirectconnection todatasources.SmartIntegration localgateways
+integratewithon-premisescustomerenvironments throughacloudhostedservicecalledAzure
+Relay.Thelocallyinstalledandconfigured localgatewayservermakesthedirectconnection to
+datasourcesandrespondstotheOneStream application.
+SmartIntegration Connector Guide 17
+NOTE:InOneStream, CustomDatabase ServerConnections definetherelationship
+betweentheSmartIntegration Connector connection gatewayandthedatasource.
+ThetwoprimaryservicesofSmartIntegration Connector are:
+lOneStream Application Server:Theapplication serverbrokerscommunication between
+theOneStream Cloudinstanceapplication andtheAzureRelayservice.
+lLocalGateway Server:Instances oftheSmartIntegration Connector LocalGateway
+Serverareinstalledinsideyournetworkandconfigured tomakedirectconnections to
+designated datasources.TheSmartIntegration Connector LocalGatewayServerrunsas
+aWindowsserviceandbrokerscommunication betweenlocaldatasourcesandAzure
+Relayusinganoutbound connection overport443.Allcommunication isencrypted endto
+endthroughTLS.
+Thecomponents oftheSmartIntegration Connector are:
+lOneStream WindowsApplication client
+DirectandGatewayConnections configured through
+System>Administration >SmartIntegration Connector .
+NOTE:TheSmartIntegrationConnectorAdminPage rolemustbeassignedtoa
+userforthistobevisible.
+lACustomDatabase Connection tothelocalgatewaydatasource.CustomDatabase
+Connections areconfigured in
+System>SystemConfiguration >Application ServerConfiguration >Database
+ServerConnections.
+NOTE:TheManageSystemConfiguration rolemustbeassignedtoauserforthis
+tobevisible.
+SmartIntegration Connector Guide 18
+lOneStream SmartIntegration Connector LocalGatewayServer
+oConnection Settingsprovidetheinformation toestablishtherelationship withthe
+OneStream WindowsApplication. Connection Settingsareexportedfromthe
+connection settingsintheOneStream WindowsApplication andimportedtothe
+LocalGatewaysectionoftheOneStream LocalGateway Configuration .
+oLocalGatewayConnections providethesetupinformation necessary fortheSmart
+Integration Connector LocalGatewaytoconnecttolocaldatasources.Local
+GatewayConnections aresetupthroughtheOneStream LocalGateway
+Configuration intheGatewayConnections Settingssection.
+SmartIntegration Connector Guide 19
+TLS/SSL Certificate
+Communication betweentheOneStream Application Server(s)isencrypted end-to-end.For
+additional information aboutcertificates andcertificate errors,seeTroubleshooting .
+GatewayConnection example:
+SmartIntegration Connector Guide 20
+DirectConnection example:
+NOTE:Certificate errorsintheOneStream Application Servercausedbyadomain
+namemismatch betweentheWebAPIdomainnameandOneStream hostname are
+ignored.Thisoccursbecausethebusinessruleuseslocalhost: {boundPort} for
+thehostname andtheresponsecontainsacertificate withahostname specifictothe
+API(forexample,someapi.org ).
+Additional Considerations
+lToprovidehighavailability therecanbemultipleinstances ofadesignated localgateway
+server,eachrunningonaseparateserverboundtothesameconnection.
+lMultiplelocalgateways canbeinstalledtoestablishglobalconnectivity todatasourcesin
+differentsubnetworks.
+SmartIntegration Connector Guide 21
+lLocalgatewayconfiguration mustaligntothecorresponding connection asdefinedinthe
+OneStream Windowsapplication. AnexportprocessfromtheOneStream Windows
+application connection userinterfacecanassistwiththealignment toensurecorresponding
+namesandkeysareidentical.
+SmartIntegration Connector Guide 22
+Requirements
+Thissectioncontainsinformation onrequiredelementsforSmartIntegration Connector. Review
+thesedetailsbeforeinstallation.
+OneStream SmartIntegration Connector
+Environment Setup
+lInstallcompatible versionsoftheOneStream application andSmartIntegration Connector
+LocalGatewayServer.
+IMPORTANT: Forbestperformance andreliability, upgradeSmartIntegration
+Connector tomatchyourOneStream version.WhileSmartIntegration Connector
+LocalGatewayServersupportsthemostrecentpreviousversionofOneStream ,
+fullfunctionality isnotguaranteed.
+oToinstallorupgradeOneStream tothelatestversion,seeSetupandInstallation .
+oToinstallorupgradeSmartIntegration Connector LocalGatewayServertothelatest
+version,seeUpgradeSmartIntegration Connector . 
+lWorkwithyourITteamtoinstallthelatestversionoftheSmartIntegration Connector Local
+GatewayServerinanappropriate environment.
+oWindowsServer2019+
+o.NETFramework 4.8
+o2newergeneration x64CPUcores(orequivalent virtualprocessors)
+SmartIntegration Connector Guide 23Requirements
+NOTE:ARMprocessor compatibility testingisoutsidethecurrenttesting
+scopeofSmartIntegration Connector.
+oMemory(RAM)
+nMinimum16GBforqueries/paralleljobsreturninglessthan1M/3Mrowsor
+1GB/3GBofdatarespectively.
+nMinimum32GBforqueries/paralleljobsreturninglessthan5M/15Mrowsor
+5GB/15GBofdatarespectively.
+NOTE:Memoryandprocessor requirements aredrivenbythefrequency
+andvolumeofremotedataaccessed throughthegatewayserviceorif
+remotebusinessrules/longrunningjobsareleveraged. Forqueries
+returningover1millionrecords,32GBormoreRAMisrecommended.
+oTheinstallerrequiresadministrative permission ontheservertoperformthe
+installation.
+oSeeSmartIntegration Connector LocalGatewayServerInstallation.
+lCreateavalidConnection tobeusedasthebaselinecommunication betweenOneStream
+CloudandtheSmartIntegration Connector LocalGatewayServer.SeeCreateaGateway
+Connection andCreateaDirectConnection formoreinformation.
+lBeaOneStream  administrator toconfigurecorresponding datasourcesintheOneStream
+environment.
+SmartIntegration Connector Guide 24Requirements
+Installation andSetup
+Thissectioncontainsimportant detailsrelatingtotheplanning,configuring, andinstallation of
+SmartIntegration Connector. Beforeinstalling, familiarize yourselfwiththesedetails:
+lSetupOverview
+lCreateaGatewayConnection
+lCreateaDirectConnection
+lExportandImporttheConnection Configuration
+lConnectaLocalGatewaytoaDataSource
+lRestarttheGateway
+lLoadBalanced LocalGatewayServers
+lDefineCustomDatabase Connections
+SetupOverview
+YoumustsetupSmartIntegration Connector inthisorder:
+1.InstalltheOneStream SmartIntegration Connector LocalGateway Server
+(OneStreamSmartIntegrationConnectorGateway- #.#.#.#####.msi) onaWindowsServer
+2019+inyourenvironment.
+2.CreateaSmartIntegration Connector connection intheOneStream Windowsapplication to
+connectOneStream CloudinstancetoaLocalGateway ontheLocalGateway Server.
+SmartIntegration Connector Guide 25Installation andSetup
+3.Exporttheconnection configuration andimportthisconfiguration totheGateway Settings
+intheOneStream LocalGateway Configuration .
+4.ForDatabase Connections:
+a.DefineaLocalGatewayconnection includingDataSourcesthroughtheOneStream
+LocalGateway Configuration .
+b.Testanyconfigured DataSourcestoconfirmtheyarecommunicating properly.
+NOTE:Testingdirectconnections mayinvolvebuildingtestbusinessrules
+toperformpropervalidation.
+c.Defineacustomdatabaseconnection intheOneStream SystemConfiguration
+Setup.
+Wheninstallation iscomplete, youcanaccessremotedatasourcesusingbusinessrules,
+memberformulas,ordashboard dataadaptersinOneStream throughtheSmartIntegration
+Connector.
+SmartIntegration Connector Terms
+TheSmartIntegration fieldsdefinethegateway.Youcanfindmoreinformation aboutthisbelow.
+Term Definition
+RelayName Referstotheinternalnamespace oftherelay
+servicethatisresponsible formanaging thedata
+flowforalldefinedGateways. Forexample,arn-
+mysite.servicebus.windows.net.
+SmartIntegration Connector Guide 26Installation andSetup
+Term Definition
+IPv4Whitelist ContainsthelistofIPsorCIDRaddresses that
+areallowedtotransferdatathroughSmart
+Integration Connector.
+Name Thenameoftheconnection. Namesare
+completely arbitraryandtypicallyrefertothe
+region(NorthEast)ordatasourcesuchas(SAP).
+Thenamecannotbechangedoncecreated,and
+theymustbeuniqueacrossallenvironments—
+bothdevelopment andproduction. Youcandelete
+anexistingconnection andrecreateitwithanew
+name.
+Description Textdescribing theroleandpurposeforthe
+connection andthedatasourcestowhichitis
+connecting.
+GatewayServerName Usefordisplayandorganizational purposesonly.
+Thisisthenameofthegatewayserverassociated
+withtheconnection. Youcanselectanexisting
+gatewayserverorenteranewone.
+SmartIntegration Connector Guide 27Installation andSetup
+Term Definition
+WebAPI Key
+(Gateway Connections only)Thisisaneditablefield.Youcanchangeyourkey
+asneeded.Ifchanged,itmustalsobechangedin
+theSmartIntegration Connector LocalGateway
+Server.Itisdesignedtoofferanadditional layerof
+protection withinyournetworkwheninvoking
+APIsembedded intheSmartIntegration
+Connector LocalGatewayServer.Thepurposeof
+theWebAPIKeyistogiveyoufullcontrolonwho
+canaccessthedatasourcesinyournetwork.
+GatewayKey Thisisthecloudkeyusedtoauthenticate the
+SmartIntegration Connector gatewaytothe
+customerOneStream environment. Thiskeycan
+berotatedintheOneStream application bySmart
+Integration Connector Gatewayadministrators
+andmustbethesameinboththeremote
+GatewayserviceandinOneStream.
+Status ValuewillbeOnlineifthelocalconnection is
+runningandreturningheartbeat messages back
+toOneStream. IftheSmartIntegration Connector
+LocalGatewayServerisunavailable, stopped,or
+networkconnectivity isinterrupted, itwilldisplay
+Offline.
+SmartIntegration Connector Guide 28Installation andSetup
+Term Definition
+StatusIndicators
+ Statusindicators inthelistofconnections provide
+avisualindication oftheConnection status.
+lGreen:TheConnection isOnline.
+lRed:TheConnection isOffline.
+lYellow:(Gateway Connections only)The
+Connection isOnlineandanupdatetothe
+LocalGatewayServerisavailable.
+NOTE:ForDirectConnections ,
+theyellowstatusisnotdisplayed
+astheseconnections donot
+reportaversionnumberbackto
+OneStream.
+InstanceCount Displaysthenumberofactivegateways. Upto
+fiveactivegateways perenvironment are
+supported. Thiscanbeincreased bycontacting
+Support.
+Version
+(Gateway Connections Only)DisplaystheSmartIntegration Connector Local
+GatewayServerversion.Thisversionmaybe
+differentfromthedeployedversionofOneStream
+andallowsadministrators toobserveandmonitor
+versionsofSmartIntegration Connector Gateway
+softwaredeployed.
+SmartIntegration Connector Guide 29Installation andSetup
+Term Definition
+ActiveLocalGatewayServer
+Computer Name
+(Gateway Connections Only)Displaysthecomputer nameofthefirstLocal
+GatewayServerthatconnected totheRelay.
+BoundPortatGateway RemoteportboundtoGatewayendpoint.
+GatewayConnections defaultto20433and
+shouldnotbechangedwithoutconsulting
+support.
+DirectConnections allowanyportrunningona
+remotehosttobeused.Thisportrepresents the
+well-knownTCPservicetoexposefromanon-
+premiseshostsuchassFTP,whichwouldequate
+toport22.
+RemoteGatewayHost
+(DirectConnections Only)RemoteporthosttoGatewayServer.Usedif
+surfacinganendpointsuchasanSFTPServer.
+Thiscouldbethehostname orIPaddressonthe
+networkthattheGatewayServerresidesin.For
+example:172.168.4.7 orsftp.mycompany.com
+SmartIntegration Connector Guide 30Installation andSetup
+Term Definition
+BoundPortinOneStream
+(DirectConnections Only)TheinternalportthatOneStream usesforsecure
+communications withDirectConnections. The
+portmustbegloballyuniqueforeveryconnection
+inthedeployment environment. Theportnumber
+mustbegreaterthan1024andlessthan65535.
+Therecommended bestpracticeisto
+automatically assignanavailableportnumber
+whenthegatewayiscreated.Toautomatically
+assignanunusedport,select(AutoAssigned) .
+Theportcanbereferenced indatamanagement
+orbusinessrulestodirectlyaccessservicessuch
+assFTPandWebAPI.
+Gatewayfailuresreportinginterval
+(min)Minutestowaitbetweenreportingconnection
+failuresintotheOneStream ErrorLog.Thedefault
+isfiveminutesandthemaxis1440minutes.Ifa
+connection isunreachable, anitemisputinthe
+errorlogusingthisintervalvalueinminutesand
+theminutescanbeadjusted.
+LocalGateway ServerInstallation
+SmartIntegration Connector isavailableinOneStream fromtheSystem>Administration tab.
+SmartIntegration Connector Guide 31Installation andSetup
+1.Download theSmartIntegration Connector installer(OneStream_ Connector_ #.#.#.zip)file
+fromthePlatformsectionoftheSolutionExchange .
+2.CopytheSmartIntegration Connector LocalGateway ServerinstallertoaWindows
+Serverwithinyourenvironment.
+3.Runtheinstallerasanadministrator. Acceptallthedefaultprompts.Whencompleted, the
+LocalGatewayServerwillbeinstalledonyourWindowsServer.
+IMPORTANT: Ifyouareupgrading, youmustfollowsteps4-7.
+4.RuntheOneStream LocalGateway Configuration Utility.
+5.TheXFGatewayConfiguration.xml filewillopenbydefault.
+IMPORTANT: DonotchangethenameoftheXFGatewayConfiguration.xml file.
+TheOneStream SmartIntegration Connector GatewayServiceonlyreferences
+thisXFGatewayConfiguration.xml fileuponstart-up.TheSaveAsfunctionality is
+usedtocreateabackupofthefile.Itisbestpracticenottorename,move,or
+changethelocationoftheXFGatewayConfiguration.xml file.Iftheconfiguration
+filehastobeopenedfromanotherlocation,thenitwillneedtobeopenedfromthis
+otherlocationagainaftertheupgrade.
+6.Savetheconfiguration file.
+SmartIntegration Connector Guide 32Installation andSetup
+7.Followthedialogpromptsandrestarttheservice.
+CreateaGateway Connection
+GatewayConnections areusedtoconnectOneStream totheSmartIntegration Connector Local
+GatewayServerovertheAzureRelay.AtleastoneGatewayConnection isrequiredforSmart
+Integration Connector tofunctionproperly.Aftertheconnection iscreated,youwillneedtocopy
+theconfiguration totheSmartIntegration Connector LocalGatewayServerusingtheOneStream
+LocalGatewayConfiguration.
+NOTE:Fordescriptions ofthefieldsinthisprocedure, seeSmartIntegration Connector
+Terms.
+TocreateaGatewayConnection :
+1.GotoSystem>Administration >SmartIntegration Connector .
+2.Click
+CreateNewConnection .
+3.EntertheNameand Description .
+NOTE:TheConnection namecannotbechangedoncecreatedandmustbe
+deletedandre-created.
+4.SelecttheGateway Serverfromthedrop-down,orenteranewGatewayServernamein
+thesamefield.IfthisisthefirstConnection beingcreated,enterthenameoftheGateway
+Server.
+SmartIntegration Connector Guide 33Installation andSetup
+NOTE:Itiscommonpracticetousethehostname orIPofyourSmartIntegration
+Connector LocalGatewayServerasthe"Gateway Server"name.TheGateway
+ServernameisonlyusedtoorganizeserverswhenmultipleSmartIntegration
+Connector serversaresetup.
+5.FromConnection Type,selectGateway Connection .
+NOTE:EachGatewayServerwillonlyneedoneGatewayConnection andas
+suchwerecommend namingit"Gateway_ Connection_ "followedbythename
+usedfor"Gateway Server."Thiswilldifferentiate theGatewayConnections in
+futuresteps.
+6.TheWebAPIKeyisusedasanadditional layerofsecuritywhencommunicating withthe
+SmartIntegration Connector LocalGatewayServerinternalAPIs.
+SmartIntegration Connector Guide 34Installation andSetup
+NOTE:WebAPIkeysarenotrequired,butarebestpracticetoenhancesecurity
+andcanbemodifiedoraddedatanytime.TheLocalGatewayServiceintroduces
+aWebAPIexposedonlytoOneStream andboundonlytolocalhostontheserverit
+isdeployedto.ThisWebAPIisinaccessible ontheremotenetwork.IftheLocal
+GatewayServiceisboundtoothernetworkinterfaces, itissuggested tousethe
+WebAPIasamechanism toenhancesecurityontheremotenetworkpreventing
+unauthorized useofOneStream WebAPIs.
+7.Copytheconfiguration totheSmartIntegration Connector LocalGatewayServerusingthe
+OneStream LocalGatewayConfiguration application. Fordetails,seeExportandImport
+theConnection Configuration .
+CreateaDirectConnection
+ADirectConnection isapoint-to-pointchanneltoaspecificremotenetworkresourcesuchasan
+sFTPserverorWebAPI(including iPaaSservices).
+NOTE:Atleastonegatewayconnection isrequiredtouseaDirectConnection because
+thegatewayconnection isusedtomonitortheavailability oftheremoteSmart
+Integration Connector Gatewayservers.
+Theexistence ofagatewayconnection doesnotnecessarily meanitmustbeusedor
+configured toadatasourceifonlyDirectConnections aredesired.
+NOTE:Fordescriptions ofthefieldsinthisprocedure, seeSmartIntegration Connector
+Terms.
+SmartIntegration Connector Guide 35Installation andSetup
+Tocreateadirectconnection:
+1.(Required) AGatewayConnection mustbecreatedbeforetheDirectConnection is
+created.TheGatewayConnection isusedtomonitortheavailability oftheremoteSmart
+Integration Connector Gatewayserver.Fordetails,refertoCreateaGatewayConnection .
+2.GotoSystem>Administration >SmartIntegration Connector .
+3.Click
+CreateNewConnection .
+4.EntertheNameand Description .
+NOTE:TheConnection namecannotbechangedoncecreatedandmustbe
+deletedandre-created.
+5.SelecttheGateway Serverfromthedrop-down,orenteranewGatewayServernamein
+thesamefield.IfthisisthefirstConnection beingcreated,enterthenameoftheGateway
+Server.
+NOTE:Itiscommonpracticetousethehostname orIPofyourSmartIntegration
+Connector LocalGatewayServerasthe"Gateway Server"name.TheGateway
+ServernameisonlyusedtoorganizeserverswhenmultipleSmartIntegration
+Connector serversaresetup.
+6.FromConnection Type,selectDirectConnection /PortForwarding .
+7.EntertheBoundPortatGateway.Thisportrepresents thewell-knownTCPserviceto
+exposefromanon-premiseshostsuchasSFTP,whichwouldequatetoport22.
+NOTE:Theremoteserviceportisrequiredtoconfiguretheconnection andmay
+requireconsultation withnetworkorITresources toobtainit.Itisalsorequired
+thatanyfirewallsbetweentheLocalGatewayServerandtheremotehostallow
+traffictothedestination portspecified.
+SmartIntegration Connector Guide 36Installation andSetup
+8.EntertheRemoteGateway Host.Thisrepresents theremotehostnameorIPaddress
+accessible bytheOneStream SmartIntegration Connector LocalGatewayServer.Ifthe
+hostorIPaddressisaccessible orresolvable fromtheOneStream SmartIntegration
+Connector Gatewayserviceorusingremoteresources accessible throughon-premises
+WAN,itcanbeexposedforuse.
+9.ForBoundPortinOneStream ,select(AutoAssigned) (defaultandrecommended
+setting)orEnterPortManually.SeeCreateaDirectConnection foradditional information.
+l(AutoAssigned) (defaultandrecommended setting)toallowtheOneStream
+application toautomatically assignanunusedportnumber.WhentheDirect
+Connection iscreated,theportnumberisshownintheconnection settings.
+lEnterPortManually:Enteranunusedportnumber.Theportnumbermustbe
+greaterthan1024andlessthan65535.
+10.ClickOK.
+11.Usingthisdirectconnection inOneStream isdonebyaccessing localhost: [Bound
+PortInOneStream] whichwilltunneltrafficbacktotheconfigured remoteGateway
+Hosttotheconfigured boundportatgateway.
+SmartIntegration Connector Guide 37Installation andSetup
+lExample: RemoteSFTPserverat172.168.3.4 listeningonport22.
+lBoundPortinOneStream defaultedto(AutoAssigned).
+Notethatwhen(AutoAssigned) isused,theselectedportnumberis
+available/displayed aftersavingandalsosurfacedintheOneStream ErrorLog.
+lInOneStream BusinessRules,youcanaccesstheremotehostbyconnecting to
+localhost:"Bound PortinOneStream" portExample: localhost:45000 .
+lInaOneStream BusinessRule,thisportcanalsobeobtainedincodeallowingthis
+portnumbertobechangedwithoutupdatingBusinessRules:
+DimgatewayDetails AsGatewayDetails =BRApi.Utilities.GetGatewayConnectionInfo
+(si,"northamerica_ sftp") 
+DimremotePort =gatewayDetails.OneStreamPortNumber
+SmartIntegration Connector Guide 38Installation andSetup
+ExportandImporttheConnection
+Configuration
+Youmustcopytheconnection configuration settingsandpastethemintoyourSmartIntegration
+Connector Gatewaytoestablishtheconnection.
+1.GotoSystem>Administration >SmartIntegration Connector .
+2.SelecttheConnection toexport.
+3.Click
+ ExportConnection Configuration .TheConnection Detailsarecopiedtothe
+clipboard.
+SmartIntegration Connector Guide 39Installation andSetup
+4.OnyourWindowsServer,opentheOneStream LocalGateway Configuration .Thisruns
+asadministrator bydefault.
+5.TheexistingXFGatewayConfiguration.xml opensbydefault.
+6.Click
+nexttoLocalGateway Settings.
+7.Import
+ ImportGateway Configuration toimportthepreviously copiedConnection
+Configuration .
+8.ClickApply.
+9.ClickTestConnection totesttheconnection.
+SmartIntegration Connector Guide 40Installation andSetup
+10.ClickOKtwice.
+11.Savetheconfiguration.
+12.ClickYestoapplythechangesandrestarttheLocalGatewayServer.
+NewKeyGeneration
+SmartIntegration Connector administrators canrotatetheKeymaintained bytheunderlying cloud
+service;however,itmustbethesameforboththeSmartIntegration Connector localgatewayand
+thegatewayconfiguration intheOneStream WindowsApplication tofunctionproperly.
+1.Selectanexistingconnection.
+2.ClickRegenerate KeyforSelected Connection .
+3.Youmustre-exportyourConnection Configuration andapplythenewsettingsthroughout
+theOneStream LocalGatewayConfiguration. SeeExportandImporttheConnection
+Configuration .
+4.ClickOK.
+SmartIntegration Connector Guide 41Installation andSetup
+ConnectaLocalGateway toaDataSource
+Adatasourcecontainsthename,connection string,anddatabaseproviderforthedatabaseof
+yourchoice.YoucansetupaPostgreSQL, SQL,Oracle,OleDb,MySQL,ODP.net,orMicrosoft
+ODBCconnection. Thedatasourceisconfigured usingtheLocalGatewayConfiguration Utility.
+TheutilitywasinstalledaspartoftheSmartIntegration Connector LocalGatewayinstallation.
+1.StarttheOneStream LocalGateway Configuration .
+2.TheexistingXFGatewayConfiguration.xml opensbydefault.
+3.Click
+MorenexttoLocalGateway Connections tosetuptheDataSourcestolocal
+databases, APIs,orotheron-premisesresources.
+4.Click
+ AddItemtoaddanewdata source.
+SmartIntegration Connector Guide 42Installation andSetup
+5.Ifyouhaveapassword fortheconnection string,enteritintheConnection String
+Password field.Thepassword ismaskedforsecurity.Then,whenyouneedtoenteryour
+connection stringpassword, usethesubstitution variable:|password|
+Example:DataSource=localhost;Initial Catalog=Sales_ DB;Persist
+Security Info=True;User ID=sa;Password=|password|;
+6.EntertheDataSourceName,Connection String,andselectaDatabase Provider.
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+Youcanaddasmanydatasourcesasnecessary. TheDataSourceNamemustbeunique
+foreachconnection definedwithinaspecificOneStream SmartIntegration Connector
+LocalGatewayServer.Namescanbere-usedacrossdeployedinstances oftheWindows
+Serviceacrossyournetwork.Seebelowforconnection stringexamples toavarietyof
+relationaldatasourcessuchasPostgreSQL, SQL,andODBC,andOracle.Connection
+Stringsareencrypted automatically. Youcanedittheplaintextstringbyclickingthe
+ellipsis.
+NOTE:Oracledatabases requiredriversandspecificconfiguration providedby
+Oracle.
+7.ClickOKtosaveyourconfiguration.
+IMPORTANT: Theconnection stringsbelowincludeuserIDsandthepassword
+substitution variable.Youcanalsouseintegrated securitytoremoveplaintext
+userIDsandpasswords fromconnection stringsinSmartIntegration Connector.
+SeeRemoveUserIDandPasswords byIntegrated Security.
+SmartIntegration Connector Guide 43Installation andSetup
+Microsoft SQLServer
+BelowisanexampleforsettingupaSQLdatabaseusingtheSqlClientprovider.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddthedata source.
+3.DataSourceName:Northeast_ Sales
+4.Connection String:
+withUserID/Password:
+Server=localhost;Initial Catalog=Sales_ DB;UserID=sa;Password=|password|;Max Pool
+Size=1000;Connect Timeout=60;
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectSqlClient DataProvider.
+7.Click
+TestConnection totestthedatasource.
+8.ClickOKtosave.
+SmartIntegration Connector Guide 44Installation andSetup
+MySQLDataProvider
+BelowisanexampleforsettingupaMySQL Data Provider.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddanewdata source.
+3.DataSourceName:Sales_UK
+4.Connection String:
+Server=localhost;Port=3306;uid=root;pwd=|password|;database=gatewaymysql;
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectMySQL Data Provider.
+7.Click
+TestConnection totestthedata source.
+8.ClickOKtosave.
+SmartIntegration Connector Guide 45Installation andSetup
+OracleDatabase Examples
+Connecting toOraclerequiresthedownload andconfiguration oftheOracleDataAccess
+Components (ODAC)obtaineddirectlyfromOracle’swebsite.Followthestepsbelowtoget
+accesstothesedriversandfiles.
+1.GotothelatestwebpageforOracle.NETandVisualStudioODACDownloads forOracle
+Database.
+2.Afterinstallation, theODP.NET ProviderwilldisplayasanavailableDatabase Providerin
+theutilitywhenaddinganewdatasource.
+3.Theconnection stringforOracledatabases canbesetuptoeitherreference orrequirea
+locallydefinedtnsnames.ora filefortherequested datasources.
+SmartIntegration Connector Guide 46Installation andSetup
+ExampleConnection Strings:
+lOracleDataProviderfor.NET:DataSource=oracletest;User
+Id=OneStream1;Password=|password|;
+lOracleDataProviderwithoutTNSNames.ora: DataSource=(DESCRIPTION=
+(ADDRESS_ LIST=(ADDRESS= (PROTOCOL=TCP) (HOST=MyHost) (PORT=MyPort)))
+(CONNECT_ DATA=(SERVER=DEDICATED) (SERVICE_ NAME=MyOracleSID))); User
+Id=myUsername;Password=|password|;
+OracleClient Database Provider
+BelowisanexampleforsettingupaOracleClient databaseprovider.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddthedatasource.
+3.DataSourceName:Sales_EMEA
+4.Connection String:DataSource=oracletest;User Id=OneStream1;Password=|password|
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectOracleClient DataProvider.
+SmartIntegration Connector Guide 47Installation andSetup
+7.Click
+TestConnection totestthedatasource.
+8.ClickOKtosave.
+OracleDataProviderfor.NET
+BelowisanexampleforsettingupaOracleDataProviderfor.NET.
+1.Click
+MorenexttoLocalGateway Connections .
+2.DataSourceName:Sales_SouthAmerica
+3.Connection String:
+DataSource=oracletest;User Id=OneStream1;Password=|password|
+4.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+5.FromDatabase Provider,selectOracleDataProviderfor.NET.
+6.Click
+ AddItemtoaddanewdata source.
+7.Click
+TestConnection totestthedata source.
+8.ClickOKtosave.
+SmartIntegration Connector Guide 48Installation andSetup
+PostgreSQL (NpgsqlDataProvider)
+BelowisanexampleforsettingupaPostGres database.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddthedata source.
+3.DataSourceName:RevenueMgmtPostGres
+4.Connection String:Server=localhost;Port=5432;Database=revmgt;User
+Id=onestream;Password=|password|;
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectNpgsqlDataProvider.
+7.Click
+TestConnection totestthedatasource.
+8.ClickOKtosave.
+SmartIntegration Connector Guide 49Installation andSetup
+OleDbDataProvider
+BelowisanexampleforsettingupanOracledatabase. Thisdoesnotrequireadditional download
+andconfigurations.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddthedata source.
+3.DataSourceName:Sales_Asia
+4.Connection String:Provider=OraOLEDB.Oracle;Data Source=localhost:1521/XE;Initial
+Catalog=myDataBase;User Id=myUsername;Password=|password|;
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectOleDbDataProvider.
+7.Click
+TestConnection totestthedatasource.
+8.ClickOKtosave.
+SmartIntegration Connector Guide 50Installation andSetup
+ODBCDataProvider
+ODBCdatasourcescanbedefined(usingasystemDSN)toremovecredentials fromthe
+configuration file.ForODBC connections, mostODBCdriverswillallowyoutosetupasystem
+DSNentryontheserver,thentheconnection stringinthegatewaywillbetoonlypointtotheDSN
+entry.SeeAdminister ODBC data sourcesformoreinformation. Belowisanexampleforsetting
+upanODBCdatasourceforOracle.
+1.Click
+MorenexttoLocalGateway Connections .
+2.Click
+ AddItemtoaddthedata source.
+3.DataSourceName:Sales_Europe
+4.Connection String:Driver={Microsoft ODBCforOracle};Server= (DESCRIPTION=
+(ADDRESS= (PROTOCOL=TCP) (HOST=199.199.199.199) (PORT=1523)) (CONNECT_
+DATA=(SID=dbName)));Uid=myUsername;Pwd=|password|;
+5.EnteryourConnection StringPassword .
+SmartIntegration Connector Guide 51Installation andSetup
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.FromDatabase Provider,selectOdbcDataProvider.
+7.Click
+TestConnection totestthedatasource.
+8.ClickOKtocreatethenewsource.
+9.ClickSave.
+(Optional) RemoveUserID and Passwords by
+Integrated Security
+YoucanremoveUserIDsandPasswords fromconnection stringsinSmartIntegration Connector
+ifyourorganization hasconcernsovercredential storageintheSmartIntegration Connector
+Gatewayconfiguration file.ThisrequiresrunningtheWindowsServiceunderaServiceAccount
+identityandusingintegrated securitytoconnecttoremotedatasources,whicheliminates local
+storageofanyplaintextcredentials. Additionally, ODBCdatasourcescanbedefined(usinga
+systemDSN)toremovecredentials fromtheconfiguration file.
+SmartIntegration Connector Guide 52Installation andSetup
+UpdatetheLocalGateway Connection String
+1.OpenyourOneStream LocalGateway Configuration .
+2.OpenaLocalGateway Connection .
+3.NavigatetotheConnection StringanduseanIntegrated orTrustedSecuritystring.For
+example:DataSource=localhost,Initial Catalog=OneStream_ GolfStreamDemo_
+2022;Trusted_ Connection=True;
+NOTE:TrustedConnections usetheUserID and password youusetologintothe
+WindowsServer.
+NOTE:TheexampleaboveisforSQL server. Trustedconnections varybyData
+Providertype.
+4.ClickOK.
+5.SaveyourDataSource.
+UpdatePermissions ontheOneStream SmartIntegration
+Connector Gateway Service
+Next,youneedtoupdatetheservicetorunastheuser.Iftheserviceisnotupdated,the
+connection doesnotupdateanderrorswilloccur.
+SmartIntegration Connector Guide 53Installation andSetup
+1.OpenWindowsServices.
+2.NavigatetoOneStream SmartIntegration Connector Gateway.Theserviceshouldbe
+running.
+3.Right-clickandopenProperties .
+4.ClicktheLogOntab.Typically, thiswilldefaulttotheLocalSystemaccount.
+IMPORTANT: Beforemovingtothenextstep,ensurethatyouhavethe
+appropriate permissions andapprovals fromyourIT Administrators tocomplete
+theLogOnchange.TheserviceaccountusedwillrequirelocalAdministrative
+rightstoaccessresources ontheWindowsserver,suchasthemachinecertificate
+storeandprivatekeysusedforencryption. Thisaccountwillalsorequirethe
+appropriate permissions toaccessthedatabasesuchasMicrosoftSQL Server.
+SmartIntegration Connector Guide 54Installation andSetup
+5.ChangelogonfromLocalSystemaccounttoThisaccountandenteryourdomainor
+loginthathasaccesstothedatasource.Depending onhowyourSSO isconfigured, your
+accountcouldrequireyourdomainname,UserID,andpassword. ContactyourIT
+Administrator ifyouhavequestions aboutyouraccountdomain.
+6.ClickApply.
+7.ClickOK.
+8.Right-clickandselectRestarttorestartandupdatetheservice.
+SmartIntegration Connector Guide 55Installation andSetup
+TesttheUpdatedIntegrated Connection String
+Youshouldtestyourconnection throughaDataAdapterquerytoverifyyouraccesstoSmart
+Integration Connector. AnalternateSQLQuerytopullingthefirst10-50rowsissufficient. See
+DataAdaptersExample.
+Microsoft EntraAuthentication forAzureSQL
+TheabilitytouseMicrosoftEntrausingserviceprincipalauthentication toaccessAzureSQLis
+supported.
+1.OpenyourOneStream LocalGateway Configuration .
+2.OpenaLocalGateway Connection .
+3.EnteraDataSourceNameofMicrosoftEntra .
+4.NavigatetotheConnection Stringandenteraconnection string.Example:
+Server=demo.database.windows.net; Authentication=Active DirectoryServicePrincipal;
+Encrypt=True; Database=testdb; UserId=AppId; Password=|password|;
+5.EnteryourConnection StringPassword .
+NOTE:Forsecuritypurposes, werecommend usingtheConnection String
+Password fieldandthesubstitution variabletoensurethepassword isnotshown
+onscreen.However, youcanalsoembedthepassword directlywithinyour
+connection string.Forexample:Server=localhost;Port=3306;uid=root;pwd=my_
+password;database=gatewaymysql;.
+6.SelectMS DataSQL Provider asyourDatabase Provider.
+SmartIntegration Connector Guide 56Installation andSetup
+7.Click
+TestConnection totestthedatasource.
+8.ClickOK.
+9.ClickSave.
+RestarttheGateway
+Aftercommunication hasbeenverified,thefollowingWindowsServiceneedstoruntomaintain
+communication withtheOneStream Cloudinstance.Bydefault,theseservicesaresettostart
+afteraWindowsreboot.YoucanalsomanuallystartthemusingtheWindowsServicecontrol
+managerorthecommand lineusingthenetstart/netstopcommands. Ifyouarehavingissues
+restarting theservice,seeTroubleshooting .
+1.OpentheOneStream LocalGateway Configuration .
+2.ClickTools>RestartOneStream SmartIntegration Connector Gateway.
+SmartIntegration Connector Guide 57Installation andSetup
+LoadBalanced LocalGateway Servers
+Tocreatealoadbalancedenvironment, installtheSmartIntegration Connector LocalGateway
+ServeronaseparateWindowsServer.Loadbalancedenvironments allowforfasteroverall
+resultsfromdatasourcesby:
+lDistributing requestsbetweenservers
+lImproving performance
+lProviding afailoverserver
+Inaloadbalancedenvironment, considerthefollowing:
+lIncomingconnections arebalancedbetweentheavailableLocalGatewayServers.
+lThefirstLocalGatewayServertoestablishaconnection totheRelayisdisplayed inthe
+ActiveLocalGateway ServerComputer NamefieldintheSmartIntegration Connector
+Adminsetup.
+lThenumberofactivegateways isdisplayed intheInstanceCountfield.
+SmartIntegration Connector Guide 58Installation andSetup
+NOTE:Tosetuplocalgatewayserversformultipleenvironments, youmustcreatea
+newserverforeachenvironment byfollowingthestepsinLocalGatewayServer
+Installation .
+CreateaLoadBalanced LocalGateway Server
+TocreatealoadbalancedLocalGatewayServer:
+1.OnthefirstWindowsServer,completeinstallation ontheinitialLocalGatewayServerand
+verifyalldataconnections transferdata.
+2.Afterallconnections havebeenverifiedonthefirstWindowsServerexportthe
+configuration.
+a.OpentheOneStream LocalGateway Configuration .
+b.GotoTools>ExportConfiguration forBackupGateway Server.
+c.ChoosethelocationandselectSave.
+3.OnthesecondWindowsServerinyourenvironment, installtheOneStream Smart
+Integration Connector LocalGateway Server
+(OneStreamSmartIntegrationConnectorGateway- #.#.#.#####.msi).
+NOTE:IfyouareusingcustomDLLs,SAP,orreferenced DLLs,youmustcopy
+theexistingReferenced Assemblies Folder.Locations mustbeinsyncandinthe
+samelocationontheprimaryserver.SeeSmartIntegration Additional Settings.
+4.Onthesecondserver,performthefollowingsteps:
+SmartIntegration Connector Guide 59Installation andSetup
+a.OpentheOneStream LocalGateway Configuration .
+b.GotoTools>ImportConfiguration fromPrimaryGateway Server.
+i.ChoosethelocationoftheexportfileandselectOpen.
+CAUTION: Youwilloverwritetheexistinglocalgateway
+configuration. IfyouuseConnection StringPasswords, youwillneed
+toreenteraconnection stringpassword.
+CAUTION: Ifyouinstalledacustomdatabasedriver,youmustinstall
+thecustomerdatabasedriveronthebackupgatewayserver.
+ii.ClickLocalGateway Connections .
+iii.SelectaDataSourceandtheConnection StringPasswords .
+iv.SelectOKtoprovideanewConnection string.
+v.Deletetheencrypted textandreplaceitwithavalidconnection stringfromthe
+primaryserver.
+vi.SelectOKtoencrypttheconnection stringandclosethedialogbox.
+vii.Repeatstepsaboveforalltheremaining datasources.
+viii.ClickOKtoclosetheLocalGateway Connections .
+ix.ClickSavetosavetheLocalGateway Configuration .
+x.ClickYestorestarttheservice.
+xi.TesttheSmart Integration Connector LocalGatewayServerinOneStream.
+SmartIntegration Connector Guide 60Installation andSetup
+5.VerifytheInstanceCountis2whenboththeinitialandsecondserversarerunninginthe
+OneStream Windowsapplication. ThefirstLocalGatewayServertoestablishaconnection
+totheRelayisdisplayed intheActiveLocalGateway ServerComputer Namefield
+SmartIntegration Connector Guide 61Installation andSetup
+DefineCustomDatabase Connections
+Nowthattheconnection issetupandcommunicating withtheSmartIntegration Connector
+Gateway, thefinalstepistosetupthelocationoftheremotedatasourceinOneStream .To
+continueaddingtheCustomDatabase Connection, youmustassignausertothe
+ManageSystemConfiguration role.
+1.GotoSystem>Administration >SystemConfiguration .
+2.SelectApplication ServerConfiguration >Database ServerConnections .
+3.Select
+ CreateItemtocreateanewCustomdatabaseserverconnection.
+NOTE:Iftheonlyfieldsdisplayed areNameandExternalDatabase properties,
+verifythatthecurrentuserisassignedtotheManageSystemConfiguration role.
+4.EntertheNameoftheDatabase ServerConnection .
+5.ForDatabase ProviderType,selectGateway.
+SmartIntegration Connector Guide 62Installation andSetup
+6.TheGateway Namedrop-downmenuwillbepopulated withalistofconfigured gateways.
+SelecttheGateway.
+7.AftertheGatewayisselected,theDataSourceNamedrop-downmenupopulates witha
+listoftheLocalGatewayServerDatabase Connections.
+8.SelectaDatabase Connection fromthedrop-downmenu.
+NOTE:Iftheremotedatasourceisnotdisplayed ortheGatewayisoffline,you
+canselectCustomtoallowthedatasourcetobemanuallyspecified. Itisadvised
+towaituptofiveminutesfortheGatewaytopopulatefirst.
+9.ClickSavetocompletetheconfiguration.
+10.Verifythecustomdatabaseconnection isunderCustom.
+SmartIntegration Connector Guide 63Installation andSetup
+SmartIntegration Connector Guide 64Installation andSetup
+UpgradeSmartIntegration
+Connector
+Thefollowingsectiondescribes howtoupgradeSmartIntegration Connector.
+IMPORTANT: Forbestperformance andreliability, upgradeSmartIntegration
+Connector tomatchyourOneStream version.WhileSmartIntegration Connector Local
+GatewayServersupportsthemostrecentpreviousversionofOneStream ,full
+functionality isnotguaranteed.
+Upgradefrom:
+lPrivatePreviewversions7.2,7.3,
+lLimitedAvailability version7.4,or
+lGeneralAvailability versions8.xto9.2
+Aspartoftheupgrade,youcanexpectthefollowing:
+lAcopyoftheoriginalconfiguration filefromthepriorversionwillbesaved.
+lExistingconnections shouldcontinuetofunctionastheydidpriortotheinstall.
+lIftheSmartIntegration Connector WindowsServiceisrunning,thentheservicewill
+automatically bestartedafterinstall.
+Ifyouperformanupgradeandhaveissuesordonotachievetheseresults,contactOneStream
+Support.
+SmartIntegration Connector Guide 65UpgradeSmartIntegration Connector
+1.InstallthelatestversionofOneStream .Thelatestversioncanberequested andscheduled
+throughtheOneStream SoftwareCloudCustomer ServiceCatalog.Makeanoteinthe
+detailssectionoftheticketthatyouwanttoinstallandconfiguretheSmartIntegration
+Connector.
+2.Download theSmartIntegration Connector install(OneStream_ Connector_ #.#.#.zip)file
+fromthePlatformsectionoftheSolutionExchange .
+3.ExtracttheOneStreamSmartIntegrationConnectorGateway- #.#.#.#####.msi fromthe
+downloaded zipfile.
+4.Backupacopyofyourconfiguration folderandsubfoldersbeforeupgrading. Defaultis:
+C:\Program Files\OneStream Software\OneStream Gateway\ .
+5.FollowthestepsinInstallation andSetuptocompleteyourupgrade.
+NOTE:Iftheupgradeprocessisinterrupted orcanceled, theSmartIntegration
+Connector mustbereinstalled.
+IftheSmartIntegration Connector WindowsServicewasconfigured tostartusingacustom
+serviceaccountpriortoupgrading, confirmthattheserviceissettostartusingthecorrectservice
+accountaftertheupgradeiscompleted.
+SmartIntegration Connector Guide 66UpgradeSmartIntegration Connector
+NOTE:ForOneStream LocalGatewayServerversion8.1andabove,thedefault
+locationforReference Assembly FolderisC:\Program Files\OneStream
+Software\OneStream Gateway\Referenced Assemblies.
+SmartIntegration Connector Guide 67UpgradeSmartIntegration Connector
+SmartIntegration Additional
+Settings
+Youcanapplyadditional settingsintheSmartIntegration Connector LocalGateway
+Configuration file.
+Additional settingsinclude:
+lLocalApplication DataSettings
+lLogSettings
+LocalApplication DataSettings
+Additional application configurations canbeappliedwithintheLocalApplication DataSettings.
+Onceyouopenaconfiguration filewithintheutility,openLocalApplication DataSettings.
+SmartIntegration Connector Guide 68SmartIntegration Additional Settings
+Youcan:
+lReference alocationtoadditional DLLsthatwillbeusedinremotebusinessrules.
+lAdjusttheMaximum RecordstoReturn.Theseareoptionalandareonlydefinedifneeded
+oriffurthertuningisnecessary byaconsultant orasinstructed bySupport.
+lStoreConfiguration Parameters andassociated values.
+Referenced Assemblies Folder
+TheReferenced Assemblies Folderspecifiesthelocationofcustomer- suppliedDLLsthatcanbe
+referenced whenremoteSmartIntegration Functions arecompiledandexecuted. Youwillneedto
+addtheDLLnametotheSmartIntegration Functions Referenced Assemblies property.The
+defaultvalueisC:\Program Files\OneStream Software\OneStream Gateway\Referenced
+Assemblies.
+NOTE:Ifyouareintegrating SAPwithERPConnect, addERPConnect andtherequired
+DLLstotheReferenced Assemblies folderandC:\Windows\System32 folderper
+instructions. RefertoSupportforDLL Migration .
+SmartIntegration Connector Guide 69SmartIntegration Additional Settings
+AllowRemoteCodeExecution
+TheSmartIntegration Connector Capabilities introduceadditional businessruleAPIs(BRAPIs) to
+allowforexecution andmanagement ofremotebusinessrulesinsidethecontextoftheSmart
+Integration Connector gateway.Theserulesaretransported usinghttpstotheSmartIntegration
+Connector localgateway,compiledlocally,executed, andtheresultsreturnedtothecallerfor
+furtherprocessing. Theyprovideamechanism forcomplexdrillbacks,dataprocessing scenarios,
+ortoinvokeremoteWebAPIshostedinyournetwork.SettoTruebydefault.
+WebAPIBoundPort
+TheportthatSmartIntegration Connector usestocommunicate withtheinternalAPI.
+Maximum RecordstoReturnwhenPaging
+Defaultsto1,000,000 anddefinesthenumberofrowstoreturnperpage/block toOneStream
+APIs.Thisvalueisusedonlywhengreaterthanthe"RowCounttoBeginPagingOperations"
+rowsarereturnedfromaquery.Example: Ifthequeryreturns3millionrowsandRowCountto
+BeginPagingissetto1million,therewouldbe3blocksof1millionrowsreturnedtoOneStream .
+NOTE:Maximum RecordstoReturnwhenPaging,Maximum RecordstoReturn,and
+RowCounttoBeginPagingOperations areoptionalandshouldonlybeappliedbya
+OneStream consultant orOneStream Support.
+Maximum RecordstoReturn
+Defaultsto5,000,000 andisthemaximum numberofrowsthatcanbereturnedfromanyone
+query.
+SmartIntegration Connector Guide 70SmartIntegration Additional Settings
+Themaximum recommended numberofrecordstoreturnis5millionandisthedefault.Additional
+RAM/CPU resources wouldberequiredontheSmartIntegration Connector GatewayServerand
+ontheremotedatabaseservertosurfacelargequantities ofdata.Ifthislimitisexceeded, youwill
+receivea"Smart Integration Connector RemoteQuery"error.
+NOTE:Maximum RecordsandRowCountsSettings:Whenlargedatavolumesare
+returned(over1,000,000 rows),tomaintainperformance andreliability, Smart
+Integration Connector automatically transfersthedatainpages.
+NOTE:SmartIntegration Connector hasathresholdlimitof5millionrowsand5GB.
+NOTE:Itisabestpracticethatyoureviewanyqueriesthatreturnmorethan1million
+rowswithyourDatabase Administrator, becauseadditional tuningmaybe
+required. Tuning thesequerieswillimproveperformance, reduceresourceusage,and
+makethemmoreefficient.
+SmartIntegration Connector Guide 71SmartIntegration Additional Settings
+RowCounttoBeginPagingOperations
+Defaultsto1,000,000 andisthenumberofrowsreturnedbeforethedatasetisreturnedthrough
+pages/blocks.
+LocalConfiguration Parameters
+Thisiswhereyoucansetkeyvaluepairs,suchasWebAPIkeys,usernames, andpasswords,
+thatcanbereferenced frombusinessrules.ThesekeyvaluepairsaredefinedasConfiguration
+Parameter NameandConfiguration Parameter Value.
+Forexample,theConfiguration Parameter NameisSFTP_PASSWORD. Sensitiveinformation,
+suchasthepassword, isstoredintheConfiguration Parameter ValueontheLocalGateway
+ServeranddoesnotneedtobestoredintheOneStream WindowsApplication.
+NOTE:Configuration Parameter Valuesaremaskedandencrypted bydefault.When
+settinguptheparameter, youwillhavetheoptionofalwaysshowingtheparameter in
+plaintext.
+Then,inabusinessrule,youcanreference theConfiguration Parameter Nameanddonotneed
+toknowthepassword orothersensitiveinformation thatisstoredintheConfiguration Parameter
+Value.Forexample,inthefollowingbusinessrulethesftpPassword Configuration Parameter
+Nameisreferenced. TheGetSmartIntegrationConfigValue APIcanbeusedinaSmartIntegration
+Functiontoreference theConfiguration Parameter Name,whichmaybeneededinabusiness
+ruletoaccessalocaldatasource.
+SmartIntegration Connector Guide 72SmartIntegration Additional Settings
+DimpasswordString AsString=APILibrary.GetSmartIntegrationConfigValue ("SFTP_PASSWORD" )
+LogSettings
+TheserviceusesSerilogforapplication- levelloggingandexposesoptionsforcontrolling naming
+convention, growthlimits,andretentiondetails.Forexampleyoucanchangetheverbosityoflog
+messages bychangingtheminimum- levelsettingfromVerbosetoInformational. Ifa
+catastrophic errorhappens,youcanchecktheWindowseventlogstoreviewtheerrors.Youcan
+edittheLogSettingsfromtheOneStream LocalGateway Configuration Utility.
+Click
+ toaccessLogSettings.
+SmartIntegration Connector Guide 73SmartIntegration Additional Settings
+lLogLeveldescriptions:
+oVerbose:Thenoisiestlevel,rarely(ifever)enabledforaproduction application.
+oDebug:Usedforinternalsystemeventsthatarenotnecessarily observable fromthe
+outside,butusefulwhendetermining howsomething happened.
+oInformation :Usedtodescribethingshappening inthesystemthatcorrespond toits
+responsibilities andfunctions. Generally, thesearetheobservable actionsthe
+systemcanperform.Thisisrecommended forproduction environments andisthe
+defaultsettinguponinstallation.
+oWarning:Serviceisdegraded, endangered, ormaybebehavingoutsideofits
+expectedparameters.
+oError:Loggingofsituations wherefunctionality isunavailable orarecoverable error
+conditionoccurred.
+oFatal:Onlythemostcriticallevelitemswouldbelogged,requiringimmediate
+attention.
+lFileSizeLimitinBytes:Themaximum sizeforthelogfile,inbytes,beforecreatinganew
+filefortheday.Thedefaultis20MB.
+lRollOnFileSizeLimit:Whenalogfilereachesthespecifiednumberofbytes,anewlog
+fileisgenerated.
+lRetained FileCountLimit:Numberoflogfilestoretain.Iflogsdonotexceedthelimitin
+bytes(onefile/day),thiswouldallowfortheconfigured value(with40daysbeingthe
+default)oflogretention. IftheSmartIntegration Serviceisusedheavilyandlogfilesareset
+tohigherlevelsofverbosity, thiscouldresultinfewerdaysoflogretention. Ensurethatthe
+growthrateandretentionperiodsalignwithyourorganizational requirements.
+SmartIntegration Connector Guide 74SmartIntegration Additional Settings
+Thedefaultlocationforlogfilesis:
+%programdata%\OneStream Software\OneStreamGatewayService\Logs .
+NOTE:Thelogfile'soutputhasbeenupdatedtoreflecttheenhanced performance and
+reliabilityofmultithreaded orparallelprocessing forlargerpayloadssincethePlatform
+Versionv8.4update.
+SmartIntegration Connector Guide 75SmartIntegration Additional Settings
+Networking andWhitelisting
+SmartIntegration Connector requiresoutbound trafficoverport443tofunction.Ifyourestrict
+outbound trafficover443thenwhitelisting outbound traffictoAzureRelayServicewillberequired.
+SmartIntegration Connector doesnotrequireanyinboundaccessrulestofunction.
+ThesesectionscontainstepstorestrictandwhitelisttrafficforSmartIntegration Connector:
+lRestrictTraffictotheAzureRelay
+lWhitelistOutbound Traffic
+SmartIntegration Connector Guide 76Networking andWhitelisting
+RestrictTraffictotheAzureRelay
+YoucanblockorrestricttraffictoyourAzurerelaytoonlyallowcertainIP ranges toconnect.
+1.FromtheOneStream WindowsApplication clientgotoSystem>Administration >Smart
+Integration Connector >Relay.
+2.SelectIPv4Whitelist.
+3.EnterIPv4compatible IP(XXX.XXX.XXX.XXX) orCIDR addresses
+(XXX.XXX.XXX.XXX/XX) separated byasemicolonintheIPv4Whitelist dialogbox.
+NOTE:IPv6addresses arenotcurrentlysupported.
+NOTE:Donotincludeanyextraspacesforcharacters.
+4.RestartyourLocalGatewayService.
+SmartIntegration Connector Guide 77Networking andWhitelisting
+Whitelist Outbound Traffic
+Allowoutbound trafficusingawildcarddomaintotheAzureRelayService(bestpractice).Ifthe
+firewalldoesnotallowwildcards, usethefullyqualifieddomainnamesforyourspecificAzure
+Relaynamespaces.
+NOTE:Foradditional information, seeAzureRelayWCFandHybridConnections DNS
+Support.
+AllowTrafficusingWildcard Domain(BestPractice)
+Toallowtrafficusingawildcarddomain(Microsoft Recommended bestpractice),add
+*.servicebus.windows.net tothefirewallrulespermitting port443outbound.
+AllowTrafficusingIPaddresses (NotRecommended)
+Toallowtrafficusingfullyqualifieddomainnamestothefirewallrules:
+1.LookuptheIPaddresses usedbytheAzureRelaynamespace. TheIP addresses canbe
+returnedbyusingthisscript.
+2.AddtheIPaddresses tothefirewallrulespermitting port443outbound.
+3.Frequently monitortheIPaddresses forchanges.UpdatetheIPaddresses inthefirewall
+ruleswhenthereareIPaddresschanges.TheIP addresses canbereturnedbyusingthis
+script.
+NOTE:Upto20%oftheIPaddresscanchangeinthespanofamonth.Toensure
+thatSmartIntegration Connector continues tooperate,youwillneedtofrequently
+monitoriftheseIPschangeandadjustyourfirewallaccordingly.
+SmartIntegration Connector Guide 78Networking andWhitelisting
+UseSmartIntegration Connector
+YoucanuseSmartIntegration Connector toaccessdatafromyourLocalGatewayConnection
+DataSourcesorthroughDirectConnections. Thissectionprovidesexamples ofhowtouseSmart
+Integration Connector:
+lDataAdaptersExample
+lSQLTableEditorExample
+lGridViewExample
+lPerformaDrillBack
+lPerformaWriteBack
+lSupportforSFTP
+lTransferFilesfromLocalFileShare
+lObtainDatathroughaWebAPI
+lSendEmailsthroughDirectConnections
+lSupportforDLL Migration
+SmartIntegration Connector Guide 79UseSmartIntegration Connector
+DataAdapters Example
+1.GotoApplication >Presentation >Workspaces >[chooseWorkspace] >[choose
+Maintenance Unit]>DataAdapters.
+2.Createorselectanexistingdataadapter.
+3.VerifythattheDatabase Location isExternalandtheExternalDatabase Connection is
+thecustomconnection thatyoudefinedearlier.
+4.EnteravalidSQLQuery.
+5.Click
+ Test Data AdaptertotesttheDataAdapterandviewtheresults.
+SmartIntegration Connector Guide 80
+SQLTableEditorExample
+Thefollowingusecasedescribes howtosendaqueryafterestablishing aconnection.
+1.GotoApplication >Presentation >Workspaces >[chooseWorkspace] >
+Maintenance Unit>[chooseMaintenance Unit]>Components >SQLTableEditor.
+2.CreateDashboard Component oropenaSQLTableEditor.
+3.ChooseSQLTableEditorandselectOK.
+SmartIntegration Connector Guide 81
+4.Verifythefollowing:
+lDatabase Location isExternal,
+lExternalDatabase Connection isthecustomconnection thatyoudefinedearlier,
+lTableNameisdefinedasthetableyouwanttoreturndatafrom.
+5.Opentheassociated dashboard andrunthequery.TheOneStream SmartIntegration
+Connector willconnecttotheexternaldatabase. Ifitconnectscorrectly,thequerywill
+populate.
+NOTE:IfusingSQL Server withSQL Table Editor,nobusinessrulemodifications are
+needed.Ifyouplanonmodifying datawithSQLTableEditorusingSmartIntegration
+Connector toanOracleorPostGres database, thenyouwillneedtowritebackdatawith
+acustombusinessruleusingtheExecuteDashboard Extender Business Rule
+featureundertheSaveDataServerTaskaction.
+SmartIntegration Connector Guide 82
+GridViewExample
+1.GotoApplication >Presentation >Workspaces >[chooseWorkspace] >
+Maintenance Unit>[chooseMaintenance Unit]>Components >GridView.
+2.CreateDashboard Component oropenagridview.
+3.ChooseGridViewandselectOK.
+4.Configure thegridtousethedataadapter.
+SmartIntegration Connector Guide 83
+5.Runtheassociated dashboard toseethedata.
+SmartIntegration Connector Guide 84
+PerformaDrillBack
+Thefollowingsnippetdescribes howtoloaddatafromalocalgatewayconnection datasource
+andhowtoperformadrillback.TheexamplebelowhasbeenupdatedfromtheStandardSQL
+Connectors businessrule.IfyoudonothavetheSnippetEditorwiththeOneStream Application,
+youcanfindtheSnippetEditorontheSolutionExchange.
+1.Download andinstalltheSnippetEditorfromSolutionExchange.
+2.NavigatetoApplication >Tools>Business Rules.
+3.ExpandConnector andselectaBusiness Rule.
+SmartIntegration Connector Guide 85
+4.NavigatetoSnippets >SQLConnector >Standard SQLConnectors .
+5.CopytheSampleBusinessRule.
+SmartIntegration Connector Guide 86
+6.Entertheconnection name.Inthisexample,“Northeast Sales”istheGatewayConnection
+Nameasdefinedintheapplication configuration.
+'CreateaConnection stringtotheExternal Database (priortousingthegateway)
+Private Function GetConnectionString (ByValsiAsSessioninfo, ByValglobals As
+BRGlobals, ByValapiAsTransformer) AsString
+Try
+'NamedExternal Connection
+'-------------------------------------------
+Return"Revenue MgmtSystem"
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+'CreateaConnection stringtotheExternal Database (usingtheGateway)
+Private Function GetConnectionString_ Gateway(ByValsiAsSessioninfo, ByValglobais As
+BRGlobals, ByValapiAsTransformer) AsString
+Try
+'NamedExternal Connection -Gateway
+'---------------------------------------------
+Return"Northeast Sales"
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex)) 
+EndTry
+EndFunction
+7.Enterthedrillbackinformation toyourdatabase.
+Ifargs.DrillCode. Equals(StageConstants.TransformationGeneral.DrillCodeDefaultValue,
+StringComparison.InvariantCulturelgnoreCase) Then
+'SourceGLDrillDown
+ drillTypes.Add (NewDrillBackTypeInfo (ConnectorDrillBackDisplayTypes.FileShareFile,
+NewNameAndDesc ("InvoiceDocument" ,"Invoice Document" ))) 
+ drillTypes.Add (NewDrillBackTypeInfo (ConnectorDrillBackDisplayTypes.DataGrid, New
+NameAndDesc ("MaterialTypeDetail" ,"Material TypeDetail")))
+ drillTypes.Add (NewDrillBackTypeInfo (ConnectorDrillBackDisplayTypes.DataGrid, New
+NameAndDesc ("MaterialTypeDetail_ Gateway" ,"Material TypeDetail(SmartIntegration)" )))
+8.Editthelevelofdrillbackinformation returned.
+SmartIntegration Connector Guide 87
+Example: Thisexampleshowspreviously existingcode
+thatleverages aVPNbasedSQLconnection andthe
+Gatewaybasedmethodshowninthesecond"ElseIf"
+block.
+ElseIfargs.DrillBackType.NameAndDescription.Name. Equals("MaterialTypeDetail" ,
+StringComparison.InvariantCultureIgnoreCase) Then
+'Level1:ReturnDrillBackDetail
+Dimdri1lBackSQL AsString-GetDrillBackSQL_ Ll(si,globais, api,args)
+DimdrillBackInfo AsNewDrillBackResultInfo
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.OataGrid
+ drillBackInfo.DataTable =api.Parser.GetXFDataTableForSQLQuery (si,
+DbProviderType.SqlServer, connectionstring. True,drillBackSQL, False,args.PageSize,
+args.PageNumber) 
+ReturndrillBacklnfo
+ElseIfargs.DrillBackType.NameAndDescription.Name. Equals("MaterialTypeDetail_ Gateway" ,
+StringComparison.lnvariantCultureIgnoreCase) Then
+'Level1:ReturnDrillBackDetail
+DimdrillBackSQL AsString=GetDrillBackSQL_ Ll(si,globais, api,args)
+DimdrillBackInfo AsNewDrillBackResultInfo
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.OataGrid
+ drillBackInfo.DataTable =api.Parser.GetXFDataTableForSQLQuery (si,DbProviderType.Gateway,
+connectionstring_ gateway. True,drillBackSQL, False,args.PageSize, args.PageNumber) 
+ReturndrillBacklnfo
+SmartIntegration Connector Guide 88
+PerformaWriteBack
+YoucanperformawritebackusingSmartIntegration Connector leveraging thedefined
+credentials tothelocalgatewaydataSource attheSmartIntegration Connector Gateway. Ifthe
+credentials havepermission toinsert,update,and/ordeleterecordsinaremotedataSource, a
+OneStream businessrulecouldbeleveraged towrite-back,update,and/ordeletedataasneeded
+tosupportafinancialprocess.
+Example: Thefollowingexampleshowshowtoinsertrows
+andcolumnstoaSmartIntegration Connector SQLremote
+database. Othertypesofdatabases (ODBCandOLEDB)are
+notcompatible withthisexample.
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports System.Windows.Forms
+Imports Microsoft.VisualBasic
+Imports OneStream.Finance.Database
+Imports OneStream.Finance.Engine
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Database
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Wcf
+Imports OneStream.Stage.Database
+Imports OneStream.Stage.Engine
+Namespace OneStream.BusinessRule.Extender.SIC_ BulkCopyExample
+PublicClassMainClass
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals, ByValapi
+AsObject,ByValargsAsExtenderArgs) AsObject
+Try
+'SICGateway name
+DimsicGatewayName AsString="Northeast_ HQ"
+'SICremoterule
+DimsicRemoteRule AsString="update_ DB"
+SmartIntegration Connector Guide 89
+'SICremoterulefunction
+DimsicRemoteRuleFunction AsString="RunOperation"
+'Createandpopulate DataTable
+DimdtAsNewDataTable ()
+                dt.Columns.Add ("Scenario" ,GetType(String))
+                dt.Columns.Add ("Time",GetType(String))                
+                dt.Columns.Add ("Entity" ,GetType(String))
+                dt.Columns.Add ("Account" ,GetType(String))
+                dt.Columns.Add ("Amount" ,GetType(Double))
+                dt.Rows.Add ("Actual" ,"2023M3" ,"Houston Heights" ,"NetSales",100.25)
+                dt.Rows.Add ("Actual" ,"2023M3" ,"SouthHouston" ,"NetSales",1230.66)                          
+DimdtObj(2)AsObject'Createobjecttostorearguments forremote
+business rule
+                dtObj (0)=dt'datatable
+                dtObj (1)="SIC_WriteBack" 'remotedatabase tablename
+                dtObj (2)="RevenueMgmt" 'remotedatasourcename                            
+'Execute remotebusiness ruletobulkcopytotargettable
+DimbulkRemoteResults AsRemoteRequestResultDto 
+                =BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,sicRemoteRule, 
+                dtObj, sicGatewayName,sicRemoteRuleFunction, String.Empty, False,600)
+'Getresultstatus
+IfbulkRemoteResults.RemoteResultStatus <> 
+                RemoteMessageResultType.RunOperationReturnObject Then'Checkifsuccessful
+'Failed, dosomething
+                    BRAPi.ErrorLog.LogMessage (si,"Failed withstatus:" &bulkRemoteResults.
+                    RemoteResultStatus.ToString)
+EndIf
+'Getreturned message
+DimreturnedMsg AsString=bulkRemoteResults.resultData                
+                BRAPi.ErrorLog.LogMessage (si,returnedMsg)
+ReturnNothing
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+EndClass
+EndNamespace
+TheExtensibility RuleabovecallsthefollowingSmartIntegration Function:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+SmartIntegration Connector Guide 90
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports System.Data.SqlClient
+Imports OneStream. Shared.Common
+Imports OneStreamGatewayService
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.SIC_ Functions
+PublicClassMainClass
+'Function tobulkcopyacompressed datatabletoaSQLdatabase table
+'Passincompressed datatable,database tablenameanddatasourcename
+PublicSharedFunction RunOperation (dtasDataTable,tablename AsString, 
+        dataSource AsString)AsString
+'------------------------------------------------------------------------------
+-----------------
+'GetSQLconnection string
+DimconnString AsString=APILibrary.GetRemoteDataSourceConnection (dataSource)
+IfdtIsNotNothing AndAlso dt.Rows.Count >0Then
+'Checkdatatablehasbeencreated andispopulated
+'Createsqlconnection toDWH
+UsingsqlTargetConn AsSqlConnection =NewSqlConnection (connString)
+                    sqlTargetConn.Open 'Openconnection
+UsingbulkCopy =NewSqlBulkCopy (sqlTargetConn)
+                        bulkCopy.DestinationTableName =tableName 'DWHtable
+                        bulkCopy.BatchSize =5000
+                        bulkCopy.BulkCopyTimeout =30
+                        bulkCopy.WriteToServer (dt)'Bulkcopydatatabletodatabase table
+EndUsing
+EndUsing
+Else
+ThrowNewException ("Problem uncompressing datainSICgateway" )
+EndIf
+Return$"{dt.Rows.Count} rowsbulkinserted intotable{tableName}"
+EndFunction
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 91
+SupportforSFTP
+SmartIntegration Connector providessupportforconnecting toSFTPserverstosendand
+retrievefiles.Performthestepsinthefollowingsectionstoestablishaconnection andthensend
+andretrievefiles.
+IMPORTANT: ItisbestpracticetoutilizeSSH.NET, whichisincludedwithSmart
+Integration Connector, forSecureFileTransferProtocol(SFTP)tasks.
+IMPORTANT: Asofversion9.1,WinSCPisnolongerincludedwithSmartIntegration
+Connector. ForcurrentWinSCP users, itisarecommended bestpracticetotransition
+yourSFTPoperations totheSSH.NET library.IfyouwanttocontinuetouseWinSCP,
+youwillneedtoaddWinSCPtoyourreferenced assemblies folderandreference
+WinSCPfromyourremotebusinessrules.SeeSupportforDLLMigration.
+NOTE:YoumusthaveanSFTPserveravailableonaport.Theportmustbeallowedfor
+inboundandoutbound connections ontheLocalGatewayServer.Forthisexample,we
+haveusedport22.
+1.LogintoOneStream.
+2.NavigatetoSystem>Administration >SmartIntegration Connector .
+3.CreateaNewConnection andfilloutallofthecorresponding detailsforyourConnection
+andtheGatewayServer.
+4.FromConnection Type,selectDirectConnection /PortForwarding .
+5.ForBoundPortatGateway,enter22.
+SmartIntegration Connector Guide 92
+6.ForRemoteGateway Host,entertheIPaddressorresolvable hostnameofthemachine
+whereyourSFTPserverislocated.
+7.ForBoundPortinOneStream ,select(AutoAssigned) (defaultandrecommended
+setting)orEnterPortManually.SeeInstallation andSetupforadditional information.
+l(AutoAssigned) (defaultandrecommended setting)toallowtheOneStream
+application toautomatically assignanunusedportnumber.WhentheDirect
+Connection iscreated,theportnumberisshownintheconnection settings.
+lEnterPortManually:Enteranunusedportnumber.Theportnumbermustbe
+greaterthan1024andlessthan65535.
+8.ClickOK.
+9.CopytheConnection totheOneStream SmartIntegration Connector LocalGateway
+ServerConfiguration .
+SmartIntegration Connector Guide 93
+10.SavetheLocalGatewayServerconfiguration andrestarttheSmartIntegration Connector
+Gatewayservice.
+Example: Hereisanexampleofhowyoucanuploadand
+download filesthroughanSFTPextensibility rule.
+C#SFTPExample
+BelowyoucanfindtheC#exampleforSTFP.
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingMicrosoft.CSharp;
+usingOneStream.Finance.Database;
+usingOneStream.Finance.Engine;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingOneStream.Stage.Database;
+usingOneStream.Stage.Engine;
+usingRenci.SshNet;
+namespace OneStream.BusinessRule.Extender.SFTP_ SSH_C
+{
+publicclassMainClass
+{
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs args)
+{
+try
+{
+//--------------------------------------------------
+//SSH.NET EXAMPLES
+//--------------------------------------------------
+//SetupSSH.NET session options fromvaluesinCloudAdministration Tools
+(CAT)KeyManagement -Secrets
+varusername =BRApi.Utilities. GetSecretValue (si,"SFTP-UserName" );
+varpassword =BRApi.Utilities. GetSecretValue (si,"SFTP-Password" );
+varauthenticationMethod =newPasswordAuthenticationMethod (username,
+password);
+varconnectionInfo =newConnectionInfo ("localhost" ,username,
+authenticationMethod);
+SmartIntegration Connector Guide 94
+//Getthefilepath -BatchHarvest inthisexample isFileShare/
+Applications /GolfStreamDemo_ v36/Batch/Harvest
+varfileDNpath =BRApi.Utilities. GetFileShareFolder (si,
+FileShareFolderTypes.BatchHarvest, null);
+varfileSFTPpath =Path.Combine(fileDNpath, "SFTP_TEST_DOWNLOAD_ "+
+DateTime.UtcNow. ToString ("MM-dd-yyyy-HHmmss")+".txt"); 
+varfileSCPpath =Path.Combine(fileDNpath, "SCP_TEST_DOWNLOAD_ "+
+DateTime.UtcNow. ToString ("MM-dd-yyyy-HHmmss")+".txt"); 
+//SFTPExample
+using(varsftpClient =newSftpClient (connectionInfo))
+{
+         sftpClient. Connect();
+using(vardownloadStream =newFileStream (fileSFTPpath,
+FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+{
+     sftpClient. DownloadFile ("SFTP_TEST_DOWNLOAD.txt" ,downloadStream);
+                    }
+     }
+//SCPExample
+using(varscpClient =newScpClient (connectionInfo))
+{
+     scpClient. Connect();
+     scpClient. Download ("SFTP_TEST_DOWNLOAD.txt" ,newFileInfo (fileSCPpath));
+     }
+return null;
+            }
+catch(Exception ex)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,ex));
+            }
+        }
+    }
+}
+VB STFP Example
+BelowyoucanfindtheVBexampleforSTFP.
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Imports System.Windows.Forms
+Imports Microsoft.VisualBasic
+Imports OneStream.Finance.Database
+SmartIntegration Connector Guide 95
+Imports OneStream.Finance.Engine
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Database
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Wcf
+Imports OneStream.Stage.Database
+Imports OneStream.Stage.Engine
+Imports Renci.SshNet
+Namespace OneStream.BusinessRule.Extender.SFTP_ SSH
+PublicClassMainClass
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals, ByValapi
+AsObject,ByValargsAsExtenderArgs) AsObject
+Try
+'--------------------------------------------------
+'SSH.NET EXAMPLES
+'--------------------------------------------------
+'SetupSSH.NET session options fromvaluesinCloudAdministration Tools
+(CAT)KeyManagement -Secrets
+Dimusername AsString=BRApi.Utilities.GetSecretValue (si,"SFTP-UserName" )
+Dimpassword AsString=BRApi.Utilities.GetSecretValue (si,"SFTP-Password" )
+DimauthenticationMethod =NewPasswordAuthenticationMethod (username,
+password)
+DimconnectionInfo =NewConnectionInfo ("localhost" ,username,
+authenticationMethod)
+'Getthefilepath -BatchHarvest inthisexample isFileShare/
+Applications /GolfStreamDemo_ v36/Batch/Harvest
+DimfileDNPath AsString=BRAPi.Utilities.GetFileShareFolder (si,
+FileShareFolderTypes.BatchHarvest, Nothing)
+DimfileSFTPpath =Path.Combine (fileDNpath, "SFTP_TEST_DOWNLOAD_ "&
+DateTime.UtcNow.ToString ("MM-dd-yyyy-HHmmss")&".txt") 
+DimfileSCPpath =Path.Combine (fileDNpath, "SCP_TEST_DOWNLOAD_ "&
+DateTime.UtcNow.ToString ("MM-dd-yyyy-HHmmss")&".txt") 
+'SFTPExample
+UsingsftpClient =NewSftpClient (connectionInfo)
+     sftpClient.Connect ()
+UsingdownloadStream =NewFileStream (fileSFTPpath, FileMode.OpenOrCreate,
+FileAccess.Write, FileShare.None)
+     sftpClient.DownloadFile ("SFTP_TEST_DOWNLOAD.txt" ,downloadStream)
+EndUsing
+EndUsing
+'                ' SCPExample
+UsingscpClient AsNewScpClient (connectionInfo)
+                    scpClient.Connect ()
+                    scpClient.Download ("SFTP_TEST_DOWNLOAD.txt" ,NewFileInfo (fileSCPpath))
+EndUsing
+ReturnNothing
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+ReturnNothing
+EndTry
+EndFunction
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 96
+TransferFilesfromLocalFileShare
+YoucanuseaDataManagement jobtomovefilesSmartIntegration Connector fromalocal
+FileShare. Todothis,youbuildanextenderbusinessruleandcallitthroughadatamanagement
+job.ThisextenderbusinessrulewillcallaSmartIntegration Function(remotefunction)andobtain
+theresults.
+Step1-SetuptheRemoteServer/RemoteShare
+Togetstarted,setuptheSmartIntegration Function:
+1.NavigatetoApplication >Tools>Business Rules.
+2.OpentheSmartIntegration Function folder.
+3.Createanewbusinessrule(forexample,TestFileRead).
+4.Copyandpastethefollowingbusinessrulecodesnippet.
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+namespace OneStream.BusinessRule.SmartIntegrationFunction.TestFileRead
+{
+publicclassMainClass
+{ 
+public byte[]RunOperation (stringyear)
+{
+stringfname=@"c:\temp\hw_ "+year+".csv";
+byte[]buffer=System.IO.File. ReadAllBytes (fname); 
+returnbuffer;
+ }
+public byte[]GetOtherFileData (stringyear)
+{
+stringfname=@"c:\temp\zw_ "+year+".csv";
+byte[]buffer=System.IO.File. ReadAllBytes (fname); 
+returnbuffer;
+SmartIntegration Connector Guide 97
+ }
+public boolDeleteOldFileData (stringyear)
+{
+stringfname=@"c:\temp\zw_ "+year+".csv";
+try
+{
+ System.IO.File. Delete(fname);
+return true;
+ }
+catch(IOException)
+{
+return false;
+ }
+ } 
+ }
+}
+Step2-PullfilefromExtender Business Rule
+1.NavigatetoApplication >Tools>Business Rules.
+2.OpentheExtensibility Rulesfolder.
+3.Createanewbusinessrule(forexample,ProcessRemoteFileData).
+4.Copyandpastethefollowingbusinessrulecodesnippet.
+Imports System
+Imports System.Data
+Imports System.Data.Common
+Imports System.IO
+Imports System.Collections.Generic
+Imports System.Globalization
+Imports System.Linq
+Imports Microsoft.VisualBasic
+Imports System.Windows.Forms
+Imports OneStream. Shared.Common
+Imports OneStream. Shared.Wcf
+Imports OneStream. Shared.Engine
+Imports OneStream. Shared.Database
+Imports OneStream.Stage.Engine
+Imports OneStream.Stage.Database
+Imports OneStream.Finance.Engine
+Imports OneStream.Finance.Database
+Namespace OneStream.BusinessRule.Extender.ProcessRemoteFileData
+PublicClassMainClass
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals,
+SmartIntegration Connector Guide 98
+ByValapiAsObject,ByValargsAsExtenderArgs) AsObject
+Try
+DimstepNumber AsString="1"
+If(Notargs.NameValuePairs IsNothing)Then
+'Extracting thevaluefromtheparameters collection                 
+If(args.NameValuePairs.Keys.Contains ("step"))Then
+                     stepNumber =args.NameValuePairs.Item ("step")
+EndIf
+                 BRApi.ErrorLog.LogMessage (si,"FileProcessing Step:"&stepNumber) 
+EndIf
+SelectCasestepNumber
+CaseIs="1"
+                        GetData (si)
+ReturnNothing
+CaseIs="2"
+                        CleanupData (si)
+ReturnNothing
+EndSelect
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+ReturnNothing
+EndFunction
+PublicSubCleanupData (ByValsiAsSessionInfo)
+DimargTest(0)AsObject
+                argTest (0)="2023"
+'Herewearetelling ittospecifically call
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestFileRead" ,argTest,
+"entergatewayname" ,"DeleteOldFileData" )
+If(objRemoteRequestResultDto.RemoteResultStatus =
+RemoteMessageResultType.RunOperationReturnObject) Then
+'Thedeletemethodreturns atrue/false returntype
+DimresultAsBoolean
+'ObjectResultValue introduced inv7.4tosimplify obtaining the
+returnvaluefromamethodthatdoesn't returna
+'Dataset/Datatable
+                    result =objRemoteRequestResultDto.ObjectResultValue
+DimobjRemoteRequestResultDtoCached AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayCachedBusinessRule (si,"TestFileReadCache" ,argTest,
+"entergatewayname" ,String.Empty)                    
+SmartIntegration Connector Guide 99
+                    BRApi.ErrorLog.LogMessage (si,"FileDeleted: "&result) 
+Else
+If(Not(objRemoteRequestResultDto.remoteException IsNothing))Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.remoteException))
+EndIf
+EndIf
+EndSub
+PublicSubGetData(ByValsiAsSessionInfo)
+'Demonstrating howtopassparameters
+'Wecreateanobjectarraythatmatches thenumberofparameters
+'Totheremotefunction. Inthiscase,wehave1parameter thatisa
+string
+DimargTest(0)AsObject
+                argTest (0)="2023"
+'Thisiswhereyoucanallowcaching oftheremotefunction. Weare
+passing intrueattheendtoforcethecachetobeupdated
+'Wearealsoallowing thefunction torunfor90seconds.
+'String.empty meansthiswilllookforaremotefunction/method
+called"RunOperation"
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestFileRead" ,argTest,
+"entertestconnection" ,String.Empty,"TestFileRead" ,True,90)
+If(objRemoteRequestResultDto.RemoteResultStatus =
+RemoteMessageResultType.RunOperationReturnObject) Then
+DimbytesFromFile AsByte()             
+                    bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+DimvalueAsString AsString=System.Text.Encoding.UTF8.GetString
+(bytesFromFile)
+ReturnvalueAsString
+                    bytesFromFile =Convert.FromBase64String
+(objRemoteRequestResultDto.ObjectResultValue)
+'bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+DimvalueAsString AsString=System.Text.Encoding.UTF8.GetString
+(bytesFromFile)
+'Dosomething withthefileshere....
+                    BRApi.ErrorLog.LogMessage (si,"FileContents: "&Left
+(valueAsString,10)) 
+'WearesavingthefileintotheOneStream Sharehere
+'ThisisanoptiontoallowotherOneStream functions toprocess
+thedata
+'DimgroupFolderPath AsString=
+FileShareFolderHelper.GetGroupsFolderForApp (si,True,AppServerConfig.GetSettings
+(si).FileShareRootFolder, si.AppToken.AppName)
+DimgroupFolderPath AsString=BRAPi.Utilities.GetFileShareFolder
+(si,FileShareFolderTypes.BatchHarvest, Nothing)
+UsingswAsStreamWriter =NewStreamWriter (groupFolderPath &
+"\outputfile.csv" )
+SmartIntegration Connector Guide 100
+                     sw.Write (valueAsString)
+                     sw.Close ()
+EndUsing
+Else
+If(Not(objRemoteRequestResultDto.remoteException IsNothing))Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.remoteException))
+EndIf
+EndIf
+EndSub
+EndClass
+EndNamespace
+5.TestyourExtenderBusinessRuleviatheExecuteExtenderbuttoninthetoolbar.
+Step3-Automate fromDataManagement /Task
+Scheduler
+AftertheExtensibility Rulehasbeencreatedandtestedyoucanautomate fromaData
+Management Jobandassociate TaskSchedule. SeeTaskScheduler formoreinformation.
+SmartIntegration Connector Guide 101
+ObtainDatathroughaWebAPI
+Inthisscenario,youhaveaWebAPI(IPaaSintegration oranotheraccessible REST API) to
+obtainandpassbackdatatoOneStream. Youcanusethefollowingremotebusinessrulein
+SmartIntegration Connector toinvoketheAPI.IfyouhaveresultsthatareinJSONformat,you
+canconvertthemtoadatatableandsendthembacktoOneStream. IfthedatafromtheWebAPI
+isinJSON,youcanprocessthedatainSmartIntegrator Connector. Additionally, youcansend
+therawdatabackasastringtoadatamanagement jobforfurthertesting.
+Directconnections arepreferredforthismethodandcanbeinvokedusingbusinessruleswithin
+OneStream similartotheSFTPexampleprovidedabove.
+SeeAccessMultipleWebAPIs forbestpracticesonscenarios withmultipleWebAPIs.
+NOTE:Datatransferred overaDirectConnection toaWebAPIistransferred directly
+overHTTP(S)andnotconverted toparquetformat.OneStream doesnotcontrolthe
+returnformat.
+HostHeaders
+Hostheadersspecifythedomainnameoftheserverthatwillreceivetherequest.TheHost
+headerisdefinedintheBusinessRuleandincludesthedomainnameofthetargetserverand
+shouldmatchwhattheserverexpectsinincomingrequests(forexample,api.example.com). See
+Troubleshooting foradditional information.
+//Theheadermustbesetorsomeconnections mayberefused.    
+internalHttpClient.DefaultRequestHeaders.Host ="api.example.com" ;
+SmartIntegration Connector Guide 102
+AccessaSingleWebAPI
+TosetupasingleWebAPIconnection:
+1.SetupaDirectConnection.
+2.ExporttheConfiguration andimporttoyourLocalGatewayServer.SeetheInstallation and
+Setupsectionformoreinformation onthisprocess.
+3.Refreshyourconnections andverifythisnewconnection isonline.
+IMPORTANT: CopyyourBoundPortinOneStream .Youwillreference this
+laterintheextensibility rule.
+SmartIntegration Connector Guide 103
+4.CreatetheExtensibility Rulebelow:
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingSystem.Net;
+usingSystem.Net.Http;
+usingNewtonsoft.Json;
+usingSystem.Net.Http.Headers;
+namespace OneStream.BusinessRule.Extender.SIC_ WebAPI
+{
+publicclassMainClass
+{
+private staticreadonly HttpClient internalHttpClient =newHttpClient ();
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs
+args)
+{
+try
+{
+                internalHttpClient.DefaultRequestHeaders.Accept. Clear();
+         internalHttpClient.DefaultRequestHeaders.Accept. Add
+(newMediaTypeWithQualityHeaderValue ("application/json" ));
+     internalHttpClient.DefaultRequestHeaders.Accept. Add
+SmartIntegration Connector Guide 104
+(newMediaTypeWithQualityHeaderValue ("application/x- www-form-urlencoded" ));
+     internalHttpClient.DefaultRequestHeaders.Accept. Add
+(newMediaTypeWithQualityHeaderValue ("application/octet- stream"));
+                internalHttpClient.DefaultRequestHeaders.Accept. Add
+(newMediaTypeWithQualityHeaderValue ("text/plain" ));
+     internalHttpClient.DefaultRequestHeaders.Accept. Add
+(newMediaTypeWithQualityHeaderValue ("*/*"));
+//Theheadermustbesetorsomeconnections mayberefused.    
+                internalHttpClient.DefaultRequestHeaders.Host ="api.example.com" ;
+//Inthisexample, 20540istheBoundPortinOneStream forthe
+Gateway beingused.            
+varstringTask =internalHttpClient. GetStringAsync
+("https://localhost:20540/v1/forecast?latitude=40.73&longitude=-
+73.94&daily=temperature_ 2m_max,temperature_ 2m_min&temperature_
+unit=fahrenheit&timezone=America%2FNew_ York");
+//Display theresultintheexception dialogasanexample.
+thrownewException (stringTask.Result);        
+            }
+catch(Exception ex)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,ex));
+            }
+        }
+    }
+}
+5.Compileandtestthebusinessrule.Iftheextensibility ransuccessfully, youshouldseethe
+correctdatathatcorresponds withthebusinessruleintheException dialogbox.
+AccessMultipleWebAPIs
+IfyouareusingmorethanoneWebAPI,thebestpracticeistoperformthisprocessusingasingle
+connection andmultipleremoteBusinessRules.
+UsethefollowingOneStream businessruletoinvoketherequest.
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,"RemoteWebAPISample" ,Nothing,
+"testconnection" ,String.Empty) If(objRemoteRequestResultDto.RemoteResultStatus =
+RemoteMessageResultType.Success) DimxfDT=NewXFDataTable
+(si,objRemoteRequestResultDto.resultSet,Nothing, 1000)EndIf
+UsethefollowingremotebusinessruletoexecutetherequestinC#.
+SmartIntegration Connector Guide 105
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingSystem.Net;
+usingSystem.Net.Http;
+usingNewtonsoft.Json;
+usingSystem.Net.Http.Headers;
+namespace OneStream.BusinessRule.SmartIntegrationFunction.RemoteWebAPISample
+{
+publicclassMainClass
+{
+private staticreadonly HttpClient internalHttpClient =newHttpClient ();
+static MainClass ()
+{
+ internalHttpClient.DefaultRequestHeaders.Accept. Clear();
+ internalHttpClient.DefaultRequestHeaders.Accept. Add(newMediaTypeWithQualityHeaderValue
+("application/json" ));
+ internalHttpClient.DefaultRequestHeaders.Accept. Add(newMediaTypeWithQualityHeaderValue
+("application/x- www-form-urlencoded" ));
+ internalHttpClient.DefaultRequestHeaders.Accept. Add(newMediaTypeWithQualityHeaderValue
+("application/octet- stream"));
+ internalHttpClient.DefaultRequestHeaders.Accept. Add(newMediaTypeWithQualityHeaderValue
+("text/plain" ));
+ internalHttpClient.DefaultRequestHeaders.Accept. Add(newMediaTypeWithQualityHeaderValue
+("*/*")); 
+ }
+publicDataTable RunOperation () 
+{
+varstringTask =internalHttpClient. GetStringAsync
+(https://localhost:44388/WeatherForecast);
+varmsg=stringTask;
+ DataTable dt=(DataTable)JsonConvert. DeserializeObject (stringTask.Result, (typeof
+(DataTable)));
+returndt;
+ }
+ }
+}
+SmartIntegration Connector Guide 106
+SendEmailsthroughDirectConnections
+Priortousingthisbusinessrule,youmusthaveyouremailserverconfigured. Youmustestablish
+adirectconnection beforesendingemail.SeeSingleWebAPI Connection formoreinformation
+onsettingupaninitialdirectconnection. Thefollowingbusinessrulecansendemailfroman
+ExtenderBusinessrule.
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingMicrosoft.CSharp;
+usingOneStream.Finance.Database;
+usingOneStream.Finance.Engine;
+usingOneStream.Shared.Common;
+usingOneStream.Shared.Database;
+usingOneStream.Shared.Engine;
+usingOneStream.Shared.Wcf;
+usingOneStream.Stage.Database;
+usingOneStream.Stage.Engine;
+usingSystem.Net.Mail;
+usingSystem.Net;
+usingSystem.Net.Security;
+usingSystem.Text.RegularExpressions;
+usingSystem.Security.Cryptography.X509Certificates;
+namespace OneStream.BusinessRule.Extender.smtp_ direct_test
+{
+publicclassMainClass
+{        
+publicSessionInfo SI;
+private conststringsmtpHostName ="smtp.azurecomm.net" ;//expected nametomatch
+thecert.
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs args)
+{
+varclient=newSmtpClient ();
+varemail=newMailMessage ();            
+try
+{
+                SI =si;
+//Addcustomvalidation callback tolookforexpected cert(Hostwillbe
+localhost, whichcausesthistofailwithout acustomcallback)
+                ServicePointManager.ServerCertificateValidationCallback +=
+ValidationCallback;
+SmartIntegration Connector Guide 107
+     client.UseDefaultCredentials =false;
+     client.Port =20542;
+     client.Host ="localhost" ;
+                client.EnableSsl =true;
+                client.Credentials =newSystem.Net. NetworkCredential ("<UserName>" ,
+"<Password>" );            
+     email.From =newMailAddress ("DoNotReply@domain.com" );
+     email.To. Add("test@onestreamsoftware.com" );
+     email.Subject ="TestfromSICGateway" ;
+     email.IsBodyHtml =false;
+     email.Body ="Forwarded testfromSICGateway" ;
+     client. Send(email);
+return null;                
+            }
+catch(Exception ex)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,ex));
+            }
+finally
+{
+//RemovethecustomValidationCallback. It'srecommended toremovethis
+beforeanyothernetwork calls.
+                ServicePointManager.ServerCertificateValidationCallback -=
+ValidationCallback;
+                email. Dispose();
+                client. Dispose();
+            }
+        }
+public boolValidationCallback (objectsender, X509Certificate certificate, X509Chain
+chain,SslPolicyErrors sslPolicyErrors)
+{
+varpolicyErrors =(sslPolicyErrors asSslPolicyErrors?) ??
+SslPolicyErrors.None;
+varcertSubject =certificate?.Subject ??string.Empty;
+varcertName =string.Empty;
+//Extract thecertName fromthecertSubject
+stringnamePattern =@"CN=([^,]+)" ;
+varmatch=Regex.Match(certSubject, namePattern);
+if(match.Success)
+{
+                certName =match.Groups [1].Value;
+            }
+if(                        
+(policyErrors ==SslPolicyErrors.RemoteCertificateNameMismatch ||
+policyErrors ==SslPolicyErrors.None)
+                && certName ==smtpHostName)
+{
+//verifythecertName matches theexpected smtpHostName. Noother
+SslPolicyErrors shouldbepresent.
+return true;
+SmartIntegration Connector Guide 108
+            }
+else
+{
+return false;
+            }                
+        }
+    }
+}
+SmartIntegration Connector Guide 109
+SupportforDLL Migration
+ForOneStream Platformversion8.0andabove,allcustomer- suppliedDLLswillbereferenced
+throughSmartIntegration Connector. TouseaDLL,copytheDLLstotheReferenced
+Assemblies FolderintheLocalGatewayServerUtilityandreference thisDLLwithinyourSmart
+Integration Function.SeeReferenced Assemblies Folder.
+ToverifytheReferenced Assemblies Folderpath:
+1.OpentheOneStream LocalGateway Configuration andRunasAdministrator.
+2.NavigatetoandopenLocalApplication DataSettings.
+3.ThefilepathunderReferenced Assemblies Folderopenstothedefaultlocation.
+4.ClicktheOKbutton.
+SeethefollowingSAP example forthisprocessinuse.SeeSmartIntegration Additional Settings
+formoreinformation onthesefields.
+SmartIntegration Connector Guide 110
+SAPConnections
+Establishaconnection toanSAPenvironment usingtheOneStream SAP Connector. Thebest
+practiceistousetheSAP Connector whenconnecting toanSAPenvironment. Ifnecessary, the
+legacyconnection methodthatusesthethird-partyERPConnect DLLcanbeused.
+ConnectwiththeSAPConnector (BestPractice)
+TheSAP Connector isavailablefromtheOneStream SolutionExchange .Toconnectwiththe
+SAP Connector, refertotheSAPConnector Guide.
+ConnectwiththeERPConnect (SAP)
+Asanalternative tousingtheSAP Connector, youcanconnecttoSAPusingthird-partyDLLs,
+suchasERPConnect##.dll. ERPConnect##.dll canbereferenced usingaSmartIntegration
+Connector Remotebusinessrule.ERPConnectStandard20.dll isavailablethroughthedownload
+DLLPackages fromthePlatformpageoftheSolutionExchange .ERPConnect requiresadditional
+librariestobeobtainedfromSAP.
+SmartIntegration Connector Guide 111
+Foradditional information, seetheTheobald SoftwareERPConnect HelpCenter.
+Togetstarted:
+1.FromthePlatformpageoftheSolutionExchange ,download theDLLPackages, which
+containstheERPConnectStandard20.dll file.
+2.Extractthecompressed zipfileandthenmovetheERPConnectStandard20.dll toyour
+Referenced Assemblies Folder.
+3.InstalltherequiredVisualC++Redistributable latestsupported downloads .
+4.Logintoyoursap.comaccountandthendownload SAPNetWeaver RFCLibraryDLL
+(sapnwrfc.dll) andassociated icudt57.dll, icuin57.dll, icuuc57.dll files.
+lCopySAPNetWeaver RFCLibraryDLL(sapnwrfc.dll) totheReferenced Assemblies
+folder.
+lCopyicudt57.dll, icuin57.dll, andicuuc57.dll toC:\Windows\System32.
+5.ModifyyourbusinessrulestousetheERPConnectStandard20.dll.
+6.NavigatetoApplication >Tools>Business Rules.
+7.ExpandtheSmartIntegration Functionlist.
+8.CreateanewSmartIntegration Function orselectanexistingone.
+SmartIntegration Connector Guide 112
+9.ClicktheProperties tab.
+10.EnterERPConnectStandard20.dll intheReferenced Assemblies field.TheSmart
+Integration Connector GatewayserverwillattempttolocatethisDLLinthepreviously
+definedfolder:Referenced BusinessRule AssemblyFolder .
+SmartIntegration Connector Guide 113
+11.AddImportsforERPConnect andERPConnect.Utils .
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+usingERPConnect;
+usingERPConnect.Utils;
+namespace OneStream.BusinessRule.SmartIntegrationFunction.ERP_ Connect_ Test
+{
+publicclassMainClass
+{
+publicconststringUserName ="";
+publicconststringPassword ="";
+publicconststringHost="";
+publicDataTable RunOperation () 
+{
+using(R3Connection con=newR3Connection ())
+{
+ con.UserName =UserName; 
+ con.Password =Password; 
+ con.Language ="EN"; 
+ con.Client ="800"; 
+ con.Host =Host; 
+ con.SystemNumber =00; 
+ con.Protocol =ClientProtocol.NWRFC; //Optional: IftheNWRFClibraries areused.
+ con.UsesLoadBalancing =false;
+ con.Open();
+ ReadTable table=newReadTable (con);
+ table. AddField ("MATNR");
+ table. AddField ("MAKTX");
+ table.WhereClause ="SPRAS='EN'ANDMATNRLIKE'%23'";
+ table.TableName ="MAKT";
+ table.RowCount =10;
+ table. Run();
+returntable.Result;
+}
+}
+}
+}
+12.VerifyyoucancompilethefunctiononyourGateway.
+SmartIntegration Connector Guide 114
+Business Rules
+TheSmartIntegration Connector Capabilities introduceadditional businessruleAPIs(BRAPIs) to
+allowforexecution andmanagement ofremotebusinessrulesinsidethecontextoftheSmart
+Integration Connector gateway.Theserulesaretransported usinghttpstotheSmartIntegration
+Connector localgateway,compiledlocally,executed, andtheresultsreturnedtothecallerfor
+furtherprocessing. Theyprovideamechanism forcomplexdrillbacks,dataprocessing scenarios
+ortoinvokeremotewebAPIshostedinyournetwork.
+NOTE:Gateways musthavealocaldatasourcedefinedtoinvokeremotebusiness
+rules.
+TherearetwowaysbusinessrulescanbeusedwiththeSmartIntegration Connector Gateway:
+lOneStream BRAPIsinteractwithaspecificlocalgatewayandrunonOneStream
+application servers.
+lBusinessrulesthatreference DLLsthatareonlyaccessible bytheLocalGatewayServer.
+TheseBRsarecompiledandexecutedonthelocalgateway(RemoteBusinessRules
+whencreatingthemintheWindowsDesktopClient).
+Inthesescenarios, thelocalgatewaymusthavetheallowRemoteCodeExec settingconfigured to
+Truetoenableremoteexecution.
+TheBRAPIsareoutlinedbelow:
+ExecRemoteGatewayBusinessRule
+ExecRemoteGatewayCachedBusinessRule
+SmartIntegration Connector Guide 115Business Rules
+ExecRemoteGatewayRequest
+ExecRemoteGatewayJobAndWait
+ExecRemoteGatewayJob
+GetRemoteGatewayJobStatus
+IsRemoteDtoSuccessful
+GetGatewayConnectionInfo
+GetSmartIntegrationConfigValue
+GetRemoteDataSourceConnection
+BRApi.Utilities.IsGatewayOnline
+CheckOneStream Version
+BusinessRulesCompatibility
+ExecRemoteGatewayBusinessRule
+ThisisacoreBRAPIthatcanbeusedtoremotelyinvokeSmartIntegration functionsona
+specifiedremoteSmartIntegration Connector LocalGatewayhost.TheSmartIntegration
+Connector LocalGatewaymusthaveallowRemoteCodeExec settoTrueforthisBRAPItoinvoke
+anoperation successfully, otherwise theSmartIntegration Connector LocalGatewayhostreturns
+aresultindicating thatremotecodeexecution isdisabled.
+SmartIntegration Connector Guide 116Business Rules
+Thismethodtakesapreviously authoredSmartIntegration function,writteninVB.NETorC#,in
+theOneStream application andpassesittotheremotehostforexecution. WiththisBRAPI,itis
+expectedthatremotecallsshouldtakenomorethan2-3minutestoreturnaresulttothecalleras
+thisBRAPIwillblockuntilaresultisreturned.Iflongerrunningorsyncoperations areneeded,
+considerusingtheExecRemoteGatewayJobAndWait BRAPI.
+NOTE:RequiresallowRemoteCodeExec =TrueonSmartIntegration Service
+Parameter details:
+lsi:SessionInfo objectusedtocreateconnection objects
+lbrName:Nameofthelocallydefined(withintheOneStream Application scope)Smart
+Integration function
+lfunctionArguments :Arrayofobjectsaligningtofunction/methodparameters. Null/
+Nothingiftherearenonerequired.
+lremoteHost :Nameofremotehosttoinvokeoperation. (SmartIntegration Connector name)
+lfunctionName :NameofthefunctionintheSmartIntegration functiontoinvoke.Ifnullor
+empty,afunction/method withthenameRunOperation isexpectedtoexistwithinthe
+authoredcode.
+l(Optional) cachedFunctionKey :Nameusedtocachetheremotefunctiontoavoid
+recompiling thefunctiononasubsequent call.Thisisoptionalandifmissingornullthe
+functionwillnotbecached.
+l(Optional) forceCacheUpdate :Optionindicating ifapreviously cachedfunctionshouldbe
+replacedwiththisversion.Whentrue,andanexistingfunctionisfoundwithaname
+specifiedinthecachedFunctionKey parameter, theBRisrecompiled andrecached. Thisis
+usefulforsituations wherearemotefunctioniscachedandachangewasmade.
+SmartIntegration Connector Guide 117Business Rules
+lexecutionTimeOut :Timeout(inseconds)ontheremotejob(In7.4,thisisnowanoptional
+parameter anddefaultsto90secondsiftheparameter ismissing.)
+HereisaC#drill-backexample:
+//ExecRemoteGatewayBusinessRule displaying results indrillback
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+DrillBackResultInfo drillBackInfo =newDrillBackResultInfo ();
+DataTable dtf=BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,SICFunctionName, null,
+GatewayName, string.Empty).ResultSet;
+varxfDT=newXFDataTable (si,dtf,null,1000);
+drillBackInfo.DataTable =xfDT;
+drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.DataGrid;
+returndrillBackInfo;
+HereisaVBexample:
+'ExecRemoteGatewayBusinessRule displaying results indrillback
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+DimdrillBackInfo AsDrillBackResultInfo =newDrillBackResultInfo ()
+DimdtfAsDataTable =BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,SICFunctionName,
+Nothing,GatewayName, String.Empty).ResultSet
+DimxfDTAsXFDataTable =newXFDataTable (si,dtf,Nothing,1000)
+drillBackInfo.DataTable =xfDT
+drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.DataGrid
+ReturndrillBackInfo
+HereisaC#drill-backexamplethatinvokesaremotebusinessruleaccepting 2parameters:
+//ExecRemoteGatewayBusinessRule Drillback example
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+varRemoteMethodName ="";//NameofthemethodinsidetheSICFunction thatwillbe
+called.
+vardrillBackInfo =newDrillBackResultInfo ();
+object[]argTest =newobject[2];//Creating anobjectarraytopackage themethod
+parameters
+argTest[0]=12;//Firstparameter isaninteger
+argTest[1]="test";//Secondparameter isastring
+//RemoteSmartIntegration Function Signature: 'PublicSharedFunction RunOperation2
+(testval AsInteger, teststr AsString) AsArrayList
+//Invoking methodRunOperation2 onendpoint testConnection passing inuserdefined
+parameters asanarray
+SmartIntegration Connector Guide 118Business Rules
+varobjRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,
+SICFunctionName, argTest, GatewayName, RemoteMethodName);
+if(objRemoteRequestResultDto.RemoteResultStatus ==
+RemoteMessageResultType.RunOperationReturnObject)
+{
+varreturnVal =objRemoteRequestResultDto.ObjectResultValue asArrayList;
+//Simpledemonstration without errorchecking tolookatthefirstelement ofthe
+arraylist
+ drillBackInfo.TextMessage ="Completed! "+returnVal [0].ToString (); 
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.TextMessage;
+returndrillBackInfo;
+}
+elseif(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.Success)
+{
+//Demonstrating a'pattern' whereby thecallercanverifywhatthetypeisthat'sreturned
+andhandleproperly.
+varxfDT=newXFDataTable (si,objRemoteRequestResultDto.ResultSet, null,1000);
+ drillBackInfo.DataTable =xfDT;
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.DataGrid;
+returndrillBackInfo;
+}
+elseif(!(objRemoteRequestResultDto.RemoteException isnull))
+{
+throwErrorHandler. LogWrite (si,newXFException (si,
+objRemoteRequestResultDto.RemoteException));
+}
+HereisaVB.NETdrill-backexamplethatinvokesaremotebusinessruleaccepting 2parameters:
+'ExecRemoteGatewayBusinessRule Drillback example
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+DimRemoteMethodName AsString=""'NameofthemethodinsidetheSICFunction thatwill
+becalled.
+DimdrillBackInfo AsNewDrillBackResultInfo
+DimargTest(1)AsObject'Creating anobjectarraytopackage themethodparameters
+argTest(0)=12'Firstparameter isaninteger
+argTest(1)="test"'Secondparameter isastring
+'RemoteSmartIntegration Function Signature: 'PublicSharedFunction RunOperation2
+(testval AsInteger, teststr AsString) AsArrayList
+'Invoking methodRunOperation2 onendpoint testConnection passing inuserdefined
+parameters asanarray
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,SICFunctionName, argTest, GatewayName,
+RemoteMethodName)
+If(objRemoteRequestResultDto.RemoteResultStatus =
+RemoteMessageResultType.RunOperationReturnObject) Then
+SmartIntegration Connector Guide 119Business Rules
+DimreturnVal AsArrayList =objRemoteRequestResultDto.ObjectResultValue
+'Simple demonstration without errorchecking tolookatthefirstelement ofthearraylist
+ drillBackInfo.TextMessage ="Completed! "&returnVal (0).ToString () 
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.TextMessage
+ReturndrillBackInfo
+ElseIf(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Success)
+'Demonstrating a'pattern' whereby thecallercanverifywhatthetypeisthat'sreturned
+andhandleproperly.
+DimxfDT=NewXFDataTable (si,objRemoteRequestResultDto.ResultSet, Nothing,1000)
+ drillBackInfo.DataTable =xfDT
+ drillBackInfo.DisplayType =ConnectorDrillBackDisplayTypes.DataGrid
+ReturndrillBackInfo
+ElseIf(Not(objRemoteRequestResultDto.remoteException IsNothing))
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.RemoteException))
+EndIf
+BelowisaTestFileRead RemoteBusinessRulefunctioninC#Referenced byExamples Below.
+HereitisinC#:
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+namespace OneStream.BusinessRule.SmartIntegrationFunction.TestFileRead
+{
+publicclassMainClass
+{
+public byte[]RunOperation (stringyear)
+{
+stringfname=@"c:\temp\hw_ "+year+".csv";
+byte[]buffer=System.IO.File. ReadAllBytes (fname);
+returnbuffer;
+ }
+public byte[]GetOtherFileData (stringyear)
+{
+stringfname=@"c:\temp\zw_ "+year+".csv";
+byte[]buffer=System.IO.File. ReadAllBytes (fname);
+returnbuffer;
+ }
+public boolDeleteOldFileData (stringyear)
+{
+stringfname=@"c:\temp\zw_ "+year+".csv";
+try
+SmartIntegration Connector Guide 120Business Rules
+{
+ System.IO.File. Delete(fname);
+return true;
+ }
+catch(IOException ex)
+{
+return false;
+ }
+ }
+ }
+}
+HereitisinVB:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.TestFileRead
+PublicClassMainClass
+PublicFunction RunOperation (ByValyearAsString)AsByte()
+DimfnameAsString="c:\temp\hw_ "&year&".csv"
+DimbufferAsByte()=System.IO.File.ReadAllBytes (fname)
+Returnbuffer
+EndFunction
+PublicFunction GetOtherFileData (ByValyearAsString)AsByte()
+DimfnameAsString="c:\temp\zw_ "&year&".csv"
+DimbufferAsByte()=System.IO.File.ReadAllBytes (fname)
+Returnbuffer
+EndFunction
+PublicFunction DeleteOldFileData (ByValyearAsString)AsBoolean
+DimfnameAsString="c:\temp\zw_ "&year&".csv"
+Try
+ System.IO.File.Delete (fname)
+ReturnTrue
+CatchexAsIOException
+ReturnFalse
+EndTry
+EndFunction
+EndClass
+EndNamespace
+Belowisaremotebusinessrulethatqueriesadatabaseandreturnsadatatable.
+SmartIntegration Connector Guide 121Business Rules
+HereistheruleinC#:
+//SICFunction referenced byotherexamples here
+namespace OneStream.BusinessRule.SmartIntegrationFunction.GetDataFromDB
+{
+publicclassMainClass
+{
+private conststringDataSourceName ="";
+publicDataTable RunOperation () 
+{
+ DataTable dataTableResults =newDataTable ();
+stringconnectionString, sql;
+ connectionString =OneStreamGatewayService.APILibrary. GetRemoteDataSourceConnection
+(DataSourceName);
+ SqlConnection conn;
+ conn=newSqlConnection (connectionStringconn. Open());
+ sql="";//EnterSQLQueryhere
+ SqlCommand cmd=newSqlCommand (sql,conn);
+vardbreader =cmd.ExecuteReader ();
+ dataTableResults. Load(dbreader);
+returndataTableResults;
+ }
+ }
+}
+HereistheruleinVB:
+'SICFunction referenced byotherexamples here
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.GetDataFromDB
+PublicClassMainClass
+Private ConstDataSourceName AsString=""
+PublicFunction RunOperation ()AsDataTable
+DimdataTableResults AsDataTable =NewDataTable ()
+DimconnectionString, sqlAsString
+ connectionString =APILibrary.GetRemoteDataSourceConnection (DataSourceName)
+DimconnAsSqlConnection
+ conn=NewSqlConnection (connectionStringconn.Open ())
+ sql=""'EnterSQLQueryhere
+DimcmdAsSqlCommand =NewSqlCommand (sql,conn)
+Dimdbreader =cmd.ExecuteReader ()
+ dataTableResults.Load (dbreader)
+ReturndataTableResults
+EndFunction
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 122Business Rules
+HereisanexampleofcallingaTestFileRead remotebusinessruleinC#.
+//Herewearetelling ittospecifically callaremoteSmartIntegration Function called
+TestFileRead atSICGateway
+//calledTestConnection withamethodcalledDeleteOldFileData
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="TestFileRead" ;//NameoftheSICFunction fromaboveexample
+varRemoteMethodName ="DeleteOldFileData" ;//NameofthemethodinsidetheSICFunction
+thatwillbecalled.
+RemoteRequestResultDto objRemoteRequestResultDto =
+BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,SICFunctionName, newobject[]{"2024"},
+GatewayName, RemoteMethodName);
+if(objRemoteRequestResultDto.RemoteResultStatus ==
+RemoteMessageResultType.RunOperationReturnObject &&!
+(objRemoteRequestResultDto.ObjectResultValue isnull))
+{
+boolresult;
+if(bool.TryParse (objRemoteRequestResultDto.ObjectResultValue. ToString (),outresult))
+{
+ BRApi.ErrorLog. LogMessage (si,"FileDeleted: "+result. ToString ()); 
+ }
+else
+{
+ BRApi.ErrorLog. LogMessage (si,"Returned anon-boolean value");
+ }
+} 
+else
+{
+if(objRemoteRequestResultDto.RemoteException !=null) 
+{
+throwErrorHandler. LogWrite (si,newXFException (si,
+objRemoteRequestResultDto.RemoteException));
+ }
+}
+return null;
+HereisanexampleofcallingaTestFileRead remotebusinessruleinVB.NET.
+'Herewearetelling ittospecifically callaremoteSmartIntegration Function called
+TestFileRead atSICGateway
+'called TestConnection withamethodcalledDeleteOldFileData
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString="TestFileRead" 'NameoftheSICFunction fromaboveexample
+DimRemoteMethodName AsString="DeleteOldFileData" 'NameofthemethodinsidetheSIC
+Function thatwillbecalled.
+DimargTest(0)AsObject'Creating anobjectarraytopackage themethodparameters
+argTest(0)="2024"'Firstparameter isaninteger
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+SmartIntegration Connector Guide 123Business Rules
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,SICFunctionName, argTest, GatewayName,
+RemoteMethodName)
+If(objRemoteRequestResultDto.RemoteResultStatus =
+RemoteMessageResultType.RunOperationReturnObject) Then
+'Thedeletemethodreturns atrue/false returntype
+DimresultAsBoolean
+'ObjectResultValue introduced inv7.4tosimplify obtaining thereturn
+'valuefromamethodthatdoesn't returnaDataset/Datatable
+ result =objRemoteRequestResultDto.ObjectResultValue
+ BRApi.ErrorLog.LogMessage (si,"FileDeleted: "&result)
+Else
+If(Not(objRemoteRequestResultDto.remoteException IsNothing))Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.remoteException))
+EndIf
+Endif
+Here'sanexampletocalltheremoteBRcalled"GetDataFromDB" (C#):
+//Herewearetelling ittospecifically callaremoteSmartIntegration Function called
+GetDataFromDB atSICGateway calledTestConnection withamethodcalledRunOperation
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="GetDataFromDB" ;//NameoftheSICFunction fromaboveexample
+varRemoteMethodName ="RunOperation" ;//NameofthemethodinsidetheSICFunction that
+willbecalled.
+varobjRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,
+SICFunctionName, null,GatewayName, RemoteMethodName);
+if(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.Success
+ &&objRemoteRequestResultDto.ResultSet !=null
+ &&objRemoteRequestResultDto.ResultType ==RemoteResultType.DataTable)
+{ 
+ BRApi.ErrorLog. LogMessage (si,"DataReturned -Rows:"+
+objRemoteRequestResultDto.ResultSet.Rows.Count);
+}
+else
+{
+if(objRemoteRequestResultDto.RemoteException !=null)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,
+objRemoteRequestResultDto.RemoteException));
+ }
+else
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote SmartIntegration Function Succeeded -no
+data/datatable returned" );
+ }
+}
+SmartIntegration Connector Guide 124Business Rules
+Here'sanexampletocalltheremoteBRcalled"GetDataFromDB" (VB):
+'Herewearetelling ittospecifically callaremoteSmartIntegration Function called
+GetDataFromDB atSICGateway calledTestConnection withamethodcalledRunOperation
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString="GetDataFromDB" 'NameoftheSICFunction fromabove
+example
+DimRemoteMethodName AsString="RunOperation" 'NameofthemethodinsidetheSICFunction
+thatwillbecalled.
+DimobjRemoteRequestResultDto =BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,
+SICFunctionName, Nothing,GatewayName, RemoteMethodName)
+IfobjRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Success AndAlso
+objRemoteRequestResultDto.ResultSet IsNotNothing AndAlso
+objRemoteRequestResultDto.ResultType =RemoteResultType.DataTable Then
+ BRApi.ErrorLog.LogMessage (si,"DataReturned -Rows:"&
+objRemoteRequestResultDto.ResultSet.Rows.Count)
+Else
+IfobjRemoteRequestResultDto.RemoteException IsNotNothing Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.RemoteException))
+Else
+ BRApi.ErrorLog.LogMessage (si,"Remote SmartIntegration Function Succeeded -no
+data/datatable returned" )
+EndIf
+EndIf
+ExecRemoteGatewayCachedBusinessRule
+WhenacacheflagandkeyisprovidedtotheExecRemoteGatewayBusinessRule BRAPI,this
+methodisusedtoinvokeapreviously cachedmethod.Thisisintendedtobeusedforhigh-
+frequency remotebusinessrulestoavoidtheperformance impactofrecompiling aremote
+methodoneachinvocation.
+NOTE:RequiresallowRemoteCodeExec =TrueonSmartIntegration Connector local
+gateway.Ifthepreviously cachedmethodisnotinvokedafter60minutes,theremote
+cachedmethodispurged.
+SmartIntegration Connector Guide 125Business Rules
+Parameter details:
+lsi:SessionInfo objectusedtocreateconnection objects
+lcachedFunctionKey :Keyofpreviously cachedremotefunctiontoinvoke
+lfunctionArguments :Arrayofobjectsaligningtofunction/methodparameters. Null/
+Nothingiftherearenonerequired
+lremoteHost :Nameofremotehosttoinvokeoperation. (SmartIntegration Connector Local
+GatewayName)
+lexecutionTimeOut :Timeout(inseconds)ontheremotejob
+lReturns:RemoteRequestResultDto -Resultofexecution includingthestatusandany
+exceptions whichmayhaveoccurredontheremoteendpoint
+HereistheruleinC#:
+//ExecRemoteGatewayCachedBusinessRule
+//Execute andcachearemoteSICFunction forlateruse
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+varRemoteMethodName ="";//NameofthemethodinsidetheSICFunction thatwillbecalled
+varSICCachedFunctionName ="";//NameofthecachekeyforthisSICFunction, whichcanbe
+calledonsubsequent requests
+RemoteRequestResultDto objRemoteRequestResultDto =
+BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,SICFunctionName, null,GatewayName,
+RemoteMethodName, SICCachedFunctionName, false,90);
+if(BRApi.Utilities. IsRemoteDtoSuccessful (si,objRemoteRequestResultDto)
+ &&objRemoteRequestResultDto.ResultType ==RemoteResultType.DataTable)
+{
+ BRApi.ErrorLog. LogMessage (si,"DataReturned -Rows:"+
+objRemoteRequestResultDto.ResultSet.Rows.Count);
+}
+else
+{
+if(objRemoteRequestResultDto.RemoteException !=null)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,
+objRemoteRequestResultDto.RemoteException));
+ }
+else
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote SmartIntegration Function Succeeded -no
+SmartIntegration Connector Guide 126Business Rules
+data/datatable returned" );
+ }
+}
+//Subsequent invocations oftheremoteBRcanberunbyspecifying theendpoint andthe
+cachedkeyname
+RemoteRequestResultDto objRemoteRequestResultDtoCached =
+BRApi.Utilities. ExecRemoteGatewayCachedBusinessRule (si,SICCachedFunctionName ,null,
+GatewayName, 90);
+HereistheruleinVB.NET:
+'ExecRemoteGatewayCachedBusinessRule
+'Execute andcachearemoteSICFunction forlateruse
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+DimRemoteMethodName AsString=""'NameofthemethodinsidetheSICFunction thatwill
+becalled
+DimSICCachedFunctionName AsString=""'NameofthecachekeyforthisSICFunction,
+whichcanbecalledonsubsequent requests
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,SICFunctionName, Nothing,GatewayName,
+RemoteMethodName, SICCachedFunctionName, False,90)
+If(BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto) AndAlso
+objRemoteRequestResultDto.ResultType =RemoteResultType.DataTable) Then
+ BRApi.ErrorLog.LogMessage (si,"DataReturned -Rows:"+
+objRemoteRequestResultDto.ResultSet.Rows.Count)
+Else
+If(objRemoteRequestResultDto.RemoteException IsNotNothing)Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.RemoteException))
+Else
+ BRApi.ErrorLog.LogMessage (si,"Remote SmartIntegration Function Succeeded -no
+data/datatable returned" )
+EndIf
+EndIf
+'Subsequent invocations oftheremoteBRcanberunbyspecifying theendpoint andthe
+cachedkeyname
+DimobjRemoteRequestResultDtoCached AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayCachedBusinessRule (si,SICCachedFunctionName, Nothing,
+GatewayName, 90)
+SmartIntegration Connector Guide 127Business Rules
+ExecRemoteGatewayRequest
+Initiatesarequesttoalocalgatewayasspecifiedintheremoterequestobject.Thisrequestis
+dispatched totheSmartIntegration Connector localgatewayconnection datasourcewiththe
+specifiedcommand remoteinvoked.
+IMPORTANT: Thismethodisusedforrequestandresponsetypeinteractions toa
+remoteendpointthatrunsforthreeorlessminutes.Forjobsthatrunlongerthan180
+seconds,itisbestpracticetousetheExecRemoteGatewayJobAndWait BRAPI.
+NOTE:Thedefaultexecution timeoutis90secondsandcanbeoverridden bysetting
+theCommandTimeout propertyontheRemoteRequestDTO instanceprovided.
+Parameter details:
+lRemoteRequestDTO: Remoterequestobjectpopulated withtheremotecommand and
+endpoint
+lReturns:RemoteRequestResultDto -Resultofexecution includingthestatusandany
+exceptions whichmayhaveoccurredontheremoteendpoint
+Following isanexampleconnector businessrulethatwouldrunontheOneStream application
+serversendingaremoterequestandblockofcodetoaLocalGatewayConnection:
+//ExecRemoteGatewayRequest forarbitrary codeexecution returning aDataTable
+stringGatewayName ="";
+RemoteRequestResultDto objxfRemoteRequestResultDto;
+RemoteCodeRequestDto objxfRemoteRequest =newRemoteCodeRequestDto ();
+//Indication thedesireistorunaremoteblockofcode
+objxfRemoteRequest.ConnectionType =RemoteCommandType.RemoteCodeExec;
+//Nameoftheremotehosttopassto
+objxfRemoteRequest.GatewayHostForRequest =GatewayName;
+varstrCode ="usingSystem;...." ;//ValidblockofC#orVB.NETcode
+objxfRemoteRequest.LanguageType =RemoteCodeLanguageType.CSHARP;
+objxfRemoteRequest.RemoteCodeBlock =strCode;
+objxfRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayRequest (objxfRemoteRequest);
+varxfDT=newXFDataTable (si,objxfRemoteRequestResultDto.ResultSet, null,1000);
+SmartIntegration Connector Guide 128Business Rules
+HereistheexampleinVB:
+'ExecRemoteGatewayRequest forarbitrary codeexecution returning aDataTable
+DimGatewayName AsString=""
+DimobjxfRemoteRequestResultDto AsRemoteRequestResultDto
+DimobjxfRemoteRequest AsNewRemoteCodeRequestDto
+'Indication thedesireistorunaremoteblockofcode
+objxfRemoteRequest.connectionType =RemoteCommandType.RemoteCodeExec
+'Nameoftheremotehosttopassto
+objxfRemoteRequest.gatewayHostforRequest =GatewayName
+DimstrCode AsString="usingSystem;...." 'ValidblockofC#orVB.NETcode
+objxfRemoteRequest.LanguageType =RemoteCodeLanguageType.CSHARP
+objxfRemoteRequest.remoteCodeBlock =strCode
+objxfRemoteRequestResultDto=BRApi.Utilities.ExecRemoteGatewayRequest (objxfRemoteRequest)
+DimxfDT=NewXFDataTable (si,objxfRemoteRequestResultDto.ResultSet, Nothing,1000)
+ThisBRAPIcanalsobeusedtoinvokearbitrarySQLcommands againstaSmartIntegration
+Connector localgatewayconnection datasourceatyoursite:
+/ExecRemoteGatewayRequest forarbitrary SQLreturning aDataTable
+stringSQL="";//SQLSELECTstatement goeshere
+RemoteRequestResultDto objxfRemoteRequestResultDto;
+RemoteRequestDto objxfRemoteRequest =newRemoteRequestDto ();
+//Indicate thisisaremoteSQLcommand request
+objxfRemoteRequest.ConnectionType =RemoteCommandType.SQLCommand;
+objxfRemoteRequest.RelayRemoteDBConnection ="";//Nameoftheconnection defined inthe
+remoteendpoint
+objxfRemoteRequest.GatewayHostForRequest ="";//Nameoftheremotehosttopassto
+objxfRemoteRequest.RemoteCommand =SQL;
+objxfRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayRequest (objxfRemoteRequest);
+//Evaulate theresults todetermine ifitwassuccessful
+if(objxfRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.Success)
+{
+//Logictouseresults in`objxfRemoteRequestResultDto.ResultSet`
+}
+else
+{
+//Queryfailed. Addadditional logicheretohandlethiscase.
+}
+HereistheexampleinVB:
+'ExecRemoteGatewayRequest forarbitrary SQLreturning aDataTable
+DimSQLAsString=""'SQLSELECTstatement goeshere
+DimobjxfRemoteRequestResultDto AsRemoteRequestResultDto
+DimobjxfRemoteRequest AsNewRemoteRequestDto
+SmartIntegration Connector Guide 129Business Rules
+'Indicate thisisaremoteSQLcommand request
+objxfRemoteRequest.connectionType =RemoteCommandType.SQLCommand
+objxfRemoteRequest.RelayRemoteDBConnection =""'Nameoftheconnection defined inthe
+remoteendpoint
+objxfRemoteRequest.GatewayHostforRequest =""'Nameoftheremotehosttopassto
+objxfRemoteRequest.RemoteCommand =SQL
+objxfRemoteRequestResultDto=BRApi.Utilities.ExecRemoteGatewayRequest (objxfRemoteRequest)
+'Evaulate theresults todetermine ifitwassuccessful
+If(objxfRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Success) Then
+'Logictouseresults in`objxfRemoteRequestResultDto.ResultSet`
+Else
+'Queryfailed. Addadditional logicheretohandlethiscase.
+EndIf
+Remotefunctionreturningadatatable(C#)withoutparameters:
+//ExecRemoteGatewayBusinessRule
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+varRemoteMethodName ="";//NameofthemethodinsidetheSICFunction thatwillbecalled
+varobjRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,
+GatewayName, null,SICFunctionName, RemoteMethodName);
+if(BRApi.Utilities. IsRemoteDtoSuccessful (si,objRemoteRequestResultDto))
+{
+if(objRemoteRequestResultDto.ResultType ==RemoteResultType.DataTable)
+{
+        BRApi.ErrorLog. LogMessage (si,"DataReturned: "+
+objRemoteRequestResultDto.ResultSet.Rows.Count);
+    }
+}
+else
+{
+if(!(objRemoteRequestResultDto.RemoteException isnull))
+{
+throwErrorHandler. LogWrite (si,newXFException (si,
+objRemoteRequestResultDto.RemoteException));
+    }
+} 
+HereistheexampleinVB:
+'ExecRemoteGatewayBusinessRule
+'CallaremoteSmartIntegration Function
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+DimRemoteMethodName AsString=""'NameofthemethodinsidetheSICFunction thatwill
+becalled
+SmartIntegration Connector Guide 130Business Rules
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,GatewayName, Nothing,SICFunctionName,
+RemoteMethodName)
+If(BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto)) Then
+If(objRemoteRequestResultDto.ResultType =RemoteResultType.DataTable) Then
+ BRApi.ErrorLog.LogMessage (si,"DataReturned: "&
+objRemoteRequestResultDto.ResultSet.Rows.Count)
+EndIf
+Else
+If(Not(objRemoteRequestResultDto.RemoteException IsNothing))Then
+ThrowErrorHandler.LogWrite (si,NewXFException (si,
+objRemoteRequestResultDto.RemoteException))
+EndIf
+EndIf
+ExecRemoteGatewayJobAndWait
+ThisBRAPI manages along-runningjobprocessusingotherbusinessrules.Itisthepreferred
+methodforuserslookingtogetaresponsefromaremotegatewayjobwithoutaddingboilerplate
+pollinglogictogetaresult.TheBRAPIfirstperformsExecRemoteGatewayJob tostartanew
+gatewayjob,thenchecksthestatusofthatjobbycallingGetRemoteGatewayJobStatus.
+Hereisabasicoverviewofthelong-runningjobprocessinC#.
+//ExecRemoteGatewayJobAndWait basicexample
+varGatewayName ="";//NameoftheGateway
+varSICBRName ="";//NameoftheSICBR
+varSICFunctionName ="";//NameoftheSICFunction torun
+varargTest =newobject[2];
+argTest[0]=100;//Example firstargument toSICFunction
+argTest[1]="test";//Example secondargument toSICFunction
+varTimeout =30;//Timespan inminutes untilfunction willtimeout.Default is30mins.
+Maxis4hours.
+varPolling =60;//Timespan inseconds untilfunction willcheckforanupdated status.
+RemoteJobStatusResultDto jobStatusResult =BRApi.Utilities. ExecRemoteGatewayJobAndWait (si,
+SICBRName, argTest ,GatewayName, SICFunctionName, Timeout ,Polling);
+if(jobStatusResult.RemoteJobState ==RemoteJobState.Completed)
+{
+RemoteRequestResultDto result=jobStatusResult.RemoteJobResult;
+//Perform logiconresult.
+}
+SmartIntegration Connector Guide 131Business Rules
+HereisthebasicexampleinVB:
+'ExecRemoteGatewayJobAndWait basicexample
+DimGatewayName AsString=""
+DimSICBRName AsString=""
+DimSICFunctionName   AsString=""
+DimargTest =NewObject(1){}
+argTest(0)=100
+argTest(1)="test"
+DimTimeout AsInteger =30
+DimPolling AsInteger =60
+DimjobStatusResult AsRemoteJobStatusResultDto =
+BRApi.Utilities.ExecRemoteGatewayJobAndWait (si,SICBRName, argTest, GatewayName,
+SICFunctionName, Timeout, Polling)
+IfjobStatusResult.RemoteJobState =RemoteJobState.Completed Then
+DimresultAsRemoteRequestResultDto =jobStatusResult.RemoteJobResult
+EndIf
+ExecRemoteGatewayJob
+Theremaybeinstances wherearemoteoperation ontheSmartIntegration Connector Local
+Gatewayhostwouldneedtoprocessandassemble datathatmaytakeseveralminutestorun.In
+thissituation,youcouldusethisBRAPItoqueueandrunaremotebusinessruleinan
+asynchronous mannerwheretheremoteSmartIntegration Connector LocalGatewayhost
+returnsaJobID(GUID)thatcanlaterbeusedtoobtainthejob’sstatusortheresultsifthejobis
+complete. Wheninvokingthismethod,iftheRemoteMessageResultStatus isreturnedas
+JobRunning (asshownintheexamplebelow),theRequestJobID ispopulated withtheIDofthe
+queuedjobthatcanlaterbeusedtoobtainstatus.
+SmartIntegration Connector Guide 132Business Rules
+NOTE:RequiresallowRemoteCodeExec =TrueonSmartIntegration Connector Local
+Gateway. Thereisadefineddefaultlimitof30minutesforremotejobstoexecutebefore
+thejobiscancelled, andanoverloaded versionofExecremoteGatewayJob exists
+allowingthetimeouttobeprovided,butcanneverexceed4hours.Thisisnot
+configurable andifthistimeoutisreached,thestatusreturnedshowsthetimeout.Ifthe
+resultisnotobtainedwithinfiveminutesafterthejobcompletes (usingthe
+GetRemoteGatewayJobStatus BRAPI),theremoteresultsarepurgedtoensurethat
+resultobjectsreclaimservermemoryontheSmartIntegration Servicehost.
+NOTE:ThisisrequiredtocallbackintoGetRemoteJobStatus withthereturnedIDto
+obtaintheresult:
+Hereisabasicoverviewofinvokingaremotejobanddisplaying thereturnedremoteJobIDinC#.
+//ExecRemoteGatewayJob basicexample
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+varargTest =newobject[2];
+argTest[0]=100;//Example firstargument toSICFunction
+argTest[1]="test";//Example secondargument toSICFunction
+//Invoking aOneStream SICFunction Business Ruleasaremotejob
+varobjRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayJob (si,SICFunctionName,
+argTest, GatewayName, String.Empty);
+if(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.JobRunning)
+{
+//Logictowaitforjobtocomplete
+}
+HereisthebasicexampleinVB:
+'ExecRemoteGatewayJob basicexample
+DimGatewayName AsString=""'NameoftheGateway
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+DimargTest(1)AsObject
+argTest(0)=100'Example firstargument toSICFunction
+argTest(1)="test"'Example secondargument toSICFunction
+SmartIntegration Connector Guide 133Business Rules
+'Invoking aOneStream SICFunction Business Ruleasaremotejob
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayJob (si,SICFunctionName, argTest, GatewayName,
+String.Empty)
+If(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.JobRunning) Then
+'Logictowaitforjobtocomplete
+EndIf
+HereistheruleinC#toinvokeajob,obtainthejobID,and'poll'untilcompletion:
+//ExecRemoteGatewayJob withpolling
+varjobID=newGuid();
+varGatewayName ="";//NameoftheGateway
+varSICFunctionName ="";//NameoftheSICFunction torun
+//Invokealong-running JobwithaSmartIntegration Function
+varobjRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayJob (si,GatewayName, null,
+SICFunctionName, String.Empty);
+//IfSuccessful, thestatusisretuned indicating thejobisrunning withthejobID.Use
+thisIDtointerrogate ifthejobiscompleed.
+if(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.JobRunning)
+{
+ jobID=objRemoteRequestResultDto.RequestJobID;
+ BRApi.ErrorLog. LogMessage (si,"Remote JobQueuedandRunning -JobID:"+jobID.ToString
+());
+//Example waiting 20seconds forjobtocomplete
+for(varloopControl =0;loopControl <10;loopControl++)
+{ 
+ System.Threading.Thread. Sleep(2000);
+varobjJobStatus =BRApi.Utilities. GetRemoteGatewayJobStatus (si,jobID,GatewayName);
+if(objJobStatus.RemoteJobState ==RemoteJobState.Running)
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobStillrunning -JobID:"+jobID.ToString ());
+ } 
+elseif(objJobStatus.RemoteJobState ==RemoteJobState.Completed)
+{ 
+//Checking thereturntypefromtheremotejob
+if(!(objJobStatus.RemoteJobResult.ResultSet isnull))
+{ 
+varxfDT=newXFDataTable (si,objJobStatus.RemoteJobResult.ResultSet, null,1000); 
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -Datatable Returned -JobID:"+
+jobID.ToString ());
+return null;
+ }
+elseif(!(objJobStatus.RemoteJobResult.ResultDataSet isnull))
+{
+varxfDT=newXFDataTable (si,objJobStatus.RemoteJobResult.ResultDataSet.Tables [0],null,
+1000); 
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -Dataset Returned -JobID:"+
+jobID.ToString ());
+SmartIntegration Connector Guide 134Business Rules
+return null; 
+ } 
+elseif(!(objJobStatus.RemoteJobResult.ResultDataCompressed isnull))
+{ 
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -ObjectReturned -JobID:"+
+jobID.ToString ());
+varvalue=CompressionHelper.InflateJsonObject<String> (si,
+objJobStatus.RemoteJobResult.ResultDataCompressed);
+ BRApi.ErrorLog. LogMessage (si,value);
+return null;
+ }
+ }
+elseif(objJobStatus.RemoteJobState ==RemoteJobState.JobNotFound)
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobNotFound-JobID:"+jobID.ToString ());
+return null;
+ }
+elseif(objJobStatus.RemoteJobState ==RemoteJobState.RequestTimeOut)
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobTimedOut-JobID:"+jobID.ToString ());
+return null;
+ }
+elseif(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.Exception)
+{
+ BRApi.ErrorLog. LogMessage (si,"Exception DuringExecution ofJob:"+
+objRemoteRequestResultDto.RemoteException. ToString ());
+ }
+ }
+}
+else
+{
+//Exception occurred immediately duringcompile/initial run
+if(objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.Exception)
+{
+ BRApi.ErrorLog. LogMessage (si,"Exception Executing Job:"+
+objRemoteRequestResultDto.RemoteException. ToString ());
+ }
+else
+{
+ BRApi.ErrorLog. LogMessage (si,"General JobExecution Error-State:"+
+objRemoteRequestResultDto.RemoteResultStatus. ToString ());
+ }
+}
+return null;
+HereistheruleinVB.NETtoinvokeajob,obtainthejobID,and'poll'untilcompletion:
+'ExecRemoteGatewayJob withpolling
+DimjobIDAsGuid
+DimGatewayName AsString=""'NameoftheGateway
+SmartIntegration Connector Guide 135Business Rules
+DimSICFunctionName AsString=""'NameoftheSICFunction torun
+'Invokealong-running JobwithaSmartIntegration Function
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayJob (si,GatewayName, Nothing,SICFunctionName,
+String.Empty)
+'IfSuccessful, thestatusisretuned indicating thejobisrunning withthejobID.Use
+thisIDtointerrogate ifthejobiscompleed.
+If(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.JobRunning) Then
+ jobID=objRemoteRequestResultDto.RequestJobID
+ BRApi.ErrorLog.LogMessage (si,"Remote JobQueuedandRunning -JobID:"&jobID.ToString ())
+'Example waiting 20seconds forjobtocomplete
+ForloopControl =0To10
+ System.Threading.Thread.Sleep (2000)
+DimobjJobStatus AsRemoteJobStatusResultDto =BRApi.Utilities.GetRemoteGatewayJobStatus
+(si,JobID,GatewayName)
+If(objJobStatus.RemoteJobState =RemoteJobState.Running) Then
+ BRApi.ErrorLog.LogMessage (si,"Remote JobStillrunning -JobID:"&jobID.ToString ()) 
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.Completed) 
+'Checking thereturntypefromtheremotejob
+If(objJobStatus.RemoteJobResult.ResultSet IsNotNothing)Then
+DimxfDTAsXFDataTable =NewXFDataTable (si,objJobStatus.RemoteJobResult.ResultSet,
+Nothing,1000) 
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -Datatable Returned -JobID:"&
+jobID.ToString ())
+ReturnNothing
+ElseIf(NotobjJobStatus.RemoteJobResult.ResultDataSet IsNothing)Then
+DimxfDTAsXFDataTable =NewXFDataTable
+(si,objJobStatus.RemoteJobResult.ResultDataSet.Tables (0),Nothing,1000) 
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -Dataset Returned -JobID:"&
+jobID.ToString ())
+ReturnNothing
+ElseIfobjJobStatus.RemoteJobResult.ResultDataCompressed IsNotNothing Then
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -ObjectReturned -JobID:"&
+jobID.ToString ())
+DimvalueAsString=CompressionHelper.InflateJsonObject (OfString)(si,
+objJobStatus.RemoteJobResult.ResultDataCompressed)
+ Brapi.ErrorLog.LogMessage (si,value)
+ReturnNothing
+EndIf
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.JobNotFound) Then
+ BRApi.ErrorLog.LogMessage (si,"Remote JobNotFound-JobID:"&jobID.ToString ())
+ReturnNothing
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.RequestTimeOut) Then
+ BRApi.ErrorLog.LogMessage (si,"Remote JobTimedOut-JobID:"&jobID.ToString ())
+ReturnNothing
+ElseIf(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Exception)
+Then
+ BRApi.ErrorLog.LogMessage (si,"Exception DuringExeuction ofJob:"&
+objRemoteRequestResultDto.RemoteException.ToString ())
+EndIf
+Next
+Else
+'Exception occurred immediately duringcompile/initial run
+If(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Exception) Then
+SmartIntegration Connector Guide 136Business Rules
+ BRApi.ErrorLog.LogMessage (si,"Exception Executing Job:"&
+objRemoteRequestResultDto.RemoteException.ToString ())
+Else
+ BRApi.ErrorLog.LogMessage (si,"General JobExecution Error-State:"&
+objRemoteRequestResultDto.RemoteResultStatus.ToString ()) 
+EndIf
+EndIf
+ReturnNothing
+GetRemoteGatewayJobStatus
+ThisBRAPIreturnsthestatusortheresultsofapreviously remotelyqueuedjobinvokedagainsta
+specifiedSmartIntegration Connector LocalGatewayhost.
+NOTE:RequiresallowRemoteCodeExec =trueonSmartIntegration Service.
+Parameter details:
+lsi:SessionInfo objectusedtocreateconnection objects
+lJobID:GUIDofremotejobIDreturneduponsuccessful calltoExecRemoteGatewayJob
+lremoteHost :Nameofremotehosttoinvokeoperation (SmartIntegration Connector Name)
+Thesamplebelowinvokesajobaspartofadatamanagement jobinsideaOneStream extender
+rule.Theexampledemonstrates asimpleSmartIntegration Functionthatsleeps2seconds1000
+timesinaloopsimulating alongrunningtask.Thecorresponding extenderruleillustrates howthis
+longrunningfunctioncanbeinvokedasajob,returningajobIDandsubsequently polleduntilit's
+completed.
+ItwouldbetypicaltoinvokelongrunningjobsaspartofaDatamanagement/Extender Ruleand
+thecodebelowisanexampleonhowthiscouldbeaccomplished inC#:
+//Invokelongrunning jobaspartofaDatamanagement/Extender rule
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs args)
+SmartIntegration Connector Guide 137Business Rules
+{
+ GuidjobID;
+ RemoteRequestResultDto objRemoteRequestResultDto =BRApi.Utilities. ExecRemoteGatewayJob (si,
+"LongRunningTest" ,null/*TODOChangetodefault(_)ifthisisnotareference type*/,
+"testConnection" ,string.Empty);
+if((objRemoteRequestResultDto.RemoteResultStatus ==RemoteMessageResultType.JobRunning))
+{
+ jobID=objRemoteRequestResultDto.RequestJobID;
+ BRApi.ErrorLog. LogMessage (si,"Remote JobQueuedandRunning -JobID:"+jobID.ToString
+());
+for(varloopControl =0;loopControl <=10;loopControl++)
+{
+ System.Threading.Thread. Sleep(2000);
+ RemoteJobStatusResultDto objJobStatus =BRApi.Utilities. GetRemoteGatewayJobStatus (si,
+jobID,"testconnection2" );
+if((objJobStatus.RemoteJobState ==RemoteJobState.Running))
+ BRApi.ErrorLog. LogMessage (si,"Remote JobStillrunning -JobID:"+jobID.ToString ());
+elseif((objJobStatus.RemoteJobState ==RemoteJobState.Completed)
+ )
+{
+//Checking thereturntypefromtheremotejob
+if(!(objJobStatus.RemoteJobResult.ResultSet ==null))
+{
+varxfDT=newXFDataTable (si,objJobStatus.RemoteJobResult.ResultSet, null,1000);
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -Datatable Returned -JobID:"+
+jobID.ToString ());
+return null;
+ }
+elseif(!(objJobStatus.RemoteJobResult.ResultDataSet ==null))
+{
+varxfDT=newXFDataTable (si,objJobStatus.RemoteJobResult.ResultDataSet.Tables [0],null,
+1000);
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -Dataset Returned -JobID:"+
+jobID.ToString ());
+ }
+elseif(!(objJobStatus.RemoteJobResult.ObjectResultValue ==null))
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobCompleted -ObjectReturned -JobID:"+
+jobID.ToString ());
+return null;
+ }
+ }
+elseif((objJobStatus.RemoteJobState ==RemoteJobState.JobNotFound))
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobNotFound-JobID:"+jobID.ToString ());
+return null;
+ }
+elseif((objJobStatus.RemoteJobState ==RemoteJobState.RequestTimeOut))
+{
+ BRApi.ErrorLog. LogMessage (si,"Remote JobTimedOut-JobID:"+jobID.ToString ());
+return null;
+ }
+elseif((objRemoteRequestResultDto.RemoteResultStatus ==
+RemoteMessageResultType.Exception))
+ BRApi.ErrorLog. LogMessage (si,"Exception DuringExeuction ofJob:"+
+SmartIntegration Connector Guide 138Business Rules
+objRemoteRequestResultDto.RemoteException. ToString ());
+ }
+ }
+elseif((objRemoteRequestResultDto.RemoteResultStatus ==
+RemoteMessageResultType.Exception))
+ BRApi.ErrorLog. LogMessage (si,"Exception Executing Job:"+
+objRemoteRequestResultDto.RemoteException. ToString ());
+else
+ BRApi.ErrorLog. LogMessage (si,"General JobExecution Error-State:"+
+objRemoteRequestResultDto.RemoteResultStatus. ToString ());
+return null;
+}
+HereistheexampleinVB:
+'Invokelongrunning jobaspartofaDatamanagement/Extender rule
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals, ByValapi
+AsObject,ByValargsAsExtenderArgs) AsObject
+DimjobIDAsGuid
+DimobjRemoteRequestResultDto AsRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayJob (si,"LongRunningTest" ,Nothing,
+"testConnection" ,String.Empty)
+If(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.JobRunning) Then
+ jobID=objRemoteRequestResultDto.RequestJobID
+ BRApi.ErrorLog.LogMessage (si,"Remote JobQueuedandRunning -JobID:"&jobID.ToString ())
+'Example waiting 20seconds forjobtocomplete
+ForloopControl =0To10
+ System.Threading.Thread.Sleep (2000)
+DimobjJobStatus AsRemoteJobStatusResultDto =BRApi.Utilities.GetRemoteGatewayJobStatus
+(si,JobID,"testconnection2" )
+If(objJobStatus.RemoteJobState =RemoteJobState.Running)
+ BRApi.ErrorLog.LogMessage (si,"Remote JobStillrunning -JobID:"&jobID.ToString ())
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.Completed)
+'Checking thereturntypefromtheremotejob
+If(NotobjJobStatus.RemoteJobResult.ResultSet IsNothing)Then
+DimxfDT=NewXFDataTable (si,objJobStatus.RemoteJobResult.ResultSet, Nothing,1000)
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -Datatable Returned -JobID:"&
+jobID.ToString ())
+ReturnNothing
+ElseIf(NotobjJobStatus.RemoteJobResult.ResultDataSet IsNothing)Then
+DimxfDT=NewXFDataTable (si,objJobStatus.RemoteJobResult.ResultDataSet.Tables
+(0),Nothing,1000)
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -Dataset Returned -JobID:"&
+jobID.ToString ())
+ReturnNothing
+ElseIf(NotobjJobStatus.RemoteJobResult.ObjectResultValue IsNothing)Then
+ BRApi.ErrorLog.LogMessage (si,"Remote JobCompleted -ObjectReturned -JobID:"&
+jobID.ToString ())
+ReturnNothing
+EndIf
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.JobNotFound)
+SmartIntegration Connector Guide 139Business Rules
+ BRApi.ErrorLog.LogMessage (si,"Remote JobNotFound-JobID:"&jobID.ToString ())
+ReturnNothing
+ElseIf(objJobStatus.RemoteJobState =RemoteJobState.RequestTimeOut)
+ BRApi.ErrorLog.LogMessage (si,"Remote JobTimedOut-JobID:"&jobID.ToString ())
+ReturnNothing
+ElseIf(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Exception)
+ BRApi.ErrorLog.LogMessage (si,"Exception DuringExeuction ofJob:"&
+objRemoteRequestResultDto.RemoteException.ToString ())
+EndIf
+Next
+Else'Exception occuring immediately duringcompile/initial run
+If(objRemoteRequestResultDto.RemoteResultStatus =RemoteMessageResultType.Exception)
+ BRApi.ErrorLog.LogMessage (si,"Exception Executing Job:"&
+objRemoteRequestResultDto.RemoteException.ToString ())
+Else
+ BRApi.ErrorLog.LogMessage (si,"General JobExecution Error-State:"&
+objRemoteRequestResultDto.RemoteResultStatus.ToString ())
+EndIf
+EndIf
+ReturnNothing
+EndFunction
+IsRemoteDtoSuccessful
+UsetheIsRemoteDtoSuccessful methodtointegratedebugging intobusinessrules.Itvalidatesa
+successful requestisreceivedpriortofurtherprocessing.
+IsRemoteDtoSuccessful method:
+BRApi.Utilities.IsRemoteDtoSuccessful (SessionInfo, RemoteRequestResultDto)
+Parameters:
+lsi:SessionInfo objectusedtocreateconnection objects
+lRemoteRequestResultDto -Resultofexecution includingthestatusandanyexceptions
+whichmayhaveoccurredontheremoteendpoint
+lReturn:RemoteRequestResultDto -ReturnsTrueorFalse.
+SmartIntegration Connector Guide 140Business Rules
+ public classMainClass
+{
+  public objectMain(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs args)
+{
+   varGatewayName ="apgate"; //NameoftheGateway
+   varRemoteMethodName ="RunOperation"; //NameofthemethodinsidetheSICFunction that
+willbecalled.  
+   //DataTable nonnulldtoandremoteexception
+   //resultdtovaluetype isnotnullandthereareremoteexception
+   RemoteRequestResultDto objRemoteRequestResultDto0 =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnNonNullRemoteEx", null,
+GatewayName, RemoteMethodName); 
+   try 
+{
+    bool ret=false;
+    ret =BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto0);      
+   }
+   catch (Exception ex)
+{
+    BRApi.ErrorLog.LogMessage (si,"ResultDto execption: "
++  ex.InnerException.Message.ToString ()); 
+   }
+   //DataTable
+   //Failed -resultdtovaluetype isnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDto =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnDataTable", newobject[]
+{true}, GatewayName, RemoteMethodName);    
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.DataTable False="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto).ToString ());  
+   //Success -resultdtovaluetype isnotnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDtoA =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnDataTable", newobject[]
+{false}, GatewayName, RemoteMethodName);
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.DataTable True="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDtoA).ToString ()); 
+   //DataSet
+   //Failed -resultdtovaluetype isnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDto1 =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnDataset", newobject[]{true},
+GatewayName, RemoteMethodName);  
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.Dataset False="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto1).ToString ()); 
+   //Success -resultdtovaluetype isnotnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDto1A =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnDataset", newobject[]{false},
+GatewayName, RemoteMethodName);
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.Dataset True="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto1A).ToString ());    
+   //Value
+   //Failed -resultdtovaluetype isnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDto2 =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnValue", newobject[]{true},
+GatewayName, RemoteMethodName);  
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.ObjectValue False="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto2).ToString ());    
+   //Success -resultdtovaluetype isnotnullandnoremoteexceptions
+   RemoteRequestResultDto objRemoteRequestResultDto2A =
+SmartIntegration Connector Guide 141Business Rules
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnValue", newobject[]{false},
+GatewayName, RemoteMethodName);
+   BRApi.ErrorLog.LogMessage (si,"IsRemoteDtoSuccess.ObjectValue True="+
+BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto2A).ToString ());
+   //Exception
+   //Failed -resultdtovaluetype isnullandthereareremoteexceptions
+   try
+{
+    RemoteRequestResultDto objRemoteRequestResultDto3 =
+BRApi.Utilities.ExecRemoteGatewayBusinessRule (si,"TestReturnException", null,GatewayName,
+RemoteMethodName);
+    BRApi.Utilities.IsRemoteDtoSuccessful (si,objRemoteRequestResultDto3);
+   }
+   catch (Exception ex)
+{
+    BRApi.ErrorLog.LogMessage (si,ex.InnerException.Message.ToString ()); 
+   }
+   return null;
+  }
+ }
+GetGatewayConnectionInfo
+FromaOneStream businessrule,youcaninvokethisAPItoobtainconnection detailssuchas:
+lGatewayName: Nameoftheremotegateway
+lGatewayVersion: VersionoftheSmartIntegration Connector GatewayServicerunningon
+theremotehost
+lRemoteGatewayPortNumber: BoundPortatGateway, theportoftheremoteservicethis
+directconnection isassociated with.
+lRemoteGatewayHost: Nameoftheremotehostassociated withthedirectconnection.
+lOneStreamPortNumber: BoundPortinOneStream, theportnumberdefinedwithin
+OneStream thatrefers/maps tothespecifieddirectconnection.
+lSmartIntegrationGatewayType: TypeoftheSmartIntegration Connection (0=Gateway
+Connection, 1=DirectConnection)
+SmartIntegration Connector Guide 142Business Rules
+ThisAPIisusefulfordirectconnections wheretheportnumberisrequiredbeforeconnecting to
+remoteservicessuchassFTPorremoteWebAPIsbecauseeachendpointdefinedinOneStream
+toSmartIntegration Connector LocalGateways hasadifferentportnumberandwouldneedtobe
+knownbythebusinessruledeveloper atdesigntime.ThisAPImakesiteasytolookupthe
+remoteportbyknowingthenameofthedirectconnection definedinOneStream. Itreturnsother
+usefulinformation outlinedbelow:
+HereistheruleinC#:
+//GetGatewayConnectionInfo
+varGatewayName =""//NameoftheGateway
+GatewayDetails gatewayDetailInformation =BRApi.Utilities. GetGatewayConnectionInfo (si,
+GatewayName);
+intoneStreamPortNumber =gatewayDetailInformation.OneStreamPortNumber;
+HereistheruleinVB:
+'GetGatewayConnectionInfo
+DimGatewayName AsString=""'NameoftheGateway
+DimobjGatewayDetails AsGatewayDetails =BRApi.Utilities.GetGatewayConnectionInfo (si,
+GatewayName)
+DimoneStreamPortNumber AsInteger =objGatewayDetails.OneStreamPortNumber
+GetSmartIntegrationConfigValue
+ThisBRAPIallowsaccesstotheLocalGatewayLocalApplication DataSettings.Accessing the
+remotelystoredsecretorcustomer- definedconfiguration valuesisdoneusinganew"Remote"
+equivalent oftheBRAPInamespace. Thisfeaturecanbeusedto:
+SmartIntegration Connector Guide 143Business Rules
+lReference configuration parameters inaremotebusinessrulerunningonaSmart
+Integration Connector LocalGatewayServer
+lStorecredentials tonetworkresources allowingthedeveloper ofremotebusinessrulesto
+reference valuesstoredintheconfiguration fileinsteadofhavingthemhard-codedand
+viewablebyanyonewithpermission toeditabusinessrule.
+Theseconfiguration valuesaredefinedandeditedusingtheSmartIntegration Connector Local
+GatewayConfiguration Utility.TheAPIusedtoobtainthesevaluesisdemonstrated inthefull
+businessruleexamplebelow:
+NOTE:RequiresallowRemoteCodeExec =TrueonSmartIntegration LocalGateway.
+HereistheruleinC#:
+//SICFunction demonstrating GetSmartIntegrationConfigValue
+namespace TestProject.OneStream.BusinessRule.SmartIntegrationFunction.SecretTester
+{
+publicclassMainClass
+{
+publicstatic@boolRunOperation ()
+{
+stringresult;
+//APILibrary istheclasscontaining newremoteBRAPImethods
+//GetSmartIntegrationConfigValue returns thestringvalueofafoundconfiguration
+//element --returns emptystringifthespecified keyisnotfound
+ result =APILibrary. GetSmartIntegrationConfigValue ("");//Enter configvaluename
+return true;
+ }
+ }
+}
+HereisanotherexampleinVB.NET:
+'SICFunction demonstrating GetSmartIntegrationConfigValue
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.SecretTester
+PublicClassMainClass
+PublicSharedFunction RunOperation ()asbool
+DimresultAsString
+'APILibrary istheclasscontaining newremoteBRAPImethods
+SmartIntegration Connector Guide 144Business Rules
+'GetSmartIntegrationConfigValue returns thestringvalueofafoundconfiguration
+'element --returns emptystringifthespecified keyisnotfound
+ result =APILibrary.GetSmartIntegrationConfigValue ("")'Enterconfigvaluename
+ReturnTrue
+EndFunction
+EndClass
+EndNameSpace
+GetRemoteDataSourceConnection
+Thisremotebusinessrulewillreturntheconnection stringassociated withaLocalGateway
+Configuration DataSource.
+NOTE:RequiresallowRemoteCodeExec =TrueonSmartIntegration LocalGateway.
+Parameter details:
+lDataSource:ThenameoftheLocalGatewayConfiguration DataSource.
+HereistheruleinC#:
+//SICFunction togetconfigured connection stringfromSICGateway
+namespace OneStream.BusinessRule.SmartIntegrationFunction.GetRemoteDataSourceSample
+{
+publicclassMainClass
+{
+publicDataTable RunOperation ()
+{
+ DataTable dataTableResults =newDataTable ();
+//Gettheremotely defined connection string
+stringconnectionString =OneStreamGatewayService.APILibrary. GetRemoteDataSourceConnection
+("");//enternameofDBConnection
+ SqlConnection conn=newSqlConnection (connectionString);
+//Insertcustomcode
+returndataTableResults;
+ }
+ }
+}
+SmartIntegration Connector Guide 145Business Rules
+HereistheruleinVB.NET:
+'SICFunction togetconfigured connection stringfromSICGateway
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.GetRemoteDataSource_ VB
+PublicClassMainClass
+PublicSharedFunction RunOperation ()AsDataTable
+DimdataTableResults AsNewDataTable 
+'Gettheremotely defined connection String
+DimconnectionString AsString=
+OneStreamGatewayService.APILibrary.GetRemoteDataSourceConnection ("")'enternameofDB
+Connection
+DimconnAsSqlConnection =NewSqlConnection (connectionString)
+'Insertcustomcode
+ReturndataTableResults
+EndFunction
+EndClass
+EndNamespace
+BRApi.Utilities.IsGatewayOnline
+ThefollowingbusinessrulecancheckthestatusofSmartIntegration Connector. Youwillneedto
+replace"gateway- name"withthenameofthegatewaytobetested.
+HereistheruleinC#:
+//IsGatewayOnline
+namespace OneStream.BusinessRule.Extender.TestHealthCheck
+{
+publicclassMainClass
+{
+publicconststringGatewayName ="";
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,ExtenderArgs args)
+{
+try
+{ 
+TestGatewayConnection (si,GatewayName);
+return null;
+ }
+catch(Exception ex)
+{
+throwErrorHandler. LogWrite (si,newXFException (si,ex));
+ }
+SmartIntegration Connector Guide 146Business Rules
+ }
+publicvoidTestGatewayConnection (SessionInfo si,stringgwName)
+{
+boolresponse =BRApi.Utilities. IsGatewayOnline (gwName);
+if(response)
+{
+ BRApi.ErrorLog. LogMessage (si,$"Health CheckSuccessful for{gwName} ");
+ }
+else
+{
+ BRApi.ErrorLog. LogMessage (si,$"Health CheckFailedfor{gwName} ");
+ } 
+ }
+ }
+}
+HereistheruleinVB:
+Namespace OneStream.BusinessRule.Extender.TestHealthCheck
+PublicClassMainClass
+PublicConstGatewayName AsString=""
+PublicFunction Main(ByValsiAsSessionInfo, ByValglobals AsBRGlobals, ByValapi
+AsObject,ByValargsAsExtenderArgs) AsObject
+Try
+ TestGatewayConnection (si,GatewayName)
+ReturnNothing
+CatchexAsException
+ThrowErrorHandler.LogWrite (si,NewXFException (si,ex))
+EndTry
+EndFunction
+PublicSubTestGatewayConnection (ByValsiAsSessionInfo, ByValgwNameAsString)
+Dimresponse AsBoolean =BRApi.Utilities.IsGatewayOnline (gwName)
+Ifresponse Then
+ BRApi.ErrorLog.LogMessage (si,$"Health CheckSuccessful for{gwName}" )
+Else
+ BRApi.ErrorLog.LogMessage (si,$"Health CheckFailedfor{gwName}" )
+EndIf
+EndSub
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 147Business Rules
+CheckOneStream Version
+RemotebusinessruleshavetheabilitytoprovidelogicbasedontheOneStream Version.
+HereistheexampleruleinC#:
+namespace OneStream.BusinessRule.SmartIntegrationFunction.version_ test_csharp
+{
+publicclassMainClass
+{
+publicstring RunOperation () 
+{
+#ifONESTREAM8_ 4_0_OR_GREATER
+//Codeiftrue
+#else
+//Codeiffalse
+#endif
+        }
+    }
+}
+HereistheexampleruleinVB:
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.version_ test_vb
+PublicClassMainClass
+PublicSharedFunction RunOperation ()AsString
+#IfONESTREAM8_ 4_0_OR_GREATER
+'Codeiftrue
+#Else
+'Codeiffalse
+#EndIf
+EndFunction
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 148Business Rules
+Business RulesCompatibility
+Therearesomebusinessrulesthatarenotcompatible withSmartIntegration Connector. Ifyou
+attemptcertainrules,youwillrunintothefollowingerror:ThisBRAPIisnotcompatible withSmart
+Integration Connector. RefertoSmartIntegration Connector RemoteBRs.
+Thefollowingbusinessrulesarenotcompatible withSmart Integration Connector:
+BRApi.Database.SaveCustomDataTable
+Although, thisbusinessruleisnotsupported, thefunctionality canbeachievedthrougharemote
+businessrule.Youcancallthisbusinessruleusing
+BRApi.Utilities.ExecRemoteGatewayBusinessRule.
+HereistheruleinC#:
+usingSystem;
+usingSystem.Collections.Generic;
+usingSystem.Data;
+usingSystem.Data.SqlClient;
+usingSystem.Data.Common;
+usingSystem.Globalization;
+usingSystem.IO;
+usingSystem.Linq;
+namespace OneStream.BusinessRule.SmartIntegrationFunction.SaveCustomDataTable
+{
+publicclassMainClass
+{
+publicvoidRunOperation ()
+{
+vartableName ="";          //Enterthenameofthetabletoupdate
+varconnectionName ="";     //Enterthenameoftheconfigured database
+connection
+varconnString =
+OneStreamGatewayService.APILibrary. GetRemoteDataSourceConnection (connectionName);
+vardataTable =newDataTable ();
+using(varconnection =newSqlConnection (connString))
+{
+                connection. Open();
+varsql=$"SELECT *FROM{tableName} ";
+varcmd=newSqlCommand (sql,connection);
+varadapter =newSqlDataAdapter ();
+SmartIntegration Connector Guide 149Business Rules
+                adapter.SelectCommand =cmd;    
+varcommandBuilder =newSqlCommandBuilder (adapter);
+                adapter. Fill(dataTable);
+//AddlogicheretoupdatevaluesinDataTable                
+//Updatedatabase withchanges totheDataTable
+                adapter.UpdateCommand =commandBuilder. GetUpdateCommand ();
+                adapter. Update(dataTable);
+            }
+        }
+    }
+}
+HereisthesameruleVB:
+Imports System
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Data.Common
+Imports System.Globalization
+Imports System.IO
+Imports System.Linq
+Namespace OneStream.BusinessRule.SmartIntegrationFunction.SaveCustomDataTableVB
+PublicClassMainClass
+PublicSubRunOperation ()
+DimtableName ="" 'Enterthenameofthetabletoupdate
+DimconnectionName ="" 'Enterthenameoftheconfigured database
+connection
+DimconnString =OneStreamGatewayService.APILibrary.GetRemoteDataSourceConnection
+(connectionName)
+DimdataTable =NewDataTable ()
+Usingconnection =NewSqlConnection (connString)
+         connection.Open ()
+Dimsql=$"SELECT *FROM{tableName}"
+Dimcmd=NewSqlCommand (sql,connection)
+Dimadapter =NewSqlDataAdapter ()
+         adapter.SelectCommand =cmd
+DimcommandBuilder =NewSqlCommandBuilder (adapter)
+         adapter.Fill (dataTable)
+'AddlogicheretoupdatevaluesinDataTable
+'Updatedatabase withchanges totheDataTable
+         adapter.UpdateCommand =commandBuilder.GetUpdateCommand ()
+         adapter.Update (dataTable)
+EndUsing
+EndSub
+EndClass
+EndNamespace
+SmartIntegration Connector Guide 150Business Rules
+BRApi.Database.InsertOrUpdateRow
+BRApi.Database.DeleteRows
+Although, thesebusinessrulesarenotsupported, inserting,deletingandupdatingrowscanbe
+accomplished throughthesameremotebusinessrulereferenced in
+BRApi.Database.SaveCustomDataTable .Youcancallthisbusinessruleusing
+BRApi.Utilities.ExecRemoteGatewayBusinessRule. Youwillinsertyourlogicatthespecific
+commentintheremotebusinessrule.
+BRApi.Database.ExecuteActionQuery
+ExecuteActionQuery doesnotsupportreturningascalarwhenusedasaremotebusinessrule.A
+sampleworkaround isprovidedbelow:
+ElseIfargs.DrillBackType.NameAndDescription.Name. Equals("ScalarQuery" ,
+StringComparison.InvariantCultureIgnoreCase) Then
+DimintResult AsInt32=0
+                        brapi.ErrorLog.Logmessage (si,"Entered GetData" )
+DimsqlExecStatement AsString="Select count(*)FROM
+InvoiceMaterialDetail"
+                        brapi.ErrorLog.LogMessage (si,"statement ="&sqlExecStatement)
+UsingdbAXConn AsDbConnInfo =
+BRApi.Database.CreateRelayDbConnInfo (si,"jl_SQL_Gateway_ Connection" )
+UsingsicConnection AsDbConnection =dbAXConn.GetConn ()
+DimsprocCmd =sicConnection.CreateCommand ()
+                                    sproccmd.commandtext =sqlExecStatement
+                                    intResult =sprocCmd.ExecuteScalar   'Shouldbenon-zero
+                                    sicConnection.Close ()                                    
+EndUsing
+                                dbAXConn.Close ()
+EndUsing
+DimdrillBackInfo AsNewDrillBackResultInfo
+                        drillbackinfo.TextMessage =intResult
+                        drillBackInfo.DisplayType =
+ConnectorDrillBackDisplayTypes.TextMessage                                    
+ReturndrillBackInfo
+SmartIntegration Connector Guide 151Business Rules
+SQLBulkCopy
+UseoftheSQL Bulk Copyclassisnotsupported tocopytoandfromdatabases accessed over
+SmartIntegration Connector. Currently, thereisnotaworkaround available.
+SQLTransactions
+UseoftheSqlTransaction classiscurrentlyonlysupported inSmartIntegration Connector
+Functions /remotebusinessrules.
+SmartIntegration Connector Guide 152Business Rules
+Limitations
+Thissectiondetailsalistofknownlimitations inSmartIntegration Connector:
+lSupported DLLs
+lBusinessRuleCompatibility
+l.NETTypeCodes
+lParquetFormatTransfer
+lCustomEmailConnections
+lFTP Transfers
+lInternalCertificate Trust
+lSQLTableEditor
+lPrecisionusingDecimals
+Supported DLLs
+Ifreferencing customDLLswithSmartIntegration Connector inyourapplication,
+.NET Framework and.NETStandardDLLsaresupported. TheseDLLswillneedtobecopiedto
+theReferenced Assemblies FolderthatisdefinedwithintheSmartIntegration Connector Utility.
+SmartIntegration Connector Guide 153Limitations
+Business RuleCompatibility
+TheSmartIntegration Connector supportsbusinessruleAPIs(BRAPIs) toallowforexecution and
+management ofremotebusinessrulesinsidethecontextoftheSmartIntegration Connector
+LocalGatewayServer.SomeOneStream BusinessRulesarenotsupported. Forcompatible
+BusinessRules,seeBusinessRules.
+.NETTypeCodes
+Thefollowing.NETTypeCodes aresupported inSmartIntegration Connector:
+lInt32
+lInt16
+lDecimal
+lString
+lBoolean
+lDateTime
+lDouble
+lInt64
+lSingle(float)
+lByte
+lSByte
+lUInt16
+lUInt32
+SmartIntegration Connector Guide 154Limitations
+lUInt64
+lGuid
+lbyte[]
+ParquetFormatTransfer
+SmartIntegration Connector transfersdatainApacheParquetformatfromtheLocalGateway
+ServicetoyourOneStream cloudinstance.Ifyouaretransferring adatatypethatisnotfully
+supported byparquet,thedatareturnsasastring.Ifthedatatypecannotbeconverted to
+parquet,youmayhavetocastthedatatypeinyourquery.
+Examplefordatetimeoffset:
+lSELECTCAST(your_datetimeoffset_ columnASVARCHAR (50))ASformatted_ datetime
+FROMyour_table;
+Foradditional information, seeTroubleshooting .
+CustomEmailConnections
+EmailoverSmartIntegration Custom("Notification Connection" inDataManagement jobs)
+Connections isnotsupported. RemoteBRsdosupportemailinSmartIntegration Connector.
+FTP Transfers
+SFTPissupported bytheuseofSSH.NET. FTP iscurrentlynotsupported forSSH.NET. Use
+SFTPforallfiletransfers.
+SmartIntegration Connector Guide 155Limitations
+InternalCertificate Trust
+Certificates issuedbyaninternaldomaincontrollercannotbetrustedbyOneStream.
+SQLTableEditor
+(missingsnippetlink)
+Precision usingDecimals
+Whentransmitting datathroughSmartIntegration Connector, numericvaluesexceeding certain
+lengthsmayberounded.Thefollowingworkarounds canhelpmaintaindataprecision.
+Receiving DatafromSmartIntegration Connector
+SmartIntegration Connector queriescanonlyreturnnumericvalueswithupto38totaldigits:20
+integerdigitstoleftofthedecimalpointand18fractionaldigitstotherightofthedecimalpoint.
+Forexample,returningacolumnwithavalueof123456789123456789123 (21digits)isnot
+supported. Eventhoughthereisnodecimalpoint,itstillexceeds20integerdigits,whichisthe
+maximum amount.
+Similarly,returningacolumnwithavalueof0.1234567891234567891 (19decimaldigits)isnot
+supported, asitcontainsmorethan18digitsontherightsideofthedecimalpoint.
+Ifyourqueriescanreturnvaluesthatrequiremorethan20integerdigitsor18fractionaldigits,
+considercastingtoaVARCHAR asthefollowing:
+l"SELECT CAST(123456789123456789123 ASVARCHAR)" --21integer
+digits
+SmartIntegration Connector Guide 156Limitations
+Ifthereisnoriskofoverflowing theoppositesideofthedecimalpoint,youcanalsodividebya
+factorof10toshiftrightormultiplybyafactorof10toshiftleft.Thisapproach ismoreefficient
+thancastingtoaVARCHAR
+Forexample:
+lSELECT123456789123456789123 /100--21integer digitswillshift
+bytwodigitstotheright
+lSELECT0.1234567891234567890 *100--19fractional digitswill
+shiftbytwodigitstotheleft
+SendingDatatoSmartIntegration Connector
+ForsendingeitheraDataTable oraCompressionResult intoaremoterule,SmartIntegration
+Connector canonlyreturnnumericvalueswithupto18characters ofsignificance. Valueswith
+morethan18significant digitswillloseprecision.
+Forexample,whensendingaDataTable intoSmartIntegration Connector, avalueof
+1234567890123456789.123456 (25significant digits)willbecome1234567890123456800 (17
+significant digits).
+Similarly,sendingaCompressionResult withavalueof123456789012345.123456 (21significant
+digits)willbecome123456789012345.13 (17significant digits).
+NOTE:Thisprecisionlimitisaceiling,notatypicalround.
+Ifyouareconfidentthatthedatawillnotreach18significant digits,noactionisneeded.Ifyou
+anticipate thatthedatasentintoSmartIntegration Connector willreachthislimit,considerusing
+thisBusinessRuleExtender:
+namespace OneStream.BusinessRule.Extender.SIC_ PrecisionDemo_ Extender
+{
+SmartIntegration Connector Guide 157Limitations
+publicclassMainClass
+{
+publicconststringremoteGatewayName ="";           //Enter
+gateway name
+constdecimal OriginalValue =1234567890123456.12 M;//18total
+digits
+publicobject Main(SessionInfo si,BRGlobals globals, objectapi,
+ExtenderArgs args)
+{
+//dataTable withasinglerowcontaining OriginalValue
+above
+vardataTable =newSystem.Data. DataTable
+("TestDataTable" );
+            dataTable.Columns. Add("DecimalColumn" ,typeof(decimal));
+//Addtheoriginal valuetothedatatable
+varrow=dataTable. NewRow();
+            row ["DecimalColumn" ]=OriginalValue;
+            dataTable.Rows. Add(row);
+//base64-encoded stringversion ofdataTable
+varbase64=GetBase64EncodedDataTable (dataTable);
+//passboththerawdataTable andencoded version as
+twoseparate arguments totheRemoteBusiness Rule
+vararguments =newobject[]{dataTable, base64};
+varresultObject =
+BRApi.Utilities. ExecRemoteGatewayBusinessRule (si,"SIC_PrecisionDemo" ,arguments,
+remoteGatewayName, "RunOperation" );        
+/*
+                                    resultObject.ObjectResultValue: "
+                                                WITHOUT encoding: valuesdon'tmatch--
+Expected 1234567890123456.12 --Actual1.23456789012346E+15.
+                                                WITH encoding: valuesshouldmatch--
+Expected 1234567890123456.12 --Actual1234567890123456.12.
+                                    "
+                                    */
+return null;
+                        }
+publicstring GetBase64EncodedDataTable (DataTable dt)
+{
+varserializer =new
+System.Runtime.Serialization. DataContractSerializer (typeof(DataTable));
+varmemoryStream =newSystem.IO. MemoryStream ();
+                                    serializer. WriteObject (memoryStream, dt);
+varbytes=memoryStream. ToArray();
+returnConvert. ToBase64String (bytes);                                  
+                        }                      
+            }
+}
+SmartIntegration Connector Guide 158Limitations
+TotesttheExtender, usethisRemoteBusinessRule:
+namespace OneStream.BusinessRule.SmartIntegrationFunction.SIC_ PrecisionDemo
+{
+publicclassMainClass
+{
+constdecimal ExpectedValue =1234567890123456.12 M;//18total
+digits
+publicstring RunOperation (DataTable dataTable, stringbase64)
+{
+//Retrieve andlograwdataTable
+varretrievedValue =dataTable.Rows [0]["DecimalColumn" ];
+varmessage =$"WITHOUT encoding: valuesdon'tmatch--
+Expected {ExpectedValue} --Actual{retrievedValue} .";
+//Retrieve andlogencoded datatable
+varbytes=Convert. FromBase64String (base64);
+varmemoryStream =newSystem.IO. MemoryStream (bytes);
+varserializer =new
+System.Runtime.Serialization. DataContractSerializer (typeof(DataTable));
+vardt=(DataTable)serializer. ReadObject (memoryStream);
+varcorrectValue =dt.Rows[0]["DecimalColumn" ];
+                                    message +=$"\nWITH encoding: valuesshouldmatch--
+Expected {ExpectedValue} --Actual{correctValue} .";
+returnmessage;
+                        }                      
+            }
+}
+SmartIntegration Connector Guide 159Limitations
+Troubleshooting
+Thissectionprovideshelponaddressing errorsinSmartIntegration Connector:
+lErrorLog
+lCommonErrors
+lScriptErrorDuringUpgrade
+lDataReturnedasaString
+lManualStartandStop
+lRemoteEndpointNotFound/Could NotDecrypt
+lERPConnect ModuleorDependency NotFound
+lConnections Requiring aSignedCertificate
+lTrustedCertificate Chain
+lUnabletoConnect
+lCommunication Error
+lGatewayTestingIssueResolution
+ErrorLog
+Toviewtheerrorlog,clickSystem>Logging>ErrorLog.
+SmartIntegration Connector Guide 160Troubleshooting
+Everyminute,bydefault,theSmartIntegration Connector triestoconnecttoanestablished Smart
+Integration Connector localgatewayfromeachapplication serverusedinadeployment. Ifthe
+gatewayisunabletoconnect,itaddsanerrortotheerrorlogbasedontheGateway failures
+reporting interval(min).TheseerrorsarerecordedintheOneStream  errorlogalongwithother
+errorsrelatedtotheOneStream application. YoucanconfiguretheintervalatwhichOneStream
+application serverslogthisgatewayfailurefrom1minuteto1440minutes(1day)toreducethe
+volumeofloggedfailuresforinfrequently onlinetestorvalidation environments.
+NOTE:Itisrecommended toincreasethetimeintervalsforqueriesthatrunlongerthan
+fiveminutes.Forexample,ifyouhaveaquerythatrunstenminuteslong,youneedto
+setyourtimeintervaltoabovetenminutes(suchasfifteenminutes).Timeintervalscan
+beadjustedfromSystem>SmartIntegration Connector >Yourconnection >
+Gateway failuresreporting interval(min).
+Common Errors
+MemoryIssues
+Ifyoureceiveanyofthefollowingerrors,increasethememoryinyourSmartIntegration
+Connector LocalGatewayServer.Forqueriesreturningover1millionrecords,32GBormore
+RAMisrecommended.
+SmartIntegration Connector Guide 161Troubleshooting
+l"Errorwhilecopyingcontenttoastream.Received anunexpected EOFor0bytesfromthe
+transportstream."
+l"Anerroroccurredwhilesendingtherequest.Theresponseendedprematurely."
+Gateway VersionisEmpty
+Ifyourconnection isreportingonline,isoftype"Gateway Connection" andtheVersionisempty,
+verifywithyourITAdminthatport443isfullyopenoutbound betweentheSmartIntegration
+Connector LocalGatewayServerandtheAzureRelayandthatDeepPacketInspection orSSL
+Teardown isnotbeingperformed.
+RefertoKnowledge BasearticleKB0013213 foradditional information.
+CustomDataSourceNames
+YoumaynotseetheDataSourceNamespopulatewhensettingupthecustomconnection witha
+newconnection. Itisrecommended towaitforfiveminutesfromcreatinganewconnection to
+whenyoucreatethecustomconnection.
+SmartIntegration Connector Guide 162Troubleshooting
+ArraycannotbenullError
+Youreceivetheerror:"Arraycannotbenull.(Parameter 'bytes')"or"System.AggregateException
+-System.NullReferenceException: Objectreference notsettoinstanceofobject"
+NOTE:CompressionHelper.InflateJsonObject isnowautomatically executedaspartof
+remotecallsresultinginserialized .NETtypesreturnedfromtheSmartIntegration
+Connector Gateway. UpdateanySmartIntegration Connector relatedbusinessrules
+accordingly.
+Previously, itwasrequiredthataOneStream BRdeveloper invokingaremoteSmart
+Integration Functionbeawareofthedatatypereturnedandconvertaccordingly afterthe
+resultisreturned.Anexamplewherethereturnedresultwasabytearrayinvolvedcode
+thatappeared asfollows:
+bytesFromFile =CompressionHelper.InflateJsonObject (OfSystem.Byte())
+(si,objRemoteRequestResultDto.resultDataCompressed) 
+'TheSmartIntegration Connector Gateway nowprovides thistypeinformation backto
+OneStream
+'andstreamlines thisconversion process usinganewlyaddedproperty called
+'ObjectResultValue whichispopulated.
+'Wheninvoking thesameoperation shownabovethatpreviously required
+'thetypetobeconverted, aBRdeveloper candothefollowing:
+bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+OpeningandSavingConfiguration Errors
+YoumayreceiveanerroropeningorsavingyourOneStream LocalGatewayConfiguration after
+installingOracleDataProviderfor.NET.
+SmartIntegration Connector Guide 163Troubleshooting
+Youmustcommentoutthefollowingline<!--<addname="Oracle DataProviderfor.NET"
+invariant="Oracle.DataAccess.Client" description=".Net Framework DataProviderforOracle"
+type="Oracle.DataAccess.Client.OracleClientFactory, Oracle.DataAccess" />-->whenediting
+yourOneStreamLocalGatewayConfiguration.exe.config toresolvethiserror.
+Yourconfiguration shouldlooksimilartothis:
+<DbProviderFactories>
+<addname="Npgsql DataProvider" invariant ="Npgsql" description ="DataProvider for
+PostgreSQL" type="Npgsql.NpgsqlFactory, Npgsql" />
+<addname="MySQL DataProvider" invariant ="MySql.Data.MySqlClient" description =".Net
+Framework DataProvider forMySQL"type="MySql.Data.MySqlClient.MySqlClientFactory,
+MySql.Data" />
+<!--<addname="Oracle DataProvider for.NET"invariant="Oracle.DataAccess.Client"
+description=".Net Framework DataProvider forOracle"
+type="Oracle.DataAccess.Client.OracleClientFactory, Oracle.DataAccess" />-->
+Incorrect orMissingLibraryReferences
+Duringcompilation ofremotebusinessrulesusing.NET DLLs suchastheERPConnect Libraryto
+interfacewithSAP,incorrectormissinglibraryreferences willresultinanerrorsimilar(Smart
+Integration Connector compileerror)totheimagebelow.
+SmartIntegration Connector Guide 164Troubleshooting
+ScriptErrorDuringUpgrade
+Duringupgrades, youmayrunintotheerror"ascriptrequiredforthisinstalltocompletecouldnot
+berun."TheactiontoresolvethiserroristoreruntheSmartIntegration Connector installer.Ifyou
+continuetoseethiserrorduringupgrades, contactOneStream support.
+DataReturned asaString
+Occasionally, datatypescanreturnasastringwhenyouareexpecting toseedataintheoriginal
+sourceformat.SmartIntegration Connector transfersdatainApacheParquetformatfromthe
+LocalGatewayServicetoOneStream. Ifyouaretransferring adatatypethatisunsupported by
+parquet,thedataconvertsandreturnsasstring.Youwillneedtoaddlogictore-convertthestring
+tothedesiredandsupported datatypeifneeded.
+Incertaincases,ifyoureceivetheerror"Themethodoroperation isnotimplemented" thenyou
+canusearemotebusinessruletotransferdata.Thisoccurswhenreturningthevarbinary(max)
+datatype.
+SmartIntegration Connector Guide 165Troubleshooting
+ManualStartandStop
+Ifyourunintoerrorswiththeservice,youmayneedtomanuallystopandrestarttheservice.This
+canbeaccomplished intheGUI-basedServicescontrolmanagerasshownbeloworbyusingthe
+command- prompt/PowerShell. Thenameoftheservicewhenusingcommand- linetoolsis
+"OneStreamSmartIntegration".
+UsingtheWindowsServiceControlManager:
+1.OpenServicesfromyourWindowsstartmenu.
+2.Right-clickonOneStream SmartIntegration Connector Gateway.
+3.SelectStop.
+4.Right-clickagainandselectStart.
+SmartIntegration Connector Guide 166Troubleshooting
+Usinganelevatedcommand- prompt:
+1.netstopOneStreamSmartIntegration
+2.netstartOneStreamSmartIntegration
+UsinganelevatedPowerShell prompt:
+1.stop-service-ServiceName OneStreamSmartIntegration
+2.start-service-ServiceName OneStreamSmartIntegration
+RemoteEndpoint NotFound/Could Not
+Decrypt
+Totroubleshoot theerrors"RemoteEndpointNotFound"or"Couldnotdecryptconnection string
+onSmartIntegration Connector Gateway Connection: [Connection Name]",checkyourservice
+accountpermissions. Theserviceaccountusedwillrequirelocaladministrative rightstoaccess
+resources ontheWindowsserver,suchasthemachinecertificate storeandprivatekeysusedfor
+encryption.
+ERPConnect ModuleorDependency Not
+Found
+Whenexecuting aSmartIntegration FunctionthatusesERPConnect, anerrormayoccurthat
+indicatesthattheERPConnect DLLoroneofitsdependencies wasnotfoundordidnotload.For
+additional information, refertoKnowledge BasearticleKB0013553 .
+IftheDLLislocatedinthecorrectfolder,Windowssecuritypoliciesarepreventing theDLLfrom
+loadingandthefilemustbeunblocked.
+SmartIntegration Connector Guide 167Troubleshooting
+TounblocktheDLL:
+1.RightclicktheDLLfileandthenselectProperties .
+2.IntheGeneraltab,selectUnblockandthenselectOK.
+3.RestarttheSmartIntegration Connector gateway.Fordetails,refertoRestarttheGateway.
+SmartIntegration Connector Guide 168Troubleshooting
+Connections Requiring aSignedCertificate
+Forconnections thatrequireasignedcertificate inordertoestablishaconnection, thena
+Certificate Authority(CA)needstobeaccessible fromtheSmartIntegration Connector Local
+GatewayServerinordertofunction.
+lGateway Connections: CAneedstobeaccessible fromtheSmartIntegration Connector
+LocalGatewayServer.
+lDirectConnections: CAneedstobepubliclyaccessible fromOneStream.
+TrustedCertificate Chain
+IfyouareusingSmartIntegration Functions andsettheSQLServerconnection stringwithinthe
+function,youmayreceivethefollowingerror:
+Aconnection wassuccessfully established withtheserver,butthenanerroroccurredduringthe
+loginprocess.(provider: SSLprovider,error:0-Thecertificate chainwasissuedbyanauthority
+thatisnottrusted.)
+SmartIntegration Connector Guide 169Troubleshooting
+Ifyoudonothaveatrustedcertificate installedonyourDBserver,youcanworkaroundthiswith
+TrustServerCertificate. However, thisworkaround islesssecureanddiscouraged inproduction
+environments. Toresolvethiserror,includeTrustServerCertificate=True ;toyourconnection
+stringwithinthefunction.
+UnabletoConnect
+Ifyourconnection fails,checkyourSmartIntegration Connector errorlogfor:
+[2023-10-0407:09:59INF]StartingListenerfor:<sitename>.servicebus.windows.net
+[2023-10-0407:10:00ERR]Unabletoconnect:Generic:Iphasbeenprevented toconnecttothe
+endpoint.
+Toresolvethisissue,verifythattheIPaddresses inyourWhitelisting totheAzureRelayareset
+upproperly.SeeNetworking andWhitelisting .
+Communication Error
+IfyouseethefollowingerrorintheWindowsServiceLog,itmeansthatyouhaveamismatched
+WebAPIKey. ThiscouldoccuriftheWebAPIkeyischangedinOneStream andtheconfiguration
+fortheSmartIntegration LocalGatewayserviceisnotexportedfromOneStream andre-imported
+intotheLocalGatewayServerserviceusingtheconfiguration utility.
+[14:13:36 INF]HTTPRequestwithinvalidAPIkey
+YoucanresolvethiserrorbymatchingtheWebAPIKey intheconfiguration utility.
+NOTE:Ifthevalueischanged,youmustrestarttheservice.
+SmartIntegration Connector Guide 170Troubleshooting
+HostHeaderCommunication Error
+Ifyoucopythebusinessrulebelowandarehavingtroublecommunicating withyourWebAPIafter
+compiling, ensurethatyouhavesetyourhostheadercorrectly.Refertohighlights inthe
+screenshot below.
+bytesFromFile =CompressionHelper.InflateJsonObject (OfSystem.Byte())
+(si,objRemoteRequestResultDto.resultDataCompressed) 
+'TheSmartIntegration Connector Gateway nowprovides thistypeinformation backto
+OneStream
+'andstreamlines thisconversion process usinganewlyaddedproperty called
+'ObjectResultValue whichispopulated.
+'Wheninvoking thesameoperation shownabovethatpreviously required
+'thetypetobeconverted, aBRdeveloper candothefollowing:
+bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+<DbProviderFactories>
+<addname="Npgsql DataProvider" invariant ="Npgsql" description ="DataProvider for
+PostgreSQL" type="Npgsql.NpgsqlFactory, Npgsql" />
+<addname="MySQL DataProvider" invariant ="MySql.Data.MySqlClient" description =".Net
+Framework DataProvider forMySQL"type="MySql.Data.MySqlClient.MySqlClientFactory,
+MySql.Data" />
+<!--<addname="Oracle DataProvider for.NET"invariant="Oracle.DataAccess.Client"
+description=".Net Framework DataProvider forOracle"
+type="Oracle.DataAccess.Client.OracleClientFactory, Oracle.DataAccess" />-->
+SmartIntegration Connector Guide 171Troubleshooting
+Gateway TestingIssueResolution
+Ifyourconnection testingisfailing,refertothestepsbelowtofullytesttheconnection.
+1.Youcantesttheconnection bydouble-clickingtheOneStreamGatewayService.exe file
+locatedintheinstallation folder.
+NOTE:TheSmartIntegration Connector GatewayWindowsServicemustbeina
+stoppedstatetorunintheconsolefortestpurposes.
+Thefollowingcommand windowisdisplayed:
+2.Correctanyerrorsthataredisplayed inthecommand window.
+SmartIntegration Connector Guide 172Troubleshooting
+NOTE:Ifthecommand windowoutputdoesnotproceedbeyondthe
+"APIServiceHostController StartRelayAPIstartupsuccessful." line,thisindicates
+thattheoutbound trafficoverport443totheAzureRelayisblocked.Opentheport
+toresolvethisissue.
+3.IntheOneStream WindowsApplication client,refreshConnection DetailsfromSystem>
+Administration >SmartIntegration Connector >Yourconnection .
+lTheInstanceCountchangesfrom0to1.
+lTheStatuschangesfromOfflinetoOnline.Additionally, statusindicators turngreen
+onthesidemenuiftheConnection isOnline,rediftheConnection isOffline,and
+yellowiftheConnection isOfflinebutthereisanewerversionoftheLocalGateway
+Serveravailable. Seethesecondscreenshot underthisstepforaclose-upofthe
+indicators.
+lTheVersionfieldshowstheversionoftherunningSmartIntegration Connector
+Gateway.
+SmartIntegration Connector Guide 173Troubleshooting
+4.PressEntertwiceonthekeyboardtostoptheserviceinthecommand windowandthen
+closethecommand window.
+Automatic Business RuleDecompression (Priorto
+Version8.0)
+Priortoversion8.0,itwasrequiredthataOneStream BusinessRuledeveloper invokingaremote
+SmartIntegration Functionbeawareofthedatatypereturnedandconvertaccordingly afterthe
+resultisreturned.
+SmartIntegration Connector Guide 174Troubleshooting
+Example: Anexamplewherethereturnedresultwasabyte
+arrayinvolvedcodethatappeared asfollows:
+bytesFromFile =CompressionHelper.InflateJsonObject (OfSystem.Byte())
+(si,objRemoteRequestResultDto.resultDataCompressed)
+TheSmartIntegration Connector Gatewaynowprovidesthistypeofinformation backto
+OneStream andstreamlines thisconversion processusinganewlyaddedpropertycalled
+ObjectResultValue, whichispopulated.
+Wheninvokingthesameoperation shownabovethatpreviously requiredthetypetobe
+converted, aBRdeveloper candothefollowing:
+bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+bytesFromFile =CompressionHelper.InflateJsonObject (OfSystem.Byte())
+(si,objRemoteRequestResultDto.resultDataCompressed)
+bytesFromFile =objRemoteRequestResultDto.ObjectResultValue
+SmartIntegration Connector Guide 175Troubleshooting
+Frequently AskedQuestions
+Thissectioncontainsfrequently askedquestions relatedtoSmartIntegration Connector:
+lSecurityandNetworkConfiguration
+lConfiguration andConnectivity
+lDataHandlingandQueryBehavior
+lIntegration andAPIUsage
+lMaintenance andReliability
+lHostHeaders
+lMigrationfromVPN
+lTroubleshooting
+SecurityandNetworkConfiguration
+IsSmartIntegration Connector secureincomparison to
+usingaVPN?
+Yes,seebelow:
+lSmartIntegration Connector isencrypted endtoendusingTLS.
+lSmartIntegration Connector is100%customermanaged. ITisabletoconfigurealldata
+sourcestoOneStream .
+SmartIntegration Connector Guide 176Frequently AskedQuestions
+lDatabase connection stringsareencrypted uponsaving.
+lSmartIntegration Connector islessinvasivethanVPNandisnetworkfriendly.
+ArethereanyportsorIPsthatneedtobewhitelisted inour
+firewalltosetupthisconnection? Howcanwewhitelistthe
+Relay?
+SmartIntegration Connector LocalGatewayServerrequiresport443outbound opento
+communicate withtheAzureRelay.Ifyouneedtofurtherlockdownthefirewall,youcanlimitthe
+trafficoutbound togoto*.servicebus.windows.net.
+IsIPWhitelisting supported?
+InOneStream v8.1andhigher,specificIPsorCIDRs,arangeofIPs,canbewhitelisted fromthe
+OneStream WindowsClientApplication. Fordetails,seeNetworking andWhitelisting .
+Configuration andConnectivity
+Isthereaneasywaytoseeifmyconnection isonline?
+Yes.YoucancheckthestatuswithinOneStream fromtheSystem/Smart Integration Connector
+page.Looktoseeifthestatusoftheconnection youselectedisonline.
+SmartIntegration Connector Guide 177Frequently AskedQuestions
+Forgatewayconnections, iftheversionisemptyandthestatusisonline,youmayhavesome
+firewallrulesthatareblockingfullconnectivity overport443.
+Statusindicators inthelistofconnections provideavisualindication oftheConnection status.
+lGreen:TheConnection isOnline.
+lRed:TheConnection isOffline.
+lYellow:(Gateway Connections only)TheConnection isOnlineandanupdatetotheLocal
+GatewayServerisavailable.
+NOTE:ForDirectConnections ,theyellowstatusisnotdisplayed asthese
+connections donotreportaversionnumberbacktoOneStream.
+SmartIntegration Connector Guide 178Frequently AskedQuestions
+CanIconnecttheSmartIntegration Connector Gateway
+ServicetobothDEVandPROD?
+Yes,butthisisnotbestpractice.Customers inthepasthavetestedlargejobsinDEVthathave
+causedperformance issueswithinPROD.
+CanIconnecttomultipleSFTPservers?
+Yes.Youcansetupdirectconnections tomultipleSFTPservers.
+DataHandling andQueryBehavior
+Aretheredatalimitations weneedtobeconcerned about?
+SmartIntegration Connector hasathresholdlimitoffivemillionrowsorfiveGB.Additional
+CPU/RAM resources arerequiredforlargequantities ofdata.Ifthislimitisexceeded, youwill
+receiveaSmartIntegration Connector RemoteQueryError.
+WhatifIhaveaquerythatreturnsnullvalues?
+Beginning inVersion8.2,queriesthatcontainnullvaluesarenowbeingreturned.Priortothis,null
+valueswouldhavetobereplacedwithsomething, likeazero.
+SmartIntegration Connector Guide 179Frequently AskedQuestions
+Arethereanyrestrictions onthetimequeriesareallowedto
+run?
+Beginning inVersion8.2,queriesthatrunlongerthantenminuteswillnowreturndata.
+Integration andAPIUsage
+Cananything otherthanJSONformatbereturnedwhen
+usingaWebAPI?
+AnyobjecttypethatcanbewrappedinJSONcanbereturned.
+WhywouldweuseBRAPIversesRemoteCodeExecution of
+Business Rules?
+Remotecodeexecution takesasimpleOneStream BRandshipsittotheSmartIntegration
+Connector Gatewaytocompile/run. Thebenefitsofthisaretwofold:
+lCustomers canhaveadependency onanythirdparty.NETlibrarytheywish.
+lRemoteBRssupportmorecomplexdata-ingestionscenarios aswell.Picturedatabeing
+pulledfrommultiplefilesharesonacustomer's network,thenbeingassembled/parsed and
+shippedbacktoOneStream .Someofthisworkcouldbeoffloadedintothecustomer's
+environment wheredirectaccesstothedataisavailable.
+SmartIntegration Connector Guide 180Frequently AskedQuestions
+Whataresomeoftheusecasesforwhenweusethethree
+RemoteCodeExecution Options? IsthereaUseCasefor
+BRAPImethod?
+TherearefouroptionsforinvokingthingsremotelyontheSmartIntegration Connector Gateway:
+lExecRemoteGatewayRequest :Thisisageneral-purposeAPIthatisusedinternallyinside
+OneStream todoeverything onaremoteendpoint.Itisexposedtoprovidegranularcontrol
+ontimeoutsorothercustomscenarios.
+lExecRemoteGatewayBusinessRule :ThistakesaSmartIntegration FunctionBRbuiltin
+OneStream andsendsittoaspecificSmartIntegration Connector Gatewaytocompile/run.
+Itprovidesoptionstocontrolcachingtomakeitrunfasteronsubsequent callssinceBRwill
+alreadybecompiled.
+lExecRemoteGatewayJob :Thisissimilartothesecondoptionlistedabove,butinsteadof
+runningsynchronously andblockingthingsonOneStream ,itisforlong-runningBRs.Think
+ofthislikerunningaDMjobontheSmartIntegration Connector Gatewaythatcanrunfor
+uptothirtyminutes.ThestatusofthejobispolledfromOneStream toobtainthestatusand
+gathertheresults.
+lExecRemoteGatewayCachedBusinessRule :ThisisaBRAPItorunacached,previously
+compiledBRontheSmartIntegration Connector Gateway. Thisisseldomused.
+ArethereanyspecificBusiness Rulefunctions thatarenot
+compatible withSmartIntegration Connector?
+Forbusinessrulecompatibility, seeBusinessRules.
+SmartIntegration Connector Guide 181Frequently AskedQuestions
+Maintenance andReliability
+HowdoI adjustthereporting intervalforSmartIntegration
+Connector failures?
+Bydefault,failureswillbereportedeveryfiveminutes.Itisrecommended thatyouadjustthe
+reportingtimeintervalsforqueriesthatrunforlongerthanfiveminutes.
+WillOneStream upgrades stoptheconnections from
+running?
+NOTE:ForOneStream v9.0,itisrequiredtouseSmartIntegration Connector v9.0.
+AlthoughSmartIntegration Connector isdesignedtobebackwards compatible withinmajor
+versions,itishighlyrecommended andabestpracticetoalwayskeepthetwoversionssynced.
+HostHeaders
+CannotCommunicate usingaDirectConnection.
+Connection issues:
+SmartIntegration Connector Guide 182Frequently AskedQuestions
+lCheckthattheserverisonline.
+lMakesurethatthecorrectdomainnameisused.
+lVerifythathostheaderisincludedintheBRandconfigured correctly.
+IstheHostHeaderrequiredforallintegrations?
+No.It'sonlyrequiredforservicesthatexplicitlycheckforit.However, includingitcanhelpavoid
+connectivity issueswithcertainAPIsorload-balancedenvironments.
+WhatvalueshouldIusefortheHostHeader?
+Usethedomainnameofthetargetserver(forexample,api.example.com ).Thisshouldmatch
+whattheserverexpectsinincomingrequests.
+Foracodeexample,refertoObtainDatathroughaWebAPI.
+Migration fromVPN
+Iammigrating fromaVPN solution toSmartIntegration
+Connector. isthereanything Ineedtotakeintoconsideration
+duringmigration?
+UsethechecklistbelowtoprepareyourselfformigratingfromVPNtoSmartIntegration
+Connector.
+NOTE:Whilemigrating, aVPNandSmartIntegration Connector canbeusedin
+tandem.ThisallowsforA/Btestingandvalidation priortodisconnecting theVPNtunnel.
+SmartIntegration Connector Guide 183Frequently AskedQuestions
+Checklist Item Complete
+CheckifyourVPNconnection isusedforsecuringauthentication pathsto
+OneStream. Smart Integration Connector isnotprovidingthiscapability,
+howeverotherconsiderations suchaswhitelisting IPaccessareoptions.
+SeeModifyInboundClientAccessRules.□
+Determine howmanyVPNconnections exist.IfOneStream isintegrating
+withdatasourcesfrommultiplesubnetworks, youmayhavemultipleVPN
+connections.  Thisconfiguration canbemanaged withmultipleLocal
+GatewayServers.□
+SmartIntegration Connector requirestheinstallation andoperation ofa
+LocalGatewayService.MakesureyouhaveidentifiedaVirtualMachineor
+physicalservertooperatetheLocalGatewayServer. See Requirements .□
+Takeinventoryofwhatyoucurrentlyuseforexample,businessrules,
+workspaces, queries,gridviews,drill-backs,andwhitelisted endpoints for
+eachplanforanyupdatesneededwhenusingSmartIntegration
+Connector.□
+SetupatimewithyourOneStream CloudSupportRepresentative toplan
+whentheVPNcanbedisconnected.□
+Troubleshooting
+SeeTroubleshooting .
+SmartIntegration Connector Guide 184Frequently AskedQuestions

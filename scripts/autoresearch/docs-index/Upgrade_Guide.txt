@@ -1,0 +1,489 @@
+Upgrade 
+Guide
+9.2.0 Release
+
+Copyright  © 2026  OneStream  Software  LLC.  All rights  reserved.
+All trademarks,  logos,  and brand  names  used  on this website  are the property  of their respective  
+owners.  This document  and its contents  are the exclusive  property  of OneStream  Software  LLC 
+and are protected  under  international  intellectual  property  laws.  Any reproduction,  modification,  
+distribution  or public  display  of this documentation,  in whole  or part, without  written  prior consent  
+from OneStream  Software  LLC is strictly  prohibited.
+Table  of Contents
+Scheduling  the Upgrade 1
+Upgrading  from Platform  Versions  Earlier  than 8.0.0 1
+Upgrading  from Platform  Version  8.0.0  or Later 1
+Requirements 3
+Before  Upgrading 5
+Upgrade  System  Components 11
+Uninstall  OneStream Software 11
+Reinstall  OneStream Servers 11
+Reinstall  OneStream for  Desktop 13
+Upgrade  the Framework  and Application  Databases 14
+Run the Upgrade  Assistant  Utility 15
+Update  the ASP.NET  Configuration  File 16
+Update  the Configuration  Files 17
+Update  the Application  Server  Configuration  File 17
+Upgrade Guide iTable ofContents
+Update  the Web Server  Configuration  File 18
+Update  and Configure  IIS 18
+Test the Windows  Client  Login  Using  ClickOnce 19
+Test the Modern  Browser  Experience  Login 20
+Verify  the Application 20
+Platform  Version  8.0.0  or Later  Readiness 21
+Business  Rules 21
+System.Data.SqlClient  to Microsoft.Data.SqlClient  Migration 22
+Custom  DLLs 24
+ERPConnect  (SAP) 24
+Smart  Integration  Connector 25
+Authentication 25
+VBA Changes 25
+Client  API Changes 25
+Tiles  Page 26
+Help Documentation 26
+Upgrade Guide iiTable ofContents
+Business  Rule Groups 26
+OneStream  Solution  Compatibility 26
+Help and Miscellaneous 27
+Upgrade  Troubleshooting 27
+Incorrect  Installation  Order 27
+Execution  Policy  when  running  PowerShell  Script 28
+Upgrade Guide iiiTable ofContents
+Scheduling  the Upgrade
+This section  provides  details  related  to scheduling  Platform  upgrades  for OneStream .
+Upgrading  from  Platform  Versions  Earlier  
+than  8.0.0
+When  upgrading  from a Platform  Version  earlier  than  8.0.0  to Platform  Version  8.0.0  or later,  
+OneStream  encourages  customers  to prepare  for their upgrade  by referencing  content  in the 
+OneStream  Community.  See Platform  v8+ Upgrade  Resource .
+OneStream  cloud  customers  may initiate  Platform  Version  8.0.0  or later upgrade  interest  by 
+submitting  a Software  Upgrade  request  through  the Service  Catalog.  A Cloud  Migration  ticket  will 
+be opened  and available  to track  upgrade  activities.
+OneStream  self- hosted  customers  may download  Platform  Version  8.0.0  or later from Solution  
+Exchange .
+Upgrading  from  Platform  Version  8.0.0  or 
+Later
+Upgrades  from Platform  Version  8.0.0  or later follow  traditional  OneStream  best  practices.  Cloud  
+customers  can initiate  and schedule  upgrades  through  the Software  Upgrade  request  on the 
+Service  Catalog.
+Upgrade Guide 1Scheduling theUpgrade
+OneStream  self- hosted  customers  may download  the latest  platform  version  directly  from 
+Solution  Exchange  and proceed  with their upgrade.
+Upgrade Guide 2Scheduling theUpgrade
+Requirements
+Information  Technology  professionals  responsible  for installing,  maintaining,  and supporting  
+OneStream  must  satisfy  the following  requirements  to best support  an upgrade.  They  must  also 
+review  the requirements  and special  notes  in the Installation  and Configuration  Guide  and 
+Release  Notes .
+IMPORTANT:  Platform  Version  8.2.0  and later was developed  using  Microsoft  .NET  8. 
+As a result,  all Business  Rules  must  be tailored  for .NET  8. For more  information,  see 
+Platform  Version  8.0.0  or Later  Readiness .
+ lOneStream  Platform  Version  8.2.0  or later requires  Microsoft  .NET  8.
+ oApp Server  and Web Servers
+ nInstall  the latest  version  of ASP.NET  Core  Runtime  (Hosting  Bundle)  (v8.0.x).
+ nInstall  the latest  version  of .NET  Desktop  Runtime  (x64)  (v8.0.x).
+ oClient
+ nInstall  the latest  version  of .NET  Desktop  Runtime  (x64)  (v8.0.x).
+IMPORTANT:  Do not install  the .NET SDK package.  You may run into errors  
+while  upgrading  if this is installed.  
+ lOneStream  Servers  requires  IIS 7 or later.
+ lIn each  application,  complete  the Compile  all Business  Rules  and Formulas  to verify  that 
+business  rules  use the proper  syntax.
+Upgrade Guide 3Requirements
+ lIf your applications  are referencing  any 3rd party  DLLs  that are not provided  by OneStream,  
+verify  these  DLLs  are .NET  8 compatible.  Contact  OneStream  Support  
+(https://www.onestream.com/support/ ) to discuss  available  upgrade  options.
+ lWhen  upgrading  OneStream,  update  the database  schema  to the most  recent  version.
+IMPORTANT:  All database  upgrade  steps  must  be taken  sequentially.  Users  
+cannot  skip steps  or stop updates  once  started.
+ lBack  up the Configuration  files in your OneStream  Share  directory.
+ lFor additional  minimum  system  requirements,  see "Hardware  and Software  Requirements"  
+in the Installation  and Configuration  Guide .
+ lWhen  implementing  Smart  Integration  Connector  with the OneStream  application,  see 
+"Requirements"  in the Smart  Integration  Connector  Guide .
+IMPORTANT:  Self-hosted  customers  must  have  a successful  database  connection  
+before  the Database  Upgrade.  See Enable  the Trust  Server  Certificate .
+Upgrade Guide 4Requirements
+Before  Upgrading
+Perform  these  tasks  before  upgrading:
+ 1. Perform  a full backup  of all OneStream  databases.
+ 2. Download  Client  Software  and Self-Hosted  Server  (for on-premises  installations)  from 
+Solution  Exchange  for the appropriate  setup  files:
+ a. Log in to Solution  Exchange , and select  Platform  to get the latest  version  of 
+OneStream .
+ b. Download  Client  Software  and Self-Hosted  Server  (for on-premises  installations)  for 
+the appropriate  setup  files for the server  installation.
+ 3. Confirm  the location  of the OneStream  configuration  files:
+ a. On a OneStream  server,  select  Start  > Programs  > OneStream  Software  > 
+OneStream  Server  Configuration  Utility .
+ b. Right- click the utility  and select  Run as Administrator .
+ c. Select  File > Open  ASP.NET  Configuration  File and open  the appsettings.json  
+file from the following  locations.
+ lWeb  servers : C:\Program  Files\OneStream  Software\ OneStream
+WebRoot\ OneStream Web
+ lApplication  servers : C:\Program  Files\OneStream  Software\
+OneStream AppRoot\ OneStream App
+ d. The file opens  and displays  the path to the XFAppServerConfig.xml  and 
+XFWebServerConfig.xml  configuration  files.
+Upgrade Guide 5Before Upgrading
+ e. Take  note of the path to the configuration  files. You will specify  this location  during  
+the upgrade.
+NOTE:  This path is commonly  set to C:\OneStreamShare\Config
+ 4. Make  a copy  of the configuration  files contained  in this folder,  and save  them  to a backup  
+folder  of your choice.
+ 5. Close  the file without  saving  and exit the utility.
+ 6. Obtain  the OneStream  service  account  in Internet  Information  Services  Manager.  Note  the 
+Windows  account  and password  because  you will enter  them  in IIS after the upgrade.
+NOTE:  The service  account  must  be an Admin  ID or in the IIS_IUSRS  Group,  
+Performance  Log User,  and Performance  Monitor  Users  group.  The ID is required  
+for queuing  and CPU  monitoring.
+Upgrade Guide 6Before Upgrading
+ a. On each  OneStream  server,  select  Start  > Control  Panel  > Administrative  Tools  > 
+Internet  Information  Services  (IIS) Manager .
+ b. Expand  the server  and select  Application  Pools . This displays  application  pools  to 
+the right.  The OneStream AppAppPool  and OneStream WebAppPool  service  
+accounts  display  in the Identity  column.
+ 7. Confirm  the IIS OneStream  App Server  Site and OneStream  Web Server  Site Binding  
+Information.  If they are not kept as default  and the type was http or https,  the port number  
+(and certificate  if used  for https)  can be restored.  This information  will not be available  if 
+OneStream  is uninstalled.
+ 8. Confirm  that the OneStream  Database  Configuration  Utility  is installed  on each  OneStream  
+application  server.  Click  Start  > Programs  > OneStream  Software .
+ 9. Confirm  that  OneStream  is installed  on each  OneStream  application  server.  Click  Start  > 
+Programs  > OneStream  Software .
+ 10. Install  the following:
+ lApp Server  and Web  Servers
+ oInstall  the latest  version  of ASP.NET  Core  Runtime  (Hosting  Bundle)  (v8.0.x).
+ oInstall  the latest  version  of .NET  Desktop  Runtime  (x64)  (v8.0.x).
+ lClient
+ oInstall  the latest  version  of .NET  Desktop  Runtime  (x64)  (v8.0.x).
+ 11. On-premises  customers  must  enable  the Trust  Server  Certificate  for the 
+OneStream  Database  Server  using  the OneStream  Server Configuration  Utility:
+Upgrade Guide 7Before Upgrading
+ a. Select  File > Open  Application  Server  Configuration  File.
+ b. Navigate  to C:\OneStream Share\Config  or the location  of configuration  files from 
+step 3e.
+ c. Open  the App Server  Config  file.
+ d. Locate  Database  Server  Connections .
+ e. Click  
+ to open  the Database  Server  Connections.
+ f. At the end of the Connection  String , add TrustServerCertificate=True.
+ g. Click  the OK button.
+All Application  Databases
+From  the OneStream  Database  Configuration  Utility:
+Upgrade Guide 8Before Upgrading
+ a. Right- click on a database,  click Edit the Database   Connection .
+ b. Select  Advanced .
+ c. Set Trust  Server  Certificate  to True , then click the OK button.
+ d. Select  Test Connection  to ensure  a successful  connection.
+Upgrade Guide 9Before Upgrading
+NOTE:  Alternatively,  set the TrustServerCertificate  to True directly  in the XML.  
+Repeat  these  steps  for all Application  Databases.
+Upgrade Guide 10Before Upgrading
+Upgrade  System  Components
+Perform  the tasks  in the following  sections  to upgrade  the complete  OneStream  system.
+Uninstall  OneStream  Software
+Uninstall  the OneStream  Server  and, if installed,  Client  API.
+ 1. Select  Control  Panel  > Programs  and Features  > Uninstall  a Program .
+ 2. Locate  the OneStream  Servers  component.
+ 3. Right- click OneStream  Servers  and select  Uninstall .
+ 4. If installed,  locate  the OneStream  Client  API component.
+ 5. Right- click OneStream  Client  API and select  Uninstall .
+Reinstall  OneStream  Servers
+Install  the OneStream  Servers  on the Application  Server  and Web Server.
+ 1. Browse  to the OneStream  Servers  package,  right- click OneStream Servers- #.msi  and 
+select  Install  to run the server  installation.
+ 2. On the landing  page,  click the Next  button  and accept  the License  Agreement.
+ 3. Specify  the directory  where  the software  was previously  installed  and click the Next  button.
+ 4. Select  Custom .
+ 5. On Select  Features , select  the features  to install.
+Upgrade Guide 11Upgrade System Components
+ lApplication  Server : Select  Application  Server  and Server  Configuration  Utility .
+NOTE:  Choose  the Database  Configuration  Utility  and Upgrade  Assistant  
+Utility  if the application  server  is the server  where  the Database  
+Configuration  Utility  was previously  installed.
+ lWeb  Server : Select  Web  Server  and Server  Configuration  Utility .
+Upgrade Guide 12Upgrade System Components
+ 6. Click  the Next  button.
+ 7. Click  Install  then Finish .
+Reinstall  OneStream  for Desktop
+ 1. Browse  to the OneStream  package,  right- click OneStream Desktop- #.msi  and select  
+Install .
+ 2. Click  the Next  button  and accept  the License  Agreement.
+ 3. Select  Custom .
+ 4. Select  the directory  where  the software  was previously  installed  and click the Next  button.
+Upgrade Guide 13Upgrade System Components
+ 5. On Select  Features , select  all options  and click the Next  button.
+ 6. Click  Install  then Finish .
+Upgrade  the Framework  and Application  
+Databases
+IMPORTANT:  When  updating  OneStream , update  the database  schema  to the most  
+recent  version.  All database  upgrade  steps  must  be completed  sequentially.  Users  
+cannot  skip steps  or stop updates  once  started.
+Changes  are made  to stage  tables  for this release,  so the database  update  may take time.
+ 1. Before  performing  these  steps,  have  a database  administrator  back  up all OneStream  
+databases.
+ 2. On the OneStream  application  server  with the OneStream  Database  Configuration  Utility  
+installed,  select  Start  > Programs  > OneStream  Software  > OneStream  Database  
+Configuration  Utility .
+ 3. Right- click the utility  and select  Run as Administrator .
+ 4. Right- click OneStream  Framework  Database  and select  Upgrade  Database  Version . If 
+disabled,  an upgrade  is not required.
+NOTE:  If you get an error,  check  the log for details:  C:\Program  Files\ OneStream  
+Software\XFDatabaseConfig\Log
+ 5. A dialog  box displays  giving  you the option  to process  the schema  upgrade  on the database  
+or the server.  Leave  the text field blank  and click Yes to begin  the database  upgrade  using  
+the default  setting,  which  is database.
+Upgrade Guide 14Upgrade System Components
+ 6. Repeat  the upgrade  for each  Application  database  and the Framework  database  until the 
+option  is disabled.  This indicates  the database  is up-to-date.
+Run the Upgrade  Assistant  Utility
+This is an additional  step that must  be performed  when  upgrading  from a Platform  Version  earlier  
+than  8.0.0  to a Platform  Version  8.0.0  or later.  Specifically,  this version  of the Upgrade  Assistant  
+Utility  will convert  any legacy  reports  that were  stored  in CodeDOM  format  to now be stored  as 
+XML.
+ 1. On the OneStream  application  server  with the OneStream  Upgrade  Assistant  Utility  
+installed,  select  Start  > Programs  > OneStream  Software  > OneStream  Upgrade  
+Assistant  Utility .
+ 2. From  the command  line enter:  
+xfupgradeassistant  -c C:\OneStream Share\Config\XFAppServerConfig.xml  -t 
+ReportLayoutBytes  -v -update
+NOTE:  C:\OneStream Share\Config  is the default  path to the configuration  file. 
+You must  update  this path if it has been  modified  for your environment.
+ 3. Enter  exit to close  the utility.
+ 4. Restart  IIS.
+Upgrade Guide 15Upgrade System Components
+Update  the ASP.NET  Configuration  File
+The ASP.NET  Configuration  file (appsettings.json)  must  be updated  on every  server/folder  as 
+outlined  in the following  section:
+ lApplication  server
+ oC:\Program  Files\ OneStream  
+Software\ OneStream AppRoot\ OneStream App\appsettings.json
+ oC:\Program  Files\ OneStream  
+Software\ OneStream AppRoot\ OneStream Mgmt\appsettings.json
+ lWeb servers:
+ oC:\Program  Files\ OneStream  
+Software\ OneStream WebRoot\ OneStream Web\appsettings.json
+ oC:\Program  Files\ OneStream  
+Software\ OneStream WebUIRoot\ OneStream WebUI\appsettings.json
+ 1. On each  OneStream  server,  launch  the OneStream  Server  Configuration  Utility  by clicking  
+Start  > Programs  > OneStream  Software  > Server  Configuration  Utility .
+ 2. Right- click the utility  and select  Run as Administrator .
+ 3. Select  File > Open  ASP.NET  Configuration  File and browse  to the appropriate  location  
+from the folders  above.
+ 4. Select  the appsettings.json  file.
+ 5. When  the file opens,  copy  the directory  path of the configuration  files.
+NOTE:  This path is commonly  set to C:\OneStream Share\Config
+ 6. Enable  HTTP  and Enable  HTTPS  are enabled  by default.
+Upgrade Guide 16Upgrade System Components
+When  SSL is  not enabled,  select  Enable  HTTP  and deselect  Enable  HTTPS . 
+NOTE:  Only one protocol  can be selected: Enable  HTTP  or Enable  HTTPS.
+NOTE:  For the WebUI  server  file for the Modern  Browser  Experience,  you are not 
+asked  to select  a checkbox  to enable  HTTP  or HTTPS.
+ 7. Save  and close  the file.
+ 8. Repeat  these  steps  on each  web and app server  in the environment.
+Update  the Configuration  Files
+Update  the Application  and Web Server  Configuration  files.
+Update  the Application  Server  Configuration  File
+ 1. Open  the OneStream  Server  Configuration  Utility,  and select  Run as Administrator .
+ 2. Select  File > Open  Application  Server  Configuration  File and select  the Application  
+Server  Configuration  file from C:\OneStream Share\Config.  
+ 3. In Database  Server  Connections , select  the ellipsis and  update  the command  time- outs 
+for the OneStream  Database  Server  connection:
+ lShort  = 90 (required)
+ lLarge  = 900
+ 4. Select  the Save  icon and close  the file.
+Upgrade Guide 17Upgrade System Components
+Update  the Web  Server  Configuration  File
+ 1. Open  the OneStream  Server  Configuration  Utility,  and select  Run as Administrator .
+ 2. Select  File > Open  Web  Server  Configuration  File and select  the Web Server  
+Configuration  file from C:\OneStream Share\Config.
+ 3. To ensure  the file version  is updated,  select  the Save  icon and close  the file.
+Update  and Configure  IIS
+ 1. On each  OneStream  server,  open  the OneStream  Server  Configuration  Utility  by clicking  
+Start  > Programs  > OneStream  Software  > OneStream  Server  Configuration  Utility .
+ 2. Right- click the utility  and select  Run as Administrator .
+ 3. Choose  Tools  > Configure  IIS.
+ 4. In Configure  IIS, specify  the following:
+ lFor Web Site Name,  enter  the name  of the OneStream  IIS Website  to update.
+ lThe OneStream  App Server  and Web Server  sites
+ 5. Select  Update  IIS Default  Settings .
+ 6. Select  options  to update  IIS for the appropriate  websites:
+ lUse Web  Server  Settings : Specify  the Web Server  site.
+ lUse App Server  Settings : Specify  the App Server  site.
+ lUser  Account  Type : Specify  Custom  Account , then enter  the user name  and 
+password  of the OneStream  Service  account.
+ 7. Click  Update  IIS Settings  then OK.
+ 8. Repeat  these  steps  to set the appropriate  IIS settings  for the application  pools  in IIS.
+Upgrade Guide 18Upgrade System Components
+ 9. Log on to each  OneStream  Web  Server  in the environment.
+ 10. Browse  to C:\Program  Files\ OneStream  Software\ OneStream WebRoot\ OneStream Web
+ 11. Locate  the OneStream Web.runtimeconfig.json  file and open  this file in a text editor.
+ 12. Update  the configProperties  section  with the following  line:
+"System.Threading.ThreadPool.MinThreads":  128
+"configProperties":  {
+      "System.GC.Server":  true,
+      "System.Reflection.Metadata.MetadataUpdater.IsSupported":  false,
+      "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization":  false,
+      "System.Threading.ThreadPool.MinThreads":  128
+    } 
+NOTE:  Add a comma  before  the previous  line as shown  in the previous  example.
+ 13. Save  the file to apply  the change.
+ 14. Click  Reset  IIS.
+Test the Windows  Client  Login  Using  
+ClickOnce
+ 1. Using  the Microsoft  Edge  Web Browser,  navigate  to the OneStream  Windows  App URL:
+ lOn-premises : http://<webserver>:50001/OneStreamWeb
+ lCloud : https://<customer>.onestreamcloud.com/OneStreamWeb
+ 2. Click  Open  to launch  the ClickOnce  Windows  app.
+ 3. Confirm  that you can log in.
+ 4. From  Application , select  System  Administration , then click Connect .
+Upgrade Guide 19Upgrade System Components
+ 5. Select  System  > Tools  > Environment  to identify  the application  servers  and their status.
+ 6. Verify  that each  server  is active.
+Test the Modern  Browser  Experience  Login
+ 1. Navigate  to the OneStream  Modern  Browser  Experience  URL:
+ lOn-premises  for Modern  Browser  Experience : http://<webserver>:50001
+ lCloud  for Modern  Browser  Experience : https://<customer>.onestreamcloud.com
+ 2. Confirm  that you can log in.
+Verify  the Application
+ 1. Compile  all business  rules:
+ lRight- click the grid and export  any errors  for analysis  using  an Excel  file format.
+ lApply  updates  as needed.
+ 2. Download  and import  the Standard  Application  and Standard  System  Reports  from the 
+Solution  Exchange .
+Upgrade Guide 20Upgrade System Components
+Platform  Version  8.0.0  or Later  
+Readiness
+Upgrading  your OneStream  Platform  to Version  8.2.0  or later requires  .NET 8.
+Business  Rules
+NOTE:  Users  upgrading  from Platform  Version  8.0.0  or later are not expected  to require  
+Business  Rule maintenance.
+Users  upgrading  from a Platform   Version  earlier  than 8.0.0  will require  Business  Rule 
+maintenance  as Platform  Version  8.0.0  includes  updates  and enhancements  to the Business  
+Rules  compiler  to improve  syntax  detection.  Administrators  must  resolve  these  errors  to compile  
+business  rules  fully. Warning  messages  identify  line items  that will function,  but you should  update  
+them  to support  the latest  compiler’s  requirements.  Resolving  these  warnings  varies.  You may be 
+able to use a provided  replacement  function  or change  a function’s  properties.
+Upgrade Guide 21Platform Version 8.0.0 orLater Readiness
+System.Data.SqlClient  to Microsoft.Data.SqlClient  
+Migration
+IMPORTANT:  
+To maintain  consistency  with Microsoft's  recommendations,  in Platform  Version  8.1.0,  
+the data access  driver  for SQL Server  will be changed  from System.Data.SqlClient  to 
+Microsoft.Data.SqlClient.  This migration  will be automatic  and will take place  during  the 
+database  upgrade  process. All  references  to System.Data.SqlClient  will automatically  
+be changed  to Microsoft.Data.SqlClient  in Business  Rules,  Member  Formulas,  and the 
+like.
+NOTE:  
+These  updates  will take place  automatically  during  the database  upgrade  to Platform  
+Version  8.1.0,  and when  using  the Load  function  of Application  Load/Extract,  instances  
+of System.Data.SqlClient  will automatically  convert  to Microsoft.Data.SqlClient.
+IMPORTANT:  
+If an application  was migrated  after the Platform  Version  8.1.0  upgrade  from Application  
+Copy  (Cloud  Administration  Tools  (CAT))  or a database  BACPAC  file, then the migration  
+from System.Data.SqlClient  to Microsoft.Data.SqlClient  will need  to be applied  directly  
+to that application.  On-premises  customers  can run the Upgrade  SqlClient  Namespace  
+References  from the OneStream  Database  Configuration  utility  to replace  
+System.Data.SqlClient  references.  SaaS  customers  can request  to have  this run by 
+contacting  OneStream  Support  (https://www.onestream.com/support/ ).
+See Platform  v8+ Upgrade  Resource .
+Upgrade Guide 22Platform Version 8.0.0 orLater Readiness
+Example
+Business  Rule Updates:  Update  Using  and Import  statements  to reference  
+Microsoft.Data.SqlClient  using  the following  code:
+C# Before  8.1.0
+using System.Data.SqlClient;
+...
+SqlConnection  conn1 = new System.Data.SqlClient. SqlConnection ();
+System.Data.SqlClient.SqlConnection  conn2 = (System.Data.SqlClient.SqlConnection)conn1;
+C# for 8.1.0
+using Microsoft.Data.SqlClient;
+...
+SqlConnection  conn1 = new Microsoft.Data.SqlClient. SqlConnection ();
+SqlConnection  conn2 = (Microsoft.Data.SqlClient.SqlConnection)conn1;    
+Visual  Basic  Before  8.1.0
+Imports System.Data.SqlClient
+...
+Dim conn1 As New System.Data.SqlClient.SqlConnection ()
+Dim conn2 As System.Data.SqlClient.SqlConnection  = CType(conn1, 
+System.Data.SqlClient.SqlConnection)
+Visual  Basic  for 8.1.0
+Imports Microsoft.Data.SqlClient
+...
+Dim conn1 As New Microsoft.Data.SqlClient.SqlConnection ()
+Dim conn2 As SqlConnection  = CType(conn1, Microsoft.Data.SqlClient.SqlConnection)
+Upgrade Guide 23Platform Version 8.0.0 orLater Readiness
+Custom  DLLs
+If your implementation  or business  rules  reference  custom  DLLs  that are not provided  by 
+OneStream , these  DLLs  must  be .NET  8 compatible.  Contact  OneStream  Support  
+(https://www.onestream.com/support/ ) to discuss  available  upgrade  options.
+ERPConnect  (SAP)
+ERPConnect45.dll  enabling  connection  to SAP systems  is no longer  available  in Platform  
+Versions  8.0.0  and later.  A newer  version  ERPConnectStandard20.dll  is available  through  the 
+download  "DLL  Packages"  from the Platform  page  of the Solution  Exchange .
+On-premises  Customers :
+ 1. Download  ERPConnectStandard20.dll file  to your integrations  folder.
+ 2. Install  the required  Microsoft  Visual  C++ Redistributable  latest  supported  downloads .
+ 3. Download  and copy  SAP NetWeaver  RFC Library  DLL (sapnwrfc.dll)  to the integrations  
+folder.
+See Theobald  Software  ERPConnect  Requirements.
+ 4. Modify  your business  rules  to use the ERPConnectStandard20.dll.
+Cloud/SaaS  Customers : ERPConnect  is available  through  Smart  Integration  Connector.  See 
+the Smart  Integration  Connector  Guide  or contact  OneStream  Support  
+(https://www.onestream.com/support/ ) to discuss  more  upgrade  options.
+Upgrade Guide 24Platform Version 8.0.0 orLater Readiness
+Smart  Integration  Connector
+Smart  Integration  Connector  is required  for OneStream  Cloud  integration  with local customer  data 
+sources  when  using  OneStream  Platform  Version  8.0.0  or later.  VPN is no longer  supported  with 
+Platform  Version  8.0.0  or later and reached  end of service  for versions  earlier  than Platform  
+Version  8.0.0  on August  31, 2024.
+See the Smart  Integration  Connector  Guide .
+Authentication
+Cloud  Customers : OneStream  IdentityServer  is required  for OneStream  Platform  Version  8.0.0  
+or later.  See the Identity  and Access  Management  Guide .
+Self- hosted  Customers : No changes  necessary.  Legacy  authentication  support  is the standard  
+for self-hosted  customers.
+VBA  Changes
+ProcessSSOAuthenticationAndCreateToken  is no longer  supported  as an authentication  option  
+from VBA scripts.  See "Visual  Basic  for Applications  (VBA)  Procedures"  in the Design  and 
+Reference  Guide .
+Client  API Changes
+Client  API is no longer  provided  with Platform  Version  8.0.0  or later.  OneStream  recommends  
+Task  Scheduler  or REST  API to replace  existing  Client  API use cases.
+Upgrade Guide 25Platform Version 8.0.0 orLater Readiness
+Tiles  Page
+The ClickOnce  journey  is enhanced  to launch  the application  with a single  click of the Open  button  
+while  eliminating  the tiles page.  See "Deployment  using  ClickOnce"  in the Installation  and 
+Configuration  Guide .
+Help  Documentation
+Help documentation  has moved  from within  the application  to 
+https://documentation.onestream.com/docs/ . Clicking  the in-app help icon routes  you to this site.
+Business  Rule  Groups
+In Platform  Version  8.0.0  the default  for new Business  Rule Access  or Maintenance  Groups  is the 
+Administrators  group.  This default  can be changed  by the Server  Configuration  Utility.
+OneStream  Solution  Compatibility
+Visit OneStream  Solution  Information  on OneStream  Community  to ensure  your OneStream  
+Solution s are ready  for your OneStream  Platform  upgrade.
+Upgrade Guide 26Platform Version 8.0.0 orLater Readiness
+Help  and Miscellaneous
+This page  contains  help and other  miscellaneous  information  related  to upgrades.
+Upgrade  Troubleshooting
+Review  this section  for troubleshooting  and installation  checks.
+Incorrect  Installation  Order
+Follow  the steps  in order  as outlined  in the Before  Upgrading  section.  Use the following  checks  to 
+help determine  installation  issue  resolutions.
+To check  that you have  the latest  .NET versions  installed,  run the following  command  in the 
+PowerShell:
+dotnet --info
+NOTE:  The hosting  bundle  should  be Microsoft.AspNetCore.App  8.0.x  and the desktop  
+runtime  should  be Microsoft.WindowsDesktop.App  8.0.x
+To check  that IIS is properly  installed,  run the following  command  in the PowerShell:
+get-webglobalmodule
+NOTE:  The output  must  contain  AspNetCoreModuleV2.
+Resolution : Uninstall  the hosting  bundle  and ensure  that IIS is  properly  installed.
+Upgrade Guide 27Help andMiscellaneous
+Execution  Policy  when  running  PowerShell  Script
+Resolution : Run the following  commands  in the PowerShell.
+ lPS C:\WINDOWS\system32>  Set-ExecutionPolicy  Unrestricted
+ lPS C:\WINDOWS\system32>  Set-ExecutionPolicy
+Upgrade Guide 28Help andMiscellaneous

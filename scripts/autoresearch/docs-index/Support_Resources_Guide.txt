@@ -1,0 +1,19 @@
+SupportResources
+Guide
+8.0.0Release
+
+Copyright ©2023OneStream Software LLC.Allrightsreserved.
+Anywarranty withrespecttothesoftware oritsfunctionality willbeexpressly giveninthe
+Subscription LicenseAgreement orSoftware LicenseandServices Agreement between
+OneStream andthewarrantee. Thisdocument doesnotitselfconstitute arepresentation or
+warranty withrespecttothesoftware oranyrelatedmatter.
+OneStream Software, OneStream, Extensible Dimensionality andtheOneStream logoare
+trademarks ofOneStream Software LLCintheUnitedStatesandothercountries. Microsoft,
+Microsoft Azure,Microsoft Office,Windows, Windows Server,Excel,.NETFramework, Internet
+Information Services, Windows Communication Foundation andSQLServerareregistered
+trademarks ortrademarks ofMicrosoft Corporation intheUnitedStatesand/orothercountries.
+DevExpress isaregistered trademark ofDeveloper Express, Inc.Ciscoisaregistered trademark
+ofCiscoSystems, Inc.Intelisatrademark ofIntelCorporation. AMD64isatrademark of
+Advanced MicroDevices, Inc.Othernamesmaybetrademarks oftheirrespective owners.
+TableofContents
+Support Resources Guide iTableofContents
