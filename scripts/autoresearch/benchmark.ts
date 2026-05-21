@@ -25,7 +25,7 @@ import { existsSync, writeFileSync } from "node:fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = resolve(__dirname, "../..");
-const METADATA_FILE = resolve(PROJECT_ROOT, "metadata/Dev_Metadata_20260516_202239Z.xml");
+const METADATA_FILE = resolve(PROJECT_ROOT, "metadata/SWF.xml");
 const CACHE_FILE = resolve(__dirname, "benchmark-cache.json");
 const RESULTS_FILE = resolve(__dirname, "results.tsv");
 
@@ -84,7 +84,7 @@ async function loadData(): Promise<{ data: CachedData; importTimeMs: number; fro
   const stream = createReadStream(METADATA_FILE, { encoding: "utf8" });
   const parsed = await parseOneStreamXmlFromStream(stream, {
     projectName: "Benchmark Import",
-    sourceFileName: "Dev_Metadata_20260516_202239Z.xml"
+    sourceFileName: "SWF.xml"
   });
   const importTimeMs = Math.round(performance.now() - importStart);
 

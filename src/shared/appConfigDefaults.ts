@@ -12,7 +12,7 @@ export const defaultAppConfig: AppConfig = {
   },
   paths: {
     metadataDirectory: "metadata",
-    defaultMetadataFile: "Dev_Metadata_20260516_202239Z.xml",
+    defaultMetadataFile: "SWF.xml",
     uploadsDirectory: "data/uploads",
     exportsDirectory: "data/exports",
     databaseFile: "data/app.db"

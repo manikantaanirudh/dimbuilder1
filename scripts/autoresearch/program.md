@@ -14,7 +14,7 @@ You are an AI agent tasked with improving the OneStream property dictionary cove
    - `src/shared/validationEngine.ts` — produces validation issues (read-only).
    - `src/shared/xmlImport.ts` — the XML importer (read-only).
    - `config/dimbuilder.yaml` — app config with validation settings (read-only).
-   - `metadata/Dev_Metadata_20260516_202239Z.xml` — the real 567MB benchmark XML (read-only, scan for property names).
+   - `metadata/SWF.xml` — the real 567MB benchmark XML (read-only, scan for property names).
 
 2. **Create the benchmark cache** (one-time, takes ~5 min):
    ```
