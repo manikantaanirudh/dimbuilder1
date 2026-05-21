@@ -24,6 +24,13 @@ export interface ServerConfig {
   host: string;
   port: number;
   clientDevPort: number;
+  corsOrigins?: string[];
+}
+
+export interface AuthConfig {
+  enabled: boolean;
+  username: string;
+  password: string;
 }
 
 export interface FeatureConfig {
@@ -181,6 +188,7 @@ export interface AppConfig {
   application: ApplicationConfig;
   paths: PathsConfig;
   server: ServerConfig;
+  auth: AuthConfig;
   features: FeatureConfig;
   dashboard: DashboardConfig;
   dimensions: DimensionsConfig;
@@ -190,4 +198,4 @@ export interface AppConfig {
   ui: UiConfig;
 }
 
-export type ClientAppConfig = Omit<AppConfig, "paths" | "server">;
+export type ClientAppConfig = Omit<AppConfig, "paths" | "server" | "auth">;

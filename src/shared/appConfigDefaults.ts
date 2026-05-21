@@ -22,6 +22,11 @@ export const defaultAppConfig: AppConfig = {
     port: 8787,
     clientDevPort: 5173
   },
+  auth: {
+    enabled: false,
+    username: "admin",
+    password: "changeme"
+  },
   features: {
     enableMetadataReferenceAlignment: true,
     includeMetadataOnlyDimensions: true,
