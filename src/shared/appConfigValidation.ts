@@ -259,7 +259,7 @@ function validateOneStreamProfileConfig(profile: unknown): void {
 }
 
 export function buildClientAppConfig(config: AppConfig): ClientAppConfig {
-  const { paths: _paths, server: _server, ...clientConfig } = config;
+  const { paths: _paths, server: _server, auth: _auth, ...clientConfig } = config;
   return clientConfig;
 }
 

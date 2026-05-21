@@ -603,6 +603,7 @@ describe("app config", () => {
     expect(clientConfig.application.title).toBe(defaultAppConfig.application.title);
     expect("paths" in clientConfig).toBe(false);
     expect("server" in clientConfig).toBe(false);
+    expect("auth" in clientConfig).toBe(false);
   });
 });
 
@@ -671,6 +672,68 @@ describe("metadata reference config", () => {
     try {
       expect(findDefaultMetadataReferencePath({ directory, defaultFile: "preferred.xml" })).toBe(preferredPath);
     } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("auth config", () => {
+  it("defaults to auth disabled", () => {
+    expect(defaultAppConfig.auth.enabled).toBe(false);
+    expect(defaultAppConfig.auth.username).toBe("admin");
+    expect(defaultAppConfig.auth.password).toBe("changeme");
+  });
+
+  it("loads auth config from yaml file", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-auth-"));
+    const filePath = join(directory, "dimbuilder.yaml");
+    writeFileSync(filePath, "auth:\n  enabled: true\n  username: user1\n  password: pass1\n", "utf8");
+
+    try {
+      const config = loadAppConfig({ configFilePath: filePath });
+      expect(config.auth.enabled).toBe(true);
+      expect(config.auth.username).toBe("user1");
+      expect(config.auth.password).toBe("pass1");
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("applies AUTH_ENABLED environment variable override", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-auth-env-"));
+    const filePath = join(directory, "dimbuilder.yaml");
+    writeFileSync(filePath, "auth:\n  enabled: false\n", "utf8");
+    const prevEnabled = process.env.AUTH_ENABLED;
+    process.env.AUTH_ENABLED = "true";
+
+    try {
+      const config = loadAppConfig({ configFilePath: filePath });
+      expect(config.auth.enabled).toBe(true);
+    } finally {
+      if (prevEnabled === undefined) delete process.env.AUTH_ENABLED;
+      else process.env.AUTH_ENABLED = prevEnabled;
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("applies AUTH_USERNAME and AUTH_PASSWORD environment variable overrides", () => {
+    const directory = mkdtempSync(join(tmpdir(), "dimbuilder-auth-creds-"));
+    const filePath = join(directory, "dimbuilder.yaml");
+    writeFileSync(filePath, "auth:\n  enabled: true\n  username: yaml_user\n  password: yaml_pass\n", "utf8");
+    const prevUser = process.env.AUTH_USERNAME;
+    const prevPass = process.env.AUTH_PASSWORD;
+    process.env.AUTH_USERNAME = "env_user";
+    process.env.AUTH_PASSWORD = "env_pass";
+
+    try {
+      const config = loadAppConfig({ configFilePath: filePath });
+      expect(config.auth.username).toBe("env_user");
+      expect(config.auth.password).toBe("env_pass");
+    } finally {
+      if (prevUser === undefined) delete process.env.AUTH_USERNAME;
+      else process.env.AUTH_USERNAME = prevUser;
+      if (prevPass === undefined) delete process.env.AUTH_PASSWORD;
+      else process.env.AUTH_PASSWORD = prevPass;
       rmSync(directory, { recursive: true, force: true });
     }
   });
