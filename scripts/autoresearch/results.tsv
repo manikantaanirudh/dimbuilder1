@@ -1,0 +1,2 @@
+timestamp	xml_unknown_count	unknown_property_count	invalid_enum_count	total_issues	tests_pass	validate_time_ms	description
+2025-05-21T00:00:00Z	0	0	0	4118	true	10116	baseline - all primary metrics already at zero
