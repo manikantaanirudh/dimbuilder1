@@ -24,6 +24,7 @@ export function createDatabase(filename = "data/app.db"): AppDatabase {
   db.exec(schemaSql);
   evolveSchema(db);
   seedSecurity(db);
+  seedDefaultWorkflow(db);
   return db;
 }
 
@@ -45,4 +46,16 @@ function seedSecurity(db: AppDatabase): void {
   db.prepare(
     "INSERT OR IGNORE INTO users (id, email, display_name, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
   ).run("local-admin", "local-admin@example.local", "Local Admin", "admin", 1, now, now);
+}
+
+function seedDefaultWorkflow(db: AppDatabase): void {
+  const existing = db.prepare("SELECT id FROM workflow_definitions WHERE id = ?").get("standard-review");
+  if (existing) return;
+  const now = new Date().toISOString();
+  const steps = JSON.stringify([
+    { name: "Peer Review", requiredRole: "reviewer", minApprovals: 1, slaHours: 48 }
+  ]);
+  db.prepare(
+    "INSERT INTO workflow_definitions (id, name, description, dimension_types, steps_json, auto_advance_rules_json, is_active, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  ).run("standard-review", "Standard Review", "Default single-step peer review workflow", "*", steps, "{}", 1, "system", now, now);
 }

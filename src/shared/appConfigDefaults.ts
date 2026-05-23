@@ -257,5 +257,10 @@ export const defaultAppConfig: AppConfig = {
       defaultScope: "currentDimension",
       allowAllDimensions: true
     }
+  },
+  workflows: {
+    enabled: true,
+    requireApprovalForDeploy: true,
+    defaultDefinition: "standard-review"
   }
 };

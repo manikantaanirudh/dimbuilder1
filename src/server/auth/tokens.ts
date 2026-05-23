@@ -17,7 +17,7 @@ export function signAccessToken(payload: SignPayload, config: TokenConfig): stri
   return jwt.sign(
     { sub: payload.sub, email: payload.email, role: payload.role },
     config.secret,
-    { expiresIn: config.accessTokenExpiry }
+    { expiresIn: config.accessTokenExpiry as jwt.SignOptions["expiresIn"] }
   );
 }
 
@@ -25,7 +25,7 @@ export function signRefreshToken(userId: string, config: TokenConfig): string {
   return jwt.sign(
     { sub: userId, type: "refresh" },
     config.secret,
-    { expiresIn: config.refreshTokenExpiry }
+    { expiresIn: config.refreshTokenExpiry as jwt.SignOptions["expiresIn"] }
   );
 }
 

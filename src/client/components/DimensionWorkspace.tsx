@@ -19,9 +19,10 @@ import { MetadataEditor } from "./MetadataEditor";
 import { MetadataDiffPanel } from "./MetadataDiffPanel";
 import { FactItem, FactStrip, StatusBadge } from "./ui";
 import { VaryingPropertiesPanel } from "./VaryingPropertiesPanel";
+import { WorkflowPanel } from "./WorkflowPanel";
 import { XmlPreview } from "./XmlPreview";
 
-type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "XML" | "Issues";
+type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
 
 function getFallbackTab(defaultWorkspaceTab: string, xmlPreviewEnabled: boolean): WorkspaceTab {
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
@@ -163,6 +164,9 @@ export function DimensionWorkspace({
                 projectId={projectId}
                 hasBlockingIssues={projectIssueSummary.blocksExport}
               />
+            )}
+            {activeTab === "Workflows" && (
+              <WorkflowPanel projectId={projectId} />
             )}
             {activeTab === "XML" && xmlPreviewEnabled && (
               <XmlPreview

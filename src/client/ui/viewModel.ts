@@ -25,7 +25,7 @@ export interface ExportFormatLink {
 type FactTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export interface WorkspaceTabItem {
-  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "XML" | "Issues";
+  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
 }
 
 export interface DimensionNavItem {
@@ -108,7 +108,8 @@ export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[]
     { label: "Varying" },
     { label: "Bulk Update" },
     { label: "Compare" },
-    { label: "Change Sets" }
+    { label: "Change Sets" },
+    { label: "Workflows" }
   ];
   if (xmlPreviewEnabled) tabs.push({ label: "XML" });
   tabs.push({ label: "Issues" });

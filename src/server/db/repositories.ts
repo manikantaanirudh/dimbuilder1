@@ -1,5 +1,12 @@
 import { nanoid } from "nanoid";
 import type { AppDatabase } from "./database";
+import type {
+  WorkflowDefinition,
+  WorkflowInstance,
+  WorkflowStepActionRecord,
+  WorkflowNotification,
+  WorkflowStepAction
+} from "../../shared/workflowTypes";
 
 export interface UserRow {
   id: string;
@@ -1147,7 +1154,7 @@ export function createRepositories(db: AppDatabase) {
         db.prepare(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`).run(...values);
       },
       listUsers(): UserRow[] {
-        return db.prepare("SELECT * FROM users ORDER BY created_at DESC").all() as UserRow[];
+        return db.prepare("SELECT * FROM users ORDER BY created_at DESC").all() as unknown as UserRow[];
       }
     },
     sessions: {
@@ -1164,13 +1171,13 @@ export function createRepositories(db: AppDatabase) {
         db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
       },
       deleteExpiredSessions(): number {
-        const result = db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now());
+        const result = db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now()) as { changes: number };
         return result.changes;
       }
     },
     projectPermissions: {
       getProjectPermissions(projectId: string): ProjectPermissionRow[] {
-        return db.prepare("SELECT * FROM project_permissions WHERE project_id = ?").all(projectId) as ProjectPermissionRow[];
+        return db.prepare("SELECT * FROM project_permissions WHERE project_id = ?").all(projectId) as unknown as ProjectPermissionRow[];
       },
       getUserProjectPermission(projectId: string, userId: string): ProjectPermissionRow | undefined {
         return db.prepare("SELECT * FROM project_permissions WHERE project_id = ? AND user_id = ?").get(projectId, userId) as ProjectPermissionRow | undefined;
@@ -1183,6 +1190,160 @@ export function createRepositories(db: AppDatabase) {
       },
       removeProjectPermission(id: string): void {
         db.prepare("DELETE FROM project_permissions WHERE id = ?").run(id);
+      }
+    },
+    workflows: {
+      definitions: {
+        create(input: { name: string; description?: string; dimensionTypes?: string; steps: unknown[]; autoAdvanceRules?: Record<string, unknown>; createdBy: string }): WorkflowDefinition {
+          const id = nanoid();
+          const timestamp = now();
+          db.prepare(`
+            INSERT INTO workflow_definitions (id, name, description, dimension_types, steps_json, auto_advance_rules_json, is_active, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+          `).run(
+            id,
+            input.name,
+            input.description ?? "",
+            input.dimensionTypes ?? "*",
+            JSON.stringify(input.steps),
+            JSON.stringify(input.autoAdvanceRules ?? {}),
+            input.createdBy,
+            timestamp,
+            timestamp
+          );
+          return this.get(id)!;
+        },
+        list(): WorkflowDefinition[] {
+          return db.prepare("SELECT * FROM workflow_definitions WHERE is_active = 1 ORDER BY name").all().map(mapWorkflowDefinition);
+        },
+        listAll(): WorkflowDefinition[] {
+          return db.prepare("SELECT * FROM workflow_definitions ORDER BY name").all().map(mapWorkflowDefinition);
+        },
+        get(id: string): WorkflowDefinition | null {
+          const row = db.prepare("SELECT * FROM workflow_definitions WHERE id = ?").get(id);
+          return row ? mapWorkflowDefinition(row) : null;
+        },
+        update(id: string, input: { name?: string; description?: string; dimensionTypes?: string; steps?: unknown[]; autoAdvanceRules?: Record<string, unknown>; isActive?: boolean }): WorkflowDefinition | null {
+          const current = this.get(id);
+          if (!current) return null;
+          db.prepare(`
+            UPDATE workflow_definitions
+            SET name = ?, description = ?, dimension_types = ?, steps_json = ?, auto_advance_rules_json = ?, is_active = ?, updated_at = ?
+            WHERE id = ?
+          `).run(
+            input.name ?? current.name,
+            input.description ?? current.description,
+            input.dimensionTypes ?? current.dimensionTypes,
+            input.steps ? JSON.stringify(input.steps) : JSON.stringify(current.steps),
+            input.autoAdvanceRules ? JSON.stringify(input.autoAdvanceRules) : JSON.stringify(current.autoAdvanceRules),
+            input.isActive !== undefined ? (input.isActive ? 1 : 0) : (current.isActive ? 1 : 0),
+            now(),
+            id
+          );
+          return this.get(id);
+        }
+      },
+      instances: {
+        create(input: { definitionId: string; changeSetId: string; projectId: string; submittedBy: string }): WorkflowInstance {
+          const id = nanoid();
+          const timestamp = now();
+          db.prepare(`
+            INSERT INTO workflow_instances (id, definition_id, change_set_id, project_id, current_step_index, status, submitted_by, submitted_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, 0, 'in_progress', ?, ?, ?, ?)
+          `).run(id, input.definitionId, input.changeSetId, input.projectId, input.submittedBy, timestamp, timestamp, timestamp);
+          return this.get(id)!;
+        },
+        get(id: string): WorkflowInstance | null {
+          const row = db.prepare("SELECT * FROM workflow_instances WHERE id = ?").get(id);
+          return row ? mapWorkflowInstance(row) : null;
+        },
+        getByChangeSet(changeSetId: string): WorkflowInstance | null {
+          const row = db.prepare("SELECT * FROM workflow_instances WHERE change_set_id = ? ORDER BY created_at DESC LIMIT 1").get(changeSetId);
+          return row ? mapWorkflowInstance(row) : null;
+        },
+        listByProject(projectId: string, status?: string): WorkflowInstance[] {
+          if (status) {
+            return db.prepare("SELECT * FROM workflow_instances WHERE project_id = ? AND status = ? ORDER BY created_at DESC").all(projectId, status).map(mapWorkflowInstance);
+          }
+          return db.prepare("SELECT * FROM workflow_instances WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(mapWorkflowInstance);
+        },
+        listPendingForUser(userId: string, userRole: string): WorkflowInstance[] {
+          const instances = db.prepare("SELECT * FROM workflow_instances WHERE status = 'in_progress' ORDER BY created_at DESC").all().map(mapWorkflowInstance);
+          return instances.filter((instance) => {
+            const def = db.prepare("SELECT * FROM workflow_definitions WHERE id = ?").get(instance.definitionId);
+            if (!def) return false;
+            const definition = mapWorkflowDefinition(def);
+            const currentStep = definition.steps[instance.currentStepIndex];
+            if (!currentStep) return false;
+            if (currentStep.requiredRole !== userRole && userRole !== "admin") return false;
+            if (instance.submittedBy === userId) return false;
+            return true;
+          });
+        },
+        updateStatus(id: string, status: string, completedAt?: string): void {
+          if (completedAt) {
+            db.prepare("UPDATE workflow_instances SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?").run(status, completedAt, now(), id);
+          } else {
+            db.prepare("UPDATE workflow_instances SET status = ?, updated_at = ? WHERE id = ?").run(status, now(), id);
+          }
+        },
+        advanceStep(id: string, newStepIndex: number): void {
+          db.prepare("UPDATE workflow_instances SET current_step_index = ?, updated_at = ? WHERE id = ?").run(newStepIndex, now(), id);
+        }
+      },
+      stepActions: {
+        record(input: { instanceId: string; stepIndex: number; action: WorkflowStepAction; actorId: string; comment?: string }): WorkflowStepActionRecord {
+          const id = nanoid();
+          const timestamp = now();
+          db.prepare(`
+            INSERT INTO workflow_step_actions (id, instance_id, step_index, action, actor_id, comment, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).run(id, input.instanceId, input.stepIndex, input.action, input.actorId, input.comment ?? "", timestamp);
+          return { id, instanceId: input.instanceId, stepIndex: input.stepIndex, action: input.action, actorId: input.actorId, comment: input.comment ?? "", createdAt: timestamp };
+        },
+        listByInstance(instanceId: string): WorkflowStepActionRecord[] {
+          return db.prepare("SELECT * FROM workflow_step_actions WHERE instance_id = ? ORDER BY created_at, id").all(instanceId).map(mapWorkflowStepAction);
+        },
+        countApprovalsForStep(instanceId: string, stepIndex: number): number {
+          const row = db.prepare("SELECT COUNT(*) as cnt FROM workflow_step_actions WHERE instance_id = ? AND step_index = ? AND action = 'approve'").get(instanceId, stepIndex) as { cnt: number } | undefined;
+          return row?.cnt ?? 0;
+        }
+      },
+      notifications: {
+        create(input: { instanceId: string; recipientId: string; channel?: string; subject: string; body: string }): WorkflowNotification {
+          const id = nanoid();
+          const timestamp = now();
+          db.prepare(`
+            INSERT INTO workflow_notifications (id, instance_id, recipient_id, channel, subject, body, is_read, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+          `).run(id, input.instanceId, input.recipientId, input.channel ?? "in_app", input.subject, input.body, timestamp);
+          return { id, instanceId: input.instanceId, recipientId: input.recipientId, channel: input.channel ?? "in_app", subject: input.subject, body: input.body, isRead: false, createdAt: timestamp };
+        },
+        listByRecipient(recipientId: string): WorkflowNotification[] {
+          return db.prepare("SELECT * FROM workflow_notifications WHERE recipient_id = ? ORDER BY created_at DESC").all(recipientId).map(mapWorkflowNotification);
+        },
+        markRead(id: string): void {
+          db.prepare("UPDATE workflow_notifications SET is_read = 1 WHERE id = ?").run(id);
+        },
+        listByInstance(instanceId: string): WorkflowNotification[] {
+          return db.prepare("SELECT * FROM workflow_notifications WHERE instance_id = ? ORDER BY created_at DESC").all(instanceId).map(mapWorkflowNotification);
+        }
+      },
+      getEligibleReviewers(requiredRole: string): { id: string; email: string; displayName: string; role: string }[] {
+        const roleHierarchy: Record<string, string[]> = {
+          viewer: ["viewer", "reviewer", "author", "admin"],
+          reviewer: ["reviewer", "admin"],
+          author: ["author", "admin"],
+          admin: ["admin"]
+        };
+        const eligibleRoles = roleHierarchy[requiredRole] ?? [requiredRole];
+        const placeholders = eligibleRoles.map(() => "?").join(", ");
+        return db.prepare(`SELECT id, email, display_name, role FROM users WHERE is_active = 1 AND role IN (${placeholders})`).all(...eligibleRoles).map((row: Record<string, unknown>) => ({
+          id: String(row.id),
+          email: String(row.email),
+          displayName: String(row.display_name),
+          role: String(row.role)
+        }));
       }
     }
   };
@@ -1752,4 +1913,60 @@ function nullableNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function mapWorkflowDefinition(row: Record<string, unknown>): WorkflowDefinition {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    description: String(row.description ?? ""),
+    dimensionTypes: String(row.dimension_types ?? "*"),
+    steps: parseJson(String(row.steps_json ?? "[]"), []),
+    autoAdvanceRules: parseJson(String(row.auto_advance_rules_json ?? "{}"), {}),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapWorkflowInstance(row: Record<string, unknown>): WorkflowInstance {
+  return {
+    id: String(row.id),
+    definitionId: String(row.definition_id),
+    changeSetId: String(row.change_set_id),
+    projectId: String(row.project_id),
+    currentStepIndex: Number(row.current_step_index ?? 0),
+    status: String(row.status) as WorkflowInstance["status"],
+    submittedBy: String(row.submitted_by),
+    submittedAt: String(row.submitted_at),
+    completedAt: row.completed_at ? String(row.completed_at) : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapWorkflowStepAction(row: Record<string, unknown>): WorkflowStepActionRecord {
+  return {
+    id: String(row.id),
+    instanceId: String(row.instance_id),
+    stepIndex: Number(row.step_index),
+    action: String(row.action) as WorkflowStepAction,
+    actorId: String(row.actor_id),
+    comment: String(row.comment ?? ""),
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapWorkflowNotification(row: Record<string, unknown>): WorkflowNotification {
+  return {
+    id: String(row.id),
+    instanceId: String(row.instance_id),
+    recipientId: String(row.recipient_id),
+    channel: String(row.channel ?? "in_app"),
+    subject: String(row.subject),
+    body: String(row.body),
+    isRead: Boolean(row.is_read),
+    createdAt: String(row.created_at)
+  };
 }

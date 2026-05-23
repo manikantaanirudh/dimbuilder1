@@ -18,6 +18,7 @@ import { createValidationRouter } from "./routes/validation";
 import { createBlueprintRouter } from "./routes/blueprints";
 import { createAuthRouter } from "./routes/auth";
 import { createUserRouter } from "./routes/users";
+import { createWorkflowRouter } from "./routes/workflows";
 import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { requireRole } from "./middleware/authorize";
 
@@ -59,6 +60,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api/import", createImportRouter(repos, config));
   app.use("/api/export", createExportRouter(repos, config));
   app.use("/api/validation", createValidationRouter(repos, config));
+  app.use("/api/workflows", createWorkflowRouter(repos, config));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";

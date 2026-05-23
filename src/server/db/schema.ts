@@ -309,4 +309,57 @@ CREATE INDEX IF NOT EXISTS idx_bulk_update_jobs_project ON bulk_update_jobs(proj
 CREATE INDEX IF NOT EXISTS idx_bulk_update_jobs_target ON bulk_update_jobs(project_id, target_type, operation);
 CREATE INDEX IF NOT EXISTS idx_bulk_update_items_job ON bulk_update_items(job_id);
 CREATE INDEX IF NOT EXISTS idx_bulk_update_items_target ON bulk_update_items(target_id, property_name);
+
+CREATE TABLE IF NOT EXISTS workflow_definitions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  dimension_types TEXT NOT NULL DEFAULT '*',
+  steps_json TEXT NOT NULL,
+  auto_advance_rules_json TEXT NOT NULL DEFAULT '{}',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workflow_instances (
+  id TEXT PRIMARY KEY,
+  definition_id TEXT NOT NULL REFERENCES workflow_definitions(id),
+  change_set_id TEXT NOT NULL REFERENCES change_sets(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  current_step_index INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'in_progress',
+  submitted_by TEXT NOT NULL,
+  submitted_at TEXT NOT NULL,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workflow_step_actions (
+  id TEXT PRIMARY KEY,
+  instance_id TEXT NOT NULL REFERENCES workflow_instances(id) ON DELETE CASCADE,
+  step_index INTEGER NOT NULL,
+  action TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  comment TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workflow_notifications (
+  id TEXT PRIMARY KEY,
+  instance_id TEXT NOT NULL REFERENCES workflow_instances(id) ON DELETE CASCADE,
+  recipient_id TEXT NOT NULL,
+  channel TEXT NOT NULL DEFAULT 'in_app',
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL,
+  is_read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_instances_project ON workflow_instances(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_workflow_instances_change_set ON workflow_instances(change_set_id);
+CREATE INDEX IF NOT EXISTS idx_workflow_step_actions_instance ON workflow_step_actions(instance_id, step_index);
+CREATE INDEX IF NOT EXISTS idx_workflow_notifications_recipient ON workflow_notifications(recipient_id, is_read);
 `;

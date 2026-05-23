@@ -200,6 +200,12 @@ export interface UiConfig {
   };
 }
 
+export interface WorkflowConfig {
+  enabled: boolean;
+  requireApprovalForDeploy: boolean;
+  defaultDefinition: string;
+}
+
 export interface AppConfig {
   application: ApplicationConfig;
   paths: PathsConfig;
@@ -212,6 +218,7 @@ export interface AppConfig {
   validation: ValidationConfig;
   export: ExportConfig;
   ui: UiConfig;
+  workflows?: WorkflowConfig;
 }
 
 export type ClientAppConfig = Omit<AppConfig, "paths" | "server" | "auth">;
