@@ -362,4 +362,46 @@ CREATE INDEX IF NOT EXISTS idx_workflow_instances_project ON workflow_instances(
 CREATE INDEX IF NOT EXISTS idx_workflow_instances_change_set ON workflow_instances(change_set_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_step_actions_instance ON workflow_step_actions(instance_id, step_index);
 CREATE INDEX IF NOT EXISTS idx_workflow_notifications_recipient ON workflow_notifications(recipient_id, is_read);
+
+CREATE TABLE IF NOT EXISTS environments (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'onestream',
+  base_url TEXT NOT NULL DEFAULT '',
+  client_id TEXT NOT NULL DEFAULT '',
+  client_secret TEXT NOT NULL DEFAULT '',
+  tenant_id TEXT NOT NULL DEFAULT '',
+  app_name TEXT NOT NULL DEFAULT '',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS deployment_history (
+  id TEXT PRIMARY KEY,
+  environment_id TEXT NOT NULL REFERENCES environments(id),
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  change_set_id TEXT REFERENCES change_sets(id) ON DELETE SET NULL,
+  status TEXT NOT NULL,
+  xml_payload TEXT NOT NULL DEFAULT '',
+  comment TEXT NOT NULL DEFAULT '',
+  initiated_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  completed_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS deployment_dimension_results (
+  id TEXT PRIMARY KEY,
+  deployment_id TEXT NOT NULL REFERENCES deployment_history(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  dimension_name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_environments_active ON environments(is_active);
+CREATE INDEX IF NOT EXISTS idx_deployment_history_env ON deployment_history(environment_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_deployment_history_project ON deployment_history(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_deployment_dim_results ON deployment_dimension_results(deployment_id);
 `;

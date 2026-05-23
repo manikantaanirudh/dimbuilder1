@@ -7,6 +7,15 @@ import type {
   WorkflowNotification,
   WorkflowStepAction
 } from "../../shared/workflowTypes";
+import type {
+  CreateEnvironmentInput,
+  DeploymentDimensionResult,
+  DeploymentRecord,
+  DeploymentStatus,
+  Environment,
+  EnvironmentSafe,
+  UpdateEnvironmentInput
+} from "../../shared/environmentTypes";
 
 export interface UserRow {
   id: string;
@@ -1345,6 +1354,101 @@ export function createRepositories(db: AppDatabase) {
           role: String(row.role)
         }));
       }
+    },
+    environments: {
+      list(): EnvironmentSafe[] {
+        return db.prepare("SELECT * FROM environments ORDER BY name ASC").all().map(mapEnvironmentSafe);
+      },
+      getById(id: string): Environment | null {
+        const row = db.prepare("SELECT * FROM environments WHERE id = ?").get(id);
+        return row ? mapEnvironment(row) : null;
+      },
+      getSafe(id: string): EnvironmentSafe | null {
+        const row = db.prepare("SELECT * FROM environments WHERE id = ?").get(id);
+        return row ? mapEnvironmentSafe(row) : null;
+      },
+      create(input: CreateEnvironmentInput & { createdBy: string }): EnvironmentSafe {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO environments (id, name, type, base_url, client_id, client_secret, tenant_id, app_name, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+        `).run(id, input.name, input.type, input.baseUrl, input.clientId, input.clientSecret, input.tenantId ?? "", input.appName ?? "", input.createdBy, timestamp, timestamp);
+        return { id, name: input.name, type: input.type, baseUrl: input.baseUrl, clientId: input.clientId, tenantId: input.tenantId ?? "", appName: input.appName ?? "", isActive: true, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      update(id: string, input: UpdateEnvironmentInput): EnvironmentSafe | null {
+        const existing = this.getById(id);
+        if (!existing) return null;
+        const name = input.name ?? existing.name;
+        const type = input.type ?? existing.type;
+        const baseUrl = input.baseUrl ?? existing.baseUrl;
+        const clientId = input.clientId ?? existing.clientId;
+        const clientSecret = input.clientSecret ?? existing.clientSecret;
+        const tenantId = input.tenantId ?? existing.tenantId;
+        const appName = input.appName ?? existing.appName;
+        const isActive = input.isActive ?? existing.isActive;
+        const updatedAt = now();
+        db.prepare(`
+          UPDATE environments SET name = ?, type = ?, base_url = ?, client_id = ?, client_secret = ?, tenant_id = ?, app_name = ?, is_active = ?, updated_at = ?
+          WHERE id = ?
+        `).run(name, type, baseUrl, clientId, clientSecret, tenantId, appName, isActive ? 1 : 0, updatedAt, id);
+        return { id, name, type, baseUrl, clientId, tenantId, appName, isActive, createdBy: existing.createdBy, createdAt: existing.createdAt, updatedAt };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM environments WHERE id = ?").run(id);
+      }
+    },
+    deployments: {
+      create(input: { environmentId: string; projectId: string; changeSetId?: string; status: DeploymentStatus; xmlPayload: string; comment: string; initiatedBy: string; dimensionResults: DeploymentDimensionResult[] }): DeploymentRecord {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO deployment_history (id, environment_id, project_id, change_set_id, status, xml_payload, comment, initiated_by, created_at, completed_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.environmentId, input.projectId, input.changeSetId ?? null, input.status, input.xmlPayload, input.comment, input.initiatedBy, timestamp, input.status === "success" || input.status === "failed" ? timestamp : null);
+
+        const dimStmt = db.prepare(`
+          INSERT INTO deployment_dimension_results (id, deployment_id, dimension_type, dimension_name, status, message)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `);
+        for (const r of input.dimensionResults) {
+          dimStmt.run(nanoid(), id, r.dimensionType, r.dimensionName, r.status, r.message);
+        }
+
+        return {
+          id,
+          environmentId: input.environmentId,
+          projectId: input.projectId,
+          changeSetId: input.changeSetId ?? null,
+          status: input.status,
+          dimensionResults: input.dimensionResults,
+          xmlPayload: input.xmlPayload,
+          comment: input.comment,
+          initiatedBy: input.initiatedBy,
+          createdAt: timestamp,
+          completedAt: input.status === "success" || input.status === "failed" ? timestamp : null
+        };
+      },
+      list(filters: { projectId?: string; environmentId?: string } = {}): Omit<DeploymentRecord, "xmlPayload" | "dimensionResults">[] {
+        let sql = "SELECT id, environment_id, project_id, change_set_id, status, comment, initiated_by, created_at, completed_at FROM deployment_history WHERE 1=1";
+        const params: unknown[] = [];
+        if (filters.projectId) { sql += " AND project_id = ?"; params.push(filters.projectId); }
+        if (filters.environmentId) { sql += " AND environment_id = ?"; params.push(filters.environmentId); }
+        sql += " ORDER BY created_at DESC";
+        return db.prepare(sql).all(...params).map(mapDeploymentSummary);
+      },
+      getById(id: string): DeploymentRecord | null {
+        const row = db.prepare("SELECT * FROM deployment_history WHERE id = ?").get(id);
+        if (!row) return null;
+        const deployment = mapDeployment(row);
+        const dimRows = db.prepare("SELECT * FROM deployment_dimension_results WHERE deployment_id = ?").all(id);
+        deployment.dimensionResults = dimRows.map(mapDeploymentDimensionResult);
+        return deployment;
+      },
+      updateStatus(id: string, status: DeploymentStatus): void {
+        const completedAt = status === "success" || status === "failed" ? now() : null;
+        db.prepare("UPDATE deployment_history SET status = ?, completed_at = ? WHERE id = ?").run(status, completedAt, id);
+      }
     }
   };
 }
@@ -1968,5 +2072,77 @@ function mapWorkflowNotification(row: Record<string, unknown>): WorkflowNotifica
     body: String(row.body),
     isRead: Boolean(row.is_read),
     createdAt: String(row.created_at)
+  };
+}
+
+function mapEnvironment(row: Record<string, unknown>): Environment {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    type: String(row.type) as Environment["type"],
+    baseUrl: String(row.base_url ?? ""),
+    clientId: String(row.client_id ?? ""),
+    clientSecret: String(row.client_secret ?? ""),
+    tenantId: String(row.tenant_id ?? ""),
+    appName: String(row.app_name ?? ""),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapEnvironmentSafe(row: Record<string, unknown>): EnvironmentSafe {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    type: String(row.type) as Environment["type"],
+    baseUrl: String(row.base_url ?? ""),
+    clientId: String(row.client_id ?? ""),
+    tenantId: String(row.tenant_id ?? ""),
+    appName: String(row.app_name ?? ""),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapDeployment(row: Record<string, unknown>): DeploymentRecord {
+  return {
+    id: String(row.id),
+    environmentId: String(row.environment_id),
+    projectId: String(row.project_id),
+    changeSetId: row.change_set_id ? String(row.change_set_id) : null,
+    status: String(row.status) as DeploymentStatus,
+    dimensionResults: [],
+    xmlPayload: String(row.xml_payload ?? ""),
+    comment: String(row.comment ?? ""),
+    initiatedBy: String(row.initiated_by),
+    createdAt: String(row.created_at),
+    completedAt: row.completed_at ? String(row.completed_at) : null
+  };
+}
+
+function mapDeploymentSummary(row: Record<string, unknown>): Omit<DeploymentRecord, "xmlPayload" | "dimensionResults"> {
+  return {
+    id: String(row.id),
+    environmentId: String(row.environment_id),
+    projectId: String(row.project_id),
+    changeSetId: row.change_set_id ? String(row.change_set_id) : null,
+    status: String(row.status) as DeploymentStatus,
+    comment: String(row.comment ?? ""),
+    initiatedBy: String(row.initiated_by),
+    createdAt: String(row.created_at),
+    completedAt: row.completed_at ? String(row.completed_at) : null
+  };
+}
+
+function mapDeploymentDimensionResult(row: Record<string, unknown>): DeploymentDimensionResult {
+  return {
+    dimensionType: String(row.dimension_type),
+    dimensionName: String(row.dimension_name),
+    status: String(row.status) as DeploymentDimensionResult["status"],
+    message: String(row.message ?? "")
   };
 }
