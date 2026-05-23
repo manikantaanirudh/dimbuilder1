@@ -1130,7 +1130,7 @@ export function createRepositories(db: AppDatabase) {
           timestamp
         );
       },
-      updateUser(id: string, updates: { displayName?: string; role?: string; isActive?: number; lastLoginAt?: string; avatarUrl?: string }): void {
+      updateUser(id: string, updates: { displayName?: string; role?: string; isActive?: number; lastLoginAt?: string; avatarUrl?: string; authProvider?: string; authProviderId?: string }): void {
         const fields: string[] = [];
         const values: unknown[] = [];
         if (updates.displayName !== undefined) { fields.push("display_name = ?"); values.push(updates.displayName); }
@@ -1138,6 +1138,8 @@ export function createRepositories(db: AppDatabase) {
         if (updates.isActive !== undefined) { fields.push("is_active = ?"); values.push(updates.isActive); }
         if (updates.lastLoginAt !== undefined) { fields.push("last_login_at = ?"); values.push(updates.lastLoginAt); }
         if (updates.avatarUrl !== undefined) { fields.push("avatar_url = ?"); values.push(updates.avatarUrl); }
+        if (updates.authProvider !== undefined) { fields.push("auth_provider = ?"); values.push(updates.authProvider); }
+        if (updates.authProviderId !== undefined) { fields.push("auth_provider_id = ?"); values.push(updates.authProviderId); }
         if (fields.length === 0) return;
         fields.push("updated_at = ?");
         values.push(now());

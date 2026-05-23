@@ -8,6 +8,7 @@ import type { Repositories, UserRow } from "../db/repositories";
 import { hashPassword, verifyPassword } from "../auth/passwords";
 import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken, type TokenConfig } from "../auth/tokens";
 import { createAuthenticateMiddleware } from "../middleware/authenticate";
+import { createOidcHandlers, type OidcHandlers } from "../auth/oidcStrategy";
 
 // --- Zod Schemas ---
 
@@ -303,6 +304,34 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
     } catch (error) {
       return res.status(500).json({ error: "Internal server error" });
     }
+  });
+
+  // --- OIDC Routes ---
+
+  let oidcHandlers: OidcHandlers | null = null;
+  let oidcInitPromise: Promise<void> | null = null;
+
+  // Lazily initialize OIDC handlers only if strategy is "oidc"
+  if (config.auth.strategy === "oidc" && config.auth.oidc) {
+    oidcInitPromise = createOidcHandlers(config, repos, tokenConfig).then(handlers => {
+      oidcHandlers = handlers;
+    });
+  }
+
+  router.get("/oidc/authorize", async (req, res) => {
+    if (oidcInitPromise) await oidcInitPromise;
+    if (!oidcHandlers) {
+      return res.status(404).json({ error: "OIDC not configured" });
+    }
+    return oidcHandlers.authorize(req, res);
+  });
+
+  router.get("/oidc/callback", async (req, res) => {
+    if (oidcInitPromise) await oidcInitPromise;
+    if (!oidcHandlers) {
+      return res.status(404).json({ error: "OIDC not configured" });
+    }
+    return oidcHandlers.callback(req, res);
   });
 
   return router;
