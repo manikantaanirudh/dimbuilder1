@@ -235,6 +235,91 @@ describe("OneStream validation profile", () => {
 
     expect(issues.map((issue) => issue.code)).toContain("VARYING_PROPERTY_DUPLICATE");
   });
+
+  it("does not flag single quote as a restricted character (not on official OneStream list)", () => {
+    const issues = validateOneStreamProfile({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          id: "m-apostrophe",
+          dimensionId: accountDimension.id,
+          memberKey: "O'Brien",
+          properties: { Account: "O'Brien", "Account Type": "Expense" }
+        })
+      ],
+      relationships: [],
+      profile: baseProfile
+    });
+
+    const restrictedIssues = issues.filter((issue) => issue.code === "MEMBER_NAME_RESTRICTED_CHARACTER");
+    expect(restrictedIssues).toHaveLength(0);
+  });
+
+  it("uses 500-character limit per official OneStream documentation", () => {
+    const name499 = "A".repeat(499);
+    const name500 = "A".repeat(500);
+    const name501 = "A".repeat(501);
+
+    const issues = validateOneStreamProfile({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({ id: "m-499", dimensionId: accountDimension.id, memberKey: name499, properties: { Account: name499, "Account Type": "Expense" } }),
+        memberFixture({ id: "m-500", dimensionId: accountDimension.id, memberKey: name500, properties: { Account: name500, "Account Type": "Expense" } }),
+        memberFixture({ id: "m-501", dimensionId: accountDimension.id, memberKey: name501, properties: { Account: name501, "Account Type": "Expense" } })
+      ],
+      relationships: [],
+      profile: baseProfile
+    });
+
+    const lengthIssues = issues.filter((issue) => issue.code === "MEMBER_NAME_TOO_LONG");
+    expect(lengthIssues).toHaveLength(1);
+    expect(lengthIssues[0].entityId).toBe("m-501");
+  });
+
+  it("flags all official OneStream restricted characters", () => {
+    const restrictedChars = ["/", "|", "!", "@", "#", ",", ";", "^", "*", "+", "-", "=", "\\", "?", "<", ">", "\"", "[", "]", "{", "}", "&"];
+
+    for (const char of restrictedChars) {
+      const memberKey = `Test${char}Member`;
+      const issues = validateOneStreamProfile({
+        project: sampleProject,
+        dimension: accountDimension,
+        members: [
+          memberFixture({
+            id: `m-char-${restrictedChars.indexOf(char)}`,
+            dimensionId: accountDimension.id,
+            memberKey,
+            properties: { Account: memberKey, "Account Type": "Expense" }
+          })
+        ],
+        relationships: [],
+        profile: baseProfile
+      });
+
+      const restrictedIssues = issues.filter((issue) => issue.code === "MEMBER_NAME_RESTRICTED_CHARACTER");
+      expect(restrictedIssues.length, `Expected restricted character '${char}' to be flagged`).toBeGreaterThan(0);
+    }
+  });
+
+  it("flags reserved words with wrong casing from the full official list", () => {
+    const issues = validateOneStreamProfile({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({ id: "m-root-lower", dimensionId: accountDimension.id, memberKey: "root", properties: { Account: "root", "Account Type": "Expense" } }),
+        memberFixture({ id: "m-scenario", dimensionId: accountDimension.id, memberKey: "scenario", properties: { Account: "scenario", "Account Type": "Expense" } }),
+        memberFixture({ id: "m-xfcommon", dimensionId: accountDimension.id, memberKey: "xfcommon", properties: { Account: "xfcommon", "Account Type": "Expense" } }),
+        memberFixture({ id: "m-all", dimensionId: accountDimension.id, memberKey: "all", properties: { Account: "all", "Account Type": "Expense" } })
+      ],
+      relationships: [],
+      profile: baseProfile
+    });
+
+    const caseIssues = issues.filter((issue) => issue.code === "RESERVED_MEMBER_NAME_CASE_MISMATCH");
+    expect(caseIssues).toHaveLength(4);
+  });
 });
 
 function weightedRelationship(overrides: Partial<DimensionRelationshipRecord> & { parentKey: string; childKey: string }) {

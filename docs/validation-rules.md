@@ -41,21 +41,76 @@ validation:
   relationshipsWithNoLocalMembersSeverity: warning
   oneStreamProfile:
     enabled: true
-    memberNameMaxLength: 250
+    memberNameMaxLength: 500
     warnOnMemberNameSpaces: true
     warnOnMemberNamePeriods: true
     reservedWords:
-      - Root
+      - Account
+      - All
+      - Cons
+      - Consolidation
+      - Default
+      - DimType
+      - Entity
+      - EntityDefault
+      - Flow
+      - IC
       - None
+      - Origin
+      - Parent
+      - POV
+      - Root
+      - RootAccountDim
+      - RootEntityDim
+      - RootFlowDim
+      - RootScenarioDim
+      - RootUD1Dim
+      - RootUD2Dim
+      - RootUD3Dim
+      - RootUD4Dim
+      - RootUD5Dim
+      - RootUD6Dim
+      - RootUD7Dim
+      - RootUD8Dim
+      - Scenario
+      - Time
+      - UD1
+      - UD2
+      - UD3
+      - UD4
+      - UD5
+      - UD6
+      - UD7
+      - UD8
+      - UD1Default
+      - Unknown
+      - View
+      - WF
+      - Workflow
+      - XFCommon
     restrictedCharacters:
+      - "/"
+      - "|"
+      - "!"
+      - "@"
+      - "#"
+      - ","
+      - ";"
+      - "^"
+      - "*"
+      - "+"
+      - "-"
+      - "="
+      - "\\"
+      - "?"
       - "<"
       - ">"
       - "\""
-      - "'"
-      - "&"
-      - "|"
       - "["
       - "]"
+      - "{"
+      - "}"
+      - "&"
     duplicateAliasSeverity: warning
     invalidSortOrderSeverity: warning
     sharedMemberSeverity: info
@@ -66,6 +121,17 @@ validation:
   exportBlockedBySeverities:
     - error
 ```
+
+### OneStream Naming Constraints (from official documentation)
+
+- **Member name max length**: 500 characters (database schema: `nvarchar(500)`)
+- **Description max length**: 200 characters (separate field)
+- **Attribute dimension limit**: 100 characters
+- **Spaces**: Allowed but not recommended. Members with spaces require `[bracket notation]` in member filters and business rules.
+- **Periods**: Allowed but problematic. Periods conflict with the member filter path separator (e.g., `A#Root.Children`).
+- **Single quote (`'`)**: NOT on the official restricted characters list.
+- **`&` and `%`**: Soft restrictions — can be used but may affect platform functionality. Not recommended.
+- **Uniqueness**: Member names must be unique within a **dimension type** (not just within a single dimension). Aliases also cannot duplicate member names within the same dimension type.
 
 Allowed severities are:
 

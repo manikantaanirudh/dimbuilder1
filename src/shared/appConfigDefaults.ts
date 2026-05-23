@@ -187,11 +187,22 @@ export const defaultAppConfig: AppConfig = {
     relationshipsWithNoLocalMembersSeverity: "warning",
     oneStreamProfile: {
       enabled: true,
-      memberNameMaxLength: 250,
+      memberNameMaxLength: 500,
       warnOnMemberNameSpaces: true,
       warnOnMemberNamePeriods: true,
-      reservedWords: ["Root", "None"],
-      restrictedCharacters: ["<", ">", "\"", "'", "&", "|", "[", "]", "\t", "\r", "\n"],
+      reservedWords: [
+        "Account", "All", "Cons", "Consolidation", "Default", "DimType",
+        "Entity", "EntityDefault", "Flow", "IC", "None", "Origin", "Parent",
+        "POV", "Root", "RootAccountDim", "RootEntityDim", "RootFlowDim",
+        "RootScenarioDim", "RootUD1Dim", "RootUD2Dim", "RootUD3Dim",
+        "RootUD4Dim", "RootUD5Dim", "RootUD6Dim", "RootUD7Dim", "RootUD8Dim",
+        "Scenario", "Time", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7",
+        "UD8", "UD1Default", "Unknown", "View", "WF", "Workflow", "XFCommon"
+      ],
+      restrictedCharacters: [
+        "/", "|", "!", "@", "#", ",", ";", "^", "*", "+", "-", "=", "\\",
+        "?", "<", ">", "\"", "[", "]", "{", "}", "&", "\t", "\r", "\n"
+      ],
       duplicateAliasSeverity: "warning",
       invalidSortOrderSeverity: "warning",
       sharedMemberSeverity: "info",

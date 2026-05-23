@@ -21,7 +21,7 @@ describe("app config", () => {
     expect(defaultAppConfig.export.requireValidationBeforeExport).toBe(false);
     expect(defaultAppConfig.validation.oneStreamProfile).toMatchObject({
       enabled: true,
-      memberNameMaxLength: 250,
+      memberNameMaxLength: 500,
       warnOnMemberNameSpaces: true,
       warnOnMemberNamePeriods: true,
       duplicateAliasSeverity: "warning",
