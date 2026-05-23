@@ -16,6 +16,10 @@ import { createProjectRouter } from "./routes/projects";
 import { createSchemaRouter } from "./routes/schema";
 import { createValidationRouter } from "./routes/validation";
 import { createBlueprintRouter } from "./routes/blueprints";
+import { createAuthRouter } from "./routes/auth";
+import { createUserRouter } from "./routes/users";
+import { createAuthenticateMiddleware } from "./middleware/authenticate";
+import { requireRole } from "./middleware/authorize";
 
 export function createApp(db: AppDatabase = createDatabase(), config: AppConfig = defaultAppConfig) {
   const app = express();
@@ -29,11 +33,17 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   // Health check is unauthenticated
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+  // Auth routes handle their own authentication
+  app.use("/api/auth", createAuthRouter(repos, config));
+
   // Apply Basic Auth to all routes below
   app.use("/api", createBasicAuthMiddleware(config.auth));
   app.use("/api", generalRateLimiter);
   app.use("/api/import", heavyOperationRateLimiter);
   app.use("/api/export", heavyOperationRateLimiter);
+
+  // Admin-only user management
+  app.use("/api/users", createAuthenticateMiddleware(config), requireRole("admin"), createUserRouter(repos));
 
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/blueprints", createBlueprintRouter(config));
