@@ -237,20 +237,35 @@ CREATE TABLE IF NOT EXISTS bulk_update_items (
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
   display_name TEXT NOT NULL,
-  email TEXT NOT NULL,
+  password_hash TEXT,
+  auth_provider TEXT NOT NULL DEFAULT 'local',
+  auth_provider_id TEXT,
+  avatar_url TEXT,
+  role TEXT NOT NULL DEFAULT 'viewer',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  last_login_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  refresh_token_hash TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS roles (
+CREATE TABLE IF NOT EXISTS project_permissions (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS user_roles (
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role_id TEXT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, role_id)
+  role TEXT NOT NULL DEFAULT 'viewer',
+  granted_by TEXT REFERENCES users(id),
+  granted_at TEXT NOT NULL,
+  UNIQUE(project_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS project_validation_overrides (
@@ -262,6 +277,12 @@ CREATE TABLE IF NOT EXISTS project_validation_overrides (
   UNIQUE(project_id, rule_code)
 );
 
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_project_permissions_project ON project_permissions(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_permissions_user ON project_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_provider ON users(auth_provider, auth_provider_id);
 CREATE INDEX IF NOT EXISTS idx_dimensions_project ON dimensions(project_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_members_dimension ON dimension_members(dimension_id, row_order);
 CREATE INDEX IF NOT EXISTS idx_members_key ON dimension_members(dimension_id, member_key);

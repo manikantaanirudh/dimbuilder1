@@ -42,12 +42,7 @@ function ensureColumn(db: AppDatabase, tableName: string, columnName: string, de
 
 function seedSecurity(db: AppDatabase): void {
   const now = new Date().toISOString();
-  db.prepare("INSERT OR IGNORE INTO users (id, display_name, email, created_at) VALUES (?, ?, ?, ?)")
-    .run("local-admin", "Local Admin", "local-admin@example.local", now);
-
-  for (const role of ["Viewer", "Editor", "Admin"]) {
-    db.prepare("INSERT OR IGNORE INTO roles (id, name) VALUES (?, ?)").run(role.toLowerCase(), role);
-  }
-
-  db.prepare("INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)").run("local-admin", "admin");
+  db.prepare(
+    "INSERT OR IGNORE INTO users (id, email, display_name, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run("local-admin", "local-admin@example.local", "Local Admin", "admin", 1, now, now);
 }
