@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { AppShell } from "../client/components/AppShell";
+import { AuthContext, type AuthContextValue } from "../client/auth/AuthProvider";
 import { Dashboard } from "../client/components/Dashboard";
 import { DimensionWorkspace } from "../client/components/DimensionWorkspace";
 import { EditableGrid } from "../client/components/EditableGrid";
@@ -42,6 +43,24 @@ const summaryWithValidationCounts: DashboardSummary = {
 
 function render(element: Parameters<typeof renderToStaticMarkup>[0]) {
   return renderToStaticMarkup(element);
+}
+
+const disabledAuthContext: AuthContextValue = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  authEnabled: false,
+  authStatus: null,
+  login: async () => {},
+  logout: async () => {}
+};
+
+function renderAppShell(props: Parameters<typeof AppShell>[0]) {
+  return render(
+    createElement(AuthContext.Provider, { value: disabledAuthContext },
+      createElement(AppShell, props)
+    )
+  );
 }
 
 const importExportModalSource = readFileSync(new URL("../client/components/ImportExportModals.tsx", import.meta.url), "utf8");
@@ -138,7 +157,7 @@ describe("client component markup", () => {
   });
 
   it("renders SR Onestream Dim Builder identity and generic lifecycle actions", () => {
-    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+    const markup = renderAppShell({ appConfig: defaultAppConfig });
 
     expect(markup).toContain(">SR Onestream Dim Builder<");
     expect(markup).toMatch(/<button[^>]*>[\s\S]*New Project<\/button>/);
@@ -149,7 +168,7 @@ describe("client component markup", () => {
   });
 
   it("renders the Notion-inspired global workbench toolbar", () => {
-    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+    const markup = renderAppShell({ appConfig: defaultAppConfig });
 
     expect(markup).toContain("global-toolbar");
     expect(markup).toContain("brand-wordmark");
@@ -159,7 +178,7 @@ describe("client component markup", () => {
   });
 
   it("keeps the left rail focused on searchable dimensions", () => {
-    const markup = render(createElement(AppShell, { appConfig: defaultAppConfig }));
+    const markup = renderAppShell({ appConfig: defaultAppConfig });
 
     expect(markup).toContain("sidebar-heading");
     expect(markup).toContain("Search dimensions");

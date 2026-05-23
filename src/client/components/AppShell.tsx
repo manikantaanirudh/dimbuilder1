@@ -8,7 +8,8 @@ import {
   Save,
   Search,
   ShieldCheck,
-  Undo2
+  Undo2,
+  User
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
@@ -22,6 +23,7 @@ import {
 } from "../ui/viewModel";
 import { createProjectSnapshot, validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
+import { useAuth } from "../auth/useAuth";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
 import { CreateProjectModal, ExportModal, ImportModal, OpenProjectModal, SaveAsModal } from "./ImportExportModals";
@@ -49,6 +51,7 @@ export function AppShell({
   configError?: string | null;
 }) {
   const store = useProjectStore();
+  const { user, authEnabled, logout } = useAuth();
   const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
   const [navSearch, setNavSearch] = useState("");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
@@ -213,6 +216,17 @@ export function AppShell({
           {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
           {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
         </ToolbarGroup>
+
+        {authEnabled && user && (
+          <div className="user-menu">
+            <User size={16} />
+            <span className="user-menu-name">{user.displayName || user.email}</span>
+            <StatusBadge tone="info">{user.role}</StatusBadge>
+            <ActionButton title="Sign out" onClick={() => void logout()}>
+              <LogOut size={16} /> Sign Out
+            </ActionButton>
+          </div>
+        )}
       </header>
 
       <nav className="secondary-nav">
