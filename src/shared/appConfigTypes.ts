@@ -29,8 +29,24 @@ export interface ServerConfig {
 
 export interface AuthConfig {
   enabled: boolean;
-  username: string;
-  password: string;
+  strategy: "local" | "oidc" | "none";
+  jwt: {
+    secret: string;
+    accessTokenExpiry: string;
+    refreshTokenExpiry: string;
+  };
+  oidc?: {
+    issuerUrl: string;
+    clientId: string;
+    clientSecret: string;
+    callbackUrl: string;
+    scopes: string[];
+  };
+  defaultRole: "admin" | "author" | "reviewer" | "viewer";
+  allowSelfRegistration: boolean;
+  // Legacy fields for backward compat
+  username?: string;
+  password?: string;
 }
 
 export interface FeatureConfig {

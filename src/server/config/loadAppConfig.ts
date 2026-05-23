@@ -34,7 +34,8 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
       ...config.auth,
       enabled: process.env.AUTH_ENABLED ? process.env.AUTH_ENABLED === "true" : config.auth.enabled,
       username: process.env.AUTH_USERNAME ?? config.auth.username,
-      password: process.env.AUTH_PASSWORD ?? config.auth.password
+      password: process.env.AUTH_PASSWORD ?? config.auth.password,
+      ...(process.env.JWT_SECRET ? { jwt: { ...config.auth.jwt, secret: process.env.JWT_SECRET } } : {})
     }
   };
 }

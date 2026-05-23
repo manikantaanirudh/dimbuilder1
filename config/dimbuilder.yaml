@@ -21,8 +21,13 @@ server:
 
 auth:
   enabled: false
-  username: admin
-  password: changeme
+  strategy: none
+  jwt:
+    secret: change-me-in-production
+    accessTokenExpiry: 15m
+    refreshTokenExpiry: 7d
+  defaultRole: author
+  allowSelfRegistration: false
 
 features:
   enableMetadataReferenceAlignment: true

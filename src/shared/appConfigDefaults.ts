@@ -24,6 +24,14 @@ export const defaultAppConfig: AppConfig = {
   },
   auth: {
     enabled: false,
+    strategy: "none",
+    jwt: {
+      secret: "change-me-in-production-use-env-var",
+      accessTokenExpiry: "15m",
+      refreshTokenExpiry: "7d"
+    },
+    defaultRole: "author",
+    allowSelfRegistration: false,
     username: "admin",
     password: "changeme"
   },
