@@ -315,3 +315,32 @@ Source:
 
 - `src/server/db/repositories.ts`
 - route modules under `src/server/routes`
+
+## Authentication & RBAC
+
+Multi-user authentication supporting local credentials (email/password with bcrypt) and OIDC SSO (Azure AD, Okta). JWT-based session management with access/refresh token rotation. Role-based access control with four system roles (admin, author, reviewer, viewer) and project-level permissions.
+
+Key capabilities:
+- Local auth with bcrypt password hashing and JWT tokens
+- OIDC integration for enterprise SSO (Azure AD, Okta, any OpenID Connect provider)
+- Role-based permission system (14 distinct permissions across 4 roles)
+- Project-level permission grants (owner, editor, reviewer, viewer)
+- Automatic token refresh on 401 with retry
+- Default admin user seeding on first startup
+- Backward compatible: auth.enabled=false preserves unauthenticated access
+
+Source:
+
+- `src/shared/authTypes.ts`
+- `src/server/auth/passwords.ts`
+- `src/server/auth/tokens.ts`
+- `src/server/auth/oidcStrategy.ts`
+- `src/server/middleware/authenticate.ts`
+- `src/server/middleware/authorize.ts`
+- `src/server/routes/auth.ts`
+- `src/server/routes/users.ts`
+- `src/client/auth/AuthProvider.tsx`
+- `src/client/auth/LoginPage.tsx`
+- `src/client/auth/ProtectedRoute.tsx`
+- `src/client/auth/useAuth.ts`
+- `src/client/api/client.ts`
