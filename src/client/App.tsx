@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { AppShell } from "./components/AppShell";
+import { AuthProvider, ProtectedRoute } from "./auth";
 import { useAppConfig } from "./config/useAppConfig";
 
 export function App() {
@@ -20,5 +21,11 @@ export function App() {
     );
   }
 
-  return <AppShell appConfig={config} configError={error?.message ?? null} />;
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AppShell appConfig={config} configError={error?.message ?? null} />
+      </ProtectedRoute>
+    </AuthProvider>
+  );
 }
