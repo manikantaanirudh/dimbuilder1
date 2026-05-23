@@ -1,5 +1,38 @@
 import { nanoid } from "nanoid";
 import type { AppDatabase } from "./database";
+
+export interface UserRow {
+  id: string;
+  email: string;
+  display_name: string;
+  password_hash: string | null;
+  auth_provider: string;
+  auth_provider_id: string | null;
+  avatar_url: string | null;
+  role: string;
+  is_active: number;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionRow {
+  id: string;
+  user_id: string;
+  refresh_token_hash: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface ProjectPermissionRow {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: string;
+  granted_by: string | null;
+  granted_at: string;
+}
+
 import type {
   BulkUpdateItemRecord,
   BulkUpdateItemStatus,
@@ -1068,6 +1101,86 @@ export function createRepositories(db: AppDatabase) {
       getLatestReleasePackage(changeSetId: string): ReleasePackageRecord | null {
         const row = db.prepare("SELECT * FROM release_packages WHERE change_set_id = ? ORDER BY created_at DESC, id LIMIT 1").get(changeSetId);
         return row ? mapReleasePackage(row) : null;
+      }
+    },
+    users: {
+      findUserByEmail(email: string): UserRow | undefined {
+        return db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
+      },
+      findUserById(id: string): UserRow | undefined {
+        return db.prepare("SELECT * FROM users WHERE id = ?").get(id) as UserRow | undefined;
+      },
+      findUserByProviderId(provider: string, providerId: string): UserRow | undefined {
+        return db.prepare("SELECT * FROM users WHERE auth_provider = ? AND auth_provider_id = ?").get(provider, providerId) as UserRow | undefined;
+      },
+      createUser(input: { id: string; email: string; displayName: string; passwordHash?: string; authProvider: string; authProviderId?: string; role: string }): void {
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO users (id, email, display_name, password_hash, auth_provider, auth_provider_id, role, is_active, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        `).run(
+          input.id,
+          input.email,
+          input.displayName,
+          input.passwordHash ?? null,
+          input.authProvider,
+          input.authProviderId ?? null,
+          input.role,
+          timestamp,
+          timestamp
+        );
+      },
+      updateUser(id: string, updates: { displayName?: string; role?: string; isActive?: number; lastLoginAt?: string; avatarUrl?: string }): void {
+        const fields: string[] = [];
+        const values: unknown[] = [];
+        if (updates.displayName !== undefined) { fields.push("display_name = ?"); values.push(updates.displayName); }
+        if (updates.role !== undefined) { fields.push("role = ?"); values.push(updates.role); }
+        if (updates.isActive !== undefined) { fields.push("is_active = ?"); values.push(updates.isActive); }
+        if (updates.lastLoginAt !== undefined) { fields.push("last_login_at = ?"); values.push(updates.lastLoginAt); }
+        if (updates.avatarUrl !== undefined) { fields.push("avatar_url = ?"); values.push(updates.avatarUrl); }
+        if (fields.length === 0) return;
+        fields.push("updated_at = ?");
+        values.push(now());
+        values.push(id);
+        db.prepare(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+      },
+      listUsers(): UserRow[] {
+        return db.prepare("SELECT * FROM users ORDER BY created_at DESC").all() as UserRow[];
+      }
+    },
+    sessions: {
+      createSession(input: { id: string; userId: string; refreshTokenHash: string; expiresAt: string }): void {
+        db.prepare(`
+          INSERT INTO sessions (id, user_id, refresh_token_hash, expires_at, created_at)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(input.id, input.userId, input.refreshTokenHash, input.expiresAt, now());
+      },
+      findSessionByUserId(userId: string): SessionRow | undefined {
+        return db.prepare("SELECT * FROM sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1").get(userId) as SessionRow | undefined;
+      },
+      deleteSessionsByUserId(userId: string): void {
+        db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+      },
+      deleteExpiredSessions(): number {
+        const result = db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now());
+        return result.changes;
+      }
+    },
+    projectPermissions: {
+      getProjectPermissions(projectId: string): ProjectPermissionRow[] {
+        return db.prepare("SELECT * FROM project_permissions WHERE project_id = ?").all(projectId) as ProjectPermissionRow[];
+      },
+      getUserProjectPermission(projectId: string, userId: string): ProjectPermissionRow | undefined {
+        return db.prepare("SELECT * FROM project_permissions WHERE project_id = ? AND user_id = ?").get(projectId, userId) as ProjectPermissionRow | undefined;
+      },
+      setProjectPermission(input: { id: string; projectId: string; userId: string; role: string; grantedBy: string }): void {
+        db.prepare(`
+          INSERT OR REPLACE INTO project_permissions (id, project_id, user_id, role, granted_by, granted_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(input.id, input.projectId, input.userId, input.role, input.grantedBy, now());
+      },
+      removeProjectPermission(id: string): void {
+        db.prepare("DELETE FROM project_permissions WHERE id = ?").run(id);
       }
     }
   };
