@@ -36,14 +36,21 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   // Auth routes handle their own authentication
   app.use("/api/auth", createAuthRouter(repos, config));
 
-  // Apply Basic Auth to all routes below
-  app.use("/api", createBasicAuthMiddleware(config.auth));
+  // Apply authentication to all /api routes below depending on strategy
+  if (config.auth.strategy === "none" && config.auth.enabled && config.auth.username) {
+    // Legacy basic auth fallback when strategy is "none" with credentials configured
+    app.use("/api", createBasicAuthMiddleware(config.auth));
+  } else if (config.auth.strategy !== "none") {
+    // JWT-based authentication for local/oidc strategies
+    app.use("/api", createAuthenticateMiddleware(config));
+  }
+
   app.use("/api", generalRateLimiter);
   app.use("/api/import", heavyOperationRateLimiter);
   app.use("/api/export", heavyOperationRateLimiter);
 
   // Admin-only user management
-  app.use("/api/users", createAuthenticateMiddleware(config), requireRole("admin"), createUserRouter(repos));
+  app.use("/api/users", requireRole("admin"), createUserRouter(repos));
 
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/blueprints", createBlueprintRouter(config));
