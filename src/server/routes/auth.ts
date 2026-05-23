@@ -79,6 +79,15 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
   const router = Router();
   const tokenConfig = getTokenConfig(config);
 
+  // GET /status — public endpoint for client to check auth configuration
+  router.get("/status", (_req, res) => {
+    res.json({
+      enabled: config.auth.enabled && config.auth.strategy !== "none",
+      strategy: config.auth.strategy,
+      oidcAuthorizeUrl: config.auth.strategy === "oidc" ? "/api/auth/oidc/authorize" : null
+    });
+  });
+
   // Per-instance rate limiting state
   const failedAttempts = new Map<string, FailedAttempt>();
 

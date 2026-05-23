@@ -31,6 +31,97 @@ import type { DimensionBlueprintConfig } from "../../shared/appConfigTypes";
 import type { HierarchyAnalyticsResult } from "../../shared/hierarchyAnalytics";
 import type { GroupedOneStreamPropertyDictionary } from "../../shared/oneStreamPropertyDictionary";
 import type { RelationshipOperationPlan } from "../../shared/relationshipOperations";
+import type { AuthUser, LoginResponse } from "../../shared/authTypes";
+
+// --- Token Store ---
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+export function setTokens(access: string, refresh: string): void {
+  accessToken = access;
+  refreshToken = refresh;
+}
+
+export function clearTokens(): void {
+  accessToken = null;
+  refreshToken = null;
+}
+
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
+function authHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+  return headers;
+}
+
+async function attemptRefresh(): Promise<boolean> {
+  if (!refreshToken) return false;
+  try {
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken })
+    });
+    if (!response.ok) { clearTokens(); return false; }
+    const data = await response.json() as { accessToken: string };
+    accessToken = data.accessToken;
+    return true;
+  } catch { clearTokens(); return false; }
+}
+
+// --- Auth API Functions ---
+
+export interface AuthStatusResponse {
+  enabled: boolean;
+  strategy: string;
+  oidcAuthorizeUrl: string | null;
+}
+
+export async function fetchAuthStatus(): Promise<AuthStatusResponse> {
+  const response = await fetch("/api/auth/status");
+  if (!response.ok) return { enabled: false, strategy: "none", oidcAuthorizeUrl: null };
+  return response.json() as Promise<AuthStatusResponse>;
+}
+
+export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  if (!response.ok) throw new Error(await response.text());
+  const data = await response.json() as LoginResponse;
+  setTokens(data.accessToken, data.refreshToken);
+  return data;
+}
+
+export async function apiLogout(): Promise<void> {
+  await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
+  clearTokens();
+}
+
+export async function apiGetMe(): Promise<AuthUser | null> {
+  if (!accessToken) return null;
+  try {
+    return await apiGet<AuthUser>("/auth/me");
+  } catch { return null; }
+}
+
+export async function apiRegister(email: string, password: string, displayName: string): Promise<AuthUser> {
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, displayName })
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<AuthUser>;
+}
+
+// --- Core API Functions ---
 
 export interface GridResponse<T> {
   rows: T[];
@@ -38,23 +129,57 @@ export interface GridResponse<T> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`/api${path}`);
+  const response = await fetch(`/api${path}`, { headers: authHeaders() });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, { headers: authHeaders() });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return retryResponse.json() as Promise<T>;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<T>;
 }
 
 export async function apiText(path: string): Promise<string> {
-  const response = await fetch(`/api${path}`);
+  const response = await fetch(`/api${path}`, { headers: authHeaders() });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, { headers: authHeaders() });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return retryResponse.text();
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.text();
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const contentHeaders = body instanceof FormData
+    ? authHeaders()
+    : { ...authHeaders(), "Content-Type": "application/json" };
   const response = await fetch(`/api${path}`, {
     method: "POST",
-    headers: body instanceof FormData ? undefined : { "Content-Type": "application/json" },
+    headers: contentHeaders,
     body: body instanceof FormData ? body : JSON.stringify(body ?? {})
   });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryHeaders = body instanceof FormData
+        ? authHeaders()
+        : { ...authHeaders(), "Content-Type": "application/json" };
+      const retryResponse = await fetch(`/api${path}`, {
+        method: "POST",
+        headers: retryHeaders,
+        body: body instanceof FormData ? body : JSON.stringify(body ?? {})
+      });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return retryResponse.json() as Promise<T>;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<T>;
 }
@@ -62,18 +187,42 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 export async function apiPatch(path: string, body: unknown): Promise<void> {
   const response = await fetch(`/api${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, {
+        method: "PATCH",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
 }
 
 export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, {
+        method: "PUT",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return retryResponse.json() as Promise<T>;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<T>;
 }
@@ -81,15 +230,35 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
 export async function apiPatchJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, {
+        method: "PATCH",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return retryResponse.json() as Promise<T>;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<T>;
 }
 
 export async function apiDelete(path: string): Promise<void> {
-  const response = await fetch(`/api${path}`, { method: "DELETE" });
+  const response = await fetch(`/api${path}`, { method: "DELETE", headers: authHeaders() });
+  if (response.status === 401 && accessToken) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      const retryResponse = await fetch(`/api${path}`, { method: "DELETE", headers: authHeaders() });
+      if (!retryResponse.ok) throw new Error(await retryResponse.text());
+      return;
+    }
+  }
   if (!response.ok) throw new Error(await response.text());
 }
 
