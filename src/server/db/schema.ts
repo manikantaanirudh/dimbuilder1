@@ -837,4 +837,56 @@ CREATE INDEX IF NOT EXISTS idx_migration_projects ON migration_projects(project_
 CREATE INDEX IF NOT EXISTS idx_webhook_subs_project ON webhook_subscriptions(project_id);
 CREATE INDEX IF NOT EXISTS idx_sync_queue_project ON sync_queue(project_id, status);
 CREATE INDEX IF NOT EXISTS idx_generated_docs_project ON generated_documents(project_id);
+
+CREATE TABLE IF NOT EXISTS tenants (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  config_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS collaboration_comments (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_id TEXT NOT NULL,
+  member_key TEXT,
+  content TEXT NOT NULL,
+  author_id TEXT NOT NULL,
+  author_name TEXT NOT NULL DEFAULT '',
+  mentions_json TEXT NOT NULL DEFAULT '[]',
+  parent_comment_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT,
+  project_id TEXT,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  changes_json TEXT NOT NULL DEFAULT '{}',
+  ip_address TEXT,
+  timestamp TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS retention_policies (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT,
+  entity_type TEXT NOT NULL,
+  retention_days INTEGER NOT NULL DEFAULT 365,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_comments_project ON collaboration_comments(project_id, dimension_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_retention_policies ON retention_policies(tenant_id, entity_type);
 `;
