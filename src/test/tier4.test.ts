@@ -55,8 +55,10 @@ describe("Tier 4 API endpoints", () => {
     expect(res.status).toBe(200);
   });
 
-  it("GET /api/tenants/:id/usage → 200", async () => {
-    const res = await fetch(`${baseUrl}/api/tenants/test-tenant/usage`, { headers: authHeaders() });
+  it("GET /api/tenants/:slug/usage → 200", async () => {
+    // Create tenant first
+    await fetch(`${baseUrl}/api/tenants`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ name: "Test Org", slug: "test-org" }) });
+    const res = await fetch(`${baseUrl}/api/tenants/test-org/usage`, { headers: authHeaders() });
     expect(res.status).toBe(200);
     const data = await res.json() as { userCount: number };
     expect(data.userCount).toBe(0);

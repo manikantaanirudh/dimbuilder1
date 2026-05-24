@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 
@@ -14,17 +13,16 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const now = new Date().toISOString();
-    res.status(201).json({
-      id: nanoid(), name: parsed.data.name, slug: parsed.data.slug,
-      config: parsed.data.config ?? {}, status: 'active', createdAt: now, updatedAt: now
-    });
+    const tenant = repos.tenants.create({ name: parsed.data.name, slug: parsed.data.slug, config: parsed.data.config });
+    res.status(201).json(tenant);
   });
 
-  router.get("/tenants", (_req, res) => { res.json([]); });
+  router.get("/tenants", (_req, res) => { res.json(repos.tenants.list()); });
 
-  router.get("/tenants/:id/usage", (req, res) => {
-    res.json({ tenantId: req.params.id, userCount: 0, projectCount: 0, storageBytes: 0, apiCallsThisMonth: 0, capturedAt: new Date().toISOString() });
+  router.get("/tenants/:slug/usage", (req, res) => {
+    const tenant = repos.tenants.getBySlug(req.params.slug);
+    if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+    res.json({ tenantId: tenant.id, userCount: 0, projectCount: 0, storageBytes: 0, apiCallsThisMonth: 0, capturedAt: new Date().toISOString() });
   });
 
   // ============ Feature 22: Real-Time Collaboration ============
@@ -49,20 +47,23 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const now = new Date().toISOString();
-    res.status(201).json({
-      id: nanoid(), projectId: project.id, dimensionId: parsed.data.dimensionId,
-      memberKey: parsed.data.memberKey ?? null, content: parsed.data.content,
-      authorId: req.user?.id ?? "system", authorName: req.user?.email ?? "system",
-      mentions: parsed.data.mentions ?? [], parentCommentId: parsed.data.parentCommentId ?? null,
-      createdAt: now, updatedAt: now
+    const comment = repos.comments.create({
+      projectId: project.id,
+      dimensionId: parsed.data.dimensionId,
+      memberKey: parsed.data.memberKey,
+      content: parsed.data.content,
+      authorId: req.user?.id ?? "system",
+      authorName: req.user?.email ?? "system",
+      mentions: parsed.data.mentions,
+      parentCommentId: parsed.data.parentCommentId
     });
+    res.status(201).json(comment);
   });
 
   router.get("/projects/:id/comments", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(repos.comments.listByProject(project.id));
   });
 
   // ============ Feature 23: Audit & Compliance ============
@@ -70,7 +71,7 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
   router.get("/projects/:id/audit-log", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(repos.auditLog.listByProject(project.id));
   });
 
   router.post("/audit-log", (req, res) => {
@@ -84,13 +85,15 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(), tenantId: null, projectId: parsed.data.projectId ?? null,
-      userId: req.user?.id ?? "system", action: parsed.data.action,
-      entityType: parsed.data.entityType, entityId: parsed.data.entityId,
-      changes: parsed.data.changes ?? {}, ipAddress: null,
-      timestamp: new Date().toISOString()
+    const entry = repos.auditLog.create({
+      projectId: parsed.data.projectId,
+      userId: req.user?.id ?? "system",
+      action: parsed.data.action,
+      entityType: parsed.data.entityType,
+      entityId: parsed.data.entityId,
+      changes: parsed.data.changes
     });
+    res.status(201).json(entry);
   });
 
   router.post("/retention-policies", (req, res) => {
@@ -98,20 +101,20 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(), tenantId: null, entityType: parsed.data.entityType,
-      retentionDays: parsed.data.retentionDays, isActive: true,
-      createdAt: new Date().toISOString()
-    });
+    const policy = repos.retentionPolicies.create({ entityType: parsed.data.entityType, retentionDays: parsed.data.retentionDays });
+    res.status(201).json(policy);
   });
 
-  router.get("/compliance/report", (_req, res) => {
+  router.get("/retention-policies", (_req, res) => { res.json(repos.retentionPolicies.list()); });
+
+  router.get("/compliance/report", (req, res) => {
+    const policies = repos.retentionPolicies.list();
     res.json({
       tenantId: 'default',
       generatedAt: new Date().toISOString(),
       segregationOfDuties: { violations: [] },
       auditCompleteness: { totalActions: 0, loggedActions: 0, coverage: 100 },
-      retentionStatus: { policiesActive: 0, oldestEntry: null }
+      retentionStatus: { policiesActive: policies.filter(p => p.isActive).length, oldestEntry: null }
     });
   });
 
@@ -120,11 +123,8 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
   router.get("/performance/metrics", (_req, res) => {
     const memUsage = process.memoryUsage();
     res.json({
-      avgResponseTimeMs: 15,
-      p95ResponseTimeMs: 50,
-      requestsPerMinute: 0,
-      cacheHitRate: 0,
-      activeConnections: 1,
+      avgResponseTimeMs: 15, p95ResponseTimeMs: 50,
+      requestsPerMinute: 0, cacheHitRate: 0, activeConnections: 1,
       memoryUsageMb: Math.round(memUsage.heapUsed / 1024 / 1024)
     });
   });
@@ -137,19 +137,12 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
 
     const offset = parseInt(req.query.offset as string) || 0;
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
-
     const allMembers = repos.members.listByProject(project.id);
     const page = allMembers.slice(offset, offset + limit);
 
     res.json({
       data: page,
-      pagination: {
-        total: allMembers.length,
-        offset,
-        limit,
-        hasMore: offset + limit < allMembers.length,
-        cursor: page.length > 0 ? page[page.length - 1].id : null
-      }
+      pagination: { total: allMembers.length, offset, limit, hasMore: offset + limit < allMembers.length, cursor: page.length > 0 ? page[page.length - 1].id : null }
     });
   });
 

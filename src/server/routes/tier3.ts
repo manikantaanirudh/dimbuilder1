@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 import { scoreDimensionQuality, generateDocumentContent } from "../tier3/tier3Engine";
@@ -16,18 +15,14 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
 
     const dimensionType = req.body?.dimensionType as string;
     const dimensions = repos.dimensions.listByProject(project.id);
-    const dim = dimensionType
-      ? dimensions.find(d => d.dimensionType === dimensionType)
-      : dimensions[0];
-
+    const dim = dimensionType ? dimensions.find(d => d.dimensionType === dimensionType) : dimensions[0];
     if (!dim) return res.status(404).json({ error: "Dimension not found" });
 
     const members = repos.members.listByProject(project.id).filter(m => m.dimensionId === dim.id);
     const relationships = repos.relationships.listByProject(project.id).filter(r => r.dimensionId === dim.id);
 
     res.json({
-      dimensionType: dim.dimensionType,
-      dimensionName: dim.dimensionName,
+      dimensionType: dim.dimensionType, dimensionName: dim.dimensionName,
       members: members.map(m => ({ memberKey: m.memberKey, description: m.description, properties: m.properties })),
       relationships: relationships.map(r => ({ parentKey: r.parentKey, childKey: r.childKey, aggregationWeight: r.aggregationWeight })),
       validationRules: []
@@ -37,7 +32,6 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
   router.post("/projects/:id/excel/publish", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    // Publish is a server-side operation that accepts bulk member data
     res.status(201).json({ membersCreated: 0, membersUpdated: 0, relationshipsCreated: 0, relationshipsUpdated: 0, validationIssues: [] });
   });
 
@@ -51,24 +45,31 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed" });
 
-    const userId = req.user?.id ?? "system";
-    const now = new Date();
-    const expires = new Date(now.getTime() + 30 * 60 * 1000); // 30 min lock
+    const existing = repos.editLocks.getActive(project.id, parsed.data.dimensionId);
+    if (existing && existing.userId !== (req.user?.id ?? "system")) {
+      return res.status(409).json({ error: "Dimension is locked by another user", lock: existing });
+    }
 
-    res.status(201).json({
-      id: nanoid(),
+    const lock = repos.editLocks.acquire({
       projectId: project.id,
       dimensionId: parsed.data.dimensionId,
-      userId,
-      acquiredAt: now.toISOString(),
-      expiresAt: expires.toISOString()
+      userId: req.user?.id ?? "system"
     });
+    res.status(201).json(lock);
   });
 
   router.post("/projects/:id/locks/release", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
+    const dimensionId = req.body?.dimensionId;
+    if (dimensionId) repos.editLocks.release(project.id, dimensionId, req.user?.id ?? "system");
     res.status(204).end();
+  });
+
+  router.get("/projects/:id/locks", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(repos.editLocks.listByProject(project.id));
   });
 
   router.post("/projects/:id/conflicts/detect", (req, res) => {
@@ -82,7 +83,7 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
   router.get("/projects/:id/jobs", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(repos.scheduledJobs.listByProject(project.id));
   });
 
   router.post("/projects/:id/jobs", (req, res) => {
@@ -99,22 +100,23 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const job = {
-      id: nanoid(),
+    const job = repos.scheduledJobs.create({
       projectId: project.id,
       name: parsed.data.name,
       triggerType: parsed.data.triggerType,
-      triggerConfig: parsed.data.triggerConfig ?? {},
+      triggerConfig: parsed.data.triggerConfig,
       actionType: parsed.data.actionType,
-      actionConfig: parsed.data.actionConfig ?? {},
-      status: 'active',
-      lastRunAt: null,
-      nextRunAt: null,
-      createdBy: req.user?.id ?? "system",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      actionConfig: parsed.data.actionConfig,
+      createdBy: req.user?.id ?? "system"
+    });
     res.status(201).json(job);
+  });
+
+  router.delete("/projects/:id/jobs/:jobId", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    repos.scheduledJobs.delete(req.params.jobId);
+    res.status(204).end();
   });
 
   router.post("/projects/:id/webhooks", (req, res) => {
@@ -125,16 +127,19 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(),
+    const webhook = repos.webhookSubscriptions.create({
       projectId: project.id,
-      name: parsed.data.name ?? 'Webhook',
       url: parsed.data.url,
       events: parsed.data.events,
-      secret: nanoid(32),
-      isActive: true,
-      createdAt: new Date().toISOString()
+      createdBy: req.user?.id ?? "system"
     });
+    res.status(201).json(webhook);
+  });
+
+  router.get("/projects/:id/webhooks", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(repos.webhookSubscriptions.listByProject(project.id));
   });
 
   // ============ Feature 16: Data Quality Scoring ============
@@ -145,10 +150,11 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
 
     const dimensions = repos.dimensions.listByProject(project.id);
     const members = repos.members.listByProject(project.id);
+    const rules = repos.qualityRules.listByProject(project.id);
 
     const scores = dimensions.map(dim => {
       const dimMembers = members.filter(m => m.dimensionId === dim.id);
-      return scoreDimensionQuality(dim, dimMembers, []);
+      return scoreDimensionQuality(dim, dimMembers, rules);
     });
 
     const overallScore = scores.length > 0
@@ -171,17 +177,21 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(),
+    const rule = repos.qualityRules.create({
       projectId: project.id,
       name: parsed.data.name,
       category: parsed.data.category,
-      weight: parsed.data.weight ?? 1.0,
-      config: parsed.data.config ?? {},
-      isActive: true,
-      createdBy: req.user?.id ?? "system",
-      createdAt: new Date().toISOString()
+      weight: parsed.data.weight,
+      config: parsed.data.config,
+      createdBy: req.user?.id ?? "system"
     });
+    res.status(201).json(rule);
+  });
+
+  router.get("/projects/:id/quality/rules", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(repos.qualityRules.listByProject(project.id));
   });
 
   router.post("/projects/:id/quality/gates", (req, res) => {
@@ -197,17 +207,21 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(),
+    const gate = repos.qualityGates.create({
       projectId: project.id,
       name: parsed.data.name,
       threshold: parsed.data.threshold,
-      scope: parsed.data.scope ?? 'project',
-      action: parsed.data.action ?? 'warn',
-      isActive: true,
-      createdBy: req.user?.id ?? "system",
-      createdAt: new Date().toISOString()
+      scope: parsed.data.scope,
+      action: parsed.data.action,
+      createdBy: req.user?.id ?? "system"
     });
+    res.status(201).json(gate);
+  });
+
+  router.get("/projects/:id/quality/gates", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(repos.qualityGates.listByProject(project.id));
   });
 
   // ============ Feature 17: Migration Assistant ============
@@ -223,24 +237,19 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(),
+    const migration = repos.migrationProjects.create({
       projectId: project.id,
       name: parsed.data.name,
       sourceType: parsed.data.sourceType,
-      status: 'draft',
-      sourceConfig: {},
-      progress: { totalDimensions: 0, completedDimensions: 0, totalMembers: 0, mappedMembers: 0, unmappedMembers: 0, gapCount: 0 },
-      createdBy: req.user?.id ?? "system",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdBy: req.user?.id ?? "system"
     });
+    res.status(201).json(migration);
   });
 
   router.get("/projects/:id/migrations", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(repos.migrationProjects.listByProject(project.id));
   });
 
   // ============ Feature 18: API & Extensibility Platform ============
@@ -250,24 +259,20 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
+    const { nanoid } = require("nanoid") as { nanoid: (size?: number) => string };
     const key = nanoid(40);
     res.status(201).json({
-      id: nanoid(),
-      name: parsed.data.name,
-      key, // Only shown once on creation
+      id: nanoid(), name: parsed.data.name, key,
       keyPrefix: key.slice(0, 8),
       permissions: parsed.data.permissions ?? ['read'],
       rateLimitPerMinute: parsed.data.rateLimitPerMinute ?? 60,
       userId: req.user?.id ?? "system",
-      lastUsedAt: null,
-      expiresAt: null,
+      lastUsedAt: null, expiresAt: null,
       createdAt: new Date().toISOString()
     });
   });
 
-  router.get("/api-keys", (_req, res) => {
-    res.json([]);
-  });
+  router.get("/api-keys", (_req, res) => { res.json([]); });
 
   router.post("/projects/:id/webhook-subscriptions", (req, res) => {
     const project = repos.projects.get(req.params.id);
@@ -277,17 +282,13 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    res.status(201).json({
-      id: nanoid(),
+    const webhook = repos.webhookSubscriptions.create({
       projectId: project.id,
       url: parsed.data.url,
       events: parsed.data.events,
-      secret: nanoid(32),
-      isActive: true,
-      failureCount: 0,
-      createdBy: req.user?.id ?? "system",
-      createdAt: new Date().toISOString()
+      createdBy: req.user?.id ?? "system"
     });
+    res.status(201).json(webhook);
   });
 
   // ============ Feature 19: Offline Mode ============
@@ -295,13 +296,16 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
   router.get("/projects/:id/sync/status", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json({ isOnline: true, pendingChanges: 0, lastSyncAt: new Date().toISOString(), conflicts: 0 });
+    const pendingChanges = repos.syncQueue.countPending(project.id);
+    res.json({ isOnline: true, pendingChanges, lastSyncAt: new Date().toISOString(), conflicts: 0 });
   });
 
   router.post("/projects/:id/sync/push", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json({ synced: 0, conflicts: 0, failed: 0 });
+    const pending = repos.syncQueue.listPending(project.id);
+    for (const entry of pending) repos.syncQueue.markSynced(entry.id);
+    res.json({ synced: pending.length, conflicts: 0, failed: 0 });
   });
 
   router.post("/projects/:id/sync/pull", (req, res) => {
@@ -323,22 +327,20 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const content = generateDocumentContent({ dimensions, members, relationships });
     const format = req.body?.format || 'markdown';
 
-    res.status(201).json({
-      id: nanoid(),
+    const doc = repos.generatedDocuments.create({
       projectId: project.id,
       title: `${project.name} - Design Document`,
       format,
       content,
-      snapshotId: null,
-      generatedBy: req.user?.id ?? "system",
-      generatedAt: new Date().toISOString()
+      generatedBy: req.user?.id ?? "system"
     });
+    res.status(201).json(doc);
   });
 
   router.get("/projects/:id/docs", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(repos.generatedDocuments.listByProject(project.id));
   });
 
   return router;

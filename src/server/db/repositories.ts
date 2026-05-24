@@ -134,6 +134,15 @@ import type {
   VcsTag,
   ProjectSnapshot
 } from "../../shared/vcsTypes";
+import type {
+  ScheduledJob, JobExecution, JobStatus, JobExecutionStatus,
+  QualityRule, QualityGate, MigrationProject, WebhookConfig,
+  SyncQueueEntry, EditLock
+} from "../../shared/tier3Types";
+import type {
+  Tenant, TenantConfig, CollaborationComment,
+  AuditLogEntry, RetentionPolicy
+} from "../../shared/tier4Types";
 
 function now(): string {
   return new Date().toISOString();
@@ -2128,6 +2137,133 @@ export function createRepositories(db: AppDatabase) {
       delete(id: string): void {
         db.prepare("DELETE FROM vcs_tags WHERE id = ?").run(id);
       }
+    },
+    editLocks: {
+      acquire(input: { projectId: string; dimensionId: string; userId: string; durationMinutes?: number }): EditLock {
+        const id = nanoid(); const timestamp = now(); const duration = input.durationMinutes ?? 30;
+        const expires = new Date(Date.now() + duration * 60 * 1000).toISOString();
+        db.prepare("DELETE FROM edit_locks WHERE project_id = ? AND dimension_id = ? AND expires_at < ?").run(input.projectId, input.dimensionId, timestamp);
+        db.prepare("INSERT INTO edit_locks (id, project_id, dimension_id, user_id, acquired_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)").run(id, input.projectId, input.dimensionId, input.userId, timestamp, expires);
+        return { id, projectId: input.projectId, dimensionId: input.dimensionId, userId: input.userId, acquiredAt: timestamp, expiresAt: expires };
+      },
+      getActive(projectId: string, dimensionId: string): EditLock | null {
+        const row = db.prepare("SELECT * FROM edit_locks WHERE project_id = ? AND dimension_id = ? AND expires_at > ? ORDER BY acquired_at DESC LIMIT 1").get(projectId, dimensionId, now());
+        if (!row) return null;
+        return { id: String(row.id), projectId: String(row.project_id), dimensionId: String(row.dimension_id), userId: String(row.user_id), acquiredAt: String(row.acquired_at), expiresAt: String(row.expires_at) };
+      },
+      release(projectId: string, dimensionId: string, userId: string): void { db.prepare("DELETE FROM edit_locks WHERE project_id = ? AND dimension_id = ? AND user_id = ?").run(projectId, dimensionId, userId); },
+      listByProject(projectId: string): EditLock[] { return db.prepare("SELECT * FROM edit_locks WHERE project_id = ? AND expires_at > ?").all(projectId, now()).map(row => ({ id: String(row.id), projectId: String(row.project_id), dimensionId: String(row.dimension_id), userId: String(row.user_id), acquiredAt: String(row.acquired_at), expiresAt: String(row.expires_at) })); }
+    },
+    scheduledJobs: {
+      create(input: { projectId: string; name: string; triggerType: string; triggerConfig?: Record<string, unknown>; actionType: string; actionConfig?: Record<string, unknown>; createdBy: string }): ScheduledJob {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO scheduled_jobs (id, project_id, name, trigger_type, trigger_config_json, action_type, action_config_json, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)").run(id, input.projectId, input.name, input.triggerType, JSON.stringify(input.triggerConfig ?? {}), input.actionType, JSON.stringify(input.actionConfig ?? {}), input.createdBy, timestamp, timestamp);
+        return { id, projectId: input.projectId, name: input.name, triggerType: input.triggerType as ScheduledJob['triggerType'], triggerConfig: input.triggerConfig ?? {}, actionType: input.actionType, actionConfig: input.actionConfig ?? {}, status: 'active', lastRunAt: null, nextRunAt: null, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      listByProject(projectId: string): ScheduledJob[] { return db.prepare("SELECT * FROM scheduled_jobs WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), name: String(row.name), triggerType: String(row.trigger_type) as ScheduledJob['triggerType'], triggerConfig: parseJson(String(row.trigger_config_json ?? "{}"), {}), actionType: String(row.action_type), actionConfig: parseJson(String(row.action_config_json ?? "{}"), {}), status: String(row.status) as JobStatus, lastRunAt: row.last_run_at ? String(row.last_run_at) : null, nextRunAt: row.next_run_at ? String(row.next_run_at) : null, createdBy: String(row.created_by), createdAt: String(row.created_at), updatedAt: String(row.updated_at) })); },
+      get(id: string): ScheduledJob | null { const row = db.prepare("SELECT * FROM scheduled_jobs WHERE id = ?").get(id); if (!row) return null; return { id: String(row.id), projectId: String(row.project_id), name: String(row.name), triggerType: String(row.trigger_type) as ScheduledJob['triggerType'], triggerConfig: parseJson(String(row.trigger_config_json ?? "{}"), {}), actionType: String(row.action_type), actionConfig: parseJson(String(row.action_config_json ?? "{}"), {}), status: String(row.status) as JobStatus, lastRunAt: row.last_run_at ? String(row.last_run_at) : null, nextRunAt: row.next_run_at ? String(row.next_run_at) : null, createdBy: String(row.created_by), createdAt: String(row.created_at), updatedAt: String(row.updated_at) }; },
+      delete(id: string): void { db.prepare("DELETE FROM scheduled_jobs WHERE id = ?").run(id); }
+    },
+    jobExecutions: {
+      create(input: { jobId: string; status?: JobExecutionStatus; result?: Record<string, unknown>; errorMessage?: string }): JobExecution {
+        const id = nanoid(); const timestamp = now(); const status = input.status ?? 'pending';
+        db.prepare("INSERT INTO job_executions (id, job_id, status, started_at, completed_at, result_json, error_message) VALUES (?, ?, ?, ?, ?, ?, ?)").run(id, input.jobId, status, timestamp, status === 'succeeded' || status === 'failed' ? timestamp : null, input.result ? JSON.stringify(input.result) : null, input.errorMessage ?? null);
+        return { id, jobId: input.jobId, status, startedAt: timestamp, completedAt: status === 'succeeded' || status === 'failed' ? timestamp : null, result: input.result ?? null, errorMessage: input.errorMessage ?? null };
+      },
+      listByJob(jobId: string): JobExecution[] { return db.prepare("SELECT * FROM job_executions WHERE job_id = ? ORDER BY started_at DESC").all(jobId).map(row => ({ id: String(row.id), jobId: String(row.job_id), status: String(row.status) as JobExecutionStatus, startedAt: String(row.started_at), completedAt: row.completed_at ? String(row.completed_at) : null, result: row.result_json ? parseJson(String(row.result_json), {}) : null, errorMessage: row.error_message ? String(row.error_message) : null })); }
+    },
+    qualityRules: {
+      create(input: { projectId: string; name: string; category: string; weight?: number; config?: Record<string, unknown>; createdBy: string }): QualityRule {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO quality_rules (id, project_id, name, category, weight, config_json, is_active, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)").run(id, input.projectId, input.name, input.category, input.weight ?? 1.0, JSON.stringify(input.config ?? {}), input.createdBy, timestamp);
+        return { id, projectId: input.projectId, name: input.name, category: input.category as QualityRule['category'], weight: input.weight ?? 1.0, config: input.config ?? {}, isActive: true, createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByProject(projectId: string): QualityRule[] { return db.prepare("SELECT * FROM quality_rules WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), name: String(row.name), category: String(row.category) as QualityRule['category'], weight: Number(row.weight ?? 1), config: parseJson(String(row.config_json ?? "{}"), {}), isActive: Boolean(row.is_active), createdBy: String(row.created_by), createdAt: String(row.created_at) })); },
+      delete(id: string): void { db.prepare("DELETE FROM quality_rules WHERE id = ?").run(id); }
+    },
+    qualityGates: {
+      create(input: { projectId: string; name: string; threshold: number; scope?: string; action?: string; createdBy: string }): QualityGate {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO quality_gates (id, project_id, name, threshold, scope, action, is_active, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)").run(id, input.projectId, input.name, input.threshold, input.scope ?? 'project', input.action ?? 'warn', input.createdBy, timestamp);
+        return { id, projectId: input.projectId, name: input.name, threshold: input.threshold, scope: (input.scope ?? 'project') as QualityGate['scope'], action: (input.action ?? 'warn') as QualityGate['action'], isActive: true, createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByProject(projectId: string): QualityGate[] { return db.prepare("SELECT * FROM quality_gates WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), name: String(row.name), threshold: Number(row.threshold), scope: String(row.scope ?? 'project') as QualityGate['scope'], action: String(row.action ?? 'warn') as QualityGate['action'], isActive: Boolean(row.is_active), createdBy: String(row.created_by), createdAt: String(row.created_at) })); },
+      delete(id: string): void { db.prepare("DELETE FROM quality_gates WHERE id = ?").run(id); }
+    },
+    migrationProjects: {
+      create(input: { projectId: string; name: string; sourceType: string; createdBy: string }): MigrationProject {
+        const id = nanoid(); const timestamp = now();
+        const progress = { totalDimensions: 0, completedDimensions: 0, totalMembers: 0, mappedMembers: 0, unmappedMembers: 0, gapCount: 0 };
+        db.prepare("INSERT INTO migration_projects (id, project_id, name, source_type, status, source_config_json, progress_json, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, 'draft', '{}', ?, ?, ?, ?)").run(id, input.projectId, input.name, input.sourceType, JSON.stringify(progress), input.createdBy, timestamp, timestamp);
+        return { id, projectId: input.projectId, name: input.name, sourceType: input.sourceType as MigrationProject['sourceType'], status: 'draft', sourceConfig: {}, progress, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      listByProject(projectId: string): MigrationProject[] { return db.prepare("SELECT * FROM migration_projects WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), name: String(row.name), sourceType: String(row.source_type) as MigrationProject['sourceType'], status: String(row.status) as MigrationProject['status'], sourceConfig: parseJson(String(row.source_config_json ?? "{}"), {}), progress: parseJson(String(row.progress_json ?? "{}"), { totalDimensions: 0, completedDimensions: 0, totalMembers: 0, mappedMembers: 0, unmappedMembers: 0, gapCount: 0 }), createdBy: String(row.created_by), createdAt: String(row.created_at), updatedAt: String(row.updated_at) })); },
+      delete(id: string): void { db.prepare("DELETE FROM migration_projects WHERE id = ?").run(id); }
+    },
+    webhookSubscriptions: {
+      create(input: { projectId: string; url: string; events: string[]; secret?: string; createdBy: string }): WebhookConfig {
+        const id = nanoid(); const timestamp = now(); const secret = input.secret ?? nanoid(32);
+        db.prepare("INSERT INTO webhook_subscriptions (id, project_id, url, events_json, secret, is_active, failure_count, created_by, created_at) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?)").run(id, input.projectId, input.url, JSON.stringify(input.events), secret, input.createdBy, timestamp);
+        return { id, projectId: input.projectId, name: input.url, url: input.url, secret, events: input.events, isActive: true, createdAt: timestamp };
+      },
+      listByProject(projectId: string): WebhookConfig[] { return db.prepare("SELECT * FROM webhook_subscriptions WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), name: String(row.url), url: String(row.url), secret: String(row.secret), events: parseJson<string[]>(String(row.events_json ?? "[]"), []), isActive: Boolean(row.is_active), createdAt: String(row.created_at) })); },
+      delete(id: string): void { db.prepare("DELETE FROM webhook_subscriptions WHERE id = ?").run(id); }
+    },
+    syncQueue: {
+      create(input: { projectId: string; operationType: string; entityType: string; entityId: string; payload: Record<string, unknown> }): SyncQueueEntry {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO sync_queue (id, project_id, operation_type, entity_type, entity_id, payload_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)").run(id, input.projectId, input.operationType, input.entityType, input.entityId, JSON.stringify(input.payload), timestamp);
+        return { id, projectId: input.projectId, operationType: input.operationType as SyncQueueEntry['operationType'], entityType: input.entityType as SyncQueueEntry['entityType'], entityId: input.entityId, payload: input.payload, status: 'pending', createdAt: timestamp, syncedAt: null };
+      },
+      listPending(projectId: string): SyncQueueEntry[] { return db.prepare("SELECT * FROM sync_queue WHERE project_id = ? AND status = 'pending' ORDER BY created_at ASC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), operationType: String(row.operation_type) as SyncQueueEntry['operationType'], entityType: String(row.entity_type) as SyncQueueEntry['entityType'], entityId: String(row.entity_id), payload: parseJson(String(row.payload_json ?? "{}"), {}), status: String(row.status) as SyncQueueEntry['status'], createdAt: String(row.created_at), syncedAt: row.synced_at ? String(row.synced_at) : null })); },
+      markSynced(id: string): void { db.prepare("UPDATE sync_queue SET status = 'synced', synced_at = ? WHERE id = ?").run(now(), id); },
+      countPending(projectId: string): number { return Number(db.prepare("SELECT COUNT(*) as count FROM sync_queue WHERE project_id = ? AND status = 'pending'").get(projectId)?.count ?? 0); }
+    },
+    generatedDocuments: {
+      create(input: { projectId: string; title: string; format: string; content: string; snapshotId?: string; generatedBy: string }): { id: string; projectId: string; title: string; format: string; content: string; snapshotId: string | null; generatedBy: string; generatedAt: string } {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO generated_documents (id, project_id, title, format, content, snapshot_id, generated_by, generated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(id, input.projectId, input.title, input.format, input.content, input.snapshotId ?? null, input.generatedBy, timestamp);
+        return { id, projectId: input.projectId, title: input.title, format: input.format, content: input.content, snapshotId: input.snapshotId ?? null, generatedBy: input.generatedBy, generatedAt: timestamp };
+      },
+      listByProject(projectId: string): Array<{ id: string; title: string; format: string; generatedAt: string }> { return db.prepare("SELECT id, title, format, generated_at FROM generated_documents WHERE project_id = ? ORDER BY generated_at DESC").all(projectId).map(row => ({ id: String(row.id), title: String(row.title), format: String(row.format), generatedAt: String(row.generated_at) })); },
+      get(id: string): { id: string; projectId: string; title: string; format: string; content: string; snapshotId: string | null; generatedBy: string; generatedAt: string } | null { const row = db.prepare("SELECT * FROM generated_documents WHERE id = ?").get(id); if (!row) return null; return { id: String(row.id), projectId: String(row.project_id), title: String(row.title), format: String(row.format), content: String(row.content), snapshotId: row.snapshot_id ? String(row.snapshot_id) : null, generatedBy: String(row.generated_by), generatedAt: String(row.generated_at) }; },
+      delete(id: string): void { db.prepare("DELETE FROM generated_documents WHERE id = ?").run(id); }
+    },
+    tenants: {
+      create(input: { name: string; slug: string; config?: TenantConfig }): Tenant {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO tenants (id, name, slug, config_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', ?, ?)").run(id, input.name, input.slug, JSON.stringify(input.config ?? {}), timestamp, timestamp);
+        return { id, name: input.name, slug: input.slug, config: input.config ?? {}, status: 'active', createdAt: timestamp, updatedAt: timestamp };
+      },
+      list(): Tenant[] { return db.prepare("SELECT * FROM tenants ORDER BY name ASC").all().map(row => ({ id: String(row.id), name: String(row.name), slug: String(row.slug), config: parseJson(String(row.config_json ?? "{}"), {}), status: String(row.status) as Tenant['status'], createdAt: String(row.created_at), updatedAt: String(row.updated_at) })); },
+      getBySlug(slug: string): Tenant | null { const row = db.prepare("SELECT * FROM tenants WHERE slug = ?").get(slug); if (!row) return null; return { id: String(row.id), name: String(row.name), slug: String(row.slug), config: parseJson(String(row.config_json ?? "{}"), {}), status: String(row.status) as Tenant['status'], createdAt: String(row.created_at), updatedAt: String(row.updated_at) }; },
+      delete(id: string): void { db.prepare("DELETE FROM tenants WHERE id = ?").run(id); }
+    },
+    comments: {
+      create(input: { projectId: string; dimensionId: string; memberKey?: string; content: string; authorId: string; authorName: string; mentions?: string[]; parentCommentId?: string }): CollaborationComment {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO collaboration_comments (id, project_id, dimension_id, member_key, content, author_id, author_name, mentions_json, parent_comment_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(id, input.projectId, input.dimensionId, input.memberKey ?? null, input.content, input.authorId, input.authorName, JSON.stringify(input.mentions ?? []), input.parentCommentId ?? null, timestamp, timestamp);
+        return { id, projectId: input.projectId, dimensionId: input.dimensionId, memberKey: input.memberKey ?? null, content: input.content, authorId: input.authorId, authorName: input.authorName, mentions: input.mentions ?? [], parentCommentId: input.parentCommentId ?? null, createdAt: timestamp, updatedAt: timestamp };
+      },
+      listByProject(projectId: string): CollaborationComment[] { return db.prepare("SELECT * FROM collaboration_comments WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({ id: String(row.id), projectId: String(row.project_id), dimensionId: String(row.dimension_id), memberKey: row.member_key ? String(row.member_key) : null, content: String(row.content), authorId: String(row.author_id), authorName: String(row.author_name ?? ''), mentions: parseJson<string[]>(String(row.mentions_json ?? "[]"), []), parentCommentId: row.parent_comment_id ? String(row.parent_comment_id) : null, createdAt: String(row.created_at), updatedAt: String(row.updated_at) })); },
+      delete(id: string): void { db.prepare("DELETE FROM collaboration_comments WHERE id = ?").run(id); }
+    },
+    auditLog: {
+      create(input: { tenantId?: string; projectId?: string; userId: string; action: string; entityType: string; entityId: string; changes?: Record<string, unknown>; ipAddress?: string }): AuditLogEntry {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO audit_log (id, tenant_id, project_id, user_id, action, entity_type, entity_id, changes_json, ip_address, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(id, input.tenantId ?? null, input.projectId ?? null, input.userId, input.action, input.entityType, input.entityId, JSON.stringify(input.changes ?? {}), input.ipAddress ?? null, timestamp);
+        return { id, tenantId: input.tenantId ?? null, projectId: input.projectId ?? null, userId: input.userId, action: input.action, entityType: input.entityType, entityId: input.entityId, changes: input.changes ?? {}, ipAddress: input.ipAddress ?? null, timestamp };
+      },
+      listByProject(projectId: string, limit = 100): AuditLogEntry[] { return db.prepare("SELECT * FROM audit_log WHERE project_id = ? ORDER BY timestamp DESC LIMIT ?").all(projectId, limit).map(row => ({ id: String(row.id), tenantId: row.tenant_id ? String(row.tenant_id) : null, projectId: row.project_id ? String(row.project_id) : null, userId: String(row.user_id), action: String(row.action), entityType: String(row.entity_type), entityId: String(row.entity_id), changes: parseJson(String(row.changes_json ?? "{}"), {}), ipAddress: row.ip_address ? String(row.ip_address) : null, timestamp: String(row.timestamp) })); },
+      countByProject(projectId: string): number { return Number(db.prepare("SELECT COUNT(*) as count FROM audit_log WHERE project_id = ?").get(projectId)?.count ?? 0); }
+    },
+    retentionPolicies: {
+      create(input: { tenantId?: string; entityType: string; retentionDays: number }): RetentionPolicy {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT INTO retention_policies (id, tenant_id, entity_type, retention_days, is_active, created_at) VALUES (?, ?, ?, ?, 1, ?)").run(id, input.tenantId ?? null, input.entityType, input.retentionDays, timestamp);
+        return { id, tenantId: input.tenantId ?? null, entityType: input.entityType, retentionDays: input.retentionDays, isActive: true, createdAt: timestamp };
+      },
+      list(): RetentionPolicy[] { return db.prepare("SELECT * FROM retention_policies ORDER BY created_at DESC").all().map(row => ({ id: String(row.id), tenantId: row.tenant_id ? String(row.tenant_id) : null, entityType: String(row.entity_type), retentionDays: Number(row.retention_days), isActive: Boolean(row.is_active), createdAt: String(row.created_at) })); }
     }
   };
 }
