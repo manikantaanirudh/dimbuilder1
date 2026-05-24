@@ -486,4 +486,20 @@ CREATE INDEX IF NOT EXISTS idx_sync_jobs_connector ON sync_jobs(connector_id);
 CREATE INDEX IF NOT EXISTS idx_sync_jobs_project ON sync_jobs(project_id);
 CREATE INDEX IF NOT EXISTS idx_sync_runs_job ON sync_runs(job_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_member_source_project ON member_source_registry(project_id, dimension_type);
+
+CREATE TABLE IF NOT EXISTS impact_analyses (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  change_set_id TEXT,
+  analysis_type TEXT NOT NULL,
+  scope_json TEXT NOT NULL,
+  environment_id TEXT,
+  results_json TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_impact_analyses_project ON impact_analyses(project_id, created_at);
 `;

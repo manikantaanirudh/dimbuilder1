@@ -1600,6 +1600,46 @@ export function createRepositories(db: AppDatabase) {
         `).run(id, input.projectId, input.dimensionType, input.memberKey, input.sourceSystem, input.sourceId ?? null, timestamp, timestamp, timestamp);
         return { id, projectId: input.projectId, dimensionType: input.dimensionType, memberKey: input.memberKey, sourceSystem: input.sourceSystem, sourceId: input.sourceId ?? null, lastSyncedAt: timestamp, createdAt: timestamp, updatedAt: timestamp };
       }
+    },
+    impactAnalyses: {
+      create(input: { projectId: string; changeSetId?: string; analysisType: string; scope: unknown; environmentId?: string; results: unknown; severity: string; summary: string; createdBy: string }): { id: string; projectId: string; changeSetId: string | null; analysisType: string; scope: unknown; environmentId: string | null; results: unknown; severity: string; summary: string; createdBy: string; createdAt: string } {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO impact_analyses (id, project_id, change_set_id, analysis_type, scope_json, environment_id, results_json, severity, summary, created_by, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.projectId, input.changeSetId ?? null, input.analysisType, JSON.stringify(input.scope), input.environmentId ?? null, JSON.stringify(input.results), input.severity, input.summary, input.createdBy, timestamp);
+        return { id, projectId: input.projectId, changeSetId: input.changeSetId ?? null, analysisType: input.analysisType, scope: input.scope, environmentId: input.environmentId ?? null, results: input.results, severity: input.severity, summary: input.summary, createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByProject(projectId: string): { id: string; projectId: string; changeSetId: string | null; analysisType: string; severity: string; summary: string; createdBy: string; createdAt: string }[] {
+        return db.prepare("SELECT id, project_id, change_set_id, analysis_type, severity, summary, created_by, created_at FROM impact_analyses WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(row => ({
+          id: String(row.id),
+          projectId: String(row.project_id),
+          changeSetId: row.change_set_id ? String(row.change_set_id) : null,
+          analysisType: String(row.analysis_type),
+          severity: String(row.severity),
+          summary: String(row.summary),
+          createdBy: String(row.created_by),
+          createdAt: String(row.created_at)
+        }));
+      },
+      findById(id: string): { id: string; projectId: string; changeSetId: string | null; analysisType: string; scope: unknown; environmentId: string | null; results: unknown; severity: string; summary: string; createdBy: string; createdAt: string } | null {
+        const row = db.prepare("SELECT * FROM impact_analyses WHERE id = ?").get(id);
+        if (!row) return null;
+        return {
+          id: String(row.id),
+          projectId: String(row.project_id),
+          changeSetId: row.change_set_id ? String(row.change_set_id) : null,
+          analysisType: String(row.analysis_type),
+          scope: parseJson(String(row.scope_json ?? "{}"), {}),
+          environmentId: row.environment_id ? String(row.environment_id) : null,
+          results: parseJson(String(row.results_json ?? "{}"), {}),
+          severity: String(row.severity),
+          summary: String(row.summary),
+          createdBy: String(row.created_by),
+          createdAt: String(row.created_at)
+        };
+      }
     }
   };
 }
