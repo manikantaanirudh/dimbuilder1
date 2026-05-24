@@ -683,4 +683,41 @@ CREATE TABLE IF NOT EXISTS metadata_health_snapshots (
 CREATE INDEX IF NOT EXISTS idx_report_definitions_type ON report_definitions(report_type);
 CREATE INDEX IF NOT EXISTS idx_report_runs_def ON report_runs(definition_id, generated_at);
 CREATE INDEX IF NOT EXISTS idx_health_snapshots_project ON metadata_health_snapshots(project_id, dimension_type, captured_at);
+
+CREATE TABLE IF NOT EXISTS vcs_branches (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  head_commit_id TEXT,
+  base_branch_id TEXT,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS vcs_commits (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  branch_id TEXT NOT NULL REFERENCES vcs_branches(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  snapshot_data_json TEXT NOT NULL DEFAULT '{}',
+  parent_commit_id TEXT,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS vcs_tags (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  commit_id TEXT NOT NULL REFERENCES vcs_commits(id) ON DELETE CASCADE,
+  description TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_vcs_branches_project ON vcs_branches(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_vcs_commits_branch ON vcs_commits(branch_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_vcs_commits_project ON vcs_commits(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_vcs_tags_project ON vcs_tags(project_id);
 `;

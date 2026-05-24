@@ -127,6 +127,13 @@ import type {
   ReportRunStatus,
   MetadataHealthSnapshot
 } from "../../shared/reportingTypes";
+import type {
+  VcsCommit,
+  VcsBranch,
+  VcsBranchStatus,
+  VcsTag,
+  ProjectSnapshot
+} from "../../shared/vcsTypes";
 
 function now(): string {
   return new Date().toISOString();
@@ -2065,6 +2072,62 @@ export function createRepositories(db: AppDatabase) {
         }
         return db.prepare("SELECT * FROM metadata_health_snapshots WHERE project_id = ? ORDER BY captured_at DESC").all(projectId).map(mapHealthSnapshot);
       }
+    },
+    vcsBranches: {
+      create(input: { projectId: string; name: string; baseBranchId?: string; createdBy: string }): VcsBranch {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`INSERT INTO vcs_branches (id, project_id, name, status, head_commit_id, base_branch_id, created_by, created_at) VALUES (?, ?, ?, 'active', NULL, ?, ?, ?)`)
+          .run(id, input.projectId, input.name, input.baseBranchId ?? null, input.createdBy, timestamp);
+        return { id, projectId: input.projectId, name: input.name, status: 'active', headCommitId: null, baseBranchId: input.baseBranchId ?? null, createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByProject(projectId: string): VcsBranch[] {
+        return db.prepare("SELECT * FROM vcs_branches WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(mapVcsBranch);
+      },
+      get(id: string): VcsBranch | null {
+        const row = db.prepare("SELECT * FROM vcs_branches WHERE id = ?").get(id);
+        return row ? mapVcsBranch(row) : null;
+      },
+      updateHead(id: string, commitId: string): void {
+        db.prepare("UPDATE vcs_branches SET head_commit_id = ? WHERE id = ?").run(commitId, id);
+      },
+      updateStatus(id: string, status: VcsBranchStatus): void {
+        db.prepare("UPDATE vcs_branches SET status = ? WHERE id = ?").run(status, id);
+      }
+    },
+    vcsCommits: {
+      create(input: { projectId: string; branchId: string; message: string; snapshotData: ProjectSnapshot; parentCommitId?: string; createdBy: string }): VcsCommit {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`INSERT INTO vcs_commits (id, project_id, branch_id, message, snapshot_data_json, parent_commit_id, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+          .run(id, input.projectId, input.branchId, input.message, JSON.stringify(input.snapshotData), input.parentCommitId ?? null, input.createdBy, timestamp);
+        return { id, projectId: input.projectId, branchId: input.branchId, message: input.message, snapshotData: input.snapshotData as unknown as Record<string, unknown>, parentCommitId: input.parentCommitId ?? null, createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByBranch(branchId: string): VcsCommit[] {
+        return db.prepare("SELECT * FROM vcs_commits WHERE branch_id = ? ORDER BY created_at DESC").all(branchId).map(mapVcsCommit);
+      },
+      listByProject(projectId: string, limit = 50): VcsCommit[] {
+        return db.prepare("SELECT * FROM vcs_commits WHERE project_id = ? ORDER BY created_at DESC LIMIT ?").all(projectId, limit).map(mapVcsCommit);
+      },
+      get(id: string): VcsCommit | null {
+        const row = db.prepare("SELECT * FROM vcs_commits WHERE id = ?").get(id);
+        return row ? mapVcsCommit(row) : null;
+      }
+    },
+    vcsTags: {
+      create(input: { projectId: string; name: string; commitId: string; description?: string; createdBy: string }): VcsTag {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`INSERT INTO vcs_tags (id, project_id, name, commit_id, description, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+          .run(id, input.projectId, input.name, input.commitId, input.description ?? '', input.createdBy, timestamp);
+        return { id, projectId: input.projectId, name: input.name, commitId: input.commitId, description: input.description ?? '', createdBy: input.createdBy, createdAt: timestamp };
+      },
+      listByProject(projectId: string): VcsTag[] {
+        return db.prepare("SELECT * FROM vcs_tags WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(mapVcsTag);
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM vcs_tags WHERE id = ?").run(id);
+      }
     }
   };
 }
@@ -3106,5 +3169,43 @@ function mapHealthSnapshot(row: Record<string, unknown>): MetadataHealthSnapshot
     memberCount: Number(row.member_count ?? 0),
     orphanCount: Number(row.orphan_count ?? 0),
     capturedAt: String(row.captured_at)
+  };
+}
+
+function mapVcsBranch(row: Record<string, unknown>): VcsBranch {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    name: String(row.name),
+    status: String(row.status) as VcsBranchStatus,
+    headCommitId: row.head_commit_id ? String(row.head_commit_id) : null,
+    baseBranchId: row.base_branch_id ? String(row.base_branch_id) : null,
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapVcsCommit(row: Record<string, unknown>): VcsCommit {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    branchId: String(row.branch_id),
+    message: String(row.message),
+    snapshotData: parseJson(String(row.snapshot_data_json ?? "{}"), {}),
+    parentCommitId: row.parent_commit_id ? String(row.parent_commit_id) : null,
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapVcsTag(row: Record<string, unknown>): VcsTag {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    name: String(row.name),
+    commitId: String(row.commit_id),
+    description: String(row.description ?? ''),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at)
   };
 }
