@@ -262,5 +262,27 @@ export const defaultAppConfig: AppConfig = {
     enabled: true,
     requireApprovalForDeploy: true,
     defaultDefinition: "standard-review"
+  },
+  ai: {
+    enabled: true,
+    provider: 'none',
+    model: '',
+    apiKey: '',
+    features: {
+      parentSuggestions: true,
+      duplicateDetection: true,
+      namingAnomalies: true,
+      hierarchyOptimization: true,
+      propertySuggestions: true,
+      naturalLanguageQuery: true
+    },
+    duplicateDetection: {
+      similarityThreshold: 0.85,
+      methods: ['levenshtein', 'soundex', 'prefix']
+    },
+    suggestions: {
+      maxPerAnalysis: 50,
+      autoRunOnImport: true
+    }
   }
 };

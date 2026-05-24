@@ -98,6 +98,13 @@ import type {
   ValidationIssue
 } from "../../shared/types";
 import { getEffectivePropertyValue } from "../../shared/varyingProperties";
+import type {
+  AISuggestion,
+  AISuggestionStatus,
+  AISuggestionType,
+  AIConversation,
+  AIMessage
+} from "../../shared/aiTypes";
 
 function now(): string {
   return new Date().toISOString();
@@ -1771,6 +1778,82 @@ export function createRepositories(db: AppDatabase) {
           db.prepare("UPDATE promotion_history SET status = ? WHERE id = ?").run(status, id);
         }
       }
+    },
+    aiSuggestions: {
+      create(input: { projectId: string; dimensionId?: string; suggestionType: AISuggestionType; targetMemberKey?: string; suggestion: Record<string, unknown>; confidence: number }): AISuggestion {
+        const id = nanoid();
+        const timestamp = now();
+        const record: AISuggestion = {
+          id,
+          projectId: input.projectId,
+          dimensionId: input.dimensionId ?? null,
+          suggestionType: input.suggestionType,
+          targetMemberKey: input.targetMemberKey ?? null,
+          suggestion: input.suggestion,
+          confidence: input.confidence,
+          status: 'pending',
+          actedBy: null,
+          createdAt: timestamp,
+          updatedAt: timestamp
+        };
+        db.prepare(`
+          INSERT INTO ai_suggestions (id, project_id, dimension_id, suggestion_type, target_member_key, suggestion_json, confidence, status, acted_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, record.projectId, record.dimensionId, record.suggestionType, record.targetMemberKey, JSON.stringify(record.suggestion), record.confidence, record.status, record.actedBy, record.createdAt, record.updatedAt);
+        return record;
+      },
+      listByProject(projectId: string, filters?: { type?: AISuggestionType; status?: AISuggestionStatus }): AISuggestion[] {
+        let sql = "SELECT * FROM ai_suggestions WHERE project_id = ?";
+        const params: unknown[] = [projectId];
+        if (filters?.type) { sql += " AND suggestion_type = ?"; params.push(filters.type); }
+        if (filters?.status) { sql += " AND status = ?"; params.push(filters.status); }
+        sql += " ORDER BY created_at DESC";
+        return db.prepare(sql).all(...params).map(mapAISuggestion);
+      },
+      updateStatus(id: string, status: AISuggestionStatus, actedBy: string): AISuggestion | null {
+        const existing = db.prepare("SELECT * FROM ai_suggestions WHERE id = ?").get(id);
+        if (!existing) return null;
+        const timestamp = now();
+        db.prepare("UPDATE ai_suggestions SET status = ?, acted_by = ?, updated_at = ? WHERE id = ?").run(status, actedBy, timestamp, id);
+        return { ...mapAISuggestion(existing), status, actedBy, updatedAt: timestamp };
+      },
+      deleteByProject(projectId: string): void {
+        db.prepare("DELETE FROM ai_suggestions WHERE project_id = ?").run(projectId);
+      },
+      get(id: string): AISuggestion | null {
+        const row = db.prepare("SELECT * FROM ai_suggestions WHERE id = ?").get(id);
+        return row ? mapAISuggestion(row) : null;
+      }
+    },
+    aiConversations: {
+      create(input: { projectId: string; userId: string; message: AIMessage }): AIConversation {
+        const id = nanoid();
+        const timestamp = now();
+        const messages = [input.message];
+        db.prepare(`
+          INSERT INTO ai_conversations (id, project_id, user_id, messages_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(id, input.projectId, input.userId, JSON.stringify(messages), timestamp, timestamp);
+        return { id, projectId: input.projectId, userId: input.userId, messages, createdAt: timestamp, updatedAt: timestamp };
+      },
+      get(id: string): AIConversation | null {
+        const row = db.prepare("SELECT * FROM ai_conversations WHERE id = ?").get(id);
+        return row ? mapAIConversation(row) : null;
+      },
+      listByProject(projectId: string): AIConversation[] {
+        return db.prepare("SELECT * FROM ai_conversations WHERE project_id = ? ORDER BY updated_at DESC").all(projectId).map(mapAIConversation);
+      },
+      appendMessage(id: string, message: AIMessage): AIConversation | null {
+        const existing = this.get(id);
+        if (!existing) return null;
+        const messages = [...existing.messages, message];
+        const timestamp = now();
+        db.prepare("UPDATE ai_conversations SET messages_json = ?, updated_at = ? WHERE id = ?").run(JSON.stringify(messages), timestamp, id);
+        return { ...existing, messages, updatedAt: timestamp };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM ai_conversations WHERE id = ?").run(id);
+      }
     }
   };
 }
@@ -2685,5 +2768,32 @@ function mapPromotionHistory(row: Record<string, unknown>): PromotionRecord {
     status: String(row.status) as PromotionRecord["status"],
     promotedBy: String(row.promoted_by),
     promotedAt: String(row.promoted_at)
+  };
+}
+
+function mapAISuggestion(row: Record<string, unknown>): AISuggestion {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    dimensionId: row.dimension_id ? String(row.dimension_id) : null,
+    suggestionType: String(row.suggestion_type) as AISuggestionType,
+    targetMemberKey: row.target_member_key ? String(row.target_member_key) : null,
+    suggestion: parseJson(String(row.suggestion_json ?? "{}"), {}),
+    confidence: Number(row.confidence ?? 0),
+    status: String(row.status ?? "pending") as AISuggestionStatus,
+    actedBy: row.acted_by ? String(row.acted_by) : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapAIConversation(row: Record<string, unknown>): AIConversation {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    userId: String(row.user_id),
+    messages: parseJson<AIMessage[]>(String(row.messages_json ?? "[]"), []),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
   };
 }

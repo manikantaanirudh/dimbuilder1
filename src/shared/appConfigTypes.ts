@@ -1,4 +1,5 @@
 import type { DimensionType, Severity } from "./types";
+import type { AIConfigSection } from "./aiTypes";
 
 export const supportedConfigSeverities: Severity[] = ["error", "warning", "info", "off"];
 
@@ -219,6 +220,7 @@ export interface AppConfig {
   export: ExportConfig;
   ui: UiConfig;
   workflows?: WorkflowConfig;
+  ai?: AIConfigSection;
 }
 
 export type ClientAppConfig = Omit<AppConfig, "paths" | "server" | "auth">;

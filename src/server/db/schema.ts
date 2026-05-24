@@ -558,4 +558,31 @@ CREATE INDEX IF NOT EXISTS idx_env_overrides_env ON environment_overrides(enviro
 CREATE INDEX IF NOT EXISTS idx_env_overrides_project ON environment_overrides(project_id, dimension_type);
 CREATE INDEX IF NOT EXISTS idx_promotion_history_pipeline ON promotion_history(pipeline_id, promoted_at);
 CREATE INDEX IF NOT EXISTS idx_promotion_history_project ON promotion_history(project_id, promoted_at);
+
+CREATE TABLE IF NOT EXISTS ai_suggestions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_id TEXT,
+  suggestion_type TEXT NOT NULL,
+  target_member_key TEXT,
+  suggestion_json TEXT NOT NULL DEFAULT '{}',
+  confidence REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending',
+  acted_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_conversations (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  messages_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_suggestions_project ON ai_suggestions(project_id, suggestion_type);
+CREATE INDEX IF NOT EXISTS idx_ai_suggestions_status ON ai_suggestions(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_project ON ai_conversations(project_id, user_id);
 `;

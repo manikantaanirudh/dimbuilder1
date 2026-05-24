@@ -1,0 +1,230 @@
+import type { DimensionMemberRecord, DimensionRelationshipRecord, DimensionRecord } from "../../../shared/types";
+import type { NLQueryResult } from "../../../shared/aiTypes";
+import { generateResponse } from "./responseGenerator";
+
+export interface NLQueryInput {
+  question: string;
+  dimensions: DimensionRecord[];
+  members: DimensionMemberRecord[];
+  relationships: DimensionRelationshipRecord[];
+}
+
+interface ParsedIntent {
+  type: 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans' | 'unknown';
+  params: Record<string, string>;
+}
+
+export function parseAndExecuteQuery(input: NLQueryInput): NLQueryResult {
+  const { question, dimensions, members, relationships } = input;
+  const intent = parseIntent(question);
+  const result = executeIntent(intent, dimensions, members, relationships);
+
+  return {
+    answer: result.answer,
+    matchedMembers: result.matchedMembers,
+    query: question,
+    confidence: result.confidence
+  };
+}
+
+function parseIntent(question: string): ParsedIntent {
+  const q = question.trim();
+
+  // "Which [dimension] are missing [property]?"
+  const missingMatch = q.match(/which\s+(\w+)\s+(?:are|is)\s+missing\s+['"]?(\w+)['"]?/i);
+  if (missingMatch) {
+    return { type: 'missing_property', params: { dimension: missingMatch[1], property: missingMatch[2] } };
+  }
+
+  // "Find members without [property]"
+  const withoutMatch = q.match(/(?:find|show|list)\s+members?\s+without\s+['"]?(\w+)['"]?/i);
+  if (withoutMatch) {
+    return { type: 'missing_property', params: { dimension: '', property: withoutMatch[1] } };
+  }
+
+  // "Show members under [parent]" / "List children of [parent]"
+  const childrenMatch = q.match(/(?:show|list|get)\s+(?:members?|children|descendants?)\s+(?:under|of|below)\s+['"]?([^'"?\s]+(?:\s+[^'"?\s]+)*)['"]?\s*\??$/i);
+  if (childrenMatch) {
+    return { type: 'children', params: { parent: childrenMatch[1].trim() } };
+  }
+
+  // "How many members (in [dimension])?"
+  const countMatch = q.match(/how\s+many\s+members?\s*(?:in\s+['"]?(\w+)['"]?)?/i);
+  if (countMatch) {
+    return { type: 'count', params: { dimension: countMatch[1] || '' } };
+  }
+
+  // "Which members have [property] = [value]?"
+  const filterMatch = q.match(/(?:which|find|show)\s+members?\s+(?:have|with|where)\s+['"]?(\w+)['"]?\s*=\s*['"]?([^'"?]+?)['"]?\s*\??$/i);
+  if (filterMatch) {
+    return { type: 'property_filter', params: { property: filterMatch[1], value: filterMatch[2].trim() } };
+  }
+
+  // "Show orphan members" / "Find members without parents"
+  if (q.includes('orphan') || q.match(/members?\s+without\s+parents?/)) {
+    return { type: 'orphans', params: {} };
+  }
+
+  // "Find [pattern]" / "Search for [pattern]"
+  const findMatch = q.match(/(?:find|search|look\s+for|show)\s+(?:for\s+)?['"]?([^'"?]+?)['"]?\s*\??$/i);
+  if (findMatch) {
+    return { type: 'find', params: { pattern: findMatch[1].trim() } };
+  }
+
+  return { type: 'unknown', params: { raw: question } };
+}
+
+function executeIntent(
+  intent: ParsedIntent,
+  dimensions: DimensionRecord[],
+  members: DimensionMemberRecord[],
+  relationships: DimensionRelationshipRecord[]
+): { answer: string; matchedMembers: string[]; confidence: number } {
+  switch (intent.type) {
+    case 'find': {
+      const pattern = intent.params.pattern.toLowerCase();
+      const matched = members.filter(m =>
+        m.memberKey.toLowerCase().includes(pattern) ||
+        m.description.toLowerCase().includes(pattern)
+      );
+      const matchedKeys = matched.map(m => m.memberKey);
+      return {
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'find', params: intent.params }),
+        matchedMembers: matchedKeys,
+        confidence: 0.8
+      };
+    }
+
+    case 'count': {
+      const dimFilter = intent.params.dimension;
+      let filtered = members;
+      if (dimFilter) {
+        const dim = dimensions.find(d =>
+          d.dimensionType.toLowerCase() === dimFilter.toLowerCase() ||
+          d.dimensionName.toLowerCase() === dimFilter.toLowerCase()
+        );
+        if (dim) {
+          filtered = members.filter(m => m.dimensionId === dim.id);
+        }
+      }
+      return {
+        answer: generateResponse({ matchedMembers: filtered.map(m => m.memberKey), intent: 'count', params: intent.params }),
+        matchedMembers: filtered.map(m => m.memberKey),
+        confidence: 1.0
+      };
+    }
+
+    case 'children': {
+      const parentKey = intent.params.parent;
+      const descendants = findDescendants(parentKey, relationships);
+      return {
+        answer: generateResponse({ matchedMembers: descendants, intent: 'children', params: intent.params }),
+        matchedMembers: descendants,
+        confidence: 0.9
+      };
+    }
+
+    case 'missing_property': {
+      const { dimension, property } = intent.params;
+      let filtered = members;
+      if (dimension) {
+        const dim = dimensions.find(d =>
+          d.dimensionType.toLowerCase() === dimension.toLowerCase() ||
+          d.dimensionName.toLowerCase() === dimension.toLowerCase()
+        );
+        if (dim) {
+          filtered = members.filter(m => m.dimensionId === dim.id);
+        }
+      }
+      const missing = filtered.filter(m => {
+        const val = m.properties[property] ?? m.properties[property.charAt(0).toUpperCase() + property.slice(1)];
+        return val === undefined || val === null || val === '';
+      });
+      const matchedKeys = missing.map(m => m.memberKey);
+      return {
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'missing_property', params: intent.params }),
+        matchedMembers: matchedKeys,
+        confidence: 0.9
+      };
+    }
+
+    case 'property_filter': {
+      const { property, value } = intent.params;
+      const matched = members.filter(m => {
+        const propVal = m.properties[property] ?? m.properties[property.charAt(0).toUpperCase() + property.slice(1)];
+        return String(propVal ?? '').toLowerCase() === value.toLowerCase();
+      });
+      const matchedKeys = matched.map(m => m.memberKey);
+      return {
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'property_filter', params: intent.params }),
+        matchedMembers: matchedKeys,
+        confidence: 0.9
+      };
+    }
+
+    case 'orphans': {
+      const childKeys = new Set(relationships.map(r => r.childKey));
+      const parentKeys = new Set(relationships.map(r => r.parentKey));
+      const orphans = members.filter(m =>
+        !childKeys.has(m.memberKey) && !parentKeys.has(m.memberKey)
+      );
+      const matchedKeys = orphans.map(m => m.memberKey);
+      return {
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'orphans', params: intent.params }),
+        matchedMembers: matchedKeys,
+        confidence: 0.9
+      };
+    }
+
+    default: {
+      // Fallback: keyword search
+      const raw = intent.params.raw || '';
+      const words = raw.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      const matched = members.filter(m =>
+        words.some(w => m.memberKey.toLowerCase().includes(w) || m.description.toLowerCase().includes(w))
+      );
+      const matchedKeys = matched.map(m => m.memberKey);
+      return {
+        answer: matchedKeys.length > 0
+          ? generateResponse({ matchedMembers: matchedKeys, intent: 'find', params: { pattern: raw } })
+          : `I couldn't understand the query "${raw}". Try "Find [name]", "Show members under [parent]", or "How many members in [dimension]?"`,
+        matchedMembers: matchedKeys,
+        confidence: 0.3
+      };
+    }
+  }
+}
+
+function findDescendants(parentKey: string, relationships: DimensionRelationshipRecord[]): string[] {
+  const childrenOf = new Map<string, string[]>();
+  for (const rel of relationships) {
+    if (!childrenOf.has(rel.parentKey)) childrenOf.set(rel.parentKey, []);
+    childrenOf.get(rel.parentKey)!.push(rel.childKey);
+  }
+
+  // Case-insensitive parent lookup
+  let resolvedParent = parentKey;
+  if (!childrenOf.has(parentKey)) {
+    for (const key of childrenOf.keys()) {
+      if (key.toLowerCase() === parentKey.toLowerCase()) {
+        resolvedParent = key;
+        break;
+      }
+    }
+  }
+
+  const descendants: string[] = [];
+  const queue = childrenOf.get(resolvedParent) || [];
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    descendants.push(current);
+    const children = childrenOf.get(current) || [];
+    queue.push(...children);
+  }
+
+  return descendants;
+}
