@@ -1449,6 +1449,157 @@ export function createRepositories(db: AppDatabase) {
         const completedAt = status === "success" || status === "failed" ? now() : null;
         db.prepare("UPDATE deployment_history SET status = ?, completed_at = ? WHERE id = ?").run(status, completedAt, id);
       }
+    },
+    connectors: {
+      list(): ConnectorDefinitionRow[] {
+        return db.prepare("SELECT * FROM connector_definitions ORDER BY name ASC").all().map(mapConnectorDefinition);
+      },
+      getById(id: string): ConnectorDefinitionRow | null {
+        const row = db.prepare("SELECT * FROM connector_definitions WHERE id = ?").get(id);
+        return row ? mapConnectorDefinition(row) : null;
+      },
+      create(input: { name: string; connectorType: string; connectionConfig: Record<string, unknown>; extractionConfig: Record<string, unknown>; createdBy: string }): ConnectorDefinitionRow {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO connector_definitions (id, name, connector_type, connection_config_json, extraction_config_json, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
+        `).run(id, input.name, input.connectorType, JSON.stringify(input.connectionConfig), JSON.stringify(input.extractionConfig), input.createdBy, timestamp, timestamp);
+        return { id, name: input.name, connectorType: input.connectorType, connectionConfig: input.connectionConfig, extractionConfig: input.extractionConfig, isActive: true, lastTestedAt: null, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      update(id: string, input: { name?: string; connectionConfig?: Record<string, unknown>; extractionConfig?: Record<string, unknown>; isActive?: boolean }): ConnectorDefinitionRow | null {
+        const existing = this.getById(id);
+        if (!existing) return null;
+        const name = input.name ?? existing.name;
+        const connectionConfig = input.connectionConfig ?? existing.connectionConfig;
+        const extractionConfig = input.extractionConfig ?? existing.extractionConfig;
+        const isActive = input.isActive ?? existing.isActive;
+        const updatedAt = now();
+        db.prepare(`
+          UPDATE connector_definitions SET name = ?, connection_config_json = ?, extraction_config_json = ?, is_active = ?, updated_at = ?
+          WHERE id = ?
+        `).run(name, JSON.stringify(connectionConfig), JSON.stringify(extractionConfig), isActive ? 1 : 0, updatedAt, id);
+        return { ...existing, name, connectionConfig, extractionConfig, isActive, updatedAt };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM connector_definitions WHERE id = ?").run(id);
+      },
+      setLastTested(id: string): void {
+        db.prepare("UPDATE connector_definitions SET last_tested_at = ? WHERE id = ?").run(now(), id);
+      }
+    },
+    mappingRules: {
+      listByConnector(connectorId: string): MappingRuleRow[] {
+        return db.prepare("SELECT * FROM mapping_rules WHERE connector_id = ? ORDER BY name ASC").all(connectorId).map(mapMappingRule);
+      },
+      getById(id: string): MappingRuleRow | null {
+        const row = db.prepare("SELECT * FROM mapping_rules WHERE id = ?").get(id);
+        return row ? mapMappingRule(row) : null;
+      },
+      create(input: { connectorId: string; name: string; sourceEntity: string; targetDimensionType: string; fieldMappings: unknown[]; hierarchyRules?: unknown; filterRules?: unknown[]; conflictResolution?: string; createdBy: string }): MappingRuleRow {
+        const id = nanoid();
+        const timestamp = now();
+        const conflictResolution = input.conflictResolution ?? "source_wins";
+        db.prepare(`
+          INSERT INTO mapping_rules (id, connector_id, name, source_entity, target_dimension_type, field_mappings_json, hierarchy_rules_json, filter_rules_json, conflict_resolution, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+        `).run(id, input.connectorId, input.name, input.sourceEntity, input.targetDimensionType, JSON.stringify(input.fieldMappings), input.hierarchyRules ? JSON.stringify(input.hierarchyRules) : null, JSON.stringify(input.filterRules ?? []), conflictResolution, input.createdBy, timestamp, timestamp);
+        return { id, connectorId: input.connectorId, name: input.name, sourceEntity: input.sourceEntity, targetDimensionType: input.targetDimensionType, fieldMappings: input.fieldMappings as FieldMappingJson[], hierarchyRules: (input.hierarchyRules as HierarchyRuleJson) ?? null, filterRules: (input.filterRules ?? []) as FilterRuleJson[], conflictResolution, isActive: true, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      update(id: string, input: { name?: string; sourceEntity?: string; targetDimensionType?: string; fieldMappings?: unknown[]; hierarchyRules?: unknown; filterRules?: unknown[]; conflictResolution?: string; isActive?: boolean }): MappingRuleRow | null {
+        const existing = this.getById(id);
+        if (!existing) return null;
+        const name = input.name ?? existing.name;
+        const sourceEntity = input.sourceEntity ?? existing.sourceEntity;
+        const targetDimensionType = input.targetDimensionType ?? existing.targetDimensionType;
+        const fieldMappings = input.fieldMappings ?? existing.fieldMappings;
+        const hierarchyRules = input.hierarchyRules !== undefined ? input.hierarchyRules : existing.hierarchyRules;
+        const filterRules = input.filterRules ?? existing.filterRules;
+        const conflictResolution = input.conflictResolution ?? existing.conflictResolution;
+        const isActive = input.isActive ?? existing.isActive;
+        const updatedAt = now();
+        db.prepare(`
+          UPDATE mapping_rules SET name = ?, source_entity = ?, target_dimension_type = ?, field_mappings_json = ?, hierarchy_rules_json = ?, filter_rules_json = ?, conflict_resolution = ?, is_active = ?, updated_at = ?
+          WHERE id = ?
+        `).run(name, sourceEntity, targetDimensionType, JSON.stringify(fieldMappings), hierarchyRules ? JSON.stringify(hierarchyRules) : null, JSON.stringify(filterRules), conflictResolution, isActive ? 1 : 0, updatedAt, id);
+        return { ...existing, name, sourceEntity, targetDimensionType, fieldMappings: fieldMappings as FieldMappingJson[], hierarchyRules: (hierarchyRules as HierarchyRuleJson) ?? null, filterRules: filterRules as FilterRuleJson[], conflictResolution, isActive, updatedAt };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM mapping_rules WHERE id = ?").run(id);
+      }
+    },
+    syncJobs: {
+      list(filters: { connectorId?: string; projectId?: string } = {}): SyncJobRow[] {
+        let sql = "SELECT * FROM sync_jobs WHERE 1=1";
+        const params: unknown[] = [];
+        if (filters.connectorId) { sql += " AND connector_id = ?"; params.push(filters.connectorId); }
+        if (filters.projectId) { sql += " AND project_id = ?"; params.push(filters.projectId); }
+        sql += " ORDER BY created_at DESC";
+        return db.prepare(sql).all(...params).map(mapSyncJob);
+      },
+      getById(id: string): SyncJobRow | null {
+        const row = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(id);
+        return row ? mapSyncJob(row) : null;
+      },
+      create(input: { connectorId: string; mappingRuleId: string; projectId: string; scheduleCron?: string; autoApprove?: boolean; createdBy: string }): SyncJobRow {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO sync_jobs (id, connector_id, mapping_rule_id, project_id, schedule_cron, auto_approve, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+        `).run(id, input.connectorId, input.mappingRuleId, input.projectId, input.scheduleCron ?? null, input.autoApprove ? 1 : 0, input.createdBy, timestamp, timestamp);
+        return { id, connectorId: input.connectorId, mappingRuleId: input.mappingRuleId, projectId: input.projectId, scheduleCron: input.scheduleCron ?? null, autoApprove: input.autoApprove ?? false, isActive: true, lastRunAt: null, nextRunAt: null, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      updateLastRun(id: string): void {
+        db.prepare("UPDATE sync_jobs SET last_run_at = ?, updated_at = ? WHERE id = ?").run(now(), now(), id);
+      }
+    },
+    syncRuns: {
+      listByJob(jobId: string): SyncRunRow[] {
+        return db.prepare("SELECT * FROM sync_runs WHERE job_id = ? ORDER BY created_at DESC").all(jobId).map(mapSyncRun);
+      },
+      getById(id: string): SyncRunRow | null {
+        const row = db.prepare("SELECT * FROM sync_runs WHERE id = ?").get(id);
+        return row ? mapSyncRun(row) : null;
+      },
+      create(input: { jobId: string }): SyncRunRow {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO sync_runs (id, job_id, status, started_at, created_at)
+          VALUES (?, ?, 'running', ?, ?)
+        `).run(id, input.jobId, timestamp, timestamp);
+        return { id, jobId: input.jobId, status: "running", sourceRecordsRead: 0, membersCreated: 0, membersUpdated: 0, membersDeleted: 0, relationshipsCreated: 0, relationshipsUpdated: 0, conflictsDetected: 0, conflictsResolved: 0, errorMessage: null, startedAt: timestamp, completedAt: null, createdAt: timestamp };
+      },
+      complete(id: string, result: { status: string; sourceRecordsRead: number; membersCreated: number; membersUpdated: number; membersDeleted: number; relationshipsCreated: number; relationshipsUpdated: number; conflictsDetected: number; conflictsResolved: number; errorMessage?: string }): void {
+        const completedAt = now();
+        db.prepare(`
+          UPDATE sync_runs SET status = ?, source_records_read = ?, members_created = ?, members_updated = ?, members_deleted = ?, relationships_created = ?, relationships_updated = ?, conflicts_detected = ?, conflicts_resolved = ?, error_message = ?, completed_at = ?
+          WHERE id = ?
+        `).run(result.status, result.sourceRecordsRead, result.membersCreated, result.membersUpdated, result.membersDeleted, result.relationshipsCreated, result.relationshipsUpdated, result.conflictsDetected, result.conflictsResolved, result.errorMessage ?? null, completedAt, id);
+      }
+    },
+    memberSourceRegistry: {
+      listByProject(projectId: string, dimensionType?: string): MemberSourceRow[] {
+        if (dimensionType) {
+          return db.prepare("SELECT * FROM member_source_registry WHERE project_id = ? AND dimension_type = ? ORDER BY member_key").all(projectId, dimensionType).map(mapMemberSource);
+        }
+        return db.prepare("SELECT * FROM member_source_registry WHERE project_id = ? ORDER BY dimension_type, member_key").all(projectId).map(mapMemberSource);
+      },
+      upsert(input: { projectId: string; dimensionType: string; memberKey: string; sourceSystem: string; sourceId?: string }): MemberSourceRow {
+        const timestamp = now();
+        const existing = db.prepare("SELECT * FROM member_source_registry WHERE project_id = ? AND dimension_type = ? AND member_key = ?").get(input.projectId, input.dimensionType, input.memberKey);
+        if (existing) {
+          db.prepare("UPDATE member_source_registry SET source_system = ?, source_id = ?, last_synced_at = ?, updated_at = ? WHERE id = ?").run(input.sourceSystem, input.sourceId ?? null, timestamp, timestamp, String(existing.id));
+          return { id: String(existing.id), projectId: input.projectId, dimensionType: input.dimensionType, memberKey: input.memberKey, sourceSystem: input.sourceSystem, sourceId: input.sourceId ?? null, lastSyncedAt: timestamp, createdAt: String(existing.created_at), updatedAt: timestamp };
+        }
+        const id = nanoid();
+        db.prepare(`
+          INSERT INTO member_source_registry (id, project_id, dimension_type, member_key, source_system, source_id, last_synced_at, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.projectId, input.dimensionType, input.memberKey, input.sourceSystem, input.sourceId ?? null, timestamp, timestamp, timestamp);
+        return { id, projectId: input.projectId, dimensionType: input.dimensionType, memberKey: input.memberKey, sourceSystem: input.sourceSystem, sourceId: input.sourceId ?? null, lastSyncedAt: timestamp, createdAt: timestamp, updatedAt: timestamp };
+      }
     }
   };
 }
@@ -2144,5 +2295,169 @@ function mapDeploymentDimensionResult(row: Record<string, unknown>): DeploymentD
     dimensionName: String(row.dimension_name),
     status: String(row.status) as DeploymentDimensionResult["status"],
     message: String(row.message ?? "")
+  };
+}
+
+// --- Connector types and mappers ---
+
+interface FieldMappingJson { source: string; target: string; transform?: string }
+interface HierarchyRuleJson { parentField: string; parentTransform?: string; rootParent: string }
+interface FilterRuleJson { field: string; operator: string; values: string[] }
+
+export interface ConnectorDefinitionRow {
+  id: string;
+  name: string;
+  connectorType: string;
+  connectionConfig: Record<string, unknown>;
+  extractionConfig: Record<string, unknown>;
+  isActive: boolean;
+  lastTestedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MappingRuleRow {
+  id: string;
+  connectorId: string;
+  name: string;
+  sourceEntity: string;
+  targetDimensionType: string;
+  fieldMappings: FieldMappingJson[];
+  hierarchyRules: HierarchyRuleJson | null;
+  filterRules: FilterRuleJson[];
+  conflictResolution: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SyncJobRow {
+  id: string;
+  connectorId: string;
+  mappingRuleId: string;
+  projectId: string;
+  scheduleCron: string | null;
+  autoApprove: boolean;
+  isActive: boolean;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SyncRunRow {
+  id: string;
+  jobId: string;
+  status: string;
+  sourceRecordsRead: number;
+  membersCreated: number;
+  membersUpdated: number;
+  membersDeleted: number;
+  relationshipsCreated: number;
+  relationshipsUpdated: number;
+  conflictsDetected: number;
+  conflictsResolved: number;
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export interface MemberSourceRow {
+  id: string;
+  projectId: string;
+  dimensionType: string;
+  memberKey: string;
+  sourceSystem: string;
+  sourceId: string | null;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapConnectorDefinition(row: Record<string, unknown>): ConnectorDefinitionRow {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    connectorType: String(row.connector_type),
+    connectionConfig: parseJson(String(row.connection_config_json ?? "{}"), {}),
+    extractionConfig: parseJson(String(row.extraction_config_json ?? "{}"), {}),
+    isActive: Boolean(row.is_active),
+    lastTestedAt: row.last_tested_at ? String(row.last_tested_at) : null,
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapMappingRule(row: Record<string, unknown>): MappingRuleRow {
+  return {
+    id: String(row.id),
+    connectorId: String(row.connector_id),
+    name: String(row.name),
+    sourceEntity: String(row.source_entity),
+    targetDimensionType: String(row.target_dimension_type),
+    fieldMappings: parseJson(String(row.field_mappings_json ?? "[]"), []),
+    hierarchyRules: row.hierarchy_rules_json ? parseJson(String(row.hierarchy_rules_json), null) : null,
+    filterRules: parseJson(String(row.filter_rules_json ?? "[]"), []),
+    conflictResolution: String(row.conflict_resolution ?? "source_wins"),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapSyncJob(row: Record<string, unknown>): SyncJobRow {
+  return {
+    id: String(row.id),
+    connectorId: String(row.connector_id),
+    mappingRuleId: String(row.mapping_rule_id),
+    projectId: String(row.project_id),
+    scheduleCron: row.schedule_cron ? String(row.schedule_cron) : null,
+    autoApprove: Boolean(row.auto_approve),
+    isActive: Boolean(row.is_active),
+    lastRunAt: row.last_run_at ? String(row.last_run_at) : null,
+    nextRunAt: row.next_run_at ? String(row.next_run_at) : null,
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapSyncRun(row: Record<string, unknown>): SyncRunRow {
+  return {
+    id: String(row.id),
+    jobId: String(row.job_id),
+    status: String(row.status),
+    sourceRecordsRead: Number(row.source_records_read ?? 0),
+    membersCreated: Number(row.members_created ?? 0),
+    membersUpdated: Number(row.members_updated ?? 0),
+    membersDeleted: Number(row.members_deleted ?? 0),
+    relationshipsCreated: Number(row.relationships_created ?? 0),
+    relationshipsUpdated: Number(row.relationships_updated ?? 0),
+    conflictsDetected: Number(row.conflicts_detected ?? 0),
+    conflictsResolved: Number(row.conflicts_resolved ?? 0),
+    errorMessage: row.error_message ? String(row.error_message) : null,
+    startedAt: String(row.started_at),
+    completedAt: row.completed_at ? String(row.completed_at) : null,
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapMemberSource(row: Record<string, unknown>): MemberSourceRow {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    dimensionType: String(row.dimension_type),
+    memberKey: String(row.member_key),
+    sourceSystem: String(row.source_system),
+    sourceId: row.source_id ? String(row.source_id) : null,
+    lastSyncedAt: row.last_synced_at ? String(row.last_synced_at) : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
   };
 }

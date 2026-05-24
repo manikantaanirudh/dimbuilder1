@@ -404,4 +404,86 @@ CREATE INDEX IF NOT EXISTS idx_environments_active ON environments(is_active);
 CREATE INDEX IF NOT EXISTS idx_deployment_history_env ON deployment_history(environment_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_deployment_history_project ON deployment_history(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_deployment_dim_results ON deployment_dimension_results(deployment_id);
+
+CREATE TABLE IF NOT EXISTS connector_definitions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  connector_type TEXT NOT NULL,
+  connection_config_json TEXT NOT NULL DEFAULT '{}',
+  extraction_config_json TEXT NOT NULL DEFAULT '{}',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  last_tested_at TEXT,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mapping_rules (
+  id TEXT PRIMARY KEY,
+  connector_id TEXT NOT NULL REFERENCES connector_definitions(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  source_entity TEXT NOT NULL,
+  target_dimension_type TEXT NOT NULL,
+  field_mappings_json TEXT NOT NULL DEFAULT '[]',
+  hierarchy_rules_json TEXT,
+  filter_rules_json TEXT NOT NULL DEFAULT '[]',
+  conflict_resolution TEXT NOT NULL DEFAULT 'source_wins',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sync_jobs (
+  id TEXT PRIMARY KEY,
+  connector_id TEXT NOT NULL REFERENCES connector_definitions(id) ON DELETE CASCADE,
+  mapping_rule_id TEXT NOT NULL REFERENCES mapping_rules(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  schedule_cron TEXT,
+  auto_approve INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  last_run_at TEXT,
+  next_run_at TEXT,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sync_runs (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES sync_jobs(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'running',
+  source_records_read INTEGER NOT NULL DEFAULT 0,
+  members_created INTEGER NOT NULL DEFAULT 0,
+  members_updated INTEGER NOT NULL DEFAULT 0,
+  members_deleted INTEGER NOT NULL DEFAULT 0,
+  relationships_created INTEGER NOT NULL DEFAULT 0,
+  relationships_updated INTEGER NOT NULL DEFAULT 0,
+  conflicts_detected INTEGER NOT NULL DEFAULT 0,
+  conflicts_resolved INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  started_at TEXT NOT NULL,
+  completed_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS member_source_registry (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  member_key TEXT NOT NULL,
+  source_system TEXT NOT NULL,
+  source_id TEXT,
+  last_synced_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(project_id, dimension_type, member_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_connector_definitions_active ON connector_definitions(is_active);
+CREATE INDEX IF NOT EXISTS idx_mapping_rules_connector ON mapping_rules(connector_id);
+CREATE INDEX IF NOT EXISTS idx_sync_jobs_connector ON sync_jobs(connector_id);
+CREATE INDEX IF NOT EXISTS idx_sync_jobs_project ON sync_jobs(project_id);
+CREATE INDEX IF NOT EXISTS idx_sync_runs_job ON sync_runs(job_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_member_source_project ON member_source_registry(project_id, dimension_type);
 `;

@@ -20,6 +20,7 @@ import { createAuthRouter } from "./routes/auth";
 import { createUserRouter } from "./routes/users";
 import { createWorkflowRouter } from "./routes/workflows";
 import { createEnvironmentRouter } from "./routes/environments";
+import { createConnectorRouter, createMappingRouter, createSyncJobRouter, createSyncRunRouter, createSourceRegistryRouter } from "./routes/connectors";
 import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { requireRole } from "./middleware/authorize";
 
@@ -63,6 +64,11 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api/validation", createValidationRouter(repos, config));
   app.use("/api/workflows", createWorkflowRouter(repos, config));
   app.use("/api/environments", requireRole("admin"), createEnvironmentRouter(repos, config));
+  app.use("/api/connectors", requireRole("admin"), createConnectorRouter(repos, config));
+  app.use("/api/mappings", requireRole("admin"), createMappingRouter(repos));
+  app.use("/api/sync-jobs", requireRole("author", "admin"), createSyncJobRouter(repos));
+  app.use("/api/sync-runs", requireRole("author", "admin"), createSyncRunRouter(repos));
+  app.use("/api/projects", createSourceRegistryRouter(repos));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";
