@@ -585,4 +585,33 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
 CREATE INDEX IF NOT EXISTS idx_ai_suggestions_project ON ai_suggestions(project_id, suggestion_type);
 CREATE INDEX IF NOT EXISTS idx_ai_suggestions_status ON ai_suggestions(project_id, status);
 CREATE INDEX IF NOT EXISTS idx_ai_conversations_project ON ai_conversations(project_id, user_id);
+
+CREATE TABLE IF NOT EXISTS cross_dimension_rules (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  source_dimension_type TEXT NOT NULL,
+  target_dimension_type TEXT NOT NULL,
+  rule_type TEXT NOT NULL,
+  rule_config_json TEXT NOT NULL DEFAULT '{}',
+  severity TEXT NOT NULL DEFAULT 'warning',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS cross_dimension_mappings (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  source_dimension_type TEXT NOT NULL,
+  source_member_key TEXT NOT NULL,
+  target_dimension_type TEXT NOT NULL,
+  target_member_key TEXT NOT NULL,
+  mapping_type TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_cross_dim_rules_project ON cross_dimension_rules(project_id);
+CREATE INDEX IF NOT EXISTS idx_cross_dim_mappings_project ON cross_dimension_mappings(project_id, source_dimension_type);
+CREATE INDEX IF NOT EXISTS idx_cross_dim_mappings_target ON cross_dimension_mappings(project_id, target_member_key);
 `;

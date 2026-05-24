@@ -105,6 +105,12 @@ import type {
   AIConversation,
   AIMessage
 } from "../../shared/aiTypes";
+import type {
+  CrossDimensionRule,
+  CrossDimensionRuleType,
+  CrossDimensionMapping,
+  CrossDimensionMappingType
+} from "../../shared/crossDimensionTypes";
 
 function now(): string {
   return new Date().toISOString();
@@ -1854,6 +1860,71 @@ export function createRepositories(db: AppDatabase) {
       delete(id: string): void {
         db.prepare("DELETE FROM ai_conversations WHERE id = ?").run(id);
       }
+    },
+    crossDimensionRules: {
+      create(input: { projectId: string; name: string; sourceDimensionType: string; targetDimensionType: string; ruleType: CrossDimensionRuleType; ruleConfig?: Record<string, unknown>; severity?: string; createdBy: string }): CrossDimensionRule {
+        const id = nanoid();
+        const timestamp = now();
+        const rule: CrossDimensionRule = {
+          id,
+          projectId: input.projectId,
+          name: input.name,
+          sourceDimensionType: input.sourceDimensionType,
+          targetDimensionType: input.targetDimensionType,
+          ruleType: input.ruleType,
+          ruleConfig: input.ruleConfig ?? {},
+          severity: (input.severity as CrossDimensionRule['severity']) || 'warning',
+          isActive: true,
+          createdBy: input.createdBy,
+          createdAt: timestamp
+        };
+        db.prepare(`
+          INSERT INTO cross_dimension_rules (id, project_id, name, source_dimension_type, target_dimension_type, rule_type, rule_config_json, severity, is_active, created_by, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, rule.projectId, rule.name, rule.sourceDimensionType, rule.targetDimensionType, rule.ruleType, JSON.stringify(rule.ruleConfig), rule.severity, 1, rule.createdBy, rule.createdAt);
+        return rule;
+      },
+      listByProject(projectId: string): CrossDimensionRule[] {
+        return db.prepare("SELECT * FROM cross_dimension_rules WHERE project_id = ? ORDER BY created_at DESC").all(projectId).map(mapCrossDimensionRule);
+      },
+      get(id: string): CrossDimensionRule | null {
+        const row = db.prepare("SELECT * FROM cross_dimension_rules WHERE id = ?").get(id);
+        return row ? mapCrossDimensionRule(row) : null;
+      },
+      update(id: string, input: { name?: string; ruleConfig?: Record<string, unknown>; severity?: string; isActive?: boolean }): CrossDimensionRule | null {
+        const existing = this.get(id);
+        if (!existing) return null;
+        const name = input.name ?? existing.name;
+        const ruleConfig = input.ruleConfig ?? existing.ruleConfig;
+        const severity = (input.severity as CrossDimensionRule['severity']) ?? existing.severity;
+        const isActive = input.isActive ?? existing.isActive;
+        db.prepare("UPDATE cross_dimension_rules SET name = ?, rule_config_json = ?, severity = ?, is_active = ? WHERE id = ?")
+          .run(name, JSON.stringify(ruleConfig), severity, isActive ? 1 : 0, id);
+        return { ...existing, name, ruleConfig, severity, isActive };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM cross_dimension_rules WHERE id = ?").run(id);
+      }
+    },
+    crossDimensionMappings: {
+      create(input: { projectId: string; sourceDimensionType: string; sourceMemberKey: string; targetDimensionType: string; targetMemberKey: string; mappingType: CrossDimensionMappingType }): CrossDimensionMapping {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO cross_dimension_mappings (id, project_id, source_dimension_type, source_member_key, target_dimension_type, target_member_key, mapping_type, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.projectId, input.sourceDimensionType, input.sourceMemberKey, input.targetDimensionType, input.targetMemberKey, input.mappingType, timestamp);
+        return { id, ...input, createdAt: timestamp };
+      },
+      listByProject(projectId: string): CrossDimensionMapping[] {
+        return db.prepare("SELECT * FROM cross_dimension_mappings WHERE project_id = ? ORDER BY source_dimension_type, source_member_key").all(projectId).map(mapCrossDimensionMapping);
+      },
+      listByMember(projectId: string, memberKey: string): CrossDimensionMapping[] {
+        return db.prepare("SELECT * FROM cross_dimension_mappings WHERE project_id = ? AND (source_member_key = ? OR target_member_key = ?)").all(projectId, memberKey, memberKey).map(mapCrossDimensionMapping);
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM cross_dimension_mappings WHERE id = ?").run(id);
+      }
     }
   };
 }
@@ -2795,5 +2866,34 @@ function mapAIConversation(row: Record<string, unknown>): AIConversation {
     messages: parseJson<AIMessage[]>(String(row.messages_json ?? "[]"), []),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
+  };
+}
+
+function mapCrossDimensionRule(row: Record<string, unknown>): CrossDimensionRule {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    name: String(row.name),
+    sourceDimensionType: String(row.source_dimension_type),
+    targetDimensionType: String(row.target_dimension_type),
+    ruleType: String(row.rule_type) as CrossDimensionRuleType,
+    ruleConfig: parseJson(String(row.rule_config_json ?? "{}"), {}),
+    severity: String(row.severity ?? "warning") as CrossDimensionRule['severity'],
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapCrossDimensionMapping(row: Record<string, unknown>): CrossDimensionMapping {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    sourceDimensionType: String(row.source_dimension_type),
+    sourceMemberKey: String(row.source_member_key),
+    targetDimensionType: String(row.target_dimension_type),
+    targetMemberKey: String(row.target_member_key),
+    mappingType: String(row.mapping_type) as CrossDimensionMappingType,
+    createdAt: String(row.created_at)
   };
 }
