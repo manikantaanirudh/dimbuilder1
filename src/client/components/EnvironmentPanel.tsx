@@ -10,6 +10,7 @@ import {
   testEnvironmentConnection
 } from "../api/client";
 import { ActionButton, Panel, StatusBadge } from "./ui";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 export function EnvironmentPanel({ projectId }: { projectId?: string }) {
   const [environments, setEnvironments] = useState<EnvironmentSafe[]>([]);
@@ -18,6 +19,7 @@ export function EnvironmentPanel({ projectId }: { projectId?: string }) {
   const [testResults, setTestResults] = useState<Record<string, ConnectionTestResult>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [newEnv, setNewEnv] = useState({ name: "", type: "mock" as const, baseUrl: "", clientId: "", clientSecret: "" });
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,15 +81,24 @@ export function EnvironmentPanel({ projectId }: { projectId?: string }) {
   }
 
   return (
-    <Panel title="Environments" icon={<Cloud size={16} />} status={status}>
+    <Panel>
+      <div className="panel-heading">
+        <div>
+          <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Cloud size={16} /> Environments
+          </h3>
+          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{status}</span>
+        </div>
+      </div>
+
       <div style={{ marginBottom: 12 }}>
-        <ActionButton icon={<Plus size={14} />} onClick={() => setShowCreate(!showCreate)}>
-          Add Environment
+        <ActionButton onClick={() => setShowCreate(!showCreate)}>
+          <Plus size={14} /> Add Environment
         </ActionButton>
       </div>
 
       {showCreate && (
-        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
+        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", marginBottom: 12 }}>
           <input placeholder="Name" value={newEnv.name} onChange={e => setNewEnv(prev => ({ ...prev, name: e.target.value }))} style={{ display: "block", width: "100%", marginBottom: 8 }} />
           <select value={newEnv.type} onChange={e => setNewEnv(prev => ({ ...prev, type: e.target.value as "mock" | "onestream" }))} style={{ display: "block", width: "100%", marginBottom: 8 }}>
             <option value="mock">Mock (Testing)</option>
@@ -101,37 +112,48 @@ export function EnvironmentPanel({ projectId }: { projectId?: string }) {
       )}
 
       {environments.map(env => (
-        <div key={env.id} style={{ padding: 8, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 8 }}>
+        <div key={env.id} style={{ padding: 10, border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", marginBottom: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong>{env.name}</strong>
-            <StatusBadge status={env.isActive ? "active" : "inactive"} />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <strong>{env.name}</strong>
+              <StatusBadge tone={env.isActive ? "success" : "neutral"}>{env.isActive ? "active" : "inactive"}</StatusBadge>
+            </div>
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
             {env.type} &mdash; {env.baseUrl || "(no URL)"}
           </div>
           {testResults[env.id] && (
-            <div style={{ fontSize: 12, marginTop: 4, color: testResults[env.id].success ? "green" : "red" }}>
+            <div style={{ fontSize: 12, marginTop: 4, color: testResults[env.id].success ? "var(--success)" : "var(--danger)" }}>
               {testResults[env.id].message} ({testResults[env.id].latencyMs}ms)
             </div>
           )}
           <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-            <ActionButton icon={<RefreshCw size={12} />} onClick={() => handleTest(env.id)}>Test</ActionButton>
-            {projectId && <ActionButton icon={<Rocket size={12} />} onClick={() => handleDeploy(env.id)}>Deploy</ActionButton>}
-            <ActionButton icon={<Trash2 size={12} />} onClick={() => handleDelete(env.id)}>Delete</ActionButton>
+            <ActionButton onClick={() => handleTest(env.id)}><RefreshCw size={12} /> Test</ActionButton>
+            {projectId && <ActionButton onClick={() => handleDeploy(env.id)}><Rocket size={12} /> Deploy</ActionButton>}
+            <ActionButton variant="danger" onClick={() => setConfirmDeleteId(env.id)}><Trash2 size={12} /> Delete</ActionButton>
           </div>
         </div>
       ))}
 
       {deployments.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <h4>Recent Deployments</h4>
+          <h4 style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Recent Deployments</h4>
           {deployments.slice(0, 10).map(d => (
-            <div key={d.id} style={{ fontSize: 12, padding: 4, borderBottom: "1px solid var(--border)" }}>
-              <StatusBadge status={d.status} /> &mdash; {new Date(d.createdAt).toLocaleString()}
+            <div key={d.id} style={{ fontSize: 12, padding: "4px 0", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <StatusBadge tone={d.status === "success" ? "success" : d.status === "failed" ? "danger" : "info"}>{d.status}</StatusBadge>
+              <span>{new Date(d.createdAt).toLocaleString()}</span>
             </div>
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete Environment"
+        message="This will permanently remove the environment and all associated configuration. This cannot be undone."
+        onConfirm={() => { if (confirmDeleteId) { void handleDelete(confirmDeleteId); setConfirmDeleteId(null); } }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </Panel>
   );
 }

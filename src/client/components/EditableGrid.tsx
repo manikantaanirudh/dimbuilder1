@@ -84,7 +84,12 @@ export function EditableGrid({
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
     if (!needle) return records;
-    return records.filter((record) => JSON.stringify(record).toLowerCase().includes(needle));
+    return records.filter((record) => {
+      const r = record as Record<string, unknown>;
+      const searchable = [r.memberKey, r.description, r.parentKey, r.childKey, r.memberKey]
+        .filter(Boolean).join(' ').toLowerCase();
+      return searchable.includes(needle);
+    });
   }, [records, search]);
   const rowSummary = issueFilteredIds
     ? `${records.length} with issues`

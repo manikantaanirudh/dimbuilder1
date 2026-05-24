@@ -1,4 +1,4 @@
-import { Database, Plus, Play, RefreshCw, Trash2 } from "lucide-react";
+import { Database, Plus, Play, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ConnectorDefinition } from "../../shared/connectorTypes";
 import {
@@ -8,6 +8,7 @@ import {
   testConnectorConnection
 } from "../api/client";
 import { ActionButton, Panel, StatusBadge } from "./ui";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 export function ConnectorPanel() {
   const [connectors, setConnectors] = useState<ConnectorDefinition[]>([]);
@@ -15,6 +16,7 @@ export function ConnectorPanel() {
   const [showCreate, setShowCreate] = useState(false);
   const [newConn, setNewConn] = useState({ name: "", connectorType: "rest" as const, connectionConfig: {} as Record<string, unknown>, extractionConfig: {} as Record<string, unknown> });
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,13 +64,24 @@ export function ConnectorPanel() {
   }
 
   return (
-    <Panel title="ERP Connectors" icon={<Database size={16} />} subtitle={status}>
+    <Panel>
+      <div className="panel-heading">
+        <div>
+          <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Database size={16} /> ERP Connectors
+          </h3>
+          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{status}</span>
+        </div>
+      </div>
+
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <ActionButton icon={<Plus size={14} />} onClick={() => setShowCreate(!showCreate)}>New Connector</ActionButton>
+        <ActionButton onClick={() => setShowCreate(!showCreate)}>
+          <Plus size={14} /> New Connector
+        </ActionButton>
       </div>
 
       {showCreate && (
-        <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: 12, marginBottom: 12 }}>
+        <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 12 }}>
           <input placeholder="Name" value={newConn.name} onChange={e => setNewConn(p => ({ ...p, name: e.target.value }))} style={{ width: "100%", marginBottom: 8 }} />
           <select value={newConn.connectorType} onChange={e => setNewConn(p => ({ ...p, connectorType: e.target.value as "rest" }))} style={{ width: "100%", marginBottom: 8 }}>
             <option value="rest">REST / Mock</option>
@@ -82,25 +95,37 @@ export function ConnectorPanel() {
       )}
 
       {connectors.map(conn => (
-        <div key={conn.id} style={{ border: "1px solid var(--border)", borderRadius: 6, padding: 10, marginBottom: 8 }}>
+        <div key={conn.id} style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: 10, marginBottom: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <strong>{conn.name}</strong>
-              <StatusBadge status={conn.isActive ? "active" : "inactive"} />
-              <span style={{ marginLeft: 8, opacity: 0.6, fontSize: 12 }}>{conn.connectorType}</span>
+              <StatusBadge tone={conn.isActive ? "success" : "neutral"}>{conn.isActive ? "active" : "inactive"}</StatusBadge>
+              <span style={{ opacity: 0.6, fontSize: 12 }}>{conn.connectorType}</span>
             </div>
             <div style={{ display: "flex", gap: 4 }}>
-              <ActionButton icon={<Play size={12} />} onClick={() => handleTest(conn.id)} title="Test Connection" />
-              <ActionButton icon={<Trash2 size={12} />} onClick={() => handleDelete(conn.id)} title="Delete" />
+              <ActionButton onClick={() => handleTest(conn.id)} title="Test Connection">
+                <Play size={12} />
+              </ActionButton>
+              <ActionButton variant="danger" onClick={() => setConfirmDeleteId(conn.id)} title="Delete">
+                <Trash2 size={12} />
+              </ActionButton>
             </div>
           </div>
           {testResults[conn.id] && (
-            <div style={{ marginTop: 6, fontSize: 12, color: testResults[conn.id].success ? "var(--success)" : "var(--error)" }}>
+            <div style={{ marginTop: 6, fontSize: 12, color: testResults[conn.id].success ? "var(--success)" : "var(--danger)" }}>
               {testResults[conn.id].message}
             </div>
           )}
         </div>
       ))}
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete Connector"
+        message="This will permanently remove the connector and all its configuration. This cannot be undone."
+        onConfirm={() => { if (confirmDeleteId) { void handleDelete(confirmDeleteId); setConfirmDeleteId(null); } }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </Panel>
   );
 }

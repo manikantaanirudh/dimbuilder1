@@ -32,7 +32,9 @@ export function IssuePanel({
       return true;
     });
   }, [codeFilter, issues, severityFilter]);
-  const visibleIssues = filteredIssues.slice(0, expanded ? 500 : 8);
+  const [showAll, setShowAll] = useState(false);
+  const maxVisible = expanded ? (showAll ? filteredIssues.length : 50) : 8;
+  const visibleIssues = filteredIssues.slice(0, maxVisible);
   const Container = expanded ? "section" : "aside";
   const pageClassName = expanded ? "issue-panel-page" : "details-rail-page";
   const issueSummaryClassName = expanded ? "issue-summary" : "issue-summary rail-issue-summary";
@@ -95,6 +97,11 @@ export function IssuePanel({
           ) : (
             <div className="issue-list">
               {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} onClick={onIssueClick} />)}
+              {expanded && filteredIssues.length > 50 && !showAll && (
+                <button className="action-button secondary" style={{ width: "100%", marginTop: "0.5rem" }} onClick={() => setShowAll(true)}>
+                  Show all {filteredIssues.length} issues ({filteredIssues.length - 50} more)
+                </button>
+              )}
             </div>
           )}
         </div>

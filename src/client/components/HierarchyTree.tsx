@@ -9,10 +9,15 @@ import { StatusBadge } from "./ui";
 export function HierarchyTree({ projectId, dimension }: { projectId: string; dimension: DimensionRecord }) {
   const [relationships, setRelationships] = useState<DimensionRelationshipRecord[]>([]);
   const [search, setSearch] = useState("");
+  const [loadLimit, setLoadLimit] = useState(200);
+  const [totalAvailable, setTotalAvailable] = useState(0);
 
   useEffect(() => {
-    void fetchRelationships(projectId, dimension.id, 0, 1000).then((result) => setRelationships(result.rows));
-  }, [projectId, dimension.id]);
+    void fetchRelationships(projectId, dimension.id, 0, loadLimit).then((result) => {
+      setRelationships(result.rows);
+      setTotalAvailable(result.total);
+    });
+  }, [projectId, dimension.id, loadLimit]);
 
   const tree = useMemo(() => buildHierarchyTree(relationships), [relationships]);
 
@@ -44,6 +49,15 @@ export function HierarchyTree({ projectId, dimension }: { projectId: string; dim
             </div>
           ) : (
             tree.map((node) => <TreeNode key={node.key} node={node} search={search.toLowerCase()} level={1} />)
+          )}
+          {totalAvailable > loadLimit && (
+            <button
+              className="action-button secondary"
+              style={{ marginTop: "0.75rem", width: "100%" }}
+              onClick={() => setLoadLimit(prev => prev + 200)}
+            >
+              Load more relationships ({totalAvailable - loadLimit} remaining)
+            </button>
           )}
         </div>
       </div>

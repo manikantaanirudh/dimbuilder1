@@ -1,6 +1,6 @@
 import { AlertTriangle, Play, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { ImpactAnalysisRequest, ImpactReport, ImpactSeverity } from "../../shared/impactTypes";
+import type { ImpactAnalysisRequest, ImpactReport } from "../../shared/impactTypes";
 import { fetchImpactAnalyses, runImpactAnalysis } from "../api/client";
 import { ActionButton, Panel, StatusBadge } from "./ui";
 
@@ -13,12 +13,12 @@ interface AnalysisSummary {
   createdAt: string;
 }
 
-function severityColor(severity: string): "red" | "yellow" | "green" | "gray" {
+function severityTone(severity: string): "danger" | "warning" | "success" | "neutral" {
   switch (severity) {
-    case "high": return "red";
-    case "medium": return "yellow";
-    case "low": return "green";
-    default: return "gray";
+    case "high": return "danger";
+    case "medium": return "warning";
+    case "low": return "success";
+    default: return "neutral";
   }
 }
 
@@ -79,19 +79,25 @@ export function ImpactAnalysisPanel({ projectId }: { projectId: string }) {
   }
 
   return (
-    <Panel title="Impact Analysis" icon={<AlertTriangle size={16} />}>
-      <p className="text-sm text-gray-500 mb-4">{status}</p>
+    <Panel>
+      <div className="panel-heading">
+        <div>
+          <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <AlertTriangle size={16} /> Impact Analysis
+          </h3>
+        </div>
+      </div>
 
-      <div className="space-y-3 mb-4 border rounded p-3">
-        <div className="grid grid-cols-2 gap-2">
+      <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "1rem" }}>{status}</p>
+
+      <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "1rem", marginBottom: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input
-            className="border rounded px-2 py-1 text-sm"
             placeholder="Dimension type (e.g. Account)"
             value={dimensionType}
             onChange={e => setDimensionType(e.target.value)}
           />
           <select
-            className="border rounded px-2 py-1 text-sm"
             value={action}
             onChange={e => setAction(e.target.value as typeof action)}
           >
@@ -101,42 +107,42 @@ export function ImpactAnalysisPanel({ projectId }: { projectId: string }) {
           </select>
         </div>
         <input
-          className="border rounded px-2 py-1 text-sm w-full"
+          style={{ width: "100%", marginBottom: "0.75rem" }}
           placeholder="Member keys (comma-separated)"
           value={memberKeys}
           onChange={e => setMemberKeys(e.target.value)}
         />
         {action === "move" && (
           <input
-            className="border rounded px-2 py-1 text-sm w-full"
+            style={{ width: "100%", marginBottom: "0.75rem" }}
             placeholder="Target parent key"
             value={targetParent}
             onChange={e => setTargetParent(e.target.value)}
           />
         )}
-        <ActionButton icon={<Play size={14} />} onClick={handleRun} disabled={running}>
-          {running ? "Analyzing..." : "Run Analysis"}
+        <ActionButton onClick={handleRun} disabled={running}>
+          <Play size={14} /> {running ? "Analyzing..." : "Run Analysis"}
         </ActionButton>
       </div>
 
       {results && (
-        <div className="border rounded p-3 mb-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <StatusBadge color={severityColor(results.severity)}>{results.severity.toUpperCase()}</StatusBadge>
-            <span className="text-sm">{results.summary}</span>
+        <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "1rem", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <StatusBadge tone={severityTone(results.severity)}>{results.severity.toUpperCase()}</StatusBadge>
+            <span style={{ fontSize: "0.85rem" }}>{results.summary}</span>
           </div>
           {results.hierarchyImpact.orphanedMembers.length > 0 && (
-            <p className="text-sm text-red-600">
+            <p style={{ fontSize: "0.85rem", color: "var(--danger)", margin: "0.5rem 0" }}>
               Orphaned members: {results.hierarchyImpact.orphanedMembers.join(", ")}
             </p>
           )}
           {results.crossDimensionImpact.totalReferences > 0 && (
-            <p className="text-sm text-orange-600">
+            <p style={{ fontSize: "0.85rem", color: "var(--warning)", margin: "0.5rem 0" }}>
               Cross-dimension references: {results.crossDimensionImpact.totalReferences}
             </p>
           )}
           {results.recommendations.length > 0 && (
-            <ul className="text-sm list-disc ml-4">
+            <ul style={{ fontSize: "0.85rem", paddingLeft: "1.25rem", margin: "0.5rem 0" }}>
               {results.recommendations.map((r, i) => <li key={i}>{r}</li>)}
             </ul>
           )}
@@ -144,13 +150,15 @@ export function ImpactAnalysisPanel({ projectId }: { projectId: string }) {
       )}
 
       {analyses.length > 0 && (
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium flex items-center gap-1"><Search size={14} /> Past Analyses</h4>
+        <div>
+          <h4 style={{ fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
+            <Search size={14} /> Past Analyses
+          </h4>
           {analyses.map(a => (
-            <div key={a.id} className="flex items-center gap-2 text-sm py-1 border-b">
-              <StatusBadge color={severityColor(a.severity)}>{a.severity}</StatusBadge>
-              <span className="flex-1 truncate">{a.summary}</span>
-              <span className="text-gray-400 text-xs">{new Date(a.createdAt).toLocaleDateString()}</span>
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", padding: "0.4rem 0", borderBottom: "1px solid var(--border)" }}>
+              <StatusBadge tone={severityTone(a.severity)}>{a.severity}</StatusBadge>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.summary}</span>
+              <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{new Date(a.createdAt).toLocaleDateString()}</span>
             </div>
           ))}
         </div>
