@@ -30,12 +30,21 @@ import { CreateProjectModal, ExportModal, ImportModal, OpenProjectModal, SaveAsM
 import { AdminPanel } from "./AdminPanel";
 import { ConfigEditor } from "./ConfigEditor";
 import { ValidationDashboard } from "./ValidationDashboard";
+import { ReportingDashboard } from "./ReportingDashboard";
+import { AIInsightsPanel } from "./AIInsightsPanel";
+import { QualityScoresPanel } from "./QualityScoresPanel";
+import { AuditLogViewer } from "./AuditLogViewer";
+import { ToastProvider } from "./Toast";
 import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
 
 const PROJECT_OVERVIEW_VALUE = "__project_overview__";
 const ADMIN_VALUE = "__admin__";
 const CONFIG_EDITOR_VALUE = "__config_editor__";
 const VALIDATION_DASHBOARD_VALUE = "__validation_dashboard__";
+const REPORTING_VALUE = "__reporting__";
+const AI_INSIGHTS_VALUE = "__ai_insights__";
+const QUALITY_VALUE = "__quality__";
+const AUDIT_LOG_VALUE = "__audit_log__";
 
 function mobileNavLabel(item: DimensionNavItem) {
   if (item.issueSummary.errors > 0) return `${item.label} - ${item.issueSummary.errors} errors`;
@@ -132,6 +141,7 @@ export function AppShell({
   }
 
   return (
+    <ToastProvider>
     <div className="app-shell notion-workbench">
       <header className="toolbar global-toolbar">
         <div className="brand global-brand">
@@ -229,7 +239,7 @@ export function AppShell({
         )}
       </header>
 
-      <nav className="secondary-nav">
+      <nav className="secondary-nav" aria-label="Feature navigation">
         <button
           className={`secondary-nav-item ${showProjectOverview ? "active" : ""}`}
           onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)}
@@ -241,6 +251,30 @@ export function AppShell({
           onClick={() => setActiveWorkspace(VALIDATION_DASHBOARD_VALUE)}
         >
           Validation
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === REPORTING_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(REPORTING_VALUE)}
+        >
+          Reports
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === AI_INSIGHTS_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(AI_INSIGHTS_VALUE)}
+        >
+          AI Insights
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === QUALITY_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(QUALITY_VALUE)}
+        >
+          Quality
+        </button>
+        <button
+          className={`secondary-nav-item ${activeWorkspace === AUDIT_LOG_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(AUDIT_LOG_VALUE)}
+        >
+          Audit Log
         </button>
         <button
           className={`secondary-nav-item ${activeWorkspace === ADMIN_VALUE ? "active" : ""}`}
@@ -317,7 +351,7 @@ export function AppShell({
         ))}
       </aside>
 
-      <main className="main">
+      <main className="main" id="main-content">
         {configError && <div className="banner error">Configuration failed to load. Using defaults: {configError}</div>}
         {store.error && <div className="banner error">{store.error}</div>}
         {status && <div className="banner">{status}</div>}
@@ -331,6 +365,14 @@ export function AppShell({
             appConfig={appConfig}
             onNavigateDimension={setActiveWorkspace}
           />
+        ) : activeWorkspace === REPORTING_VALUE && store.selectedProjectId ? (
+          <ReportingDashboard projectId={store.selectedProjectId} />
+        ) : activeWorkspace === AI_INSIGHTS_VALUE && store.selectedProjectId ? (
+          <AIInsightsPanel projectId={store.selectedProjectId} />
+        ) : activeWorkspace === QUALITY_VALUE && store.selectedProjectId ? (
+          <QualityScoresPanel projectId={store.selectedProjectId} />
+        ) : activeWorkspace === AUDIT_LOG_VALUE && store.selectedProjectId ? (
+          <AuditLogViewer projectId={store.selectedProjectId} />
         ) : activeWorkspace === ADMIN_VALUE ? (
           <AdminPanel appConfig={appConfig} projectId={store.selectedProjectId} />
         ) : !showProjectOverview && activeDimension && store.selectedProjectId ? (
@@ -401,5 +443,6 @@ export function AppShell({
         onSaved={(name) => { setStatus(`Saved: ${name}`); void store.refresh(); }}
       />
     </div>
+    </ToastProvider>
   );
 }

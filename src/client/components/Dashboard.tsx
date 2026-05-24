@@ -6,6 +6,7 @@ import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue 
 import { apiPatchJson } from "../api/client";
 import { buildIssueSummary, formatCount } from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
+import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
 import { EmptyState, FactItem, FactStrip, StatusBadge } from "./ui";
 
@@ -99,6 +100,15 @@ export function Dashboard({
           <FactItem label="Errors" value={formatCount(summaryErrors)} tone={summaryErrors ? "danger" : "neutral"} />
           <FactItem label="Warnings" value={formatCount(summaryWarnings)} tone={summaryWarnings ? "warning" : "neutral"} />
         </FactStrip>
+
+        {project && (
+          <KPICards
+            projectId={project.id}
+            summary={summary}
+            issues={issues}
+            blockedSeverities={appConfig.validation.exportBlockedBySeverities}
+          />
+        )}
 
         <section className="overview-dimensions">
           <div className="panel-heading">
