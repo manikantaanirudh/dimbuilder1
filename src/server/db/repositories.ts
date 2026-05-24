@@ -16,6 +16,14 @@ import type {
   EnvironmentSafe,
   UpdateEnvironmentInput
 } from "../../shared/environmentTypes";
+import type {
+  PromotionPipeline,
+  PromotionStage,
+  EnvironmentSyncStatus,
+  EnvironmentOverride,
+  PromotionRecord,
+  SyncStatus
+} from "../../shared/multiEnvTypes";
 
 export interface UserRow {
   id: string;
@@ -1640,6 +1648,129 @@ export function createRepositories(db: AppDatabase) {
           createdAt: String(row.created_at)
         };
       }
+    },
+    promotionPipelines: {
+      list(): PromotionPipeline[] {
+        return db.prepare("SELECT * FROM promotion_pipelines ORDER BY name ASC").all().map(mapPromotionPipeline);
+      },
+      getById(id: string): PromotionPipeline | null {
+        const row = db.prepare("SELECT * FROM promotion_pipelines WHERE id = ?").get(id);
+        return row ? mapPromotionPipeline(row) : null;
+      },
+      create(input: { name: string; stages: PromotionStage[]; createdBy: string }): PromotionPipeline {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO promotion_pipelines (id, name, stages_json, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, 1, ?, ?, ?)
+        `).run(id, input.name, JSON.stringify(input.stages), input.createdBy, timestamp, timestamp);
+        return { id, name: input.name, stages: input.stages, isActive: true, createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      update(id: string, input: { name?: string; stages?: PromotionStage[]; isActive?: boolean }): PromotionPipeline | null {
+        const existing = this.getById(id);
+        if (!existing) return null;
+        const name = input.name ?? existing.name;
+        const stages = input.stages ?? existing.stages;
+        const isActive = input.isActive ?? existing.isActive;
+        const updatedAt = now();
+        db.prepare(`
+          UPDATE promotion_pipelines SET name = ?, stages_json = ?, is_active = ?, updated_at = ? WHERE id = ?
+        `).run(name, JSON.stringify(stages), isActive ? 1 : 0, updatedAt, id);
+        return { ...existing, name, stages, isActive, updatedAt };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM promotion_pipelines WHERE id = ?").run(id);
+      }
+    },
+    environmentSyncStatus: {
+      listByProject(projectId: string): EnvironmentSyncStatus[] {
+        return db.prepare("SELECT * FROM environment_sync_status WHERE project_id = ? ORDER BY environment_id, dimension_type").all(projectId).map(mapEnvironmentSyncStatus);
+      },
+      listByEnvironment(environmentId: string, projectId?: string): EnvironmentSyncStatus[] {
+        if (projectId) {
+          return db.prepare("SELECT * FROM environment_sync_status WHERE environment_id = ? AND project_id = ? ORDER BY dimension_type").all(environmentId, projectId).map(mapEnvironmentSyncStatus);
+        }
+        return db.prepare("SELECT * FROM environment_sync_status WHERE environment_id = ? ORDER BY project_id, dimension_type").all(environmentId).map(mapEnvironmentSyncStatus);
+      },
+      upsert(input: { environmentId: string; projectId: string; dimensionType: string; lastDeployedAt?: string | null; localVersionHash: string; syncStatus: SyncStatus }): EnvironmentSyncStatus {
+        const timestamp = now();
+        const existing = db.prepare("SELECT id FROM environment_sync_status WHERE environment_id = ? AND project_id = ? AND dimension_type = ?").get(input.environmentId, input.projectId, input.dimensionType);
+        if (existing) {
+          db.prepare(`
+            UPDATE environment_sync_status SET local_version_hash = ?, sync_status = ?, checked_at = ?, last_deployed_at = COALESCE(?, last_deployed_at)
+            WHERE environment_id = ? AND project_id = ? AND dimension_type = ?
+          `).run(input.localVersionHash, input.syncStatus, timestamp, input.lastDeployedAt ?? null, input.environmentId, input.projectId, input.dimensionType);
+          const row = db.prepare("SELECT * FROM environment_sync_status WHERE environment_id = ? AND project_id = ? AND dimension_type = ?").get(input.environmentId, input.projectId, input.dimensionType);
+          return mapEnvironmentSyncStatus(row);
+        }
+        const id = nanoid();
+        db.prepare(`
+          INSERT INTO environment_sync_status (id, environment_id, project_id, dimension_type, last_deployed_at, local_version_hash, sync_status, checked_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.environmentId, input.projectId, input.dimensionType, input.lastDeployedAt ?? null, input.localVersionHash, input.syncStatus, timestamp);
+        return { id, environmentId: input.environmentId, projectId: input.projectId, dimensionType: input.dimensionType, lastDeployedAt: input.lastDeployedAt ?? null, localVersionHash: input.localVersionHash, syncStatus: input.syncStatus, checkedAt: timestamp };
+      }
+    },
+    environmentOverrides: {
+      list(filters: { environmentId?: string; projectId?: string } = {}): EnvironmentOverride[] {
+        let sql = "SELECT * FROM environment_overrides WHERE 1=1";
+        const params: unknown[] = [];
+        if (filters.environmentId) { sql += " AND environment_id = ?"; params.push(filters.environmentId); }
+        if (filters.projectId) { sql += " AND project_id = ?"; params.push(filters.projectId); }
+        sql += " ORDER BY dimension_type, member_key, property_name";
+        return db.prepare(sql).all(...params).map(mapEnvironmentOverride);
+      },
+      getById(id: string): EnvironmentOverride | null {
+        const row = db.prepare("SELECT * FROM environment_overrides WHERE id = ?").get(id);
+        return row ? mapEnvironmentOverride(row) : null;
+      },
+      create(input: { environmentId: string; projectId: string; dimensionType: string; memberKey: string; propertyName: string; overrideValue: string; reason?: string; createdBy: string }): EnvironmentOverride {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO environment_overrides (id, environment_id, project_id, dimension_type, member_key, property_name, override_value, reason, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.environmentId, input.projectId, input.dimensionType, input.memberKey, input.propertyName, input.overrideValue, input.reason ?? "", input.createdBy, timestamp, timestamp);
+        return { id, environmentId: input.environmentId, projectId: input.projectId, dimensionType: input.dimensionType, memberKey: input.memberKey, propertyName: input.propertyName, overrideValue: input.overrideValue, reason: input.reason ?? "", createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp };
+      },
+      update(id: string, input: { overrideValue?: string; reason?: string }): EnvironmentOverride | null {
+        const existing = this.getById(id);
+        if (!existing) return null;
+        const overrideValue = input.overrideValue ?? existing.overrideValue;
+        const reason = input.reason ?? existing.reason;
+        const updatedAt = now();
+        db.prepare("UPDATE environment_overrides SET override_value = ?, reason = ?, updated_at = ? WHERE id = ?").run(overrideValue, reason, updatedAt, id);
+        return { ...existing, overrideValue, reason, updatedAt };
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM environment_overrides WHERE id = ?").run(id);
+      }
+    },
+    promotionHistory: {
+      list(filters: { pipelineId?: string; projectId?: string } = {}): PromotionRecord[] {
+        let sql = "SELECT * FROM promotion_history WHERE 1=1";
+        const params: unknown[] = [];
+        if (filters.pipelineId) { sql += " AND pipeline_id = ?"; params.push(filters.pipelineId); }
+        if (filters.projectId) { sql += " AND project_id = ?"; params.push(filters.projectId); }
+        sql += " ORDER BY promoted_at DESC";
+        return db.prepare(sql).all(...params).map(mapPromotionHistory);
+      },
+      create(input: { pipelineId: string; projectId: string; fromEnvironmentId: string; toEnvironmentId: string; deploymentId?: string | null; status: PromotionRecord["status"]; promotedBy: string }): PromotionRecord {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO promotion_history (id, pipeline_id, project_id, from_environment_id, to_environment_id, deployment_id, status, promoted_by, promoted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input.pipelineId, input.projectId, input.fromEnvironmentId, input.toEnvironmentId, input.deploymentId ?? null, input.status, input.promotedBy, timestamp);
+        return { id, pipelineId: input.pipelineId, projectId: input.projectId, fromEnvironmentId: input.fromEnvironmentId, toEnvironmentId: input.toEnvironmentId, deploymentId: input.deploymentId ?? null, status: input.status, promotedBy: input.promotedBy, promotedAt: timestamp };
+      },
+      updateStatus(id: string, status: PromotionRecord["status"], deploymentId?: string): void {
+        if (deploymentId) {
+          db.prepare("UPDATE promotion_history SET status = ?, deployment_id = ? WHERE id = ?").run(status, deploymentId, id);
+        } else {
+          db.prepare("UPDATE promotion_history SET status = ? WHERE id = ?").run(status, id);
+        }
+      }
     }
   };
 }
@@ -2499,5 +2630,60 @@ function mapMemberSource(row: Record<string, unknown>): MemberSourceRow {
     lastSyncedAt: row.last_synced_at ? String(row.last_synced_at) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
+  };
+}
+
+function mapPromotionPipeline(row: Record<string, unknown>): PromotionPipeline {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    stages: parseJson<PromotionStage[]>(String(row.stages_json ?? "[]"), []),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapEnvironmentSyncStatus(row: Record<string, unknown>): EnvironmentSyncStatus {
+  return {
+    id: String(row.id),
+    environmentId: String(row.environment_id),
+    projectId: String(row.project_id),
+    dimensionType: String(row.dimension_type),
+    lastDeployedAt: row.last_deployed_at ? String(row.last_deployed_at) : null,
+    localVersionHash: String(row.local_version_hash ?? ""),
+    syncStatus: String(row.sync_status ?? "unknown") as SyncStatus,
+    checkedAt: String(row.checked_at)
+  };
+}
+
+function mapEnvironmentOverride(row: Record<string, unknown>): EnvironmentOverride {
+  return {
+    id: String(row.id),
+    environmentId: String(row.environment_id),
+    projectId: String(row.project_id),
+    dimensionType: String(row.dimension_type),
+    memberKey: String(row.member_key),
+    propertyName: String(row.property_name),
+    overrideValue: String(row.override_value ?? ""),
+    reason: String(row.reason ?? ""),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapPromotionHistory(row: Record<string, unknown>): PromotionRecord {
+  return {
+    id: String(row.id),
+    pipelineId: String(row.pipeline_id),
+    projectId: String(row.project_id),
+    fromEnvironmentId: String(row.from_environment_id),
+    toEnvironmentId: String(row.to_environment_id),
+    deploymentId: row.deployment_id ? String(row.deployment_id) : null,
+    status: String(row.status) as PromotionRecord["status"],
+    promotedBy: String(row.promoted_by),
+    promotedAt: String(row.promoted_at)
   };
 }

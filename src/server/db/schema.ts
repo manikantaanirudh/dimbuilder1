@@ -502,4 +502,60 @@ CREATE TABLE IF NOT EXISTS impact_analyses (
 );
 
 CREATE INDEX IF NOT EXISTS idx_impact_analyses_project ON impact_analyses(project_id, created_at);
+
+CREATE TABLE IF NOT EXISTS promotion_pipelines (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  stages_json TEXT NOT NULL DEFAULT '[]',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS environment_sync_status (
+  id TEXT PRIMARY KEY,
+  environment_id TEXT NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  last_deployed_at TEXT,
+  local_version_hash TEXT NOT NULL DEFAULT '',
+  sync_status TEXT NOT NULL DEFAULT 'unknown',
+  checked_at TEXT NOT NULL,
+  UNIQUE(environment_id, project_id, dimension_type)
+);
+
+CREATE TABLE IF NOT EXISTS environment_overrides (
+  id TEXT PRIMARY KEY,
+  environment_id TEXT NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  member_key TEXT NOT NULL,
+  property_name TEXT NOT NULL,
+  override_value TEXT NOT NULL DEFAULT '',
+  reason TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS promotion_history (
+  id TEXT PRIMARY KEY,
+  pipeline_id TEXT NOT NULL REFERENCES promotion_pipelines(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  from_environment_id TEXT NOT NULL REFERENCES environments(id),
+  to_environment_id TEXT NOT NULL REFERENCES environments(id),
+  deployment_id TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  promoted_by TEXT NOT NULL,
+  promoted_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_promotion_pipelines_active ON promotion_pipelines(is_active);
+CREATE INDEX IF NOT EXISTS idx_env_sync_status_env ON environment_sync_status(environment_id, project_id);
+CREATE INDEX IF NOT EXISTS idx_env_sync_status_project ON environment_sync_status(project_id, dimension_type);
+CREATE INDEX IF NOT EXISTS idx_env_overrides_env ON environment_overrides(environment_id, project_id);
+CREATE INDEX IF NOT EXISTS idx_env_overrides_project ON environment_overrides(project_id, dimension_type);
+CREATE INDEX IF NOT EXISTS idx_promotion_history_pipeline ON promotion_history(pipeline_id, promoted_at);
+CREATE INDEX IF NOT EXISTS idx_promotion_history_project ON promotion_history(project_id, promoted_at);
 `;

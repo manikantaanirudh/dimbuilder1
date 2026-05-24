@@ -4,6 +4,7 @@ import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 import { createOneStreamClient } from "../connectors/onestream";
 import { exportProjectXml } from "../../shared/xmlExport";
+import { refreshSyncStatus, getSyncStatusSummary } from "../environments/syncStatus";
 
 const createEnvironmentSchema = z.object({
   name: z.string().min(1).max(255),
@@ -31,6 +32,48 @@ const deploySchema = z.object({
   changeSetId: z.string().optional(),
   dimensionIds: z.array(z.string()).optional(),
   comment: z.string().max(2000).optional()
+});
+
+const createPipelineSchema = z.object({
+  name: z.string().min(1).max(255),
+  stages: z.array(z.object({
+    environmentId: z.string().min(1),
+    order: z.number().int().min(0),
+    name: z.string().min(1).max(255),
+    requiresApproval: z.boolean()
+  })).min(2)
+});
+
+const updatePipelineSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  stages: z.array(z.object({
+    environmentId: z.string().min(1),
+    order: z.number().int().min(0),
+    name: z.string().min(1).max(255),
+    requiresApproval: z.boolean()
+  })).min(2).optional(),
+  isActive: z.boolean().optional()
+});
+
+const promoteSchema = z.object({
+  projectId: z.string().min(1),
+  fromStageIndex: z.number().int().min(0),
+  toStageIndex: z.number().int().min(1)
+});
+
+const createOverrideSchema = z.object({
+  environmentId: z.string().min(1),
+  projectId: z.string().min(1),
+  dimensionType: z.string().min(1),
+  memberKey: z.string().min(1),
+  propertyName: z.string().min(1),
+  overrideValue: z.string(),
+  reason: z.string().max(2000).optional()
+});
+
+const updateOverrideSchema = z.object({
+  overrideValue: z.string().optional(),
+  reason: z.string().max(2000).optional()
 });
 
 export function createEnvironmentRouter(repos: Repositories, config: AppConfig): Router {
@@ -197,6 +240,139 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     const deployment = repos.deployments.getById(req.params.id);
     if (!deployment) return res.status(404).json({ error: "Deployment not found" });
     res.json(deployment);
+  });
+
+  // --- Promotion Pipelines ---
+
+  router.get("/pipelines", (_req, res) => {
+    res.json(repos.promotionPipelines.list());
+  });
+
+  router.post("/pipelines", (req, res) => {
+    const parsed = createPipelineSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
+      });
+    }
+    const pipeline = repos.promotionPipelines.create({
+      ...parsed.data,
+      createdBy: req.user?.id ?? "system"
+    });
+    res.status(201).json(pipeline);
+  });
+
+  router.patch("/pipelines/:id", (req, res) => {
+    const parsed = updatePipelineSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
+      });
+    }
+    const updated = repos.promotionPipelines.update(req.params.id, parsed.data);
+    if (!updated) return res.status(404).json({ error: "Pipeline not found" });
+    res.json(updated);
+  });
+
+  router.delete("/pipelines/:id", (req, res) => {
+    const existing = repos.promotionPipelines.getById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Pipeline not found" });
+    repos.promotionPipelines.delete(req.params.id);
+    res.json({ ok: true });
+  });
+
+  router.post("/pipelines/:id/promote", (req, res) => {
+    const pipeline = repos.promotionPipelines.getById(req.params.id);
+    if (!pipeline) return res.status(404).json({ error: "Pipeline not found" });
+
+    const parsed = promoteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
+      });
+    }
+
+    const { projectId, fromStageIndex, toStageIndex } = parsed.data;
+    if (fromStageIndex >= pipeline.stages.length || toStageIndex >= pipeline.stages.length) {
+      return res.status(400).json({ error: "Invalid stage index" });
+    }
+
+    const fromStage = pipeline.stages[fromStageIndex];
+    const toStage = pipeline.stages[toStageIndex];
+
+    const record = repos.promotionHistory.create({
+      pipelineId: pipeline.id,
+      projectId,
+      fromEnvironmentId: fromStage.environmentId,
+      toEnvironmentId: toStage.environmentId,
+      status: "success",
+      promotedBy: req.user?.id ?? "system"
+    });
+
+    res.status(201).json(record);
+  });
+
+  // --- Sync Status ---
+
+  router.get("/projects/:id/sync-status", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(getSyncStatusSummary(repos, req.params.id));
+  });
+
+  router.post("/sync-status/refresh", (req, res) => {
+    const { projectId, environmentId } = req.body as { projectId?: string; environmentId?: string };
+    if (!projectId) return res.status(400).json({ error: "projectId is required" });
+    const project = repos.projects.get(projectId);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    const statuses = refreshSyncStatus(repos, projectId, environmentId);
+    res.json(statuses);
+  });
+
+  // --- Environment Overrides ---
+
+  router.get("/env-overrides", (req, res) => {
+    const environmentId = typeof req.query.environmentId === "string" ? req.query.environmentId : undefined;
+    const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
+    res.json(repos.environmentOverrides.list({ environmentId, projectId }));
+  });
+
+  router.post("/env-overrides", (req, res) => {
+    const parsed = createOverrideSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
+      });
+    }
+    const override = repos.environmentOverrides.create({
+      ...parsed.data,
+      createdBy: req.user?.id ?? "system"
+    });
+    res.status(201).json(override);
+  });
+
+  router.patch("/env-overrides/:id", (req, res) => {
+    const parsed = updateOverrideSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
+      });
+    }
+    const updated = repos.environmentOverrides.update(req.params.id, parsed.data);
+    if (!updated) return res.status(404).json({ error: "Override not found" });
+    res.json(updated);
+  });
+
+  router.delete("/env-overrides/:id", (req, res) => {
+    const existing = repos.environmentOverrides.getById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Override not found" });
+    repos.environmentOverrides.delete(req.params.id);
+    res.json({ ok: true });
   });
 
   return router;
