@@ -720,4 +720,121 @@ CREATE INDEX IF NOT EXISTS idx_vcs_branches_project ON vcs_branches(project_id, 
 CREATE INDEX IF NOT EXISTS idx_vcs_commits_branch ON vcs_commits(branch_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_vcs_commits_project ON vcs_commits(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_vcs_tags_project ON vcs_tags(project_id);
+
+CREATE TABLE IF NOT EXISTS edit_locks (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  acquired_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS scheduled_jobs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  trigger_type TEXT NOT NULL,
+  trigger_config_json TEXT NOT NULL DEFAULT '{}',
+  action_type TEXT NOT NULL,
+  action_config_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'active',
+  last_run_at TEXT,
+  next_run_at TEXT,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS job_executions (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES scheduled_jobs(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  started_at TEXT NOT NULL,
+  completed_at TEXT,
+  result_json TEXT,
+  error_message TEXT
+);
+
+CREATE TABLE IF NOT EXISTS quality_rules (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  weight REAL NOT NULL DEFAULT 1.0,
+  config_json TEXT NOT NULL DEFAULT '{}',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS quality_gates (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  threshold REAL NOT NULL DEFAULT 70,
+  scope TEXT NOT NULL DEFAULT 'project',
+  action TEXT NOT NULL DEFAULT 'warn',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS migration_projects (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  source_type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  source_config_json TEXT NOT NULL DEFAULT '{}',
+  progress_json TEXT NOT NULL DEFAULT '{}',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  events_json TEXT NOT NULL DEFAULT '[]',
+  secret TEXT NOT NULL DEFAULT '',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  failure_count INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sync_queue (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  operation_type TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  synced_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS generated_documents (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  format TEXT NOT NULL DEFAULT 'markdown',
+  content TEXT NOT NULL DEFAULT '',
+  snapshot_id TEXT,
+  generated_by TEXT NOT NULL,
+  generated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_edit_locks_project ON edit_locks(project_id, dimension_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_project ON scheduled_jobs(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_job_executions_job ON job_executions(job_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_quality_rules_project ON quality_rules(project_id, category);
+CREATE INDEX IF NOT EXISTS idx_quality_gates_project ON quality_gates(project_id);
+CREATE INDEX IF NOT EXISTS idx_migration_projects ON migration_projects(project_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_subs_project ON webhook_subscriptions(project_id);
+CREATE INDEX IF NOT EXISTS idx_sync_queue_project ON sync_queue(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_generated_docs_project ON generated_documents(project_id);
 `;
