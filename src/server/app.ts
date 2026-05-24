@@ -27,6 +27,7 @@ import { createCrossDimensionRouter } from "./routes/crossDimension";
 import { createTemplateRouter } from "./routes/templates";
 import { createReportingRouter } from "./routes/reporting";
 import { createVcsRouter } from "./routes/vcs";
+import { createExtensibilityRouter } from "./routes/extensibility";
 import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { requireRole } from "./middleware/authorize";
 
@@ -81,6 +82,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api/templates", createTemplateRouter(repos, config));
   app.use("/api/reports", createReportingRouter(repos, config));
   app.use("/api", createVcsRouter(repos, config));
+  app.use("/api", createExtensibilityRouter(repos, config));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";
