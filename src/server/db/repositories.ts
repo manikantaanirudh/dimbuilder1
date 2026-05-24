@@ -118,6 +118,15 @@ import type {
   TemplateData,
   TemplateApplication
 } from "../../shared/templateTypes";
+import type {
+  ReportDefinition,
+  ReportType,
+  ReportFormat,
+  ReportConfig,
+  ReportRun,
+  ReportRunStatus,
+  MetadataHealthSnapshot
+} from "../../shared/reportingTypes";
 
 function now(): string {
   return new Date().toISOString();
@@ -1995,6 +2004,67 @@ export function createRepositories(db: AppDatabase) {
       listByTemplate(templateId: string): TemplateApplication[] {
         return db.prepare("SELECT * FROM template_applications WHERE template_id = ? ORDER BY applied_at DESC").all(templateId).map(mapTemplateApplication);
       }
+    },
+    reportDefinitions: {
+      create(input: { name: string; reportType: ReportType; config?: ReportConfig; scheduleCron?: string; format?: ReportFormat; recipients?: string[]; createdBy: string }): ReportDefinition {
+        const id = nanoid();
+        const timestamp = now();
+        const def: ReportDefinition = {
+          id, name: input.name, reportType: input.reportType,
+          config: input.config ?? {}, scheduleCron: input.scheduleCron ?? null,
+          format: input.format ?? 'json', recipients: input.recipients ?? [],
+          createdBy: input.createdBy, createdAt: timestamp, updatedAt: timestamp
+        };
+        db.prepare(`INSERT INTO report_definitions (id, name, report_type, config_json, schedule_cron, format, recipients_json, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+          .run(id, def.name, def.reportType, JSON.stringify(def.config), def.scheduleCron, def.format, JSON.stringify(def.recipients), def.createdBy, def.createdAt, def.updatedAt);
+        return def;
+      },
+      list(filters?: { reportType?: ReportType }): ReportDefinition[] {
+        let sql = "SELECT * FROM report_definitions";
+        const params: unknown[] = [];
+        if (filters?.reportType) { sql += " WHERE report_type = ?"; params.push(filters.reportType); }
+        sql += " ORDER BY updated_at DESC";
+        return db.prepare(sql).all(...params).map(mapReportDefinition);
+      },
+      get(id: string): ReportDefinition | null {
+        const row = db.prepare("SELECT * FROM report_definitions WHERE id = ?").get(id);
+        return row ? mapReportDefinition(row) : null;
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM report_definitions WHERE id = ?").run(id);
+      }
+    },
+    reportRuns: {
+      create(input: { definitionId: string; status?: ReportRunStatus; outputData?: Record<string, unknown> }): ReportRun {
+        const id = nanoid();
+        const timestamp = now();
+        const status = input.status ?? 'completed';
+        db.prepare(`INSERT INTO report_runs (id, definition_id, status, output_data_json, generated_at) VALUES (?, ?, ?, ?, ?)`)
+          .run(id, input.definitionId, status, input.outputData ? JSON.stringify(input.outputData) : null, timestamp);
+        return { id, definitionId: input.definitionId, status, outputData: input.outputData ?? null, generatedAt: timestamp };
+      },
+      listByDefinition(definitionId: string): ReportRun[] {
+        return db.prepare("SELECT * FROM report_runs WHERE definition_id = ? ORDER BY generated_at DESC").all(definitionId).map(mapReportRun);
+      },
+      get(id: string): ReportRun | null {
+        const row = db.prepare("SELECT * FROM report_runs WHERE id = ?").get(id);
+        return row ? mapReportRun(row) : null;
+      }
+    },
+    healthSnapshots: {
+      create(input: Omit<MetadataHealthSnapshot, 'id' | 'capturedAt'>): MetadataHealthSnapshot {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`INSERT INTO metadata_health_snapshots (id, project_id, dimension_type, quality_score, completeness_score, naming_score, validation_error_count, validation_warning_count, member_count, orphan_count, captured_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+          .run(id, input.projectId, input.dimensionType, input.qualityScore, input.completenessScore, input.namingScore, input.validationErrorCount, input.validationWarningCount, input.memberCount, input.orphanCount, timestamp);
+        return { id, ...input, capturedAt: timestamp };
+      },
+      listByProject(projectId: string, dimensionType?: string): MetadataHealthSnapshot[] {
+        if (dimensionType) {
+          return db.prepare("SELECT * FROM metadata_health_snapshots WHERE project_id = ? AND dimension_type = ? ORDER BY captured_at DESC").all(projectId, dimensionType).map(mapHealthSnapshot);
+        }
+        return db.prepare("SELECT * FROM metadata_health_snapshots WHERE project_id = ? ORDER BY captured_at DESC").all(projectId).map(mapHealthSnapshot);
+      }
     }
   };
 }
@@ -2995,5 +3065,46 @@ function mapTemplateApplication(row: Record<string, unknown>): TemplateApplicati
     appliedBy: String(row.applied_by),
     renameMapping: row.rename_mapping_json ? parseJson<Record<string, string>>(String(row.rename_mapping_json), {}) : null,
     appliedAt: String(row.applied_at)
+  };
+}
+
+function mapReportDefinition(row: Record<string, unknown>): ReportDefinition {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    reportType: String(row.report_type) as ReportType,
+    config: parseJson<ReportConfig>(String(row.config_json ?? "{}"), {}),
+    scheduleCron: row.schedule_cron ? String(row.schedule_cron) : null,
+    format: String(row.format ?? 'json') as ReportFormat,
+    recipients: parseJson<string[]>(String(row.recipients_json ?? "[]"), []),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapReportRun(row: Record<string, unknown>): ReportRun {
+  return {
+    id: String(row.id),
+    definitionId: String(row.definition_id),
+    status: String(row.status) as ReportRunStatus,
+    outputData: row.output_data_json ? parseJson<Record<string, unknown>>(String(row.output_data_json), {}) : null,
+    generatedAt: String(row.generated_at)
+  };
+}
+
+function mapHealthSnapshot(row: Record<string, unknown>): MetadataHealthSnapshot {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    dimensionType: String(row.dimension_type),
+    qualityScore: Number(row.quality_score ?? 0),
+    completenessScore: Number(row.completeness_score ?? 0),
+    namingScore: Number(row.naming_score ?? 0),
+    validationErrorCount: Number(row.validation_error_count ?? 0),
+    validationWarningCount: Number(row.validation_warning_count ?? 0),
+    memberCount: Number(row.member_count ?? 0),
+    orphanCount: Number(row.orphan_count ?? 0),
+    capturedAt: String(row.captured_at)
   };
 }

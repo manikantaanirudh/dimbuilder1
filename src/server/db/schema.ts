@@ -644,4 +644,43 @@ CREATE TABLE IF NOT EXISTS template_applications (
 CREATE INDEX IF NOT EXISTS idx_templates_category ON templates(category, industry);
 CREATE INDEX IF NOT EXISTS idx_template_applications_project ON template_applications(project_id);
 CREATE INDEX IF NOT EXISTS idx_template_applications_template ON template_applications(template_id);
+
+CREATE TABLE IF NOT EXISTS report_definitions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  report_type TEXT NOT NULL,
+  config_json TEXT NOT NULL DEFAULT '{}',
+  schedule_cron TEXT,
+  format TEXT NOT NULL DEFAULT 'json',
+  recipients_json TEXT NOT NULL DEFAULT '[]',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS report_runs (
+  id TEXT PRIMARY KEY,
+  definition_id TEXT NOT NULL REFERENCES report_definitions(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  output_data_json TEXT,
+  generated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS metadata_health_snapshots (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  quality_score REAL NOT NULL DEFAULT 0,
+  completeness_score REAL NOT NULL DEFAULT 0,
+  naming_score REAL NOT NULL DEFAULT 0,
+  validation_error_count INTEGER NOT NULL DEFAULT 0,
+  validation_warning_count INTEGER NOT NULL DEFAULT 0,
+  member_count INTEGER NOT NULL DEFAULT 0,
+  orphan_count INTEGER NOT NULL DEFAULT 0,
+  captured_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_definitions_type ON report_definitions(report_type);
+CREATE INDEX IF NOT EXISTS idx_report_runs_def ON report_runs(definition_id, generated_at);
+CREATE INDEX IF NOT EXISTS idx_health_snapshots_project ON metadata_health_snapshots(project_id, dimension_type, captured_at);
 `;
