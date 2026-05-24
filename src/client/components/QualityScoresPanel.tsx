@@ -7,10 +7,14 @@ import { ScoreRing } from "./ScoreRing";
 
 interface DimensionScore {
   dimensionType: string;
+  dimensionName?: string;
   overallScore: number;
-  completeness: number;
-  naming: number;
-  structure: number;
+  memberCount?: number;
+  avgMemberScore?: number;
+  completeness?: number;
+  naming?: number;
+  structure?: number;
+  lowestScoreMembers?: Array<{ memberKey: string; score: number }>;
 }
 
 interface QualityGate {
@@ -103,32 +107,41 @@ export function QualityScoresPanel({ projectId }: { projectId: string }) {
             {dimensions.map(dim => (
               <div key={dim.dimensionType} className="quality-dimension-card">
                 <div className="qd-header">
-                  <strong>{dim.dimensionType}</strong>
+                  <strong>{dim.dimensionName ?? dim.dimensionType}</strong>
                   <StatusBadge tone={scoreTone(dim.overallScore)}>{dim.overallScore}/100</StatusBadge>
                 </div>
                 <div className="qd-bars">
                   <div className="qd-bar-row">
-                    <span>Completeness</span>
+                    <span>Overall</span>
                     <div className="score-bar-container">
-                      <div className={`score-bar ${scoreTone(dim.completeness)}`} style={{ width: `${dim.completeness}%` }} />
-                      <span className="score-bar-label">{dim.completeness}</span>
+                      <div className={`score-bar ${scoreTone(dim.overallScore)}`} style={{ width: `${dim.overallScore}%` }} />
+                      <span className="score-bar-label">{dim.overallScore}</span>
                     </div>
                   </div>
-                  <div className="qd-bar-row">
-                    <span>Naming</span>
-                    <div className="score-bar-container">
-                      <div className={`score-bar ${scoreTone(dim.naming)}`} style={{ width: `${dim.naming}%` }} />
-                      <span className="score-bar-label">{dim.naming}</span>
+                  {dim.avgMemberScore !== undefined && (
+                    <div className="qd-bar-row">
+                      <span>Avg Member</span>
+                      <div className="score-bar-container">
+                        <div className={`score-bar ${scoreTone(dim.avgMemberScore)}`} style={{ width: `${dim.avgMemberScore}%` }} />
+                        <span className="score-bar-label">{dim.avgMemberScore}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="qd-bar-row">
-                    <span>Structure</span>
-                    <div className="score-bar-container">
-                      <div className={`score-bar ${scoreTone(dim.structure)}`} style={{ width: `${dim.structure}%` }} />
-                      <span className="score-bar-label">{dim.structure}</span>
+                  )}
+                  {dim.completeness !== undefined && (
+                    <div className="qd-bar-row">
+                      <span>Completeness</span>
+                      <div className="score-bar-container">
+                        <div className={`score-bar ${scoreTone(dim.completeness)}`} style={{ width: `${dim.completeness}%` }} />
+                        <span className="score-bar-label">{dim.completeness}</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
+                {dim.memberCount !== undefined && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--muted)" }}>
+                    {dim.memberCount} members
+                  </div>
+                )}
               </div>
             ))}
           </div>

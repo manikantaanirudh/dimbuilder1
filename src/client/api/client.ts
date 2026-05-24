@@ -804,3 +804,67 @@ export function updateEnvOverride(id: string, body: { overrideValue?: string; re
 export function deleteEnvOverride(id: string) {
   return apiDelete(`/environments/env-overrides/${id}`);
 }
+
+// --- Reporting & Analytics (Feature 10) ---
+
+export function fetchHealthReport(projectId: string) {
+  return apiPost<{ overallScore: number; trend: string; snapshots: Array<{ dimensionType: string; qualityScore: number; completenessScore: number; namingScore: number; memberCount: number; orphanCount: number; validationErrorCount: number; validationWarningCount: number }> }>("/reports/generate/health", { projectId });
+}
+
+export function fetchVelocityReport(projectId: string) {
+  return apiPost<{ totalChanges: number; periods: Array<{ periodStart: string; membersAdded: number; membersModified: number; membersDeleted: number; totalChanges: number }> }>("/reports/generate/velocity", { projectId });
+}
+
+export function fetchCoverageReport(projectId: string) {
+  return apiPost<{ overallCoverage: number; dimensions: Array<{ dimensionType: string; memberCount: number; propertyCoverage: number; descriptionCoverage: number; lastModified: string; isStale: boolean }> }>("/reports/generate/coverage", { projectId });
+}
+
+export function exportReport(projectId: string, reportType: string, format: 'html' | 'csv' | 'json') {
+  return apiPost<Blob>(`/reports/export/${reportType}`, { projectId, format });
+}
+
+// --- AI Intelligence (Feature 7) ---
+
+export function fetchAIAnalysis(projectId: string) {
+  return apiPost<{ suggestions: Array<{ id: string; suggestionType: string; targetMemberKey?: string; suggestion: Record<string, unknown>; confidence: number }>; totalGenerated: number }>(`/projects/${projectId}/ai/analyze`, {});
+}
+
+export function fetchDuplicateDetection(projectId: string) {
+  return apiPost<Array<{ members: string[]; similarity: number; method: string }>>(`/projects/${projectId}/ai/duplicates`, {});
+}
+
+export function fetchNamingAnomalies(projectId: string) {
+  // Naming anomalies come from the full analysis endpoint filtered by type
+  return apiPost<{ suggestions: Array<{ id: string; suggestionType: string; targetMemberKey?: string; suggestion: Record<string, unknown>; confidence: number }>; totalGenerated: number }>(`/projects/${projectId}/ai/analyze`, { scope: { types: ['naming'] } });
+}
+
+export function fetchHierarchyOptimizations(projectId: string) {
+  // Hierarchy optimizations come from the full analysis endpoint filtered by type
+  return apiPost<{ suggestions: Array<{ id: string; suggestionType: string; targetMemberKey?: string; suggestion: Record<string, unknown>; confidence: number }>; totalGenerated: number }>(`/projects/${projectId}/ai/analyze`, { scope: { types: ['hierarchy'] } });
+}
+
+// --- Quality Scoring (Feature 16) ---
+
+export function fetchQualityScores(projectId: string) {
+  return apiGet<{ overallScore: number; dimensions: Array<{ dimensionType: string; overallScore: number; completeness: number; naming: number; structure: number }> }>(`/projects/${projectId}/quality/scores`);
+}
+
+export function fetchQualityGates(projectId: string) {
+  return apiGet<Array<{ id: string; name: string; threshold: number; scope: string; action: string }>>(`/projects/${projectId}/quality/gates`);
+}
+
+// --- Audit Log (Feature 23) ---
+
+export function fetchAuditLog(projectId: string) {
+  return apiGet<Array<{ id: string; userId: string; action: string; entityType: string; entityId: string; changes: Record<string, unknown>; timestamp: string }>>(`/projects/${projectId}/audit-log`);
+}
+
+// --- Auto-Advance (Feature 2 enhancement) ---
+
+export function evaluateAutoAdvance(instanceId: string) {
+  return apiPost<{ instanceId: string; stepIndex: number; shouldAdvance: boolean; conditionsEvaluated: Array<{ condition: { type: string }; passed: boolean; detail: string }> }>(`/workflows/instances/${instanceId}/auto-advance/evaluate`, {});
+}
+
+export function runAutoAdvanceCheck() {
+  return apiPost<{ evaluated: number; advanced: number; results: Array<{ instanceId: string; advanced: boolean }> }>("/workflows/auto-advance/run", {});
+}

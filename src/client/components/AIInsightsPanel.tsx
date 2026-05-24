@@ -1,33 +1,27 @@
 import { Brain, Copy, AlertTriangle, GitBranch } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchDuplicateDetection, fetchNamingAnomalies, fetchHierarchyOptimizations } from "../api/client";
+import { fetchDuplicateDetection, fetchAIAnalysis } from "../api/client";
 import { Panel, StatusBadge } from "./ui";
 import { SkeletonAIInsights } from "./Skeleton";
 
 interface DuplicateGroup {
-  canonical: string;
-  duplicates: Array<{ memberKey: string; similarity: number; reason: string }>;
+  members: string[];
+  similarity: number;
+  method: string;
 }
 
-interface NamingAnomaly {
-  memberKey: string;
-  dimensionType: string;
-  anomalyType: string;
-  description: string;
-  suggestion: string;
-}
-
-interface HierarchyOptimization {
-  type: string;
-  description: string;
-  impact: string;
-  affectedMembers: string[];
+interface AISuggestion {
+  id: string;
+  suggestionType: string;
+  targetMemberKey?: string;
+  suggestion: Record<string, unknown>;
+  confidence: number;
 }
 
 export function AIInsightsPanel({ projectId }: { projectId: string }) {
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
-  const [anomalies, setAnomalies] = useState<NamingAnomaly[]>([]);
-  const [optimizations, setOptimizations] = useState<HierarchyOptimization[]>([]);
+  const [namingAnomalies, setNamingAnomalies] = useState<AISuggestion[]>([]);
+  const [hierarchyOpts, setHierarchyOpts] = useState<AISuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"duplicates" | "naming" | "hierarchy">("duplicates");
@@ -38,15 +32,17 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
       setLoading(true);
       setError("");
       try {
-        const [dupRes, namRes, hierRes] = await Promise.all([
-          fetchDuplicateDetection(projectId),
-          fetchNamingAnomalies(projectId),
-          fetchHierarchyOptimizations(projectId)
+        const [dupRes, analysisRes] = await Promise.all([
+          fetchDuplicateDetection(projectId).catch(() => []),
+          fetchAIAnalysis(projectId).catch(() => ({ suggestions: [], totalGenerated: 0 }))
         ]);
         if (!cancelled) {
-          setDuplicates(dupRes.groups ?? []);
-          setAnomalies(namRes.anomalies ?? []);
-          setOptimizations(hierRes.optimizations ?? []);
+          // Duplicates endpoint returns array directly
+          setDuplicates(Array.isArray(dupRes) ? dupRes : []);
+          // Full analysis returns suggestions with types
+          const suggestions = analysisRes.suggestions ?? [];
+          setNamingAnomalies(suggestions.filter(s => s.suggestionType === 'naming'));
+          setHierarchyOpts(suggestions.filter(s => s.suggestionType === 'hierarchy'));
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load AI insights");
@@ -61,7 +57,7 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
   if (loading) return <SkeletonAIInsights />;
   if (error) return <div className="banner error">{error}</div>;
 
-  const totalInsights = duplicates.length + anomalies.length + optimizations.length;
+  const totalInsights = duplicates.length + namingAnomalies.length + hierarchyOpts.length;
 
   return (
     <section className="ai-insights-panel">
@@ -80,10 +76,10 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
           <Copy size={14} /> Duplicates {duplicates.length > 0 && <span className="tab-count">{duplicates.length}</span>}
         </button>
         <button className={`ai-tab ${activeTab === "naming" ? "active" : ""}`} onClick={() => setActiveTab("naming")}>
-          <AlertTriangle size={14} /> Naming {anomalies.length > 0 && <span className="tab-count">{anomalies.length}</span>}
+          <AlertTriangle size={14} /> Naming {namingAnomalies.length > 0 && <span className="tab-count">{namingAnomalies.length}</span>}
         </button>
         <button className={`ai-tab ${activeTab === "hierarchy" ? "active" : ""}`} onClick={() => setActiveTab("hierarchy")}>
-          <GitBranch size={14} /> Hierarchy {optimizations.length > 0 && <span className="tab-count">{optimizations.length}</span>}
+          <GitBranch size={14} /> Hierarchy {hierarchyOpts.length > 0 && <span className="tab-count">{hierarchyOpts.length}</span>}
         </button>
       </div>
 
@@ -96,15 +92,15 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
               {duplicates.map((group, idx) => (
                 <div key={idx} className="duplicate-group">
                   <div className="duplicate-canonical">
-                    <strong>{group.canonical}</strong>
-                    <StatusBadge tone="warning">{group.duplicates.length} similar</StatusBadge>
+                    <strong>{group.members[0]}</strong>
+                    <StatusBadge tone="warning">{group.members.length} similar members</StatusBadge>
+                    <span className="dup-similarity">{Math.round(group.similarity * 100)}% match</span>
                   </div>
                   <ul className="duplicate-list">
-                    {group.duplicates.map((dup, i) => (
+                    {group.members.slice(1).map((member, i) => (
                       <li key={i}>
-                        <code>{dup.memberKey}</code>
-                        <span className="dup-similarity">{Math.round(dup.similarity * 100)}% match</span>
-                        <small>{dup.reason}</small>
+                        <code>{member}</code>
+                        <small>detected by {group.method}</small>
                       </li>
                     ))}
                   </ul>
@@ -117,25 +113,26 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
 
       {activeTab === "naming" && (
         <Panel className="ai-results-panel">
-          {anomalies.length === 0 ? (
+          {namingAnomalies.length === 0 ? (
             <div className="empty-state-block"><strong>No naming anomalies</strong><div className="empty-state-description">All member names follow consistent patterns.</div></div>
           ) : (
             <table className="anomalies-table">
               <thead>
                 <tr>
                   <th>Member</th>
-                  <th>Dimension</th>
                   <th>Issue</th>
-                  <th>Suggestion</th>
+                  <th>Confidence</th>
                 </tr>
               </thead>
               <tbody>
-                {anomalies.map((a, idx) => (
+                {namingAnomalies.map((a, idx) => (
                   <tr key={idx}>
-                    <td><code>{a.memberKey}</code></td>
-                    <td>{a.dimensionType}</td>
-                    <td><StatusBadge tone="warning">{a.anomalyType}</StatusBadge> {a.description}</td>
-                    <td className="suggestion-cell">{a.suggestion}</td>
+                    <td><code>{a.targetMemberKey ?? "—"}</code></td>
+                    <td>
+                      <StatusBadge tone="warning">{String(a.suggestion.anomalyType ?? "naming")}</StatusBadge>
+                      {" "}{String(a.suggestion.description ?? "")}
+                    </td>
+                    <td>{Math.round((a.confidence ?? 0) * 100)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -146,21 +143,20 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
 
       {activeTab === "hierarchy" && (
         <Panel className="ai-results-panel">
-          {optimizations.length === 0 ? (
+          {hierarchyOpts.length === 0 ? (
             <div className="empty-state-block"><strong>No optimizations suggested</strong><div className="empty-state-description">Hierarchy structure looks healthy.</div></div>
           ) : (
             <div className="optimization-cards">
-              {optimizations.map((opt, idx) => (
+              {hierarchyOpts.map((opt, idx) => (
                 <div key={idx} className="optimization-card">
                   <div className="opt-header">
-                    <StatusBadge tone="info">{opt.type}</StatusBadge>
-                    <span className="opt-impact">{opt.impact}</span>
+                    <StatusBadge tone="info">{String(opt.suggestion.strategy ?? "optimize")}</StatusBadge>
+                    <span className="opt-impact">{Math.round((opt.confidence ?? 0) * 100)}% confidence</span>
                   </div>
-                  <p>{opt.description}</p>
-                  {opt.affectedMembers.length > 0 && (
+                  <p>{String(opt.suggestion.description ?? opt.suggestion.reason ?? "Hierarchy optimization suggestion")}</p>
+                  {opt.targetMemberKey && (
                     <div className="opt-members">
-                      Affects: {opt.affectedMembers.slice(0, 5).map(m => <code key={m}>{m}</code>)}
-                      {opt.affectedMembers.length > 5 && <span> +{opt.affectedMembers.length - 5} more</span>}
+                      Affects: <code>{opt.targetMemberKey}</code>
                     </div>
                   )}
                 </div>
