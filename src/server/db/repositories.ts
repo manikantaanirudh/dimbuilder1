@@ -111,6 +111,13 @@ import type {
   CrossDimensionMapping,
   CrossDimensionMappingType
 } from "../../shared/crossDimensionTypes";
+import type {
+  Template,
+  TemplateCategory,
+  TemplateIndustry,
+  TemplateData,
+  TemplateApplication
+} from "../../shared/templateTypes";
 
 function now(): string {
   return new Date().toISOString();
@@ -1925,6 +1932,69 @@ export function createRepositories(db: AppDatabase) {
       delete(id: string): void {
         db.prepare("DELETE FROM cross_dimension_mappings WHERE id = ?").run(id);
       }
+    },
+    templates: {
+      create(input: { name: string; description?: string; category?: TemplateCategory; industry?: TemplateIndustry; dimensionTypes: string[]; templateData: TemplateData; tags?: string[]; isPublic?: boolean; createdBy: string }): Template {
+        const id = nanoid();
+        const timestamp = now();
+        const template: Template = {
+          id,
+          name: input.name,
+          description: input.description ?? '',
+          category: input.category ?? 'custom',
+          industry: input.industry ?? null,
+          dimensionTypes: input.dimensionTypes,
+          templateData: input.templateData,
+          tags: input.tags ?? [],
+          version: '1.0.0',
+          isPublic: input.isPublic ?? false,
+          usageCount: 0,
+          createdBy: input.createdBy,
+          createdAt: timestamp,
+          updatedAt: timestamp
+        };
+        db.prepare(`
+          INSERT INTO templates (id, name, description, category, industry, dimension_types_json, template_data_json, tags_json, version, is_public, usage_count, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, template.name, template.description, template.category, template.industry, JSON.stringify(template.dimensionTypes), JSON.stringify(template.templateData), JSON.stringify(template.tags), template.version, template.isPublic ? 1 : 0, 0, template.createdBy, template.createdAt, template.updatedAt);
+        return template;
+      },
+      list(filters?: { category?: TemplateCategory; industry?: TemplateIndustry; search?: string }): Template[] {
+        let sql = "SELECT * FROM templates WHERE 1=1";
+        const params: unknown[] = [];
+        if (filters?.category) { sql += " AND category = ?"; params.push(filters.category); }
+        if (filters?.industry) { sql += " AND industry = ?"; params.push(filters.industry); }
+        if (filters?.search) { sql += " AND (name LIKE ? OR description LIKE ? OR tags_json LIKE ?)"; const s = `%${filters.search}%`; params.push(s, s, s); }
+        sql += " ORDER BY usage_count DESC, updated_at DESC";
+        return db.prepare(sql).all(...params).map(mapTemplate);
+      },
+      get(id: string): Template | null {
+        const row = db.prepare("SELECT * FROM templates WHERE id = ?").get(id);
+        return row ? mapTemplate(row) : null;
+      },
+      incrementUsage(id: string): void {
+        db.prepare("UPDATE templates SET usage_count = usage_count + 1, updated_at = ? WHERE id = ?").run(now(), id);
+      },
+      delete(id: string): void {
+        db.prepare("DELETE FROM templates WHERE id = ?").run(id);
+      }
+    },
+    templateApplications: {
+      create(input: { templateId: string; projectId: string; appliedBy: string; renameMapping?: Record<string, string> }): TemplateApplication {
+        const id = nanoid();
+        const timestamp = now();
+        db.prepare(`
+          INSERT INTO template_applications (id, template_id, project_id, applied_by, rename_mapping_json, applied_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(id, input.templateId, input.projectId, input.appliedBy, input.renameMapping ? JSON.stringify(input.renameMapping) : null, timestamp);
+        return { id, templateId: input.templateId, projectId: input.projectId, appliedBy: input.appliedBy, renameMapping: input.renameMapping ?? null, appliedAt: timestamp };
+      },
+      listByProject(projectId: string): TemplateApplication[] {
+        return db.prepare("SELECT * FROM template_applications WHERE project_id = ? ORDER BY applied_at DESC").all(projectId).map(mapTemplateApplication);
+      },
+      listByTemplate(templateId: string): TemplateApplication[] {
+        return db.prepare("SELECT * FROM template_applications WHERE template_id = ? ORDER BY applied_at DESC").all(templateId).map(mapTemplateApplication);
+      }
     }
   };
 }
@@ -2895,5 +2965,35 @@ function mapCrossDimensionMapping(row: Record<string, unknown>): CrossDimensionM
     targetMemberKey: String(row.target_member_key),
     mappingType: String(row.mapping_type) as CrossDimensionMappingType,
     createdAt: String(row.created_at)
+  };
+}
+
+function mapTemplate(row: Record<string, unknown>): Template {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    description: String(row.description ?? ''),
+    category: String(row.category ?? 'custom') as TemplateCategory,
+    industry: row.industry ? String(row.industry) as TemplateIndustry : null,
+    dimensionTypes: parseJson<string[]>(String(row.dimension_types_json ?? "[]"), []),
+    templateData: parseJson<TemplateData>(String(row.template_data_json ?? "{}"), { dimensions: [] }),
+    tags: parseJson<string[]>(String(row.tags_json ?? "[]"), []),
+    version: String(row.version ?? '1.0.0'),
+    isPublic: Boolean(row.is_public),
+    usageCount: Number(row.usage_count ?? 0),
+    createdBy: String(row.created_by),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapTemplateApplication(row: Record<string, unknown>): TemplateApplication {
+  return {
+    id: String(row.id),
+    templateId: String(row.template_id),
+    projectId: String(row.project_id),
+    appliedBy: String(row.applied_by),
+    renameMapping: row.rename_mapping_json ? parseJson<Record<string, string>>(String(row.rename_mapping_json), {}) : null,
+    appliedAt: String(row.applied_at)
   };
 }

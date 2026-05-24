@@ -24,6 +24,7 @@ import { createConnectorRouter, createMappingRouter, createSyncJobRouter, create
 import { createImpactRouter } from "./routes/impact";
 import { createAIRouter } from "./routes/ai";
 import { createCrossDimensionRouter } from "./routes/crossDimension";
+import { createTemplateRouter } from "./routes/templates";
 import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { requireRole } from "./middleware/authorize";
 
@@ -75,6 +76,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api", createImpactRouter(repos, config));
   app.use("/api", createAIRouter(repos, config));
   app.use("/api", createCrossDimensionRouter(repos, config));
+  app.use("/api/templates", createTemplateRouter(repos, config));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";

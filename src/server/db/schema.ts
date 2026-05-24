@@ -614,4 +614,34 @@ CREATE TABLE IF NOT EXISTS cross_dimension_mappings (
 CREATE INDEX IF NOT EXISTS idx_cross_dim_rules_project ON cross_dimension_rules(project_id);
 CREATE INDEX IF NOT EXISTS idx_cross_dim_mappings_project ON cross_dimension_mappings(project_id, source_dimension_type);
 CREATE INDEX IF NOT EXISTS idx_cross_dim_mappings_target ON cross_dimension_mappings(project_id, target_member_key);
+
+CREATE TABLE IF NOT EXISTS templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'custom',
+  industry TEXT,
+  dimension_types_json TEXT NOT NULL DEFAULT '[]',
+  template_data_json TEXT NOT NULL DEFAULT '{}',
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  version TEXT NOT NULL DEFAULT '1.0.0',
+  is_public INTEGER NOT NULL DEFAULT 0,
+  usage_count INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS template_applications (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  applied_by TEXT NOT NULL,
+  rename_mapping_json TEXT,
+  applied_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_category ON templates(category, industry);
+CREATE INDEX IF NOT EXISTS idx_template_applications_project ON template_applications(project_id);
+CREATE INDEX IF NOT EXISTS idx_template_applications_template ON template_applications(template_id);
 `;
