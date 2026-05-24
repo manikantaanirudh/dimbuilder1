@@ -136,8 +136,16 @@ describe("Tier 3 API endpoints", () => {
   });
 
   it("POST /api/projects/:id/excel/publish → 201", async () => {
-    const res = await fetch(`${baseUrl}/api/projects/${projectId}/excel/publish`, { method: "POST", headers: authHeaders(), body: JSON.stringify({}) });
+    // First create a dimension via import
+    await fetch(`${baseUrl}/api/import`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ projectId, dimensions: [{ sheetName: "Accounts", dimensionType: "Account", dimensionName: "Accounts", members: [{ memberKey: "Revenue", description: "Revenue" }], relationships: [] }] }) });
+
+    const res = await fetch(`${baseUrl}/api/projects/${projectId}/excel/publish`, {
+      method: "POST", headers: authHeaders(),
+      body: JSON.stringify({ dimensionType: "Account", members: [{ memberKey: "Expenses", description: "Expenses" }] })
+    });
     expect(res.status).toBe(201);
+    const data = await res.json() as { membersCreated: number };
+    expect(data.membersCreated).toBeGreaterThanOrEqual(1);
   });
 
   // Feature 14: Conflict Resolution

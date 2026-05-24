@@ -889,4 +889,17 @@ CREATE INDEX IF NOT EXISTS idx_comments_project ON collaboration_comments(projec
 CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_retention_policies ON retention_policies(tenant_id, entity_type);
+
+-- Project-level access control
+CREATE TABLE IF NOT EXISTS project_members (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'viewer',
+  granted_by TEXT NOT NULL,
+  granted_at TEXT NOT NULL,
+  UNIQUE(project_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
 `;

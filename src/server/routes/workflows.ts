@@ -11,6 +11,7 @@ import {
   rejectWorkflow,
   submitWorkflow
 } from "../workflow/workflowEngine";
+import { evaluateAutoAdvance, runAutoAdvanceCheck } from "../workflow/autoAdvanceEngine";
 import { requireRole } from "../middleware/authorize";
 
 const createDefinitionSchema = z.object({
@@ -202,6 +203,21 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
   router.patch("/notifications/:id/read", (req, res) => {
     repos.workflows.notifications.markRead(req.params.id);
     res.json({ ok: true });
+  });
+
+  // --- Auto-Advance ---
+
+  // POST /workflows/instances/:id/auto-advance/evaluate — evaluate auto-advance for a specific instance
+  router.post("/instances/:id/auto-advance/evaluate", (req, res) => {
+    const result = evaluateAutoAdvance(repos, req.params.id);
+    if (!result) return res.status(404).json({ error: "Instance not found or has no auto-advance rules" });
+    res.json(result);
+  });
+
+  // POST /workflows/auto-advance/run — run auto-advance check across all active workflows
+  router.post("/auto-advance/run", requireRole("admin"), (req, res) => {
+    const results = runAutoAdvanceCheck(repos);
+    res.json({ evaluated: results.length, advanced: results.filter(r => r.advanced).length, results });
   });
 
   return router;

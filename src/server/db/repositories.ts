@@ -2264,6 +2264,28 @@ export function createRepositories(db: AppDatabase) {
         return { id, tenantId: input.tenantId ?? null, entityType: input.entityType, retentionDays: input.retentionDays, isActive: true, createdAt: timestamp };
       },
       list(): RetentionPolicy[] { return db.prepare("SELECT * FROM retention_policies ORDER BY created_at DESC").all().map(row => ({ id: String(row.id), tenantId: row.tenant_id ? String(row.tenant_id) : null, entityType: String(row.entity_type), retentionDays: Number(row.retention_days), isActive: Boolean(row.is_active), createdAt: String(row.created_at) })); }
+    },
+    projectMembers: {
+      add(input: { projectId: string; userId: string; role: string; grantedBy: string }): { id: string; projectId: string; userId: string; role: string; grantedBy: string; grantedAt: string } {
+        const id = nanoid(); const timestamp = now();
+        db.prepare("INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, granted_by, granted_at) VALUES (?, ?, ?, ?, ?, ?)").run(id, input.projectId, input.userId, input.role, input.grantedBy, timestamp);
+        return { id, projectId: input.projectId, userId: input.userId, role: input.role, grantedBy: input.grantedBy, grantedAt: timestamp };
+      },
+      remove(projectId: string, userId: string): void { db.prepare("DELETE FROM project_members WHERE project_id = ? AND user_id = ?").run(projectId, userId); },
+      listByProject(projectId: string): Array<{ id: string; projectId: string; userId: string; role: string; grantedBy: string; grantedAt: string }> {
+        return db.prepare("SELECT * FROM project_members WHERE project_id = ? ORDER BY granted_at DESC").all(projectId).map(row => ({
+          id: String(row.id), projectId: String(row.project_id), userId: String(row.user_id), role: String(row.role), grantedBy: String(row.granted_by), grantedAt: String(row.granted_at)
+        }));
+      },
+      getUserRole(projectId: string, userId: string): string | null {
+        const row = db.prepare("SELECT role FROM project_members WHERE project_id = ? AND user_id = ?").get(projectId, userId) as Record<string, unknown> | undefined;
+        return row ? String(row.role) : null;
+      },
+      listByUser(userId: string): Array<{ id: string; projectId: string; userId: string; role: string; grantedBy: string; grantedAt: string }> {
+        return db.prepare("SELECT * FROM project_members WHERE user_id = ? ORDER BY granted_at DESC").all(userId).map(row => ({
+          id: String(row.id), projectId: String(row.project_id), userId: String(row.user_id), role: String(row.role), grantedBy: String(row.granted_by), grantedAt: String(row.granted_at)
+        }));
+      }
     }
   };
 }

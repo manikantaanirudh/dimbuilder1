@@ -2,9 +2,18 @@ import { Router } from "express";
 import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
+import { createPresenceStore, type PresenceStore } from "../collaboration/presenceStore";
+
+// Module-level presence store (shared across requests)
+let presenceStore: PresenceStore | null = null;
+function getPresenceStore(): PresenceStore {
+  if (!presenceStore) presenceStore = createPresenceStore();
+  return presenceStore;
+}
 
 export function createTier4Router(repos: Repositories, _config: AppConfig): Router {
   const router = Router();
+  const presence = getPresenceStore();
 
   // ============ Feature 21: Multi-Tenant ============
 
@@ -30,7 +39,39 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
   router.get("/projects/:id/presence", (req, res) => {
     const project = repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json([]);
+    res.json(presence.getProjectPresence(project.id));
+  });
+
+  router.post("/projects/:id/presence/heartbeat", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const schema = z.object({
+      dimensionId: z.string().optional(),
+      memberKey: z.string().optional(),
+      cursor: z.object({ line: z.number().optional(), field: z.string().optional() }).optional()
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "Validation failed" });
+
+    presence.heartbeat({
+      userId: req.user?.id ?? "anonymous",
+      userName: req.user?.email ?? "anonymous",
+      projectId: project.id,
+      dimensionId: parsed.data.dimensionId,
+      memberKey: parsed.data.memberKey,
+      cursor: parsed.data.cursor
+    });
+
+    res.json({ ok: true, activeUsers: presence.getProjectPresence(project.id).length });
+  });
+
+  router.post("/projects/:id/presence/leave", (req, res) => {
+    const project = repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    presence.leave(req.user?.id ?? "anonymous", project.id);
+    res.json({ ok: true });
   });
 
   router.post("/projects/:id/comments", (req, res) => {

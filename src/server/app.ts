@@ -30,6 +30,7 @@ import { createVcsRouter } from "./routes/vcs";
 import { createExtensibilityRouter } from "./routes/extensibility";
 import { createTier3Router } from "./routes/tier3";
 import { createTier4Router } from "./routes/tier4";
+import { createProjectACLRouter } from "./acl/projectACL";
 import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { requireRole } from "./middleware/authorize";
 
@@ -87,6 +88,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api", createExtensibilityRouter(repos, config));
   app.use("/api", createTier3Router(repos, config));
   app.use("/api", createTier4Router(repos, config));
+  app.use("/api", createProjectACLRouter(repos));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";
