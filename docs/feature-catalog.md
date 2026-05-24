@@ -344,3 +344,153 @@ Source:
 - `src/client/auth/ProtectedRoute.tsx`
 - `src/client/auth/useAuth.ts`
 - `src/client/api/client.ts`
+
+## AI-Powered Metadata Intelligence (Feature 7)
+
+Heuristic-based AI analysis: duplicate detection (Levenshtein, soundex, prefix similarity), naming anomaly detection (case, separator, prefix, length), hierarchy optimization suggestions, property inference from siblings, and natural language query parsing.
+
+Source:
+
+- `src/server/ai/aiEngine.ts`
+- `src/server/ai/suggestions/duplicateDetection.ts`
+- `src/server/ai/suggestions/namingAnomaly.ts`
+- `src/server/ai/suggestions/hierarchyOptimization.ts`
+- `src/server/ai/suggestions/propertySuggestion.ts`
+- `src/server/ai/naturalLanguage/queryParser.ts`
+- `src/server/routes/ai.ts`
+- `src/client/components/AIInsightsPanel.tsx`
+
+## Cross-Dimension Relationship Mapping (Feature 8)
+
+Maps relationships across dimensions with where-used lookup, inheritance chain building, and cross-dimension validation.
+
+Source:
+
+- `src/server/crossDimension/crossDimensionEngine.ts`
+- `src/server/routes/crossDimension.ts`
+
+## Template & Pattern Library (Feature 9)
+
+Extract reusable templates from projects and apply them to new projects. Includes built-in templates for common OneStream patterns.
+
+Source:
+
+- `src/server/templates/templateEngine.ts`
+- `src/server/routes/templates.ts`
+
+## Reporting & Analytics (Feature 10)
+
+Health, velocity, coverage, and compliance reports with per-dimension scoring. Export to HTML (styled), CSV, and JSON.
+
+Source:
+
+- `src/server/reporting/reportingEngine.ts`
+- `src/server/reporting/reportExporter.ts`
+- `src/server/routes/reporting.ts`
+- `src/client/components/ReportingDashboard.tsx`
+
+## Version Control System (Feature 11)
+
+Git-like branching, commits, tags, three-way merge with conflict detection. Full project snapshot serialization.
+
+Source:
+
+- `src/server/vcs/vcsEngine.ts`
+- `src/server/routes/vcs.ts`
+
+## Extensibility Modeler (Feature 12)
+
+Analyzes dimension inheritance patterns, detects anti-patterns, and supports what-if extension planning.
+
+Source:
+
+- `src/server/extensibility/extensibilityEngine.ts`
+- `src/server/routes/extensibility.ts`
+
+## Excel Add-In API (Feature 13)
+
+Download dimension data as structured JSON for Excel consumption. Publish members back with upsert logic (create new, update existing, validate relationships).
+
+Source:
+
+- `src/server/routes/tier3.ts` (excel/download, excel/publish endpoints)
+
+## Scheduled Jobs (Feature 15)
+
+Pure-TypeScript cron expression parser with in-process job scheduler. Supports manual trigger and execution history.
+
+Source:
+
+- `src/server/scheduler/cronParser.ts`
+- `src/server/scheduler/jobScheduler.ts`
+- `src/server/routes/tier3.ts` (jobs endpoints)
+
+## Data Quality Scoring (Feature 16)
+
+Per-member and per-dimension quality scoring with configurable rules and gates. Gates can block deployments.
+
+Source:
+
+- `src/server/tier3/tier3Engine.ts`
+- `src/server/routes/tier3.ts` (quality endpoints)
+- `src/client/components/QualityScoresPanel.tsx`
+
+## Migration Assistant (Feature 17)
+
+CSV-based parsers for Hyperion HFM, Hyperion EPMA, SAP BPC, and generic CSV formats. Parsed data can be auto-imported into the project.
+
+Source:
+
+- `src/server/migration/migrationParsers.ts`
+- `src/server/routes/tier3.ts` (migrations/parse endpoint)
+
+## Real-Time Collaboration (Feature 22)
+
+In-memory presence store with 30-second TTL. Heartbeat/leave/get endpoints for polling-based presence. Collaboration comments with mentions and threading.
+
+Source:
+
+- `src/server/collaboration/presenceStore.ts`
+- `src/server/routes/tier4.ts` (presence endpoints)
+
+## Audit & Compliance (Feature 23)
+
+Audit log with project/user/entity/action tracking. Retention policies. Compliance report.
+
+Source:
+
+- `src/server/routes/tier4.ts` (audit-log endpoints)
+- `src/client/components/AuditLogViewer.tsx`
+
+## Project-Level Access Control
+
+Role-based project membership with hierarchy: viewer < editor < manager < owner. Middleware enforces minimum role. Backwards-compatible (no ACL entries = full access).
+
+Source:
+
+- `src/server/acl/projectACL.ts`
+- `src/server/db/schema.ts` (project_members table)
+- `src/server/db/repositories.ts` (projectMembers repo)
+
+## Auto-Advance Workflow Rules
+
+Rule engine that evaluates conditions (quality score threshold, no validation errors, time elapsed, all properties filled) and auto-approves workflow steps when criteria are met.
+
+Source:
+
+- `src/server/workflow/autoAdvanceEngine.ts`
+- `src/server/routes/workflows.ts` (auto-advance endpoints)
+
+## Frontend UX Polish
+
+Skeleton loading states, animated SVG score rings, KPI dashboard cards, toast notification system, confirmation dialogs, focus trap for modals, card hover elevation, skip-to-content link, WCAG AA contrast compliance.
+
+Source:
+
+- `src/client/components/Skeleton.tsx`
+- `src/client/components/ScoreRing.tsx`
+- `src/client/components/KPICards.tsx`
+- `src/client/components/Toast.tsx`
+- `src/client/components/ConfirmDialog.tsx`
+- `src/client/hooks/useFocusTrap.ts`
+- `src/client/styles.css`

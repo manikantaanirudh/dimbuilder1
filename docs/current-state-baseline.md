@@ -1,8 +1,10 @@
 # Current State Baseline
 
-This baseline describes the application state as of 2026-05-21.
+This baseline describes the application state as of 2026-05-24.
 
 ## Implemented
+
+### Core Platform (Tier 1 — Features 1-6)
 
 - Product identity is SR Onestream Dim Builder.
 - Central YAML config drives app identity, feature flags, paths, validation severities, export modes, UI controls, and dimension blueprints.
@@ -25,50 +27,89 @@ This baseline describes the application state as of 2026-05-21.
 - Validation warns on unknown dictionary properties and errors on invalid dictionary enum or typed values.
 - Validation detects duplicate varying property contexts, missing varying targets, unknown varying properties, non-varying overrides, and invalid varying values.
 - XML preview and export work from persisted records.
-- XML export preserves unknown properties and uses dictionary aliases/XML names before fallback conversion.
-- XML export re-emits XML-imported unknown attributes, unknown property nodes, and unsupported child elements when known edited values have not replaced them.
-- XML export appends deterministic contextual property nodes for varying property values without changing base flat property output.
 - XLSX, CSV, JSON, and snapshots are available when enabled.
 - Export routes block server-side when stored validation issues match `validation.exportBlockedBySeverities`, with optional audited bypass disabled by default.
-- Audit logs record major actions.
-- HTTP Basic Authentication is available and configurable (`auth.enabled`, disabled by default).
-- CORS origins are configurable via `server.corsOrigins`.
-- Rate limiting protects all API routes (100/min general, 10/min for import/export).
-- Request body validation uses Zod schemas on mutation routes.
-- Structured logging via Pino with configurable level.
-- Request logging middleware records method, path, status, and duration.
-- Graceful shutdown on SIGTERM/SIGINT with 10-second timeout.
-- GitHub Actions CI pipeline runs type-check, tests, and build.
-- Docker multi-stage build produces a production image.
-- Vitest coverage with V8 provider and threshold enforcement.
-- Tests cover config, parsing, validation, exports, repositories, routes, project blueprints, Blueprint Studio helpers/endpoints, UI view models, auth, CORS, rate limiting, graceful shutdown, logging, and Zod validation middleware.
+- Workflow system with multi-step approval, role-based reviewers, notifications, and auto-advance rules (`src/server/workflow/autoAdvanceEngine.ts`).
+- JWT authentication with local strategy, OIDC SSO support, role-based access control (admin/author/reviewer/viewer).
+- ERP connectors with configurable extraction, field mapping, hierarchy building, conflict detection.
+- Multi-environment management with promotion pipelines, sync status, and environment overrides.
+- Impact analysis engine with cross-dimension reference detection and hierarchy orphan warnings.
+
+### Intelligence Layer (Tier 2 — Features 7-12)
+
+- AI-powered metadata intelligence: duplicate detection (Levenshtein + soundex + prefix), naming anomaly detection, hierarchy optimization suggestions, property inference, natural language query (`src/server/ai/`).
+- Cross-dimension relationship mapping with where-used lookup, inheritance chain builder, and cross-dim validation (`src/server/crossDimension/crossDimensionEngine.ts`).
+- Template and pattern library: extract templates from projects, apply to new projects, built-in templates (`src/server/templates/templateEngine.ts`).
+- Reporting and analytics: health reports, velocity reports, coverage reports, compliance reports with HTML/CSV/JSON export (`src/server/reporting/`).
+- Version control system: branches, commits, tags, three-way merge with conflict detection (`src/server/vcs/vcsEngine.ts`).
+- Extensibility modeler: inheritance analysis, anti-pattern detection, what-if extension planning (`src/server/extensibility/extensibilityEngine.ts`).
+
+### Power Features (Tier 3 — Features 13-20)
+
+- Excel Add-In API: dimension download and member upsert with validation (`POST /api/projects/:id/excel/publish`).
+- Conflict resolution: edit locks with expiry, conflict detection between concurrent edits.
+- Scheduled jobs: cron expression parsing, in-process scheduler, manual trigger, execution history (`src/server/scheduler/`).
+- Data quality scoring: per-member and per-dimension scoring, quality rules, quality gates (`GET /api/projects/:id/quality/scores`).
+- Migration assistant: parsers for Hyperion HFM, Hyperion EPMA, SAP BPC, and generic CSV with optional auto-import (`src/server/migration/migrationParsers.ts`).
+- API & extensibility platform: API key generation, webhook subscriptions, event delivery.
+- Offline sync: sync queue with pending/synced status, push/pull endpoints.
+- Documentation auto-generation: generates Markdown design documents from project data.
+
+### Platform & Scale (Tier 4 — Features 21-24)
+
+- Multi-tenant: tenant CRUD, slug-based lookup, usage metrics.
+- Real-time collaboration: in-memory presence store with heartbeat/leave/get, collaboration comments with mentions and threading (`src/server/collaboration/presenceStore.ts`).
+- Audit & compliance: audit log with project/user/entity tracking, retention policies, compliance report.
+- Performance & scale: paginated member listing, performance metrics endpoint, background jobs listing.
+
+### Infrastructure (Gap Fills)
+
+- Report export in HTML/CSV/JSON formats with styled HTML templates (`src/server/reporting/reportExporter.ts`).
+- Project-level access control: `project_members` table, `requireProjectRole` middleware, role hierarchy (viewer/editor/manager/owner) (`src/server/acl/projectACL.ts`).
+- Auto-advance rules engine for workflow: evaluates quality score, validation errors, time elapsed, and property completeness conditions (`src/server/workflow/autoAdvanceEngine.ts`).
+
+### Frontend UI
+
+- 8 navigation tabs: Project Overview, Validation, Reports, AI Insights, Quality, Audit Log, Admin, Config.
+- Reporting Dashboard with animated SVG score rings, per-dimension quality/completeness/naming bars, coverage grid, and HTML/CSV/JSON export buttons.
+- AI Insights panel with tabbed view: duplicate detection, naming anomalies, hierarchy optimizations.
+- Quality Scores panel with overall score gauge, quality gate pass/fail status, per-dimension breakdown.
+- Audit Log viewer with filterable table (who, what, when, entity type).
+- KPI cards on Project Overview (Quality Score, Total Members, Issues, Coverage).
+- Skeleton loading placeholders for all async panels.
+- Toast notification system with auto-dismiss.
+- Confirmation dialogs for destructive actions.
+- Focus trap for modal accessibility.
+- Card hover elevation with reduced-motion support.
+- Skip-to-content link, WCAG AA contrast compliance, 44px touch targets on mobile.
+- Design system persisted at `design-system/onestream-dim-builder/MASTER.md`.
 
 ## Intentionally Local-First
 
-- The app uses SQLite.
-- User identity is fixed to `local-admin`.
+- The app uses SQLite (via Node.js built-in `node:sqlite` DatabaseSync).
 - The server defaults to localhost.
 - Uploads and exports are local directories.
+- Presence is in-memory (no WebSocket dependency).
+- Scheduled jobs run in-process (no external job runner).
 
 ## Known Gaps
 
-- No per-user authorization (auth is available but not project-aware).
-- No database migrations.
+- No database migrations (schema is applied fresh on startup).
 - Blueprint Studio returns YAML fragments only; visual nested editing and automatic config writes are intentionally not implemented.
 - XML import supports the current app export shape and common property nodes, not every possible OneStream XML variant.
 - Varying property XML uses a conservative explicit context shape pending exact OneStream-specific confirmation for every property.
 - Bulk update rollback data is stored, but the rollback endpoint is not yet exposed.
 - CSV-driven bulk update mapping is not yet implemented.
-- Baseline import from multipart XML upload is not yet exposed; XML baseline support currently accepts XML text through the project baseline endpoint.
 - Release package XML is currently full current metadata for every package mode; mode-specific XML subsets and rollback XML are not yet generated.
-- No background export job lifecycle.
-- No formal release process.
+- No dark mode support.
+- No keyboard shortcuts system.
+- Workbook parser tests require a fixture Excel file not in the repository.
 
 ## Documentation Baseline
 
 The maintained docs pack lives in `docs/`. The maintenance mechanism is:
 
-- `.codex/skills/docs-maintainer/SKILL.md`
+- `.cortex/skills/docs-maintainer/SKILL.md`
 - `npm.cmd run docs:check`
 
 Use both whenever source changes affect behavior or project operation.
