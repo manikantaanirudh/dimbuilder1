@@ -146,7 +146,7 @@ export function AppShell({
     <ToastProvider>
     <div className="app-shell notion-workbench">
       <header className="toolbar global-toolbar">
-        <div className="brand global-brand">
+        <div className="brand global-brand" style={{ cursor: 'pointer' }} onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)} title="Back to Project Overview">
           <img src="/sr-logo.svg" alt="SR" className="app-logo" width="24" height="24" />
           <span className="brand-wordmark">{appConfig.application.productName}</span>
         </div>

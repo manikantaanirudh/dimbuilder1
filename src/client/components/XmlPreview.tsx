@@ -67,7 +67,11 @@ export function XmlPreview({
   }, [allowAllDimensions, defaultScope]);
 
   const preview = xml;
-  const downloadDisabled = exportAvailability.disabled;
+  const dimensionHasBlockingIssues = exportAvailability.disabled;
+  const downloadDisabled = dimensionHasBlockingIssues;
+  const downloadTitle = downloadDisabled
+    ? exportAvailability.title
+    : "Download XML";
 
   async function copy() {
     await navigator.clipboard.writeText(preview);
@@ -104,7 +108,7 @@ export function XmlPreview({
                 tabIndex={downloadDisabled ? -1 : undefined}
                 target={downloadDisabled ? undefined : "_blank"}
                 rel={downloadDisabled ? undefined : "noreferrer"}
-                title={downloadDisabled ? exportAvailability.title : "Download XML"}
+                title={downloadTitle}
               >
                 <Download size={15} /> Download XML
               </ActionLink>

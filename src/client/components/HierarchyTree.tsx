@@ -69,6 +69,19 @@ function TreeNode({ node, search, level }: { node: HierarchyNode; search: string
   const [open, setOpen] = useState(true);
   const match = search && node.key.toLowerCase().includes(search);
   const hasChildren = node.children.length > 0;
+
+  // When searching, hide branches that don't contain any matches
+  const childrenContainMatch = useMemo(() => {
+    if (!search) return true;
+    function hasMatch(n: HierarchyNode): boolean {
+      if (n.key.toLowerCase().includes(search)) return true;
+      return n.children.some(hasMatch);
+    }
+    return hasMatch(node);
+  }, [node, search]);
+
+  if (search && !childrenContainMatch) return null;
+
   const toggleLabel = hasChildren ? `${open ? "Collapse" : "Expand"} ${node.key}` : `Hierarchy member ${node.key}`;
   return (
     <div className="tree-node">
