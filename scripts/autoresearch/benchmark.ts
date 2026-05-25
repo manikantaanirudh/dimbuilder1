@@ -165,7 +165,7 @@ async function runBenchmark() {
   // Phase 3: AI Duplicate Detection
   console.log("--- AI Duplicate Detection ---");
   const aiDupConfig: AIDuplicateDetectionConfig = {
-    similarityThreshold: 0.85,
+    similarityThreshold: 0.95,
     methods: ['levenshtein', 'soundex', 'prefix']
   };
   const dupStart = performance.now();
@@ -191,7 +191,8 @@ async function runBenchmark() {
     const anomalies = detectNamingAnomalies({ members: dimensionMembers, dimensionType: dimension.dimensionType });
     totalNamingAnomalies += anomalies.length;
     for (const a of anomalies) {
-      anomalyTypes.set(a.anomalyType, (anomalyTypes.get(a.anomalyType) ?? 0) + 1);
+      const type = a.expectedPattern.split(' ')[0] || 'unknown';
+      anomalyTypes.set(type, (anomalyTypes.get(type) ?? 0) + 1);
     }
   }
   const aiNamingTimeMs = Math.round(performance.now() - namingStart);
@@ -213,7 +214,7 @@ async function runBenchmark() {
     const opts = suggestHierarchyOptimizations({ members: dimensionMembers, relationships: dimensionRels });
     totalHierOpts += opts.length;
     for (const opt of opts) {
-      optStrategies.set(opt.strategy, (optStrategies.get(opt.strategy) ?? 0) + 1);
+      optStrategies.set(opt.action, (optStrategies.get(opt.action) ?? 0) + 1);
     }
   }
   const aiHierTimeMs = Math.round(performance.now() - hierStart);

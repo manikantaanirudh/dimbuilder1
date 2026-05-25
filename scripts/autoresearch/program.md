@@ -5,16 +5,29 @@ Adapted from [karpathy/autoresearch](https://github.com/karpathy/autoresearch).
 
 ## Overview
 
-You are an AI agent tasked with improving the OneStream property dictionary coverage. The project imports real OneStream metadata XML files and validates them. Properties not in our dictionary generate `XML_UNKNOWN_*` and `UNKNOWN_PROPERTY` validation issues. Your goal is to **expand the property dictionary** so that real-world metadata imports cleanly with zero unknown warnings.
+You are an AI agent tasked with improving the OneStream Dimension Builder's engines. The benchmark measures **7 engine phases** against real metadata (7,048 members, 18 dimensions, 8,663 relationships):
+
+1. **XML Import & Validation** — property dictionary coverage
+2. **Validation Issue Counting** — breakdown by severity and code
+3. **AI Duplicate Detection** — find near-identical member keys
+4. **AI Naming Anomalies** — detect naming convention deviations
+5. **AI Hierarchy Optimizations** — suggest structural improvements
+6. **Quality Scoring** — per-member quality assessment
+7. **Migration Parsers** — import from HFM, EPMA, BPC, generic CSV
 
 ## Setup
 
 1. **Read the in-scope files** for full context:
-   - `src/shared/oneStreamPropertyDictionary.ts` — the file you modify. Contains `define(...)` entries for known properties.
-   - `src/shared/validationEngine.ts` — produces validation issues (read-only).
-   - `src/shared/xmlImport.ts` — the XML importer (read-only).
-   - `config/dimbuilder.yaml` — app config with validation settings (read-only).
-   - `metadata/SWF.xml` — the real 567MB benchmark XML (read-only, scan for property names).
+   - `src/shared/oneStreamPropertyDictionary.ts` — property definitions (editable)
+   - `src/shared/validationEngine.ts` — validation rules (read-only)
+   - `src/shared/xmlImport.ts` — XML importer (read-only)
+   - `src/server/ai/suggestions/duplicateDetection.ts` — duplicate detection engine (editable)
+   - `src/server/ai/suggestions/namingAnomaly.ts` — naming anomaly engine (editable)
+   - `src/server/ai/suggestions/hierarchyOptimization.ts` — hierarchy optimization engine (editable)
+   - `src/server/tier3/tier3Engine.ts` — quality scoring engine (editable)
+   - `src/server/migration/migrationParsers.ts` — migration parsers (editable)
+   - `scripts/autoresearch/sample-data/` — parser test fixtures (editable)
+   - `metadata/SWF.xml` — the real 567MB benchmark XML (read-only)
 
 2. **Create the benchmark cache** (one-time, takes ~5 min):
    ```
@@ -23,117 +36,107 @@ You are an AI agent tasked with improving the OneStream property dictionary cove
    This imports the full XML and saves parsed data to `scripts/autoresearch/benchmark-cache.json`.
 
 3. **Verify quick benchmark runs**: `npm run benchmark:quick`
-   This loads the cache and runs validation only (~3 seconds).
+   This loads the cache and runs all engine phases (~15 seconds).
 
 4. **Establish baseline**: The first `benchmark:quick` output is your baseline metrics.
 
-**IMPORTANT**: After making dictionary changes, use `npm run benchmark:quick` for the fast loop. The quick mode runs validation against cached data — it accurately measures `UNKNOWN_PROPERTY` reductions. To verify `XML_UNKNOWN_*` reductions (which depend on re-importing), run `npm run benchmark:cache` periodically (every 5-10 experiments).
+**IMPORTANT**: After making engine changes, use `npm run benchmark:quick` for the fast loop. For XML import changes, run `npm run benchmark:cache` periodically (every 5-10 experiments).
 
-## What You CAN Do
+## Engines You CAN Modify
 
-- Modify `src/shared/oneStreamPropertyDictionary.ts` — this is the ONLY file you edit.
-  - Add new `define(...)` entries to `seededDefinitions` for missing properties.
-  - Add entries to `KNOWN_VARYING_CONTEXT_BY_XML_NAME` for properties with varying context.
-  - Add `enumValues` arrays to existing definitions if the XML shows valid enum values.
-  - Add `aliases` to existing definitions.
-  - Change `dimensionTypes` on existing definitions if the XML shows broader usage.
+| Engine | File | Optimization Target |
+|--------|------|-------------------|
+| Property Dictionary | `src/shared/oneStreamPropertyDictionary.ts` | Reduce `xml_unknown_count` + `unknown_property_count` → 0 |
+| Duplicate Detection | `src/server/ai/suggestions/duplicateDetection.ts` | Reduce false positive groups, improve similarity precision |
+| Naming Anomalies | `src/server/ai/suggestions/namingAnomaly.ts` | Improve detection accuracy, reduce noise |
+| Hierarchy Optimization | `src/server/ai/suggestions/hierarchyOptimization.ts` | Improve suggestion quality, reduce low-confidence noise |
+| Quality Scoring | `src/server/tier3/tier3Engine.ts` | Increase score spread, improve differentiation |
+| Migration Parsers | `src/server/migration/migrationParsers.ts` | Maintain 4/4 pass rate, reduce parse warnings |
 
 ## What You CANNOT Do
 
 - Modify `scripts/autoresearch/benchmark.ts` — it is the fixed measurement harness.
 - Modify `src/shared/validationEngine.ts` — it is the fixed scoring engine.
 - Modify `src/shared/xmlImport.ts` — it is the fixed importer.
-- Modify test files or any file other than `oneStreamPropertyDictionary.ts`.
+- Modify test files or the benchmark cache.
 - Add new npm dependencies.
-- Remove or rename existing property definitions (only add or augment).
 
-## The Metric
+## The Metrics
 
-**Primary goal: reduce `xml_unknown_count` + `unknown_property_count` to 0.**
+The benchmark outputs these key metrics:
 
-The benchmark outputs:
 ```
-xml_unknown_count:       N    ← XML attributes/elements not mapped (lower is better)
-unknown_property_count:  N    ← Properties not in dictionary (lower is better)
-invalid_enum_count:      N    ← Enum values outside allowed list (lower is better)
+--- Validation ---
+xml_unknown_count:       0    ← XML attributes not mapped (lower is better)
+unknown_property_count:  0    ← Properties not in dictionary (lower is better)
 total_issues:            N    ← All validation issues combined
-tests_pass:              true ← MUST remain true (safety gate)
+
+--- AI Engines ---
+duplicate_groups:        N    ← Groups found (fewer with high precision is better)
+naming_anomalies:        N    ← Anomalies found (should show real type breakdown)
+hierarchy_opts:          N    ← Suggestions (should show real action breakdown)
+
+--- Quality ---
+avg_quality_score:       N    ← Higher is better (members are well-structured)
+score_spread:            N    ← Higher is better (differentiates good from bad)
+
+--- Migration ---
+migration_pass_rate:     N/4  ← Must stay 4/4
+parse_warnings:          N    ← Lower is better
 ```
 
-Priority order:
-1. `xml_unknown_count` → 0 (highest priority)
+**Priority order:**
+1. `xml_unknown_count` → 0 (highest priority — property dictionary)
 2. `unknown_property_count` → 0
-3. `invalid_enum_count` → 0 (requires knowing valid enum values from the XML)
-
-## Research Methodology
-
-To discover what properties need to be added:
-
-1. **Scan the real XML** for property names. Look at `<property name="X" .../>` elements across different dimension types (Scenario, Entity, Account, Flow, UD1-UD8, Consolidation, Currency, IC).
-2. **Check dimension-level attributes** like `accessGroup`, `maintenanceGroup` — some may not be in the dictionary.
-3. **Note varying context** — if a property has `time=""` or `scenarioType=""` attributes, it needs `supportsVarying: true` and appropriate `varyingContextType`.
-4. **Infer value types** from actual values: "true"/"false" → boolean, numbers → number, specific set → enum.
+3. Duplicate detection precision (fewer false positives)
+4. Naming anomaly categorization accuracy (type breakdown should be meaningful)
+5. Hierarchy optimization quality (high-confidence suggestions only)
+6. Quality score spread (better differentiation)
+7. Migration parser robustness (0 warnings, handles edge cases)
 
 ## The Experiment Loop
 
-Work on branch `autoresearch/<tag>` (ask the user for the tag or propose one based on today's date).
+Work on branch `autoresearch/<tag>`.
 
 **LOOP FOREVER:**
 
-1. Look at the current benchmark output — which codes are generating unknown issues?
-2. Scan the XML to find the property names causing those issues.
-3. Add appropriate `define(...)` entries to `oneStreamPropertyDictionary.ts`.
-4. `git commit -m "add [property names] to dictionary"`
+1. Read the current benchmark output — which metrics need improvement?
+2. Choose one engine to improve based on priority order.
+3. Make a targeted change to the engine file.
+4. `git commit -m "tune [engine]: [what changed]"`
 5. Run: `npm run benchmark:quick`
 6. Read the metrics from stdout.
-7. If `unknown_property_count` decreased AND tests pass (run `npm test` separately if quick mode skips tests):
+7. If target metric improved AND tests pass AND no other metric regressed:
    - **KEEP** the commit (advance the branch).
-   - Log to results.tsv: `timestamp  xml_unknown  unknown_prop  invalid_enum  total  true  time_ms  description`
-8. If metrics did not improve OR tests fail:
+   - Log to results.tsv.
+8. If metrics did not improve OR tests fail OR other metrics regressed:
    - `git reset --hard HEAD~1` to revert.
    - Log to results.tsv with status "reverted".
-9. Move to the next property or group.
-10. Every 5 experiments, run `npm run benchmark:cache` to refresh the cache and verify XML_UNKNOWN_* counts.
+9. Move to the next optimization target.
+10. Every 5 experiments, run `npm run benchmark:cache` to refresh.
 
-**Batch size**: You may add multiple related properties in one commit (e.g., all Scenario-type properties), but keep batches small enough that a revert doesn't lose too much good work.
-
-**Timing**: Each quick benchmark takes ~5 minutes (dominated by validation of 440K entities). This yields ~12 experiments/hour. The full import benchmark takes ~10 minutes total.
+**Batch size**: Keep changes small and atomic — one logical improvement per commit.
 
 **NEVER STOP**: Continue working indefinitely until manually stopped by the human.
 
-## Property Definition Format
+## Current Baseline (2026-05-25)
 
-```typescript
-define({
-  propertyKey: "camelCaseKey",          // internal key
-  displayName: "Human Readable Name",   // display name
-  xmlName: "ExactXmlAttributeName",     // MUST match XML exactly
-  targetLevel: "member",                // "dimension" | "member" | "relationship"
-  dimensionTypes: ["Scenario"],         // or "all" for universal properties
-  valueType: "string",                  // "string" | "boolean" | "number" | "enum" | etc.
-  supportsVarying: true,                // if it has time/scenario context
-  varyingContextType: "scenarioTime",   // "scenarioTime" | "scenario" | "cubeType" | "none"
-  helpText: "Brief description."
-})
 ```
-
-For enums, add:
-```typescript
-  valueType: "enum",
-  enumValues: ["Value1", "Value2", "Value3"],
+duplicate_groups:        206  (avg similarity 0.998 — mostly real shared members)
+naming_anomalies:        481  (Length: 74, Common: 12, PascalCase: 395)
+hierarchy_opts:          106  (rebalance: 6, group: 23, flatten: 77)
+avg_quality_score:       80   (spread: 39, min: 55, max: 94)
+migration_pass_rate:     4/4  (0 warnings)
+xml_unknown_count:       0
+unknown_property_count:  0
+total_issues:            4118
 ```
-
-## Simplicity Criterion
-
-- Prefer correct, minimal definitions. Don't add fields you can't verify from the XML.
-- If you're unsure about `valueType`, use `"string"` — it's the safest default.
-- Only add `enumValues` when you've confirmed the full set from the XML data.
-- Group related properties logically (all Scenario properties together, all Entity properties together, etc.)
 
 ## Tips
 
-- The XML has `<property name="X" value="Y" />` — the `name` attribute is what maps to `xmlName`.
-- Member-level attributes like `readDataGroup`, `readWriteDataGroup` are on the `<member>` element directly, not in `<properties>`.
+- The XML has `<property name="X" value="Y" />` — the `name` attribute maps to `xmlName`.
+- Member-level attributes are on the `<member>` element directly.
 - Dimension-level attributes are on the `<dimension>` element.
-- Use `grep` or streaming reads on the XML to find patterns — don't try to load 567MB into memory at once.
-- When in doubt about dimension type scope, use `"all"`.
+- Use `grep` or streaming reads on the XML — don't load 567MB into memory.
+- For AI engines, focus on reducing false positives over increasing raw detection counts.
+- For quality scoring, aim to widen the spread between well-formed and poorly-formed members.
