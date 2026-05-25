@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
@@ -59,10 +59,6 @@ export function DimensionWorkspace({
     const targetSeverity = issueFilter === "errors" ? "error" : "warning";
     return new Set(dimensionIssues.filter((i) => i.severity === targetSeverity).map((i) => i.entityId));
   }, [dimensionIssues, issueFilter]);
-  const dimensionExportDisabled = issueSummary.blocksExport;
-  const dimensionDownloadTitle = dimensionExportDisabled
-    ? "Resolve dimension errors before downloading"
-    : "Download XML for this dimension only";
   const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
   const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionDisplayConfig = appConfig.dimensions.display;
@@ -98,18 +94,6 @@ export function DimensionWorkspace({
               {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
               {readinessLabel}
             </StatusBadge>
-            <a
-              className={`button-link dim-download ${dimensionExportDisabled ? "disabled" : ""}`}
-              href={dimensionExportDisabled ? undefined : `/api/export/${projectId}/xml?dimensionId=${encodeURIComponent(dimension.id)}`}
-              target={dimensionExportDisabled ? undefined : "_blank"}
-              rel={dimensionExportDisabled ? undefined : "noreferrer"}
-              title={dimensionDownloadTitle}
-              aria-disabled={dimensionExportDisabled}
-              onClick={(e) => { if (dimensionExportDisabled) e.preventDefault(); }}
-              tabIndex={dimensionExportDisabled ? -1 : undefined}
-            >
-              <Download size={14} /> Download XML
-            </a>
           </div>
         </div>
       </div>

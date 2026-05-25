@@ -232,6 +232,109 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     }
   }
 
+  // Hierarchy max depth exceeded (OneStream max is typically 30)
+  if (input.relationships.length > 0) {
+    const childrenByParent = new Map<string, string[]>();
+    for (const rel of input.relationships) {
+      if (!childrenByParent.has(rel.parentKey)) childrenByParent.set(rel.parentKey, []);
+      childrenByParent.get(rel.parentKey)!.push(rel.childKey);
+    }
+    const incoming = new Set(input.relationships.map(r => r.childKey));
+    const roots = [...new Set(input.relationships.map(r => r.parentKey))].filter(k => !incoming.has(k));
+    function measureDepth(key: string, visited: Set<string>): number {
+      if (visited.has(key)) return 0;
+      visited.add(key);
+      const children = childrenByParent.get(key) ?? [];
+      if (children.length === 0) return 1;
+      return 1 + Math.max(...children.map(c => measureDepth(c, visited)));
+    }
+    const maxDepth = Math.max(0, ...roots.map(r => measureDepth(r, new Set())));
+    if (maxDepth > 30) {
+      addIssue({
+        entityType: "dimension",
+        entityId: input.dimension.id,
+        severity: "error",
+        code: "HIERARCHY_MAX_DEPTH_EXCEEDED",
+        message: `Hierarchy depth is ${maxDepth} levels, exceeding the OneStream maximum of 30.`,
+        fieldName: "Relationships",
+        rowNumber: null
+      });
+    }
+  }
+
+  // Member name starts with digit
+  for (const member of input.members) {
+    if (/^\d/.test(member.memberKey)) {
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "warning",
+        code: "MEMBER_NAME_STARTS_WITH_DIGIT",
+        message: `Member '${member.memberKey}' starts with a digit. This may cause issues in OneStream expressions and business rules.`,
+        fieldName: "Member Key",
+        rowNumber: member.sourceRowNumber
+      });
+    }
+  }
+
+  // Duplicate member (case-insensitive)
+  const memberKeyLower = new Map<string, string>();
+  for (const member of input.members) {
+    const lower = member.memberKey.toLowerCase();
+    const existing = memberKeyLower.get(lower);
+    if (existing && existing !== member.memberKey) {
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "warning",
+        code: "DUPLICATE_MEMBER_CASE_INSENSITIVE",
+        message: `Member '${member.memberKey}' conflicts with '${existing}' (case-insensitive match). OneStream treats member names as case-insensitive.`,
+        fieldName: "Member Key",
+        rowNumber: member.sourceRowNumber
+      });
+    }
+    if (!memberKeyLower.has(lower)) memberKeyLower.set(lower, member.memberKey);
+  }
+
+  // Scenario Type missing (Scenario dimensions only)
+  if (input.dimension.dimensionType === "Scenario") {
+    for (const member of input.members) {
+      const scenarioType = member.properties["Scenario Type"];
+      if (!scenarioType || String(scenarioType).trim() === "") {
+        addIssue({
+          entityType: "member",
+          entityId: member.id,
+          severity: "warning",
+          code: "SCENARIO_TYPE_MISSING",
+          message: `Scenario member '${member.memberKey}' is missing a Scenario Type value.`,
+          fieldName: "Scenario Type",
+          rowNumber: member.sourceRowNumber
+        });
+      }
+    }
+  }
+
+  // Consolidation method mismatch (Entity dimensions only)
+  if (input.dimension.dimensionType === "Entity") {
+    for (const rel of input.relationships) {
+      const pctConsol = rel.percentConsol;
+      const pctOwn = rel.percentOwnership;
+      if (pctConsol !== null && pctOwn !== null && pctConsol !== pctOwn) {
+        if (pctConsol === 100 && pctOwn < 100) {
+          addIssue({
+            entityType: "relationship",
+            entityId: rel.id,
+            severity: "warning",
+            code: "CONSOLIDATION_METHOD_MISMATCH",
+            message: `Relationship ${rel.parentKey} → ${rel.childKey}: 100% consolidation with ${pctOwn}% ownership may need proportional or equity method.`,
+            fieldName: "Consolidation",
+            rowNumber: rel.sourceRowNumber
+          });
+        }
+      }
+    }
+  }
+
   if (severities.oneStreamProfile?.enabled) {
     issues.push(...validateOneStreamProfile({
       project: input.project,
