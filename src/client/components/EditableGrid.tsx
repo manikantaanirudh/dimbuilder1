@@ -7,7 +7,8 @@ import type {
   DimensionMemberRecord,
   DimensionRecord,
   DimensionRelationshipRecord,
-  FieldDefinition
+  FieldDefinition,
+  ValidationIssue
 } from "../../shared/types";
 import {
   createMember,
@@ -35,7 +36,8 @@ export function EditableGrid({
   dimension,
   pageSize = 600,
   highlightedEntityId = null,
-  issueFilteredIds = null
+  issueFilteredIds = null,
+  issues = []
 }: {
   projectId: string;
   kind: "members" | "relationships";
@@ -43,6 +45,7 @@ export function EditableGrid({
   pageSize?: number;
   highlightedEntityId?: string | null;
   issueFilteredIds?: Set<string> | null;
+  issues?: ValidationIssue[];
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
@@ -334,12 +337,17 @@ export function EditableGrid({
           <div className="grid-body" style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
             {virtualizer.getVirtualItems().map((item) => {
               const record = filteredRecords[item.index];
+              const rowIssues = issues.filter(i => i.entityId === record.id);
+              const rowTooltip = rowIssues.length > 0
+                ? rowIssues.map(i => `[${i.severity.toUpperCase()}] ${i.code}: ${i.message}`).join('\n')
+                : undefined;
               return (
                 <div
                   key={record.id}
-                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""}`}
+                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""} ${rowIssues.length > 0 ? "has-issues" : ""}`}
                   style={{ transform: `translateY(${item.start}px)`, gridTemplateColumns }}
                   onClick={() => setSelectedId(record.id)}
+                  title={rowTooltip}
                 >
                   <span className="grid-row-number">{offset + item.index + 1}</span>
                   {visibleColumns.map((column) => (

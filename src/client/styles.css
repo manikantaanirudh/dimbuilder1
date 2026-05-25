@@ -3224,3 +3224,9 @@ svg {
 .clickable-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .clickable-card.active-filter { outline-color: var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .clickable-card:hover { transform: none; } }
+
+/* Issue Dismiss Button */
+.issue-dismiss-btn { display: flex; align-items: center; gap: 3px; padding: 3px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 0.7rem; cursor: pointer; white-space: nowrap; transition: background var(--transition-fast), color var(--transition-fast); }
+.issue-dismiss-btn:hover { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+.issue.dismissed { opacity: 0.5; background: var(--surface-muted); }
+.grid-row.has-issues { border-left: 3px solid var(--warning); }

@@ -54,6 +54,12 @@ function parseIntent(question: string): ParsedIntent {
     return { type: 'count', params: { dimension: countMatch[1] || '' } };
   }
 
+  // "How many dimensions?" / "total dimensions"
+  const dimCountMatch = q.match(/(?:how\s+many|total|count)\s+dimensions?/i);
+  if (dimCountMatch) {
+    return { type: 'count', params: { dimension: '__dimensions__' } };
+  }
+
   // "Which members have [property] = [value]?"
   const filterMatch = q.match(/(?:which|find|show)\s+members?\s+(?:have|with|where)\s+['"]?(\w+)['"]?\s*=\s*['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (filterMatch) {
@@ -74,7 +80,10 @@ function parseIntent(question: string): ParsedIntent {
   // "Find [pattern]" / "Search for [pattern]"
   const findMatch = q.match(/(?:find|search|look\s+for|show)\s+(?:for\s+)?['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (findMatch) {
-    return { type: 'find', params: { pattern: findMatch[1].trim() } };
+    // Strip filler words: "member", "called", "named", "a", "the"
+    const raw = findMatch[1].trim();
+    const pattern = raw.replace(/\b(member|members|called|named|a|the|dimension|in)\b/gi, '').trim();
+    return { type: 'find', params: { pattern: pattern || raw } };
   }
 
   return { type: 'unknown', params: { raw: question } };
@@ -103,6 +112,14 @@ function executeIntent(
 
     case 'count': {
       const dimFilter = intent.params.dimension;
+      // Special case: counting dimensions
+      if (dimFilter === '__dimensions__') {
+        return {
+          answer: `This project has ${dimensions.length} dimension(s): ${dimensions.map(d => `${d.dimensionType} (${d.dimensionName})`).join(', ')}`,
+          matchedMembers: [],
+          confidence: 1.0
+        };
+      }
       let filtered = members;
       if (dimFilter) {
         const dim = dimensions.find(d =>

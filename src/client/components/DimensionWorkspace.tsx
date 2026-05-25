@@ -148,8 +148,8 @@ export function DimensionWorkspace({
         <div className="workspace-grid">
           <div className="workspace-main">
             {activeTab === "Overview" && <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />}
-            {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} />}
-            {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} />}
+            {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} issues={dimensionIssues} />}
+            {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} issues={dimensionIssues} />}
             {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
             {activeTab === "Varying" && <VaryingPropertiesPanel projectId={projectId} dimension={dimension} />}
             {activeTab === "Bulk Update" && <BulkUpdatePanel projectId={projectId} dimension={dimension} onApplied={onRefresh} />}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, Shield, TriangleAlert } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
 import { buildDimensionFacts, buildIssueSummary, getReadinessLabel } from "../ui/viewModel";
@@ -20,6 +20,8 @@ export function IssuePanel({
 }) {
   const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
   const [codeFilter, setCodeFilter] = useState("");
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [showDismissed, setShowDismissed] = useState(false);
   const summary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
   const readinessLabel = getReadinessLabel(summary);
   const facts = buildDimensionFacts(dimension, summary);
@@ -27,11 +29,12 @@ export function IssuePanel({
   const filteredIssues = useMemo(() => {
     const codeNeedle = codeFilter.trim().toLowerCase();
     return issues.filter((issue) => {
+      if (!showDismissed && dismissedIds.has(issue.id)) return false;
       if (severityFilter !== "all" && issue.severity !== severityFilter) return false;
       if (codeNeedle && !issue.code.toLowerCase().includes(codeNeedle)) return false;
       return true;
     });
-  }, [codeFilter, issues, severityFilter]);
+  }, [codeFilter, issues, severityFilter, dismissedIds, showDismissed]);
   const [showAll, setShowAll] = useState(false);
   const maxVisible = expanded ? (showAll ? filteredIssues.length : 50) : 8;
   const visibleIssues = filteredIssues.slice(0, maxVisible);
@@ -96,12 +99,20 @@ export function IssuePanel({
             </EmptyState>
           ) : (
             <div className="issue-list">
-              {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} onClick={onIssueClick} />)}
+              {visibleIssues.map((issue) => <IssueCard issue={issue} key={issue.id} onClick={onIssueClick} isDismissed={dismissedIds.has(issue.id)} onDismiss={(id) => setDismissedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })} />)}
               {expanded && filteredIssues.length > 50 && !showAll && (
                 <button className="action-button secondary" style={{ width: "100%", marginTop: "0.5rem" }} onClick={() => setShowAll(true)}>
                   Show all {filteredIssues.length} issues ({filteredIssues.length - 50} more)
                 </button>
               )}
+            </div>
+          )}
+          {dismissedIds.size > 0 && (
+            <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
+              <label style={{ cursor: 'pointer' }}>
+                <input type="checkbox" checked={showDismissed} onChange={() => setShowDismissed(!showDismissed)} style={{ marginRight: '0.3rem' }} />
+                Show {dismissedIds.size} dismissed issue(s)
+              </label>
             </div>
           )}
         </div>
@@ -110,20 +121,20 @@ export function IssuePanel({
   );
 }
 
-function IssueCard({ issue, onClick }: { issue: ValidationIssue; onClick?: (issue: ValidationIssue) => void }) {
+function IssueCard({ issue, onClick, isDismissed, onDismiss }: { issue: ValidationIssue; onClick?: (issue: ValidationIssue) => void; isDismissed?: boolean; onDismiss?: (id: string) => void }) {
   const location = [issue.fieldName, issue.rowNumber ? `Row ${issue.rowNumber}` : ""].filter(Boolean).join(" | ");
   const clickable = onClick && (issue.entityType === "member" || issue.entityType === "relationship");
 
   return (
     <div
-      className={`issue ${issue.severity}${clickable ? " clickable" : ""}`}
+      className={`issue ${issue.severity}${clickable ? " clickable" : ""}${isDismissed ? " dismissed" : ""}`}
       onClick={clickable ? () => onClick(issue) : undefined}
       role={clickable ? "button" : undefined}
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(issue); } : undefined}
     >
       <div className="issue-icon">{iconForSeverity(issue.severity)}</div>
-      <div>
+      <div style={{ flex: 1 }}>
         <div className="issue-title">
           <b>{issue.code}</b>
           <SeverityPill severity={issue.severity} />
@@ -131,6 +142,17 @@ function IssueCard({ issue, onClick }: { issue: ValidationIssue; onClick?: (issu
         <span>{issue.message}</span>
         {location && <small>{location}</small>}
       </div>
+      {onDismiss && (
+        <button
+          className="issue-dismiss-btn"
+          onClick={(e) => { e.stopPropagation(); onDismiss(issue.id); }}
+          title={isDismissed ? "Restore this issue" : "Mark as safe / dismiss"}
+          aria-label={isDismissed ? "Restore issue" : "Mark as safe"}
+        >
+          <Shield size={14} />
+          <span>{isDismissed ? "Restore" : "Safe"}</span>
+        </button>
+      )}
     </div>
   );
 }
