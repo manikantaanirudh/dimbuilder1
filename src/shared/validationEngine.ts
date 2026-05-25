@@ -183,6 +183,55 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     });
   }
 
+  // Self-referencing relationships (parent == child)
+  for (const rel of input.relationships) {
+    if (rel.parentKey && rel.childKey && rel.parentKey === rel.childKey) {
+      addIssue({
+        entityType: "relationship",
+        entityId: rel.id,
+        severity: "error",
+        code: "SELF_REFERENCING_RELATIONSHIP",
+        message: `Relationship has the same parent and child: '${rel.parentKey}'. A member cannot be its own parent.`,
+        fieldName: "Parent/Child",
+        rowNumber: null
+      });
+    }
+  }
+
+  // Member name leading/trailing whitespace
+  for (const member of input.members) {
+    if (member.memberKey !== member.memberKey.trim()) {
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "warning",
+        code: "MEMBER_NAME_LEADING_TRAILING_WHITESPACE",
+        message: `Member '${member.memberKey}' has leading or trailing whitespace which may cause silent match failures in OneStream.`,
+        fieldName: "Member Key",
+        rowNumber: member.sourceRowNumber
+      });
+    }
+  }
+
+  // Root member missing check
+  if (input.relationships.length > 0) {
+    const childKeys = new Set(input.relationships.map(r => r.childKey));
+    const parentKeys = new Set(input.relationships.map(r => r.parentKey));
+    const rootKeys = [...parentKeys].filter(k => !childKeys.has(k));
+    const hasRoot = rootKeys.some(k => k.toLowerCase() === "root" || input.members.some(m => m.memberKey === k));
+    if (rootKeys.length === 0 || (!hasRoot && !input.members.some(m => m.memberKey.toLowerCase() === "root"))) {
+      addIssue({
+        entityType: "dimension",
+        entityId: input.dimension.id,
+        severity: "warning",
+        code: "ROOT_MEMBER_MISSING",
+        message: `No root member found for dimension '${input.dimension.dimensionName}'. OneStream dimensions typically require a 'Root' member.`,
+        fieldName: "Members",
+        rowNumber: null
+      });
+    }
+  }
+
   if (severities.oneStreamProfile?.enabled) {
     issues.push(...validateOneStreamProfile({
       project: input.project,
