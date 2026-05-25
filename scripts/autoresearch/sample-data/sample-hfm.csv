@@ -1,0 +1,6 @@
+Account;Revenue;Root;Revenue Account;Revenue;false
+Account;COGS;Root;Cost of Goods Sold;Expense;false
+Account;OpEx;Root;Operating Expenses;Expense;false
+Account;NetIncome;Root;Net Income;Asset;true
+Account;SalesNA;Revenue;NA Sales;Revenue;false
+Account;SalesEU;Revenue;EU Sales;Revenue;false

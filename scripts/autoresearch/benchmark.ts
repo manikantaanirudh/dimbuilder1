@@ -21,6 +21,12 @@ import { validateDimension } from "../../src/shared/validationEngine";
 import type { ValidationIssue } from "../../src/shared/types";
 import type { DimensionRecord, DimensionMemberRecord, DimensionRelationshipRecord, ProjectRecord } from "../../src/shared/types";
 import { existsSync, writeFileSync } from "node:fs";
+import { detectDuplicates } from "../../src/server/ai/suggestions/duplicateDetection";
+import { detectNamingAnomalies } from "../../src/server/ai/suggestions/namingAnomaly";
+import { suggestHierarchyOptimizations } from "../../src/server/ai/suggestions/hierarchyOptimization";
+import { scoreMemberQuality } from "../../src/server/tier3/tier3Engine";
+import { parseHyperionHFM, parseHyperionEPMA, parseSAPBPC, parseGenericCSV } from "../../src/server/migration/migrationParsers";
+import type { AIDuplicateDetectionConfig } from "../../src/shared/aiTypes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -156,7 +162,124 @@ async function runBenchmark() {
   const warningCount = allIssues.filter(i => i.severity === "warning").length;
   const infoCount = allIssues.filter(i => i.severity === "info").length;
 
-  // Phase 4: Run tests (unless skipped)
+  // Phase 3: AI Duplicate Detection
+  console.log("--- AI Duplicate Detection ---");
+  const aiDupConfig: AIDuplicateDetectionConfig = {
+    similarityThreshold: 0.85,
+    methods: ['levenshtein', 'soundex', 'prefix']
+  };
+  const dupStart = performance.now();
+  const duplicateGroups = detectDuplicates({ members, config: aiDupConfig });
+  const aiDupTimeMs = Math.round(performance.now() - dupStart);
+  const totalSimilarMembers = duplicateGroups.reduce((sum, g) => sum + g.members.length, 0);
+  const avgSimilarity = duplicateGroups.length > 0
+    ? duplicateGroups.reduce((sum, g) => sum + g.similarity, 0) / duplicateGroups.length
+    : 0;
+  console.log(`  duplicate_groups_found:    ${duplicateGroups.length}`);
+  console.log(`  total_similar_members:     ${totalSimilarMembers}`);
+  console.log(`  avg_similarity:            ${avgSimilarity.toFixed(3)}`);
+  console.log(`  ai_duplicate_time_ms:      ${aiDupTimeMs}`);
+  console.log("");
+
+  // Phase 4: AI Naming Anomalies
+  console.log("--- AI Naming Anomalies ---");
+  const namingStart = performance.now();
+  let totalNamingAnomalies = 0;
+  const anomalyTypes = new Map<string, number>();
+  for (const dimension of dimensions) {
+    const dimensionMembers = members.filter(m => m.dimensionId === dimension.id);
+    const anomalies = detectNamingAnomalies({ members: dimensionMembers, dimensionType: dimension.dimensionType });
+    totalNamingAnomalies += anomalies.length;
+    for (const a of anomalies) {
+      anomalyTypes.set(a.anomalyType, (anomalyTypes.get(a.anomalyType) ?? 0) + 1);
+    }
+  }
+  const aiNamingTimeMs = Math.round(performance.now() - namingStart);
+  console.log(`  naming_anomalies_found:    ${totalNamingAnomalies}`);
+  for (const [type, count] of anomalyTypes) {
+    console.log(`    ${type}: ${count}`);
+  }
+  console.log(`  ai_naming_time_ms:         ${aiNamingTimeMs}`);
+  console.log("");
+
+  // Phase 5: AI Hierarchy Optimizations
+  console.log("--- AI Hierarchy Optimizations ---");
+  const hierStart = performance.now();
+  let totalHierOpts = 0;
+  const optStrategies = new Map<string, number>();
+  for (const dimension of dimensions) {
+    const dimensionMembers = members.filter(m => m.dimensionId === dimension.id);
+    const dimensionRels = relationships.filter(r => r.dimensionId === dimension.id);
+    const opts = suggestHierarchyOptimizations({ members: dimensionMembers, relationships: dimensionRels });
+    totalHierOpts += opts.length;
+    for (const opt of opts) {
+      optStrategies.set(opt.strategy, (optStrategies.get(opt.strategy) ?? 0) + 1);
+    }
+  }
+  const aiHierTimeMs = Math.round(performance.now() - hierStart);
+  console.log(`  hierarchy_opts_found:      ${totalHierOpts}`);
+  for (const [strategy, count] of optStrategies) {
+    console.log(`    ${strategy}: ${count}`);
+  }
+  console.log(`  ai_hierarchy_time_ms:      ${aiHierTimeMs}`);
+  console.log("");
+
+  // Phase 6: Quality Scoring
+  console.log("--- Quality Scoring ---");
+  const qualityStart = performance.now();
+  const qualityScores: number[] = [];
+  for (const dimension of dimensions) {
+    const dimensionMembers = members.filter(m => m.dimensionId === dimension.id);
+    for (const member of dimensionMembers) {
+      const score = scoreMemberQuality(member, dimension, []);
+      qualityScores.push(score.overallScore);
+    }
+  }
+  const qualityTimeMs = Math.round(performance.now() - qualityStart);
+  const avgQualityScore = qualityScores.length > 0 ? Math.round(qualityScores.reduce((s, v) => s + v, 0) / qualityScores.length) : 0;
+  const minScore = qualityScores.length > 0 ? Math.min(...qualityScores) : 0;
+  const maxScore = qualityScores.length > 0 ? Math.max(...qualityScores) : 0;
+  const scoreSpread = maxScore - minScore;
+  console.log(`  avg_quality_score:         ${avgQualityScore}`);
+  console.log(`  min_member_score:          ${minScore}`);
+  console.log(`  max_member_score:          ${maxScore}`);
+  console.log(`  score_spread:              ${scoreSpread}`);
+  console.log(`  quality_time_ms:           ${qualityTimeMs}`);
+  console.log("");
+
+  // Phase 7: Migration Parsers
+  console.log("--- Migration Parsers ---");
+  const SAMPLE_DIR = resolve(__dirname, "sample-data");
+  const migrationStart = performance.now();
+  let migrationPassCount = 0;
+  let totalParseWarnings = 0;
+  const parsers = [
+    { name: "hfm", file: "sample-hfm.csv", fn: (content: string) => parseHyperionHFM(content) },
+    { name: "epma", file: "sample-epma.csv", fn: (content: string) => parseHyperionEPMA(content) },
+    { name: "bpc", file: "sample-bpc.csv", fn: (content: string) => parseSAPBPC(content) },
+    { name: "csv", file: "sample-generic.csv", fn: (content: string) => parseGenericCSV(content) },
+  ];
+  for (const parser of parsers) {
+    try {
+      const filePath = resolve(SAMPLE_DIR, parser.file);
+      const content = readFileSync(filePath, "utf8");
+      const result = parser.fn(content);
+      const memberCount = result.totalMembers;
+      const warnings = result.warnings.length;
+      totalParseWarnings += warnings;
+      migrationPassCount++;
+      console.log(`  ${parser.name}_parse:                 PASS (${memberCount} members, ${warnings} warnings)`);
+    } catch (err) {
+      console.log(`  ${parser.name}_parse:                 FAIL (${err instanceof Error ? err.message : "unknown error"})`);
+    }
+  }
+  const migrationTimeMs = Math.round(performance.now() - migrationStart);
+  console.log(`  migration_pass_rate:       ${migrationPassCount}/4`);
+  console.log(`  total_parse_warnings:      ${totalParseWarnings}`);
+  console.log(`  migration_time_ms:         ${migrationTimeMs}`);
+  console.log("");
+
+  // Phase 8: Run tests (unless skipped)
   let testsPass = true;
   if (!SKIP_TESTS) {
     console.log("Running test suite...");
@@ -190,6 +313,13 @@ async function runBenchmark() {
   console.log(`error_count:             ${errorCount}`);
   console.log(`warning_count:           ${warningCount}`);
   console.log(`info_count:              ${infoCount}`);
+  console.log(`duplicate_groups:        ${duplicateGroups.length}`);
+  console.log(`naming_anomalies:        ${totalNamingAnomalies}`);
+  console.log(`hierarchy_opts:          ${totalHierOpts}`);
+  console.log(`avg_quality_score:       ${avgQualityScore}`);
+  console.log(`score_spread:            ${scoreSpread}`);
+  console.log(`migration_pass_rate:     ${migrationPassCount}/4`);
+  console.log(`parse_warnings:          ${totalParseWarnings}`);
   console.log(`import_time_ms:          ${importTimeMs}`);
   console.log(`validate_time_ms:        ${validateTimeMs}`);
   console.log(`dimensions_count:        ${dimensions.length}`);
@@ -199,12 +329,19 @@ async function runBenchmark() {
   console.log(`from_cache:              ${fromCache}`);
   console.log("---");
 
-  // Phase 6: Initialize results.tsv if needed
+  // Phase 10: Initialize results.tsv if needed
   if (!existsSync(RESULTS_FILE)) {
-    writeFileSync(RESULTS_FILE, "timestamp\txml_unknown_count\tunknown_property_count\tinvalid_enum_count\ttotal_issues\ttests_pass\tvalidate_time_ms\tdescription\n");
+    writeFileSync(RESULTS_FILE, "timestamp\txml_unknown\tunknown_prop\tinvalid_enum\tdup_groups\tnaming_anomalies\thierarchy_opts\tavg_quality\tscore_spread\tmigration_pass\ttotal_issues\ttests_pass\ttime_ms\tdescription\n");
   }
 
-  return { xmlUnknownCount, unknownPropertyCount, invalidEnumCount, invalidPropertyTypeCount, totalIssues, errorCount, warningCount, infoCount, importTimeMs, validateTimeMs, testsPass, dimensionsCount: dimensions.length, membersCount: members.length, relationshipsCount: relationships.length };
+  return {
+    xmlUnknownCount, unknownPropertyCount, invalidEnumCount, invalidPropertyTypeCount,
+    totalIssues, errorCount, warningCount, infoCount, importTimeMs, validateTimeMs,
+    testsPass, dimensionsCount: dimensions.length, membersCount: members.length,
+    relationshipsCount: relationships.length,
+    duplicateGroups: duplicateGroups.length, totalNamingAnomalies, totalHierOpts,
+    avgQualityScore, scoreSpread, migrationPassCount, totalParseWarnings
+  };
 }
 
 // Main

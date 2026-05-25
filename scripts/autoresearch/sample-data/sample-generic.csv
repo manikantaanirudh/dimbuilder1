@@ -1,0 +1,7 @@
+member,parent,description,type,currency
+TotalEntity,,Total Entity,Parent,USD
+NorthAmerica,TotalEntity,North America,Parent,USD
+USA,NorthAmerica,United States,Base,USD
+Canada,NorthAmerica,Canada,Base,CAD
+Europe,TotalEntity,Europe,Parent,EUR
+UK,Europe,United Kingdom,Base,GBP

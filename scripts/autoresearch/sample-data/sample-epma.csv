@@ -1,0 +1,6 @@
+Member,Parent,Alias,DataStorage,UDA
+TotalRevenue,,Total Revenue,DynamicCalc,
+ProductRevenue,TotalRevenue,Product Revenue,StoreData,ProductLine
+ServiceRevenue,TotalRevenue,Service Revenue,StoreData,ServiceLine
+LicenseRevenue,ProductRevenue,License Revenue,StoreData,
+SupportRevenue,ServiceRevenue,Support Revenue,StoreData,
