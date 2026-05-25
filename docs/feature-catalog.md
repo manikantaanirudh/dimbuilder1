@@ -494,3 +494,66 @@ Source:
 - `src/client/components/ConfirmDialog.tsx`
 - `src/client/hooks/useFocusTrap.ts`
 - `src/client/styles.css`
+
+## Chat Page (Natural Language Query)
+
+Conversational chatbot interface for querying project metadata in plain English. Supports 8 query intents: find member, count members, count dimensions, show children, find orphans, check member existence, missing property, property filter. Hybrid AI: local pattern matching first, optional LLM fallback if configured.
+
+Source:
+
+- `src/client/components/ChatPanel.tsx`
+- `src/server/ai/naturalLanguage/queryParser.ts`
+- `src/server/ai/naturalLanguage/responseGenerator.ts`
+- `src/server/routes/ai.ts` (`POST /projects/:id/ai/query`)
+
+## Validation Dashboard Drill-Down
+
+Clickable severity summary cards (Errors, Warnings, Info) that filter the issues-by-dimension table. Issue code rows in "Most Frequent Issues" table navigate to the source dimension. Active filter state highlighted with accent outline.
+
+Source:
+
+- `src/client/components/ValidationDashboard.tsx`
+
+## Mark as Safe (Issue Dismissal)
+
+Per-issue dismiss button on validation issue cards. Dismissed issues are hidden from the list with a "Show N dismissed issues" checkbox to restore. Uses Shield icon for dismiss action. Supports restore (toggle back).
+
+Source:
+
+- `src/client/components/IssuePanel.tsx`
+- `src/client/styles.css` (`.issue-dismiss-btn`, `.issue.dismissed`)
+
+## Admin: Export Validation Rules
+
+"Export Rules" button in the Admin panel that downloads all validation rules as a CSV file with columns: Rule Code, Description, Category, Severity, Active, Blocks Export. Allows business teams to review and validate rules offline.
+
+Source:
+
+- `src/client/components/AdminPanel.tsx` (`exportRulesAsCsv()`)
+
+## Row Error Tooltips
+
+Grid rows with associated validation issues display a native tooltip (title attribute) on hover showing the full error message text. Rows with issues also get a gold left-border highlight (`.grid-row.has-issues`).
+
+Source:
+
+- `src/client/components/EditableGrid.tsx`
+- `src/client/styles.css`
+
+## Hierarchy Tree Filter
+
+Search input in the hierarchy tree now actually filters/hides non-matching branches. Uses recursive `childrenContainMatch` check — only branches containing at least one matching node (or descendant) remain visible.
+
+Source:
+
+- `src/client/components/HierarchyTree.tsx`
+
+## Autoresearch Benchmark (Extended)
+
+Benchmark measures 7 engine phases against real metadata (7,048 members, 18 dimensions): validation, AI duplicate detection, AI naming anomalies, AI hierarchy optimizations, quality scoring, migration parsers. Used for iterative engine tuning.
+
+Source:
+
+- `scripts/autoresearch/benchmark.ts`
+- `scripts/autoresearch/program.md`
+- `scripts/autoresearch/sample-data/`

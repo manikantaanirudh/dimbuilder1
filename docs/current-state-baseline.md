@@ -1,6 +1,6 @@
 # Current State Baseline
 
-This baseline describes the application state as of 2026-05-24.
+This baseline describes the application state as of 2026-05-25.
 
 ## Implemented
 
@@ -37,7 +37,7 @@ This baseline describes the application state as of 2026-05-24.
 
 ### Intelligence Layer (Tier 2 — Features 7-12)
 
-- AI-powered metadata intelligence: duplicate detection (Levenshtein + soundex + prefix), naming anomaly detection, hierarchy optimization suggestions, property inference, natural language query (`src/server/ai/`).
+- AI-powered metadata intelligence: duplicate detection (Levenshtein + soundex + prefix), naming anomaly detection, hierarchy optimization suggestions, property inference, natural language query with 8 intents (find, count, children, missing_property, property_filter, orphans, check_exists, dimensions_count) (`src/server/ai/`).
 - Cross-dimension relationship mapping with where-used lookup, inheritance chain builder, and cross-dim validation (`src/server/crossDimension/crossDimensionEngine.ts`).
 - Template and pattern library: extract templates from projects, apply to new projects, built-in templates (`src/server/templates/templateEngine.ts`).
 - Reporting and analytics: health reports, velocity reports, coverage reports, compliance reports with HTML/CSV/JSON export (`src/server/reporting/`).
@@ -70,12 +70,19 @@ This baseline describes the application state as of 2026-05-24.
 
 ### Frontend UI
 
-- 8 navigation tabs: Project Overview, Validation, Reports, AI Insights, Quality, Audit Log, Admin, Config.
+- 9 navigation tabs: Project Overview, Validation, Reports, AI Insights, Quality, Audit Log, Chat, Admin, Config.
+- **Chat page** with natural language project queries: find members, count dimensions, check existence, show children, find orphans. Hybrid AI — local pattern matching with optional LLM fallback (`src/client/components/ChatPanel.tsx`, `src/server/ai/naturalLanguage/queryParser.ts`).
 - Reporting Dashboard with animated SVG score rings, per-dimension quality/completeness/naming bars, coverage grid, and HTML/CSV/JSON export buttons.
 - AI Insights panel with tabbed view: duplicate detection, naming anomalies, hierarchy optimizations.
 - Quality Scores panel with overall score gauge, quality gate pass/fail status, per-dimension breakdown.
 - Audit Log viewer with filterable table (who, what, when, entity type).
 - KPI cards on Project Overview (Quality Score, Total Members, Issues, Coverage).
+- **Validation Dashboard drill-down**: clickable severity cards filter issue list by type; issue code rows navigate to source dimension.
+- **Mark as Safe**: per-issue dismiss button on validation issues. Dismissed issues hidden with toggle to restore.
+- **Admin Export Rules**: download all validation rules as CSV for business team review.
+- **Hierarchy tree filter**: search now hides non-matching branches (recursive ancestor-path filtering).
+- **Row error tooltips**: grid rows with validation issues show full error message on hover (title attribute).
+- **Logo click navigation**: brand/logo click returns to Project Overview.
 - Skeleton loading placeholders for all async panels.
 - Toast notification system with auto-dismiss.
 - Confirmation dialogs for destructive actions.
