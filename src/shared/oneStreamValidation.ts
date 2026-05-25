@@ -290,7 +290,7 @@ function validateParentInputWarnings(
       entityId: parent.id,
       severity: profile.parentInputWarningSeverity,
       code: "PARENT_MEMBER_ALLOW_INPUT_WARNING",
-      message: `Parent member '${parent.memberKey}' allows input while also acting as a hierarchy parent.`,
+      message: `Parent member '${parent.memberKey}' has AllowInput enabled while acting as a hierarchy parent. This is common for accounts accepting manual adjustments but unusual for consolidation-only parents.`,
       fieldName: "Allow Input",
       rowNumber: parent.sourceRowNumber
     });

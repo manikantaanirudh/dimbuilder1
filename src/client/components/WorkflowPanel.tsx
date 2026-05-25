@@ -140,6 +140,16 @@ export function WorkflowPanel({
 
   return (
     <Panel title={`Workflows — ${status}`}>
+      {!changeSetId && instances.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--muted)' }}>
+          <Clock size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+          <h4 style={{ margin: '0.5rem 0', color: 'var(--fg)' }}>No workflow in progress</h4>
+          <p style={{ fontSize: '0.85rem', margin: 0 }}>
+            Start a review workflow from the <b>Change Sets</b> tab to begin the approval process for this dimension.
+          </p>
+        </div>
+      )}
+
       {changeSetId && definitions.length > 0 && (
         <div className="workflow-submit-section" style={{ marginBottom: "1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
           <select value={selectedDefinition} onChange={(e) => setSelectedDefinition(e.target.value)}>

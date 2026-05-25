@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { fetchValidationConfig, saveValidationConfig } from "../api/client";
 import { ActionButton, StatusBadge } from "./ui";
@@ -75,6 +76,24 @@ export function AdminPanel({ appConfig, projectId }: { appConfig: ClientAppConfi
     return overrides.get(code) === "off";
   }
 
+  function exportRulesAsCsv() {
+    const header = "Rule Code,Description,Category,Severity,Active,Blocks Export";
+    const rows = rules.map(r => {
+      const effectiveSev = getEffectiveSeverity(r);
+      const active = effectiveSev !== "off" ? "Yes" : "No";
+      const blocks = (blockedSeverities as string[]).includes(effectiveSev) ? "Yes" : "No";
+      return `"${r.code}","${r.description}","${r.category}","${effectiveSev}","${active}","${blocks}"`;
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `validation-rules-export.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="panel admin-panel">
       <div className="admin-page">
@@ -85,9 +104,14 @@ export function AdminPanel({ appConfig, projectId }: { appConfig: ClientAppConfi
             <p>Rules at severity <b>{blockedSeverities.join(", ")}</b> block export. Toggle rules off or change severity per project.</p>
           </div>
           {projectId && (
-            <ActionButton variant="primary" disabled={saving} onClick={() => void handleSave()}>
-              Save Overrides
-            </ActionButton>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <ActionButton onClick={exportRulesAsCsv}>
+                <Download size={14} /> Export Rules
+              </ActionButton>
+              <ActionButton variant="primary" disabled={saving} onClick={() => void handleSave()}>
+                Save Overrides
+              </ActionButton>
+            </div>
           )}
         </div>
         {status && <div className="admin-status">{status}</div>}
