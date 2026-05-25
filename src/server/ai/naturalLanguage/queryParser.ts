@@ -10,7 +10,7 @@ export interface NLQueryInput {
 }
 
 interface ParsedIntent {
-  type: 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans' | 'unknown';
+  type: 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans' | 'check_exists' | 'unknown';
   params: Record<string, string>;
 }
 
@@ -63,6 +63,12 @@ function parseIntent(question: string): ParsedIntent {
   // "Show orphan members" / "Find members without parents"
   if (q.includes('orphan') || q.match(/members?\s+without\s+parents?/)) {
     return { type: 'orphans', params: {} };
+  }
+
+  // "Is there a member called X" / "Does X exist" / "Check if X exists"
+  const existsMatch = q.match(/(?:is there|does|do we have|check if|can you (?:find|check))\s+(?:a\s+)?(?:member\s+)?(?:called|named|with name)?\s*['"]?([^'"?]+?)['"]?\s*(?:exist[s]?|in the)?\s*\??$/i);
+  if (existsMatch) {
+    return { type: 'check_exists', params: { memberKey: existsMatch[1].trim() } };
   }
 
   // "Find [pattern]" / "Search for [pattern]"
@@ -173,6 +179,36 @@ function executeIntent(
         answer: generateResponse({ matchedMembers: matchedKeys, intent: 'orphans', params: intent.params }),
         matchedMembers: matchedKeys,
         confidence: 0.9
+      };
+    }
+
+    case 'check_exists': {
+      const searchKey = intent.params.memberKey.toLowerCase();
+      const found = members.filter(m => m.memberKey.toLowerCase() === searchKey);
+      if (found.length === 0) {
+        const partial = members.filter(m => m.memberKey.toLowerCase().includes(searchKey));
+        if (partial.length > 0) {
+          return {
+            answer: `No exact match for "${intent.params.memberKey}", but found ${partial.length} similar member(s): ${partial.slice(0, 5).map(m => m.memberKey).join(', ')}${partial.length > 5 ? '...' : ''}`,
+            matchedMembers: partial.slice(0, 10).map(m => m.memberKey),
+            confidence: 0.6
+          };
+        }
+        return {
+          answer: `No member called "${intent.params.memberKey}" exists in this project.`,
+          matchedMembers: [],
+          confidence: 1.0
+        };
+      }
+      const member = found[0];
+      const dim = dimensions.find(d => d.id === member.dimensionId);
+      const parentRels = relationships.filter(r => r.childKey === member.memberKey);
+      const parents = parentRels.map(r => r.parentKey).join(', ') || 'None (root)';
+      const propCount = Object.keys(member.properties).length;
+      return {
+        answer: `Yes! Member "${member.memberKey}" exists.\n• Dimension: ${dim?.dimensionType ?? 'Unknown'} (${dim?.dimensionName ?? ''})\n• Description: ${member.description || '(none)'}\n• Parent(s): ${parents}\n• Properties: ${propCount} defined\n• Active: ${member.isActive ? 'Yes' : 'No'}`,
+        matchedMembers: found.map(m => m.memberKey),
+        confidence: 1.0
       };
     }
 

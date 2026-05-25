@@ -34,6 +34,7 @@ import { ReportingDashboard } from "./ReportingDashboard";
 import { AIInsightsPanel } from "./AIInsightsPanel";
 import { QualityScoresPanel } from "./QualityScoresPanel";
 import { AuditLogViewer } from "./AuditLogViewer";
+import { ChatPanel } from "./ChatPanel";
 import { ToastProvider } from "./Toast";
 import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
 
@@ -45,6 +46,7 @@ const REPORTING_VALUE = "__reporting__";
 const AI_INSIGHTS_VALUE = "__ai_insights__";
 const QUALITY_VALUE = "__quality__";
 const AUDIT_LOG_VALUE = "__audit_log__";
+const CHAT_VALUE = "__chat__";
 
 function mobileNavLabel(item: DimensionNavItem) {
   if (item.issueSummary.errors > 0) return `${item.label} - ${item.issueSummary.errors} errors`;
@@ -277,6 +279,12 @@ export function AppShell({
           Audit Log
         </button>
         <button
+          className={`secondary-nav-item ${activeWorkspace === CHAT_VALUE ? "active" : ""}`}
+          onClick={() => setActiveWorkspace(CHAT_VALUE)}
+        >
+          Chat
+        </button>
+        <button
           className={`secondary-nav-item ${activeWorkspace === ADMIN_VALUE ? "active" : ""}`}
           onClick={() => setActiveWorkspace(ADMIN_VALUE)}
         >
@@ -373,6 +381,13 @@ export function AppShell({
           <QualityScoresPanel projectId={store.selectedProjectId} />
         ) : activeWorkspace === AUDIT_LOG_VALUE && store.selectedProjectId ? (
           <AuditLogViewer projectId={store.selectedProjectId} />
+        ) : activeWorkspace === CHAT_VALUE && store.selectedProjectId ? (
+          <ChatPanel projectId={store.selectedProjectId} onNavigateMember={(_key) => {
+            // Navigate to first dimension - member lookup needs dimension context
+            if (store.dimensions.length > 0) {
+              setActiveWorkspace(store.dimensions[0].id);
+            }
+          }} />
         ) : activeWorkspace === ADMIN_VALUE ? (
           <AdminPanel appConfig={appConfig} projectId={store.selectedProjectId} />
         ) : !showProjectOverview && activeDimension && store.selectedProjectId ? (
