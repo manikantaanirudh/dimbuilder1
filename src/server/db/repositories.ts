@@ -1746,7 +1746,7 @@ export function createRepositories(db: AppDatabase) {
             WHERE environment_id = ? AND project_id = ? AND dimension_type = ?
           `).run(input.localVersionHash, input.syncStatus, timestamp, input.lastDeployedAt ?? null, input.environmentId, input.projectId, input.dimensionType);
           const row = db.prepare("SELECT * FROM environment_sync_status WHERE environment_id = ? AND project_id = ? AND dimension_type = ?").get(input.environmentId, input.projectId, input.dimensionType);
-          return mapEnvironmentSyncStatus(row);
+          return mapEnvironmentSyncStatus(row!);
         }
         const id = nanoid();
         db.prepare(`

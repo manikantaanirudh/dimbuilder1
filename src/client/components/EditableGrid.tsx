@@ -85,7 +85,7 @@ export function EditableGrid({
     const needle = search.toLowerCase();
     if (!needle) return records;
     return records.filter((record) => {
-      const r = record as Record<string, unknown>;
+      const r = record as unknown as Record<string, unknown>;
       const searchable = [r.memberKey, r.description, r.parentKey, r.childKey, r.memberKey]
         .filter(Boolean).join(' ').toLowerCase();
       return searchable.includes(needle);

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
+import type { DimensionType } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
 import { scoreDimensionQuality, generateDocumentContent } from "../tier3/tier3Engine";
 
@@ -470,7 +471,7 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
         const dimensionId = existing?.id ?? repos.dimensions.create({
           projectId: project.id,
           sheetName: dim.dimensionName,
-          dimensionType: dim.dimensionType,
+          dimensionType: dim.dimensionType as DimensionType,
           dimensionName: dim.dimensionName,
           description: "",
           accessGroup: "Everyone",

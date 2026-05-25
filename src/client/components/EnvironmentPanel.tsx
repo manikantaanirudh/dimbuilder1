@@ -18,7 +18,7 @@ export function EnvironmentPanel({ projectId }: { projectId?: string }) {
   const [status, setStatus] = useState("Loading...");
   const [testResults, setTestResults] = useState<Record<string, ConnectionTestResult>>({});
   const [showCreate, setShowCreate] = useState(false);
-  const [newEnv, setNewEnv] = useState({ name: "", type: "mock" as const, baseUrl: "", clientId: "", clientSecret: "" });
+  const [newEnv, setNewEnv] = useState({ name: "", type: "mock" as "mock" | "onestream", baseUrl: "", clientId: "", clientSecret: "" });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {

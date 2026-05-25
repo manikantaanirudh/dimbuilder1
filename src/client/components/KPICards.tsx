@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { TrendingUp, AlertTriangle, Users, BarChart3 } from "lucide-react";
 import { fetchQualityScores, fetchCoverageReport } from "../api/client";
 import { ScoreRing } from "./ScoreRing";
-import type { DashboardSummary, ValidationIssue } from "../../shared/types";
+import type { DashboardSummary, Severity, ValidationIssue } from "../../shared/types";
 import { buildIssueSummary } from "../ui/viewModel";
 
 export function KPICards({ projectId, summary, issues, blockedSeverities }: {
   projectId: string;
   summary: DashboardSummary | null;
   issues: ValidationIssue[];
-  blockedSeverities: string[];
+  blockedSeverities: Severity[];
 }) {
   const [qualityScore, setQualityScore] = useState<number | null>(null);
   const [coverage, setCoverage] = useState<number | null>(null);

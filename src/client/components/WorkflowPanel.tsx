@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, PlayCircle, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, PlayCircle, XCircle, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { WorkflowDefinition, WorkflowInstance, WorkflowInstanceDetail } from "../../shared/workflowTypes";
 import {
@@ -8,7 +8,8 @@ import {
   submitWorkflow,
   approveWorkflowStep,
   rejectWorkflowInstance,
-  cancelWorkflowInstance
+  cancelWorkflowInstance,
+  evaluateAutoAdvance
 } from "../api/client";
 import { ActionButton, Panel, StatusBadge } from "./ui";
 
@@ -26,6 +27,7 @@ export function WorkflowPanel({
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState("Loading...");
   const [selectedDefinition, setSelectedDefinition] = useState("");
+  const [autoAdvanceResult, setAutoAdvanceResult] = useState<{ shouldAdvance: boolean; conditionsEvaluated: Array<{ condition: { type: string }; passed: boolean; detail: string }> } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +122,16 @@ export function WorkflowPanel({
     } catch { /* ignore */ }
   }
 
+  async function handleAutoAdvanceCheck() {
+    if (!selectedId) return;
+    try {
+      const result = await evaluateAutoAdvance(selectedId);
+      setAutoAdvanceResult(result);
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Auto-advance check failed");
+    }
+  }
+
   const statusTone = (s: string) => {
     if (s === "approved") return "success";
     if (s === "rejected" || s === "cancelled") return "danger";
@@ -208,7 +220,26 @@ export function WorkflowPanel({
                 <ActionButton onClick={handleApprove}><CheckCircle2 size={14} /> Approve</ActionButton>
                 <ActionButton onClick={handleReject}><XCircle size={14} /> Reject</ActionButton>
                 <ActionButton onClick={handleCancel}><XCircle size={14} /> Cancel</ActionButton>
+                <ActionButton onClick={() => void handleAutoAdvanceCheck()}>
+                  <Zap size={14} /> Check Auto-Advance
+                </ActionButton>
               </div>
+              {autoAdvanceResult && (
+                <div className="auto-advance-result" style={{ marginTop: "0.5rem", padding: "0.75rem", background: "var(--surface-subtle)", borderRadius: "8px", fontSize: "0.85rem" }}>
+                  <strong><Zap size={12} /> Auto-Advance: </strong>
+                  <StatusBadge tone={autoAdvanceResult.shouldAdvance ? "success" : "warning"}>
+                    {autoAdvanceResult.shouldAdvance ? "Ready to advance" : "Conditions not met"}
+                  </StatusBadge>
+                  <ul style={{ listStyle: "none", padding: 0, marginTop: "0.5rem" }}>
+                    {autoAdvanceResult.conditionsEvaluated.map((c, i) => (
+                      <li key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
+                        {c.passed ? <CheckCircle2 size={12} color="var(--success)" /> : <XCircle size={12} color="var(--danger)" />}
+                        <span>{c.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -170,7 +170,7 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
     const dataCtx = { dimensions, members, relationships };
 
     let report: unknown;
-    let title: string;
+    let title = "Report";
 
     switch (reportType) {
       case 'health': {

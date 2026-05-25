@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
+import type { WhatIfExtensionInput } from "../../shared/extensibilityTypes";
 import { buildExtensibilityModel, detectAntiPatterns, whatIfExtension, generateDocumentation } from "../extensibility/extensibilityEngine";
 
 export function createExtensibilityRouter(repos: Repositories, _config: AppConfig): Router {
@@ -56,7 +57,7 @@ export function createExtensibilityRouter(repos: Repositories, _config: AppConfi
     const members = repos.members.listByProject(project.id);
     const relationships = repos.relationships.listByProject(project.id);
 
-    const result = whatIfExtension(parsed.data, { dimensions, members, relationships });
+    const result = whatIfExtension(parsed.data as WhatIfExtensionInput, { dimensions, members, relationships });
     res.json(result);
   });
 
