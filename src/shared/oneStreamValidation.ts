@@ -355,9 +355,9 @@ function validateDimensionSpecificRules(
       addIssue({
         entityType: "relationship",
         entityId: relationship.id,
-        severity: "warning",
+        severity: "info",
         code: "RELATIONSHIP_WEIGHT_MISSING",
-        message: `Relationship '${relationship.parentKey} -> ${relationship.childKey}' is missing Aggregation Weight.`,
+        message: `Relationship '${relationship.parentKey} -> ${relationship.childKey}' is missing Aggregation Weight. Default of 1.0 (100% roll-up) will be used.`,
         fieldName: "Aggregation Weight",
         rowNumber: relationship.sourceRowNumber
       });
