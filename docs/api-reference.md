@@ -177,7 +177,7 @@ Branch response returns `{ "project": ProjectRecord, "summary": SnapshotRestoreS
 |---|---|---|
 | GET | `/api/projects/:projectId/dimensions/:dimensionId/members?offset=0&limit=300&ids=` | Page active members for a dimension. Supports `?ids=` param to fetch specific records by ID (comma-separated), bypassing pagination. |
 | POST | `/api/projects/:projectId/dimensions/:dimensionId/members` | Create a member. |
-| PATCH | `/api/projects/:projectId/members/:memberId` | Update a member. |
+| PATCH | `/api/projects/:projectId/members/:memberId` | Partial-update a member. Accepts `memberKey`, `properties`, and/or `description`. Missing fields are merged from the existing record (`src/server/routes/projects.ts:243`). |
 | DELETE | `/api/projects/:projectId/members/:memberId` | Soft-delete a member. |
 
 Create member body:

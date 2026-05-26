@@ -1,6 +1,6 @@
 # Current State Baseline
 
-This baseline describes the application state as of 2026-05-25.
+This baseline describes the application state as of 2026-05-26.
 
 ## Implemented
 
@@ -14,7 +14,7 @@ This baseline describes the application state as of 2026-05-25.
 - XLSX import is an optional seed workflow.
 - OneStream metadata XML can be imported directly as an editable project.
 - Metadata reference XML can align imported dimensions and add metadata-only dimensions.
-- Members and relationships can be edited in the workbench.
+- Members and relationships can be edited in the workbench. Member PATCH supports partial updates (any combination of `memberKey`, `properties`, `description`).
 - A versioned OneStream property dictionary describes supported dimension, member, and relationship properties for UI labels, validation, API schema output, and XML property mapping.
 - Varying property values can be stored for dimensions, members, and relationships with cube type, scenario type, and time member context.
 - Metadata baselines can be created from the current project snapshot and compared against the current project.
@@ -24,9 +24,10 @@ This baseline describes the application state as of 2026-05-25.
 - Hierarchies can be analyzed per dimension with cycle-safe paths, levelized rows, leaf/parent classification, shared member detection, orphan detection, depth stats, and deterministic CSV exports.
 - Saved project snapshots can be listed, restored into the current project with an automatic safety snapshot, or branched into a new project.
 - Validation detects common metadata and hierarchy issues.
+- Validation includes 56 rule codes covering integrity, OneStream naming, hierarchy depth, case-insensitive duplicates, scenario type, consolidation method, cross-dimension currency, and project completeness.
 - Validation warns on unknown dictionary properties and errors on invalid dictionary enum or typed values.
 - Validation detects duplicate varying property contexts, missing varying targets, unknown varying properties, non-varying overrides, and invalid varying values.
-- XML preview and export work from persisted records.
+- XML preview and export work from persisted records. The Download XML button is located in the XML tab only.
 - XLSX, CSV, JSON, and snapshots are available when enabled.
 - Export routes block server-side when stored validation issues match `validation.exportBlockedBySeverities`, with optional audited bypass disabled by default.
 - Workflow system with multi-step approval, role-based reviewers, notifications, and auto-advance rules (`src/server/workflow/autoAdvanceEngine.ts`).

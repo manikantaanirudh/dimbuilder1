@@ -26,6 +26,19 @@ Validation runs per dimension and checks:
 - circular hierarchy
 - orphan members
 - relationships with no local members
+- self-referencing relationships (parent == child)
+- member name leading/trailing whitespace
+- root member missing from hierarchy
+- hierarchy max depth exceeded (OneStream limit: 30 levels)
+- member name starts with digit
+- duplicate member (case-insensitive)
+- Scenario Type missing (Scenario dimensions only)
+- consolidation method mismatch (Entity dimensions only)
+
+Additionally, project-level validation runs after per-dimension checks:
+
+- missing required dimension types (Account, Entity, Scenario, Flow)
+- cross-dimension currency references pointing to invalid values
 
 ## Severity Configuration
 
@@ -220,6 +233,16 @@ Current issue codes include:
 - `DUPLICATE_RELATIONSHIP`
 - `ORPHAN_MEMBER`
 - `RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS`
+- `SELF_REFERENCING_RELATIONSHIP`
+- `MEMBER_NAME_LEADING_TRAILING_WHITESPACE`
+- `ROOT_MEMBER_MISSING`
+- `HIERARCHY_MAX_DEPTH_EXCEEDED`
+- `MEMBER_NAME_STARTS_WITH_DIGIT`
+- `DUPLICATE_MEMBER_CASE_INSENSITIVE`
+- `SCENARIO_TYPE_MISSING`
+- `CONSOLIDATION_METHOD_MISMATCH`
+- `DIMENSION_MISSING_FROM_PROJECT` (project-level, `src/server/routes/projects.ts:930`)
+- `CROSS_DIMENSION_CURRENCY_INVALID` (project-level, `src/server/routes/projects.ts:951`)
 
 ## Hierarchy Analysis
 

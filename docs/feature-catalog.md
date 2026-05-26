@@ -192,7 +192,7 @@ Source:
 
 ## XML Preview
 
-Users can preview XML for the current dimension or all dimensions when enabled.
+Users can preview XML for the current dimension or all dimensions when enabled. The Download XML button is located exclusively in the XML tab (`src/client/components/XmlPreview.tsx:113`) and respects per-dimension export blocking.
 
 Source:
 
