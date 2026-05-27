@@ -3,11 +3,13 @@ import {
   FileUp,
   FolderOpen,
   LogOut,
+  Moon,
   PlusCircle,
   RotateCcw,
   Save,
   Search,
   ShieldCheck,
+  Sun,
   Undo2,
   User
 } from "lucide-react";
@@ -24,6 +26,7 @@ import {
 import { createProjectSnapshot, validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { useAuth } from "../auth/useAuth";
+import { useTheme } from "../hooks/useTheme";
 import { Dashboard } from "./Dashboard";
 import { DimensionWorkspace } from "./DimensionWorkspace";
 import { CreateProjectModal, ExportModal, ImportModal, OpenProjectModal, SaveAsModal } from "./ImportExportModals";
@@ -36,7 +39,7 @@ import { QualityScoresPanel } from "./QualityScoresPanel";
 import { AuditLogViewer } from "./AuditLogViewer";
 import { ChatPanel } from "./ChatPanel";
 import { ToastProvider } from "./Toast";
-import { ActionButton, StatusBadge, ToolbarGroup } from "./ui";
+import { ActionButton, IconButton, StatusBadge, ToolbarGroup } from "./ui";
 
 const PROJECT_OVERVIEW_VALUE = "__project_overview__";
 const ADMIN_VALUE = "__admin__";
@@ -63,6 +66,7 @@ export function AppShell({
 }) {
   const store = useProjectStore();
   const { user, authEnabled, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
   const [navSearch, setNavSearch] = useState("");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
@@ -227,6 +231,13 @@ export function AppShell({
           </ActionButton>
           {toolbar.showUndoRedo && <ActionButton disabled title="Undo" aria-label="Undo"><Undo2 size={16} /></ActionButton>}
           {toolbar.showUndoRedo && <ActionButton disabled title="Redo" aria-label="Redo"><RotateCcw size={16} /></ActionButton>}
+          <IconButton
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          </IconButton>
         </ToolbarGroup>
 
         {authEnabled && user && (

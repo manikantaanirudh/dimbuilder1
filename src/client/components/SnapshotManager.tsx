@@ -7,6 +7,7 @@ import {
   restoreProjectSnapshot
 } from "../api/client";
 import { ActionButton, EmptyState, StatusBadge } from "./ui";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 export function SnapshotManager({
   project,
@@ -20,6 +21,7 @@ export function SnapshotManager({
   const [branchName, setBranchName] = useState(`${project.name} branch`);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
 
   const selectedSnapshot = useMemo(
     () => snapshots.find((snapshot) => snapshot.id === selectedSnapshotId) ?? snapshots[0] ?? null,
@@ -47,8 +49,7 @@ export function SnapshotManager({
 
   async function restoreSelectedSnapshot() {
     if (!selectedSnapshot) return;
-    const confirmed = window.confirm("Restore replaces current metadata. A safety snapshot will be created first.");
-    if (!confirmed) return;
+    setConfirmRestoreOpen(false);
     setStatus("Restoring snapshot...");
     const summary = await restoreProjectSnapshot(project.id, selectedSnapshot.id);
     setStatus(`Restored ${summary.membersRestored} members and ${summary.relationshipsRestored} relationships`);
@@ -70,7 +71,7 @@ export function SnapshotManager({
       <div className="panel-heading">
         <div>
           <span className="section-kicker">Rollback and branch</span>
-          <h2>Snapshots</h2>
+          <h3>Snapshots</h3>
         </div>
         <StatusBadge tone={snapshots.length ? "info" : "neutral"}>{loading ? "Loading" : snapshots.length}</StatusBadge>
       </div>
@@ -107,7 +108,7 @@ export function SnapshotManager({
       )}
 
       <div className="snapshot-actions">
-        <ActionButton disabled={!selectedSnapshot} onClick={restoreSelectedSnapshot}>
+        <ActionButton disabled={!selectedSnapshot} onClick={() => setConfirmRestoreOpen(true)}>
           <RefreshCcw size={16} /> Restore current project
         </ActionButton>
         <ActionButton disabled={!selectedSnapshot} onClick={createBranch}>
@@ -115,7 +116,17 @@ export function SnapshotManager({
         </ActionButton>
       </div>
 
-      {status ? <p className="snapshot-status">{status}</p> : null}
+      {status ? <p className="snapshot-status" aria-live="polite" role="status">{status}</p> : null}
+
+      <ConfirmDialog
+        open={confirmRestoreOpen}
+        title="Restore snapshot?"
+        message="This will replace current metadata with the selected snapshot. A safety snapshot will be created first."
+        confirmLabel="Restore"
+        confirmVariant="danger"
+        onConfirm={() => void restoreSelectedSnapshot()}
+        onCancel={() => setConfirmRestoreOpen(false)}
+      />
     </section>
   );
 }

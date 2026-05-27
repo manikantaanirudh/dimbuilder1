@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T19:15:00.000Z",
+  "title": "Design System: OneStream Dimension Builder",
+  "extensions": {
+    "colorMeta": {
+      "navy-deep": { "role": "primary", "displayName": "Navy Deep", "canonical": "#00204A", "tonalRamp": ["#001528", "#00204A", "#0a3a6e", "#1a5a9a", "#3a7ac0", "#6aa0d8", "#a0c8f0", "#d0e8fa"] },
+      "gold-brass": { "role": "secondary", "displayName": "Brass Gold", "canonical": "#C5A961", "tonalRamp": ["#5a4820", "#7a6530", "#a88d45", "#C5A961", "#d4be7a", "#e0cf94", "#eeddb0", "#faf3d8"] },
+      "slate-bg": { "role": "neutral", "displayName": "Slate Background", "canonical": "#f8f9fb", "tonalRamp": ["#1a1e24", "#2e353e", "#4b5c6f", "#8a96a3", "#b8c4d0", "#dce3eb", "#f4f6f9", "#f8f9fb"] },
+      "signal-danger": { "role": "signal", "displayName": "Danger Red", "canonical": "#e03131", "tonalRamp": ["#5a1010", "#8a1a1a", "#b82626", "#e03131", "#f06060", "#f5a0a0", "#fde0ec", "#fff5f5"] },
+      "signal-success": { "role": "signal", "displayName": "Success Green", "canonical": "#1aae39", "tonalRamp": ["#0a3a12", "#105520", "#1aae39", "#3dc95e", "#70e090", "#a0f0b0", "#d9f3e1", "#f0faf3"] },
+      "signal-warning": { "role": "signal", "displayName": "Warning Orange", "canonical": "#dd5b00", "tonalRamp": ["#4a1f00", "#7a3500", "#dd5b00", "#f59e42", "#ffc070", "#ffe0a0", "#ffe8d4", "#fff8f0"] },
+      "signal-info": { "role": "signal", "displayName": "Info Blue", "canonical": "#0075de", "tonalRamp": ["#0a1e3d", "#103a6d", "#0075de", "#5aabf5", "#90c8f8", "#b8d0ff", "#dcecfa", "#f0f8ff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles. Project name, workspace name. The largest text on any surface." },
+      "body": { "displayName": "Body", "purpose": "Default text. Descriptions, paragraphs, help text." },
+      "label": { "displayName": "Label", "purpose": "Section kickers, metric labels, form field labels. Small, uppercase, assertive." },
+      "mono": { "displayName": "Monospace", "purpose": "Code blocks, JSON previews, blueprint drafts. Structured data display." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 2px rgba(0, 0, 0, 0.05)", "purpose": "Cards at rest. Subtle baseline layering." },
+      { "name": "shadow-md", "value": "0 4px 6px rgba(0, 0, 0, 0.07)", "purpose": "Hovered cards, dropdown menus. Slight lift." },
+      { "name": "shadow-lg", "value": "0 10px 15px rgba(0, 0, 0, 0.08)", "purpose": "Modals, popovers, floating panels." },
+      { "name": "shadow-xl", "value": "0 20px 25px rgba(0, 0, 0, 0.1)", "purpose": "Critical overlays. Maximum elevation. Rarely used." }
+    ],
+    "motion": [
+      { "name": "transition-fast", "value": "150ms ease", "purpose": "Micro-interactions: color shifts, opacity changes." },
+      { "name": "transition-base", "value": "200ms ease", "purpose": "Standard state transitions: hover, focus, expand." },
+      { "name": "transition-slow", "value": "300ms ease", "purpose": "Larger movements: panel reveals, disclosure toggles." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action button. Navy fill, white text, 10px radius.",
+      "html": "<button class=\"ds-btn-primary\">Validate</button>",
+      "css": ".ds-btn-primary { min-height: 34px; border: 1px solid #00204A; border-radius: 10px; background: #00204A; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 11px; font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease; } .ds-btn-primary:hover { background: #001528; border-color: #001528; } .ds-btn-primary:focus-visible { outline: 2px solid rgba(0, 32, 74, 0.72); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting action button. White fill, navy text, strong border.",
+      "html": "<button class=\"ds-btn-secondary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg> Export</button>",
+      "css": ".ds-btn-secondary { min-height: 34px; border: 1px solid #b8c4d0; border-radius: 10px; background: #ffffff; color: #00204A; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 11px; font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease; } .ds-btn-secondary:hover { background: #f4f6f9; } .ds-btn-secondary:focus-visible { outline: 2px solid rgba(0, 32, 74, 0.72); outline-offset: 2px; } .ds-btn-secondary svg { flex: 0 0 auto; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Inline status communication. Pill-shaped, colored by severity.",
+      "html": "<span class=\"ds-badge ds-badge-success\">Ready</span>",
+      "css": ".ds-badge { min-height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border-radius: 999px; border: 1px solid #dce3eb; padding: 3px 8px; color: #3d4f63; background: #f4f6f9; font-size: 12px; font-weight: 750; line-height: 1.2; white-space: nowrap; } .ds-badge-success { color: #1aae39; border-color: #b5dfbf; background: #d9f3e1; } .ds-badge-danger { color: #e03131; border-color: #efb6c9; background: #fde0ec; } .ds-badge-warning { color: #dd5b00; border-color: #f0c0a0; background: #ffe8d4; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard text field. Border, white background, focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search dimensions\" />",
+      "css": ".ds-input { min-width: 0; min-height: 34px; border: 1px solid #b8c4d0; border-radius: 10px; background: #ffffff; color: #00204A; padding: 8px 10px; font-family: inherit; font-size: 14px; transition: border-color 200ms ease, box-shadow 200ms ease; } .ds-input:focus { border-color: #00204A; box-shadow: 0 0 0 3px rgba(0, 32, 74, 0.08); outline: none; } .ds-input::placeholder { color: #4b5c6f; }"
+    },
+    {
+      "name": "Dimension Row",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Clickable list item for dimension navigation. Grid layout with label, badge, and arrow.",
+      "html": "<button class=\"ds-dim-row\"><span><b>Account</b><small>Financial dimension</small></span><span class=\"ds-badge ds-badge-success\">Clean</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
+      "css": ".ds-dim-row { width: 100%; min-height: 54px; display: grid; grid-template-columns: 1fr auto 18px; align-items: center; gap: 12px; padding: 10px 12px; color: #00204A; background: #ffffff; border: 1px solid #dce3eb; border-radius: 10px; text-align: left; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease; } .ds-dim-row:hover { background: #f4f6f9; border-color: #b8c4d0; } .ds-dim-row span { display: grid; gap: 2px; min-width: 0; } .ds-dim-row b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-dim-row small { color: #4b5c6f; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-dim-row svg { flex: 0 0 auto; color: #4b5c6f; }"
+    },
+    {
+      "name": "Score Ring",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Animated SVG ring gauge showing quality score 0-100. Color coded by threshold.",
+      "html": "<div class=\"ds-score-ring\"><svg viewBox=\"0 0 88 88\" width=\"88\" height=\"88\" style=\"transform: rotate(-90deg)\"><circle cx=\"44\" cy=\"44\" r=\"36\" fill=\"none\" stroke=\"#dce3eb\" stroke-width=\"8\"/><circle cx=\"44\" cy=\"44\" r=\"36\" fill=\"none\" stroke=\"#1aae39\" stroke-width=\"8\" stroke-dasharray=\"226.19\" stroke-dashoffset=\"45.24\" stroke-linecap=\"round\"/></svg><div class=\"ds-score-label\"><span class=\"ds-score-value\">80</span><span class=\"ds-score-text\">QUALITY</span></div></div>",
+      "css": ".ds-score-ring { width: 88px; height: 88px; position: relative; } .ds-score-ring svg { display: block; } .ds-score-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; } .ds-score-value { font-size: 24px; font-weight: 700; line-height: 1; } .ds-score-text { font-size: 9px; color: #4b5c6f; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Control Room",
+    "overview": "A precision instrument for structured data work. The interface is clean, confident, and engineered. Every surface communicates clearly; nothing is decorative. The system earns trust through visual precision: aligned grids, consistent token usage, and predictable interaction patterns.\n\nThis is not a consumer app; it's a professional tool that respects the domain expertise of OneStream consultants and finance architects. The design is dense without being chaotic, modern without chasing trends, and quiet without being lifeless.",
+    "keyCharacteristics": [
+      "Information density served by structured whitespace, not by cramming",
+      "Single-family typography (Montserrat) carrying all hierarchy through weight and scale",
+      "Restrained color strategy: navy + tinted neutrals, with brass-gold accent at less than 10%",
+      "Gently layered elevation conveying surface relationships without dramatic depth",
+      "Tactile, engineered components that feel precise and responsive"
+    ],
+    "rules": [
+      { "name": "The Restraint Rule", "body": "Brass Gold appears on less than 10% of any given surface. Its rarity is the point. Primary actions are navy, not gold; gold is reserved for brand presence and selected emphasis.", "section": "colors" },
+      { "name": "The Single Voice Rule", "body": "One font family everywhere. No display/body pairing. Montserrat carries headings, buttons, labels, and body text. Hierarchy is weight and size, not family contrast.", "section": "typography" },
+      { "name": "The Ambient Rule", "body": "Shadows are ambient, never crisp. Black opacity never exceeds 10% in light mode. In dark mode, shadows deepen (20-35% opacity) but remain diffuse. No hard drop-shadows; no inset shadows for decoration.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the spacing token scale (4/8/16/24/32/48px) for all gaps and padding.",
+      "Do use gap for sibling spacing. Eliminate margin-collapse hacks.",
+      "Do use the single Montserrat family with weight contrast for all hierarchy.",
+      "Do use aria-live=\"polite\" on all inline status messages that update asynchronously.",
+      "Do add title tooltips on metric labels to explain what each measurement represents.",
+      "Do use <details> for progressive disclosure of secondary tools.",
+      "Do persist user preferences (theme, disclosure state) in localStorage.",
+      "Do provide keyboard shortcuts for frequent actions."
+    ],
+    "donts": [
+      "Don't use playful SaaS energy: no confetti, emoji-heavy UI, rounded bubbly cards.",
+      "Don't use legacy enterprise patterns: no gray-on-gray, tiny fonts, 2005 tab bars.",
+      "Don't waste space with ultra-minimal whitespace. Density matters.",
+      "Don't use neon accents, decorative gradients, or dark-mode-as-aesthetic.",
+      "Don't use Bootstrap defaults, Material cookie-cutter, or generic admin templates.",
+      "Don't use border-left/right > 1px as colored accent stripes.",
+      "Don't use gradient text (background-clip: text).",
+      "Don't use glassmorphism or blur decoratively.",
+      "Don't use identical card grids (icon + heading + text repeated).",
+      "Don't use cursor: pointer on non-interactive elements.",
+      "Don't use transition: all. Specify exact properties.",
+      "Don't use hardcoded hex outside the token system.",
+      "Don't use em dashes in UI copy."
+    ]
+  }
+}

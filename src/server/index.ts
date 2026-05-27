@@ -9,6 +9,11 @@ const config = loadAppConfig();
 const db = createDatabase(config.paths.databaseFile);
 const repos = createRepositories(db);
 
+// Security: warn if JWT secret is still the default placeholder
+if (config.auth.enabled && config.auth.jwt.secret === "change-me-in-production") {
+  logger.warn("JWT secret is set to the default placeholder. Set JWT_SECRET environment variable before deploying.");
+}
+
 // Seed default admin user if auth is enabled and no users exist
 async function seedDefaultAdmin() {
   if (!config.auth.enabled || config.auth.strategy === "none") return;
@@ -30,7 +35,7 @@ async function seedDefaultAdmin() {
     role: "admin"
   });
 
-  logger.info(`Default admin created: ${email} (password from ADMIN_PASSWORD env or default)`);
+  logger.info("Default admin created (configure via ADMIN_EMAIL and ADMIN_PASSWORD env vars)");
 }
 
 void seedDefaultAdmin();

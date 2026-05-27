@@ -18,6 +18,9 @@ server:
   host: 127.0.0.1
   port: 8787
   clientDevPort: 5173
+  # corsOrigins:
+  #   - http://localhost:5173
+  #   - https://your-production-domain.com
 
 auth:
   enabled: false

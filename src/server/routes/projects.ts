@@ -244,25 +244,20 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     try {
       const memberKey = req.body.memberKey;
       const properties = req.body.properties;
-      if (!memberKey && !properties && !req.body.description) {
+      if (!memberKey && !properties && req.body.description === undefined) {
         return res.status(400).json({ error: "Provide memberKey, properties, or description to update" });
       }
-      // If only partial fields provided, we need to merge. The update() requires both.
-      // If caller sends full properties object (like the grid does), pass through directly.
-      if (memberKey && properties) {
-        repos.members.update(req.params.memberId, { memberKey, properties });
-      } else {
-        // Partial update: fetch current state first via project members list
-        const allMembers = repos.members.listByProject(req.params.projectId);
-        const existing = allMembers.find(m => m.id === req.params.memberId);
-        if (!existing) return res.status(404).json({ error: "Member not found" });
-        const finalKey = memberKey ?? existing.memberKey;
-        const finalProps = properties ?? { ...existing.properties };
-        if (req.body.description !== undefined) {
-          finalProps.Description = req.body.description;
-        }
-        repos.members.update(req.params.memberId, { memberKey: finalKey, properties: finalProps });
+
+      const existing = repos.members.getById(req.params.memberId);
+      if (!existing) return res.status(404).json({ error: "Member not found" });
+
+      const finalKey = memberKey ?? existing.memberKey;
+      const finalProps = properties ?? { ...existing.properties };
+      if (req.body.description !== undefined) {
+        finalProps.Description = req.body.description;
       }
+      repos.members.update(req.params.memberId, { memberKey: finalKey, properties: finalProps });
+
       repos.audit.record({
         projectId: req.params.projectId,
         action: "member.update",
@@ -270,7 +265,9 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
         entityId: req.params.memberId,
         after: req.body
       });
-      res.json({ id: req.params.memberId, memberKey: memberKey ?? req.body.memberKey, ...(req.body) });
+
+      const updated = repos.members.getById(req.params.memberId);
+      res.json(updated ?? { id: req.params.memberId, memberKey: finalKey, properties: finalProps });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Update failed" });
     }

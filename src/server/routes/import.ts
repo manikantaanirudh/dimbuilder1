@@ -8,9 +8,32 @@ import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
 
+const ALLOWED_MIMETYPES = new Set([
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/xml",
+  "text/xml",
+  "text/csv",
+  "application/octet-stream"
+]);
+
+const ALLOWED_EXTENSIONS = /\.(xlsx|xls|xml|csv)$/i;
+
 export function createImportRouter(repos: Repositories, config: AppConfig): Router {
   mkdirSync(config.paths.uploadsDirectory, { recursive: true });
-  const upload = multer({ dest: config.paths.uploadsDirectory });
+  const upload = multer({
+    dest: config.paths.uploadsDirectory,
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const extOk = ALLOWED_EXTENSIONS.test(file.originalname);
+      const mimeOk = ALLOWED_MIMETYPES.has(file.mimetype);
+      if (extOk || mimeOk) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only .xlsx, .xls, .xml, and .csv files are allowed"));
+      }
+    }
+  });
   const router = Router();
 
   router.post("/workbook", upload.single("file"), async (req, res, next) => {

@@ -1,14 +1,16 @@
-import { useState } from "react";
-import { ArrowRight, Database } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, Database, Search } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
 import { apiPatchJson } from "../api/client";
-import { buildIssueSummary, formatCount } from "../ui/viewModel";
+import { buildIssueSummary } from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
 import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
-import { EmptyState, FactItem, FactStrip, StatusBadge } from "./ui";
+import { EmptyState, StatusBadge } from "./ui";
+
+const DISCLOSURE_KEY = "dimbuilder-overview-disclosure";
 
 export function Dashboard({
   dimensions,
@@ -37,16 +39,57 @@ export function Dashboard({
   const statusLabel = !project ? "No project" : blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready";
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(project?.name ?? "");
+  const [renameError, setRenameError] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [dimSearch, setDimSearch] = useState("");
+  const [disclosureOpen, setDisclosureOpen] = useState(() => localStorage.getItem(DISCLOSURE_KEY) === "open");
+  const dimSearchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (e.target as HTMLElement).tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        dimSearchRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const dimensionIssueMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof buildIssueSummary>>();
+    for (const dim of dimensions) {
+      map.set(dim.id, buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities, dim.id));
+    }
+    return map;
+  }, [dimensions, issues, appConfig.validation.exportBlockedBySeverities]);
+
+  const filteredDimensions = useMemo(() => {
+    if (!dimSearch.trim()) return dimensions;
+    const query = dimSearch.toLowerCase();
+    return dimensions.filter((dim) => {
+      const label = getDimensionDisplayLabel(dim, dimensionDisplayConfig).toLowerCase();
+      const subtitle = getDimensionDisplaySubtitle(dim, dimensionDisplayConfig).toLowerCase();
+      return label.includes(query) || subtitle.includes(query);
+    });
+  }, [dimensions, dimSearch, dimensionDisplayConfig]);
 
   async function handleRename() {
     if (!project || !editName.trim() || editName.trim() === project.name) {
       setEditing(false);
       return;
     }
+    setRenameError("");
+    setRenaming(true);
     try {
       await apiPatchJson<ProjectRecord>(`/projects/${project.id}`, { name: editName.trim() });
       onProjectChanged?.(project.id);
-    } catch { /* ignore */ }
+    } catch (caught) {
+      setRenameError(caught instanceof Error ? caught.message : "Rename failed");
+    }
+    setRenaming(false);
     setEditing(false);
   }
 
@@ -63,7 +106,11 @@ export function Dashboard({
               <h1
                 className="editable-title"
                 title="Click to rename project"
+                tabIndex={0}
+                role="button"
+                aria-label={`Rename project: ${project.name}`}
                 onClick={() => { setEditName(project.name); setEditing(true); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setEditName(project.name); setEditing(true); } }}
               >
                 {project.name}
               </h1>
@@ -72,6 +119,7 @@ export function Dashboard({
                 className="rename-input"
                 value={editName}
                 autoFocus
+                disabled={renaming}
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={() => void handleRename()}
                 onKeyDown={(e) => {
@@ -87,26 +135,28 @@ export function Dashboard({
                 ? project.sourceFileName || project.description || "Created manually."
                 : "Create a project or seed one from XLSX."}
             </p>
+            {renameError && (
+              <p className="rename-error" role="alert">
+                {renameError}
+                {" "}
+                <button className="rename-retry" onClick={() => { setEditName(editName); setEditing(true); setRenameError(""); }}>
+                  Try again
+                </button>
+              </p>
+            )}
           </div>
           <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
         </div>
       </div>
 
       <div className="overview-document">
-        <FactStrip className="overview-facts">
-          <FactItem label="Dimensions" value={formatCount(summary?.totalDimensions ?? dimensions.length)} />
-          <FactItem label="Members" value={formatCount(summary?.totalMembers ?? 0)} />
-          <FactItem label="Relationships" value={formatCount(summary?.totalRelationships ?? 0)} />
-          <FactItem label="Errors" value={formatCount(summaryErrors)} tone={summaryErrors ? "danger" : "neutral"} />
-          <FactItem label="Warnings" value={formatCount(summaryWarnings)} tone={summaryWarnings ? "warning" : "neutral"} />
-        </FactStrip>
-
         {project && (
           <KPICards
             projectId={project.id}
             summary={summary}
             issues={issues}
             blockedSeverities={appConfig.validation.exportBlockedBySeverities}
+            dimensionCount={dimensions.length}
           />
         )}
 
@@ -119,10 +169,23 @@ export function Dashboard({
             <span>{dimensions.length} available</span>
           </div>
 
-          {dimensions.length ? (
+          {dimensions.length > 3 && (
+            <div className="overview-dim-search">
+              <Search size={14} />
+              <input
+                ref={dimSearchRef}
+                value={dimSearch}
+                onChange={(e) => setDimSearch(e.target.value)}
+                placeholder="Filter dimensions (press /)"
+                aria-label="Filter dimensions"
+              />
+            </div>
+          )}
+
+          {filteredDimensions.length ? (
             <div className="dimension-list">
-              {dimensions.map((dimension) => {
-                const dimensionIssues = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities, dimension.id);
+              {filteredDimensions.map((dimension) => {
+                const dimensionIssues = dimensionIssueMap.get(dimension.id) ?? { errors: 0, warnings: 0, infos: 0, total: 0, blocksExport: false };
                 return (
                   <button className="dimension-row" key={dimension.id} onClick={() => onOpenDimension(dimension.id)}>
                     <span>
@@ -137,6 +200,10 @@ export function Dashboard({
                 );
               })}
             </div>
+          ) : dimensions.length ? (
+            <EmptyState title="No dimensions match">
+              No dimensions match "{dimSearch}".
+            </EmptyState>
           ) : (
             <EmptyState title={project ? "No dimensions available" : "No project open"}>
               {project
@@ -146,8 +213,26 @@ export function Dashboard({
           )}
         </section>
 
-        {project ? <SnapshotManager project={project} onProjectChanged={onProjectChanged} /> : null}
-        <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />
+        {project && (
+          <details
+            className="overview-secondary"
+            open={disclosureOpen}
+            onToggle={(e) => {
+              const open = (e.currentTarget as HTMLDetailsElement).open;
+              setDisclosureOpen(open);
+              localStorage.setItem(DISCLOSURE_KEY, open ? "open" : "closed");
+            }}
+          >
+            <summary className="overview-secondary-toggle">
+              Snapshots and Blueprints
+            </summary>
+            <div className="overview-secondary-content">
+              <SnapshotManager project={project} onProjectChanged={onProjectChanged} />
+              <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />
+            </div>
+          </details>
+        )}
+        {!project && <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />}
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { AppConfig } from "../shared/appConfigTypes";
 import type { AppDatabase } from "./db/database";
@@ -38,13 +39,21 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   const app = express();
   const repos = createRepositories(db);
 
+  app.use(helmet({ contentSecurityPolicy: false }));
   const corsOrigins = config.server.corsOrigins;
   app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined));
   app.use(express.json({ limit: "25mb" }));
   app.use(requestLogger);
 
   // Health check is unauthenticated
-  app.get("/api/health", (_req, res) => res.json({ ok: true }));
+  app.get("/api/health", (_req, res) => {
+    try {
+      db.prepare("SELECT 1").get();
+      res.json({ ok: true });
+    } catch {
+      res.status(503).json({ ok: false, error: "Database unavailable" });
+    }
+  });
 
   // Auth routes handle their own authentication
   app.use("/api/auth", createAuthRouter(repos, config));

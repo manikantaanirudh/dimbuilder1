@@ -358,6 +358,10 @@ export function createRepositories(db: AppDatabase) {
           WHERE id = ?
         `).run(input.memberKey, description, JSON.stringify(input.properties), now(), id);
       },
+      getById(id: string): DimensionMemberRecord | undefined {
+        const row = db.prepare("SELECT * FROM dimension_members WHERE id = ? AND is_active = 1").get(id);
+        return row ? mapMember(row) : undefined;
+      },
       softDelete(id: string): void {
         db.prepare("UPDATE dimension_members SET is_active = 0, updated_at = ? WHERE id = ?").run(now(), id);
       },

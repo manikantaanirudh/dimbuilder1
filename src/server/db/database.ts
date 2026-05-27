@@ -21,6 +21,8 @@ export interface AppDatabase {
 export function createDatabase(filename = "data/app.db"): AppDatabase {
   if (filename !== ":memory:") mkdirSync(dirname(filename), { recursive: true });
   const db = new DatabaseSync(filename);
+  db.exec("PRAGMA journal_mode=WAL");
+  db.exec("PRAGMA busy_timeout=5000");
   db.exec(schemaSql);
   evolveSchema(db);
   seedSecurity(db);

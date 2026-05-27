@@ -112,7 +112,7 @@ export function BlueprintStudio({
       <div className="panel-heading">
         <div>
           <span className="section-kicker">Configuration authoring</span>
-          <h2>Blueprint Studio</h2>
+          <h3>Blueprint Studio</h3>
         </div>
         <StatusBadge tone={valid === false ? "danger" : valid ? "success" : "info"}>
           {valid === false ? "Needs fixes" : valid ? "Valid draft" : "Authoring aid"}
@@ -120,7 +120,7 @@ export function BlueprintStudio({
       </div>
 
       <p className="blueprint-studio-note">
-        Validate, preview, and generate dimension blueprint YAML. Studio does not write config automatically.
+        Author and validate dimension blueprint configurations. Select a dimension type, edit the JSON draft, then validate or preview the generated YAML.
       </p>
 
       <div className="blueprint-studio-form">
@@ -172,7 +172,7 @@ export function BlueprintStudio({
         </ActionButton>
       </div>
 
-      {status ? <p className="blueprint-studio-status">{status}</p> : null}
+      {status ? <p className="blueprint-studio-status" aria-live="polite" role="status">{status}</p> : null}
       {yamlPreview ? <pre className="blueprint-yaml-preview">{yamlPreview}</pre> : null}
     </section>
   );
