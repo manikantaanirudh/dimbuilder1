@@ -1,0 +1,32 @@
+spec:
+  containers:
+  - name: app
+    image: /demo_openflow/os_metadata/sr_os_metadatabuilder_repo/sr_os_metadatabuilder:latest
+    env:
+      HOST: "0.0.0.0"
+      PORT: "8787"
+      NODE_ENV: "production"
+      DATABASE_FILE: "/app/data/app.db"
+      METADATA_DIRECTORY: "/app/data/metadata"
+      AUTH_ENABLED: "false"
+    readinessProbe:
+      port: 8787
+      path: /api/health
+    volumeMounts:
+    - name: appdata
+      mountPath: /app/data
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: "0.5"
+      limits:
+        memory: 2Gi
+        cpu: "1"
+  endpoints:
+  - name: web
+    port: 8787
+    public: true
+  volumes:
+  - name: appdata
+    source: block
+    size: 10Gi

@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -98,6 +100,16 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api", createTier3Router(repos, config));
   app.use("/api", createTier4Router(repos, config));
   app.use("/api", createProjectACLRouter(repos));
+
+  // Serve the built React SPA in production. API routes above take precedence;
+  // any non-/api path falls back to index.html for client-side routing.
+  const clientDir = process.env.CLIENT_DIST_DIR ?? path.resolve(process.cwd(), "dist");
+  if (existsSync(clientDir)) {
+    app.use(express.static(clientDir));
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+      res.sendFile(path.join(clientDir, "index.html"));
+    });
+  }
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unexpected server error";

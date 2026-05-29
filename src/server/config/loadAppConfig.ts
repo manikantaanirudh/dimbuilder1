@@ -28,6 +28,7 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
     },
     server: {
       ...config.server,
+      host: process.env.HOST ?? config.server.host,
       port: process.env.PORT ? Number(process.env.PORT) : config.server.port
     },
     auth: {
