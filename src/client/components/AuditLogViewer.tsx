@@ -113,7 +113,7 @@ export function AuditLogViewer({ projectId }: { projectId: string }) {
                   <td className="audit-changes">
                     {Object.keys(entry.changes).length > 0
                       ? Object.keys(entry.changes).slice(0, 3).join(", ")
-                      : "—"}
+                      : "n/a"}
                   </td>
                 </tr>
               ))}

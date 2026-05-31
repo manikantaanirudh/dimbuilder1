@@ -68,7 +68,7 @@ export function ImpactAnalysisPanel({ projectId }: { projectId: string }) {
       };
       const response = await runImpactAnalysis(projectId, request);
       setResults(response.results);
-      setStatus(`Analysis complete — severity: ${response.severity}`);
+      setStatus(`Analysis complete: severity ${response.severity}`);
       const refreshed = await fetchImpactAnalyses(projectId);
       setAnalyses(refreshed as AnalysisSummary[]);
     } catch (err) {

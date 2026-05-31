@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
 import { getDimensionDisplayLabel } from "../../shared/dimensionDisplay";
+import { onActivate } from "../hooks/keyboardActivate";
 import { StatusBadge } from "./ui";
 
 export function ValidationDashboard({
@@ -73,19 +74,19 @@ export function ValidationDashboard({
         </div>
 
         <div className="validation-summary-cards">
-          <div className={`summary-card danger clickable-card ${severityFilter === 'error' ? 'active-filter' : ''}`} onClick={() => handleCardClick('error')}>
+          <div className={`summary-card danger clickable-card ${severityFilter === 'error' ? 'active-filter' : ''}`} role="button" tabIndex={0} aria-pressed={severityFilter === 'error'} onClick={() => handleCardClick('error')} onKeyDown={onActivate(() => handleCardClick('error'))}>
             <span className="summary-value">{totalErrors}</span>
             <span className="summary-label">Errors</span>
           </div>
-          <div className={`summary-card warning clickable-card ${severityFilter === 'warning' ? 'active-filter' : ''}`} onClick={() => handleCardClick('warning')}>
+          <div className={`summary-card warning clickable-card ${severityFilter === 'warning' ? 'active-filter' : ''}`} role="button" tabIndex={0} aria-pressed={severityFilter === 'warning'} onClick={() => handleCardClick('warning')} onKeyDown={onActivate(() => handleCardClick('warning'))}>
             <span className="summary-value">{totalWarnings}</span>
             <span className="summary-label">Warnings</span>
           </div>
-          <div className={`summary-card info clickable-card ${severityFilter === 'info' ? 'active-filter' : ''}`} onClick={() => handleCardClick('info')}>
+          <div className={`summary-card info clickable-card ${severityFilter === 'info' ? 'active-filter' : ''}`} role="button" tabIndex={0} aria-pressed={severityFilter === 'info'} onClick={() => handleCardClick('info')} onKeyDown={onActivate(() => handleCardClick('info'))}>
             <span className="summary-value">{totalInfos}</span>
             <span className="summary-label">Info</span>
           </div>
-          <div className={`summary-card neutral clickable-card ${severityFilter === null ? 'active-filter' : ''}`} onClick={() => handleCardClick(null)}>
+          <div className={`summary-card neutral clickable-card ${severityFilter === null ? 'active-filter' : ''}`} role="button" tabIndex={0} aria-pressed={severityFilter === null} onClick={() => handleCardClick(null)} onKeyDown={onActivate(() => handleCardClick(null))}>
             <span className="summary-value">{issues.length}</span>
             <span className="summary-label">Total Issues</span>
           </div>

@@ -37,6 +37,31 @@ docs/               Maintained documentation (23 files, verified by npm run docs
 - **Issue dismissal**: Client-side state only (`Set<string>`), not persisted to backend.
 - **Export blocking**: Controlled by `validation.exportBlockedBySeverities` config. Server enforces in `exportGuards.ts`.
 
+## Do Not Touch
+
+- `data/` — runtime SQLite database, exports, and logs. Never edit or commit generated contents.
+- `dist/`, `node_modules/` — build output and dependencies.
+- Design tokens in `src/client/styles.css` (the `:root` and `[data-theme="dark"]` OKLCH values) and the `<title>` in `index.html` are pinned by `src/test/notionDesignSystem.test.ts`. Changing them breaks tests; update the test deliberately if a token change is intended.
+- The 4 known-failing `workbookParser.test.ts` cases (missing fixture) — do not "fix" by deleting assertions; the fixture is intentionally absent.
+- `config/dimbuilder.yaml` — central config. Change only when the task is about configuration, and update `configuration-guide.md`.
+- Pre-existing dead code — leave it unless removal is requested.
+
+## File & Naming Conventions
+
+- React components: `PascalCase.tsx` under `src/client/components/`. One component per file.
+- Hooks: `useX.ts` / camelCase helpers under `src/client/hooks/`.
+- Shared and server modules: `camelCase.ts` (e.g., `validationEngine.ts`, `exportGuards.ts`).
+- Tests: `src/test/<feature>.test.ts`, matching the module under test.
+- Docs: `kebab-case.md` under `docs/`, linked from `docs/README.md`.
+- CSS: classes are kebab-case; colors come from CSS variables only, never raw hex/rgb.
+
+## Response Format
+
+- Be concise. Reference code as `file_path:line` so it is navigable.
+- Before multi-file or behavioral changes, present the plan/options; don't pick silently.
+- After changes: state what changed, the verification run, and the result (pass/fail counts).
+- No em dashes in code or UI copy; use commas, colons, or periods.
+
 ## Commands
 
 | Action | Command |

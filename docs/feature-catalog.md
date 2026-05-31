@@ -242,7 +242,7 @@ A dedicated Admin Panel page is accessible from the sidebar. It displays all val
 Source:
 
 - `src/client/components/AdminPanel.tsx`
-- `src/client/components/Sidebar.tsx`
+- `src/client/components/AppShell.tsx`
 - `src/server/routes/validation.ts`
 - `src/server/db/schema.ts` (`project_validation_overrides` table)
 
@@ -284,7 +284,7 @@ A project-wide validation summary page accessible from the sidebar. Displays tot
 Source:
 
 - `src/client/components/ValidationDashboard.tsx`
-- `src/client/components/Sidebar.tsx`
+- `src/client/components/AppShell.tsx`
 - `src/server/routes/validation.ts`
 
 ## Frontend Config Editor
@@ -294,17 +294,18 @@ A "Config" section in the sidebar displays the current application config as JSO
 Source:
 
 - `src/client/components/ConfigEditor.tsx`
-- `src/client/components/Sidebar.tsx`
+- `src/client/components/AppShell.tsx`
 - `src/client/api/client.ts`
 - `src/server/routes/config.ts`
 
 ## Spaulding Ridge Branding
 
-Navy (#1B2A4A), Gold (#C5A961), and White color scheme applied throughout the UI. CSS variables define the palette. Toolbar background is navy with gold accent on hover. SR logo favicon (navy rectangle with gold "SR" text). Updated `index.html` title.
+Navy (#00204A), Brass Gold (#C5A961), and tinted neutral color scheme applied throughout the UI. The palette is defined as OKLCH CSS custom properties in `src/client/styles.css`, with a full `[data-theme="dark"]` token set powering the light/dark theme toggle. The global toolbar uses the navy primary with a brass-gold accent on hover. SR logo favicon (navy rectangle with gold "SR" text). Updated `index.html` title.
 
 Source:
 
-- `src/client/styles/variables.css`
+- `src/client/styles.css`
+- `src/client/hooks/useTheme.ts`
 - `index.html`
 
 ## Audit Logging
@@ -497,14 +498,15 @@ Source:
 
 ## Chat Page (Natural Language Query)
 
-Conversational chatbot interface for querying project metadata in plain English. Supports 8 query intents: find member, count members, count dimensions, show children, find orphans, check member existence, missing property, property filter. Hybrid AI: local pattern matching first, optional LLM fallback if configured.
+Conversational chatbot interface for querying project metadata in plain English. Supports 11 query intents: project summary, project issues/health, export readiness, find member, count members, count dimensions, show children, find orphans, check member existence, missing property, property filter. The summary, issues, and export-readiness intents are answered from injected project context (dimension/member/relationship counts, validation summary, top issue codes, export-blocking status) computed server-side by `buildProjectAIContext`, so the assistant reports on the actual project state rather than falling back to keyword search. Hybrid AI: local pattern matching first, optional LLM fallback if configured.
 
 Source:
 
 - `src/client/components/ChatPanel.tsx`
 - `src/server/ai/naturalLanguage/queryParser.ts`
 - `src/server/ai/naturalLanguage/responseGenerator.ts`
-- `src/server/routes/ai.ts` (`POST /projects/:id/ai/query`)
+- `src/server/ai/projectContext.ts` (project context builder)
+- `src/server/routes/ai.ts` (`POST /projects/:id/ai/query`, `POST /projects/:id/ai/chat`)
 
 ## Validation Dashboard Drill-Down
 

@@ -43,10 +43,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map(t => {
           const Icon = icons[t.type];
           return (
-            <div key={t.id} className={`toast ${t.type}`} role="alert" onClick={() => dismiss(t.id)}>
+            <div key={t.id} className={`toast ${t.type}`} role="alert">
               <Icon size={16} />
               <span>{t.message}</span>
-              <X size={14} style={{ marginLeft: "auto", opacity: 0.6 }} />
+              <button type="button" className="toast-dismiss" aria-label="Dismiss notification" onClick={() => dismiss(t.id)}>
+                <X size={14} />
+              </button>
             </div>
           );
         })}

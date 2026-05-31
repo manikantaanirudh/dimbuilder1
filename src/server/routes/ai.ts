@@ -4,6 +4,7 @@ import type { AppConfig } from "../../shared/appConfigTypes";
 import type { AIConfigSection, AISuggestionType, AISuggestionStatus } from "../../shared/aiTypes";
 import type { Repositories } from "../db/repositories";
 import { runFullAnalysis, runParentSuggestion, runDuplicateDetection, runNaturalLanguageQuery } from "../ai/aiEngine";
+import { buildProjectAIContext } from "../ai/projectContext";
 
 const defaultAIConfig: AIConfigSection = {
   enabled: true,
@@ -187,7 +188,11 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const members = repos.members.listByProject(project.id);
     const relationships = repos.relationships.listByProject(project.id);
 
-    const result = runNaturalLanguageQuery(parsed.data.question, { dimensions, members, relationships });
+    const result = runNaturalLanguageQuery(
+      parsed.data.question,
+      { dimensions, members, relationships },
+      buildProjectAIContext(repos, config, project.id) ?? undefined
+    );
     res.json(result);
   });
 
@@ -209,7 +214,11 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const dimensions = repos.dimensions.listByProject(project.id);
     const members = repos.members.listByProject(project.id);
     const relationships = repos.relationships.listByProject(project.id);
-    const queryResult = runNaturalLanguageQuery(parsed.data.message, { dimensions, members, relationships });
+    const queryResult = runNaturalLanguageQuery(
+      parsed.data.message,
+      { dimensions, members, relationships },
+      buildProjectAIContext(repos, config, project.id) ?? undefined
+    );
 
     const assistantMessage = {
       role: 'assistant' as const,

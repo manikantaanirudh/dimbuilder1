@@ -15,6 +15,7 @@ import { detectNamingAnomalies } from "./suggestions/namingAnomaly";
 import { suggestHierarchyOptimizations } from "./suggestions/hierarchyOptimization";
 import { suggestProperties } from "./suggestions/propertySuggestion";
 import { parseAndExecuteQuery } from "./naturalLanguage/queryParser";
+import type { ProjectAIContext } from "./projectContext";
 
 export interface ProjectData {
   dimensions: DimensionRecord[];
@@ -129,12 +130,14 @@ export function runDuplicateDetection(
 
 export function runNaturalLanguageQuery(
   question: string,
-  projectData: ProjectData
+  projectData: ProjectData,
+  context?: ProjectAIContext
 ): NLQueryResult {
   return parseAndExecuteQuery({
     question,
     dimensions: projectData.dimensions,
     members: projectData.members,
-    relationships: projectData.relationships
+    relationships: projectData.relationships,
+    context
   });
 }

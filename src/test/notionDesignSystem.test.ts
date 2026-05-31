@@ -6,15 +6,15 @@ const html = readFileSync("index.html", "utf8");
 
 describe("Notion-inspired design system CSS", () => {
   it("uses SR Onestream Dim Builder as the browser-facing app identity", () => {
-    expect(html).toContain("<title>Spaulding Ridge Onestream Dim Builder</title>");
+    expect(html).toContain("<title>SR Onestream Dim Builder</title>");
   });
 
   it("uses the Notion-inspired core tokens", () => {
-    expect(css).toContain("--bg: #f8f9fb;");
-    expect(css).toContain("--surface: #ffffff;");
-    expect(css).toContain("--surface-subtle: #f4f6f9;");
-    expect(css).toContain("--text: #00204A;");
-    expect(css).toContain("--primary: #00204A;");
+    expect(css).toContain("--bg: oklch(0.9819 0.0029 264.54);");
+    expect(css).toContain("--surface: oklch(0.9925 0.005 256.41);");
+    expect(css).toContain("--surface-subtle: oklch(0.9725 0.0045 258.32);");
+    expect(css).toContain("--text: oklch(0.2505 0.0869 256.41);");
+    expect(css).toContain("--primary: oklch(0.2505 0.0869 256.41);");
     expect(css).toContain("--radius: 16px;");
     expect(css).toContain("--radius-sm: 10px;");
   });

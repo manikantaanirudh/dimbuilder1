@@ -5,6 +5,7 @@ import type { ExportLoadMode, ProjectRecord } from "../../shared/types";
 import type { RelationshipOperationPlan } from "../../shared/relationshipOperations";
 import { getEnabledExportFormats, type ExportAvailability, type ExportFormatLink } from "../ui/viewModel";
 import { createProject, createProjectSnapshot, deleteProject, planRelationshipExport, uploadWorkbook, uploadXml } from "../api/client";
+import { onActivate } from "../hooks/keyboardActivate";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
@@ -508,7 +509,7 @@ export function OpenProjectModal({
           <div className="project-list">
             {projects.map((project) => (
               <div key={project.id} className={`project-list-item ${project.id === selectedProjectId ? "active" : ""}`}>
-                <div className="project-list-info" onClick={() => { onOpenProject(project.id); onClose(); }}>
+                <div className="project-list-info" role="button" tabIndex={0} onClick={() => { onOpenProject(project.id); onClose(); }} onKeyDown={onActivate(() => { onOpenProject(project.id); onClose(); })}>
                   <strong>{project.name}</strong>
                   <small>{project.description || project.sourceFileName || "No description"}</small>
                   <small className="project-date">{new Date(project.createdAt).toLocaleDateString()}</small>

@@ -1,5 +1,6 @@
 import type { DimensionMemberRecord, DimensionRelationshipRecord, DimensionRecord } from "../../../shared/types";
 import type { NLQueryResult } from "../../../shared/aiTypes";
+import type { ProjectAIContext } from "../projectContext";
 import { generateResponse } from "./responseGenerator";
 
 export interface NLQueryInput {
@@ -7,17 +8,18 @@ export interface NLQueryInput {
   dimensions: DimensionRecord[];
   members: DimensionMemberRecord[];
   relationships: DimensionRelationshipRecord[];
+  context?: ProjectAIContext;
 }
 
 interface ParsedIntent {
-  type: 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans' | 'check_exists' | 'unknown';
+  type: 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans' | 'check_exists' | 'summary' | 'issues' | 'export_ready' | 'unknown';
   params: Record<string, string>;
 }
 
 export function parseAndExecuteQuery(input: NLQueryInput): NLQueryResult {
-  const { question, dimensions, members, relationships } = input;
+  const { question, dimensions, members, relationships, context } = input;
   const intent = parseIntent(question);
-  const result = executeIntent(intent, dimensions, members, relationships);
+  const result = executeIntent(intent, dimensions, members, relationships, context);
 
   return {
     answer: result.answer,
@@ -29,6 +31,21 @@ export function parseAndExecuteQuery(input: NLQueryInput): NLQueryResult {
 
 function parseIntent(question: string): ParsedIntent {
   const q = question.trim();
+
+  // "Can I export?" / "Is it ready to export?" / "What's blocking export?"
+  if (/\bexport\b/i.test(q) && /(ready|can i|able to|block|blocking|blocked|allowed|safe to)/i.test(q)) {
+    return { type: 'export_ready', params: {} };
+  }
+
+  // "What's wrong?" / "What are the issues?" / "Is my project healthy?" / "Any errors?"
+  if (/(what(?:'s| is| are)?\s+(?:wrong|the issues|the problems))|(\b(issues?|problems?|errors?|warnings?)\b.*\b(project|have|are there|exist))|(\bhealth(y|\b))|(is\s+(?:my|the)\s+project\s+(?:ok|okay|valid|healthy|clean))/i.test(q)) {
+    return { type: 'issues', params: {} };
+  }
+
+  // "Summarize my project" / "Project overview" / "Project status" / "Tell me about this project"
+  if (/(summar(y|ize|ise))|(\boverview\b)|(project\s+status)|(tell me about (?:my|this|the) project)|(give me (?:a )?(?:rundown|snapshot))/i.test(q)) {
+    return { type: 'summary', params: {} };
+  }
 
   // "Which [dimension] are missing [property]?"
   const missingMatch = q.match(/which\s+(\w+)\s+(?:are|is)\s+missing\s+['"]?(\w+)['"]?/i);
@@ -93,9 +110,64 @@ function executeIntent(
   intent: ParsedIntent,
   dimensions: DimensionRecord[],
   members: DimensionMemberRecord[],
-  relationships: DimensionRelationshipRecord[]
+  relationships: DimensionRelationshipRecord[],
+  context?: ProjectAIContext
 ): { answer: string; matchedMembers: string[]; confidence: number } {
   switch (intent.type) {
+    case 'summary': {
+      if (!context) {
+        return { answer: "Project context is unavailable right now. Open a project and try again.", matchedMembers: [], confidence: 0.4 };
+      }
+      const dimList = context.dimensions.length > 0
+        ? context.dimensions.map(d => `${d.dimensionType} (${d.dimensionName}): ${d.memberCount} member(s)`).join('\n  ')
+        : 'No dimensions yet.';
+      const health = context.validation.totalIssues === 0
+        ? 'No validation issues.'
+        : `${context.validation.totalIssues} issue(s): ${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s), ${context.validation.infos ?? 0} info.`;
+      const exportLine = context.exportReady
+        ? 'Export status: ready (no blocking issues).'
+        : `Export status: blocked by ${context.validation.blockingIssues} issue(s).`;
+      return {
+        answer: `Project "${context.projectName}"\n• ${context.dimensionCount} dimension(s), ${context.memberCount} member(s), ${context.relationshipCount} relationship(s).\n• ${health}\n• ${exportLine}\n\nDimensions:\n  ${dimList}`,
+        matchedMembers: [],
+        confidence: 1.0
+      };
+    }
+
+    case 'issues': {
+      if (!context) {
+        return { answer: "Project context is unavailable right now. Open a project and try again.", matchedMembers: [], confidence: 0.4 };
+      }
+      if (context.validation.totalIssues === 0) {
+        return { answer: `No validation issues in "${context.projectName}". The project is clean.`, matchedMembers: [], confidence: 1.0 };
+      }
+      const breakdown = `${context.validation.totalIssues} issue(s): ${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s), ${context.validation.infos ?? 0} info.`;
+      const top = context.topIssues.length > 0
+        ? '\n\nMost frequent:\n  ' + context.topIssues.map(i => `${i.code} (x${i.count}): ${i.message}`).join('\n  ')
+        : '';
+      const blocking = context.validation.blockingIssues > 0
+        ? `\n\n${context.validation.blockingIssues} of these block export.`
+        : '\n\nNone of these block export.';
+      return { answer: `${breakdown}${top}${blocking}`, matchedMembers: [], confidence: 1.0 };
+    }
+
+    case 'export_ready': {
+      if (!context) {
+        return { answer: "Project context is unavailable right now. Open a project and try again.", matchedMembers: [], confidence: 0.4 };
+      }
+      if (context.exportReady) {
+        return { answer: `Yes, "${context.projectName}" is ready to export. No blocking validation issues.`, matchedMembers: [], confidence: 1.0 };
+      }
+      const top = context.topIssues.length > 0
+        ? '\n\nTop issues:\n  ' + context.topIssues.map(i => `${i.code} (x${i.count}): ${i.message}`).join('\n  ')
+        : '';
+      return {
+        answer: `Not yet. Export is blocked by ${context.validation.blockingIssues} issue(s) in "${context.projectName}". Resolve the blocking issues, then export.${top}`,
+        matchedMembers: [],
+        confidence: 1.0
+      };
+    }
+
     case 'find': {
       const pattern = intent.params.pattern.toLowerCase();
       const matched = members.filter(m =>

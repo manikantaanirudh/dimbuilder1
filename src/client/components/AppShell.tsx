@@ -79,12 +79,6 @@ export function AppShell({
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
   const selectedProject = store.projects.find((project) => project.id === store.selectedProjectId) ?? null;
-  const projectName = selectedProject?.name ?? "No project open";
-  const projectSource = store.loading
-    ? "Loading metadata workspace..."
-    : selectedProject
-      ? selectedProject.sourceFileName || selectedProject.description || ""
-      : appConfig.application.supportText;
   const issueSummary = buildIssueSummary(store.issues, appConfig.validation.exportBlockedBySeverities);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
@@ -150,15 +144,16 @@ export function AppShell({
     <ToastProvider>
     <div className="app-shell notion-workbench">
       <header className="toolbar global-toolbar">
-        <div className="brand global-brand" style={{ cursor: 'pointer' }} onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)} title="Back to Project Overview">
+        <button
+          type="button"
+          className="brand global-brand"
+          onClick={() => setActiveWorkspace(PROJECT_OVERVIEW_VALUE)}
+          title="Back to Project Overview"
+          aria-label="Back to Project Overview"
+        >
           <img src="/sr-logo.svg" alt="SR" className="app-logo" width="24" height="24" />
           <span className="brand-wordmark">{appConfig.application.productName}</span>
-        </div>
-
-        <div className="project-context">
-          <strong>{projectName}</strong>
-          <span>{projectSource}</span>
-        </div>
+        </button>
 
         <label className="mobile-nav">
           <span>Workspace</span>

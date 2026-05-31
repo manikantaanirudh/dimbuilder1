@@ -90,6 +90,9 @@ This baseline describes the application state as of 2026-05-26.
 - Focus trap for modal accessibility.
 - Card hover elevation with reduced-motion support.
 - Skip-to-content link, WCAG AA contrast compliance, 44px touch targets on mobile.
+- Light/dark theme toggle persisted in localStorage (`src/client/hooks/useTheme.ts`, `[data-theme="dark"]` token set in `src/client/styles.css`).
+- Keyboard activation (Enter/Space) for clickable `role="button"` elements such as validation severity cards and project rows (`src/client/hooks/keyboardActivate.ts`).
+- Context-aware Project Assistant: the natural-language chat answers project summary, validation health, and export-readiness questions from server-computed project context (`src/server/ai/projectContext.ts`), not just member lookups.
 - Design system persisted at `design-system/onestream-dim-builder/MASTER.md`.
 
 ## Intentionally Local-First
@@ -109,7 +112,6 @@ This baseline describes the application state as of 2026-05-26.
 - Bulk update rollback data is stored, but the rollback endpoint is not yet exposed.
 - CSV-driven bulk update mapping is not yet implemented.
 - Release package XML is currently full current metadata for every package mode; mode-specific XML subsets and rollback XML are not yet generated.
-- No dark mode support.
 - No keyboard shortcuts system.
 - Workbook parser tests require a fixture Excel file not in the repository.
 

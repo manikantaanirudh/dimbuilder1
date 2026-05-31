@@ -27,6 +27,10 @@ Coverage is provided by `@vitest/coverage-v8` and configured in `vitest.config.t
 - Excluded: `src/server/index.ts`
 - Thresholds: 60% lines, 50% branches
 
+## Test Environment Setup
+
+Tests run under the Vitest `node` environment. Rendered markup tests use `renderToStaticMarkup`, where browser globals (`localStorage`, `matchMedia`, `window`) are absent. `vitest.config.ts` registers `setupFiles: ["src/test/setup.ts"]`, which installs minimal in-memory shims for those globals so components that read them during render (for example the theme hook) do not throw.
+
 ## Build Verification
 
 ```powershell

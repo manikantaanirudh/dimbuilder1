@@ -107,11 +107,13 @@ describe("client component markup", () => {
     expect(markup).toContain("overview-page");
     expect(markup).toContain("overview-page-icon");
     expect(markup).toContain("overview-document");
-    expect(markup).toContain('<span class="fact-item neutral"><span>Dimensions</span><b>7</b></span>');
-    expect(markup).toContain('<span class="fact-item neutral"><span>Members</span><b>1.2k</b></span>');
-    expect(markup).toContain('<span class="fact-item neutral"><span>Relationships</span><b>4.5k</b></span>');
-    expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
-    expect(markup).toContain('<span class="fact-item warning"><span>Warnings</span><b>3</b></span>');
+    expect(markup).toContain("kpi-metric");
+    expect(markup).toContain('<span class="kpi-metric-value">7</span>');
+    expect(markup).toContain("Dimensions");
+    expect(markup).toContain('<span class="kpi-metric-value">1200</span>');
+    expect(markup).toContain("Members");
+    expect(markup).toContain('<span class="kpi-metric-value">4500</span>');
+    expect(markup).toContain("Relationships");
   });
 
   it("renders a dashboard snapshot manager for restore and branching", () => {
@@ -151,8 +153,6 @@ describe("client component markup", () => {
     const markup = dashboardMarkup(config, summaryWithNonBlockingErrors, sampleProject);
 
     expect(markup).toContain('<span class="status-badge warning">Needs review</span>');
-    expect(markup).toContain('<span class="fact-item danger"><span>Errors</span><b>2</b></span>');
-    expect(markup).toContain('<span class="fact-item neutral"><span>Warnings</span><b>0</b></span>');
     expect(markup).not.toContain("Export blocked");
   });
 
@@ -173,7 +173,7 @@ describe("client component markup", () => {
     expect(markup).toContain("global-toolbar");
     expect(markup).toContain("brand-wordmark");
     expect(markup).toContain(">SR Onestream Dim Builder<");
-    expect(markup).toContain("project-context");
+    expect(markup).not.toContain("project-context");
     expect(markup).not.toContain("nav-project");
   });
 

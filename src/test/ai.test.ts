@@ -371,6 +371,66 @@ describe("AI Natural Language Query", () => {
   });
 });
 
+describe("AI Natural Language Query with project context", () => {
+  const dimensions = [accountDimension];
+  const members = [member("Revenue"), member("Expenses")];
+  const relationships = [rel("Root", "Revenue"), rel("Root", "Expenses")];
+
+  const cleanContext = {
+    projectName: "Demo",
+    dimensionCount: 1,
+    memberCount: 2,
+    relationshipCount: 2,
+    dimensions: [{ dimensionType: "Account", dimensionName: "Account", memberCount: 2 }],
+    validation: { totalIssues: 0, blockingIssues: 0, errors: 0, warnings: 0, infos: 0 },
+    topIssues: [],
+    exportReady: true
+  };
+
+  const blockedContext = {
+    ...cleanContext,
+    validation: { totalIssues: 3, blockingIssues: 2, errors: 2, warnings: 1, infos: 0 },
+    topIssues: [{ code: "MEMBER_KEY_REQUIRED", count: 2, message: "Member key is required." }],
+    exportReady: false
+  };
+
+  it("'Summarize my project' uses context counts and health", () => {
+    const result = parseAndExecuteQuery({ question: "Summarize my project", dimensions, members, relationships, context: cleanContext });
+    expect(result.answer).toContain("Demo");
+    expect(result.answer).toContain("2 member(s)");
+    expect(result.answer).toContain("ready");
+    expect(result.confidence).toBe(1.0);
+  });
+
+  it("'Is my project ready to export?' reflects clean context", () => {
+    const result = parseAndExecuteQuery({ question: "Is my project ready to export?", dimensions, members, relationships, context: cleanContext });
+    expect(result.answer.toLowerCase()).toContain("ready to export");
+  });
+
+  it("'What's blocking export?' lists blocking count and top issues", () => {
+    const result = parseAndExecuteQuery({ question: "What's blocking export?", dimensions, members, relationships, context: blockedContext });
+    expect(result.answer).toContain("2 issue(s)");
+    expect(result.answer).toContain("MEMBER_KEY_REQUIRED");
+  });
+
+  it("'What is wrong with my project?' reports issue breakdown", () => {
+    const result = parseAndExecuteQuery({ question: "What is wrong with my project?", dimensions, members, relationships, context: blockedContext });
+    expect(result.answer).toContain("3 issue(s)");
+    expect(result.answer).toContain("2 error(s)");
+  });
+
+  it("context intents degrade gracefully when context is absent", () => {
+    const result = parseAndExecuteQuery({ question: "Summarize my project", dimensions, members, relationships });
+    expect(result.answer.toLowerCase()).toContain("context is unavailable");
+    expect(result.confidence).toBeLessThan(1.0);
+  });
+
+  it("does not hijack member-find queries when context is present", () => {
+    const result = parseAndExecuteQuery({ question: "Find Revenue", dimensions, members, relationships, context: cleanContext });
+    expect(result.matchedMembers).toContain("Revenue");
+  });
+});
+
 describe("AI Engine Orchestrator", () => {
   const dimensions = [accountDimension];
   const members = [

@@ -10,11 +10,11 @@ interface ChatMessage {
 }
 
 const QUICK_QUERIES = [
-  "Find member Actual",
+  "Summarize my project",
+  "Is my project ready to export?",
+  "What's blocking export?",
   "Show orphan members",
   "How many members in Account?",
-  "List children of Root",
-  "Does NetIncome exist?",
 ];
 
 export function ChatPanel({ projectId, onNavigateMember }: {
@@ -78,7 +78,7 @@ export function ChatPanel({ projectId, onNavigateMember }: {
           <div className="chat-welcome">
             <Bot size={32} />
             <h4>Ask me about your project</h4>
-            <p>I can find members, show hierarchies, count data, and check properties across all dimensions.</p>
+            <p>I can summarize the project, report validation issues and export readiness, find members, show hierarchies, and check properties across all dimensions.</p>
             <div className="chat-suggestions">
               {QUICK_QUERIES.map(q => (
                 <button key={q} className="chip" onClick={() => handleSend(q)}>{q}</button>

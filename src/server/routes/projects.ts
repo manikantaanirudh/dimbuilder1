@@ -906,7 +906,7 @@ function readSnapshot(repos: Repositories, projectId: string) {
   };
 }
 
-function runProjectValidation(repos: Repositories, config: AppConfig, projectId: string) {
+export function runProjectValidation(repos: Repositories, config: AppConfig, projectId: string) {
   const project = repos.projects.get(projectId);
   if (!project) return [];
   const dimensions = repos.dimensions.listByProject(project.id);

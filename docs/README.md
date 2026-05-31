@@ -38,7 +38,12 @@ This folder is the maintained knowledge base for SR Onestream Dim Builder. It de
 ## Planning And Governance
 
 - [Decisions](decisions.md): Architecture decisions and rationale.
+- [Project Log](log.md): Dated `date | type | description` changelog of day-to-day work.
 - [Enhancement Roadmap Prompts](enhancement-roadmap-prompts.md): Future-work prompts grouped by area.
+
+## Knowledge Intake
+
+- [Raw Intake](raw/README.md): Drop zone for unprocessed source material before it is distilled into the maintained docs above.
 
 ## Keeping Docs Current
 

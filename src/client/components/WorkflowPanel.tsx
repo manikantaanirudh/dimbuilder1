@@ -1,5 +1,6 @@
 import { CheckCircle2, Clock, PlayCircle, XCircle, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { onActivate } from "../hooks/keyboardActivate";
 import type { WorkflowDefinition, WorkflowInstance, WorkflowInstanceDetail } from "../../shared/workflowTypes";
 import {
   fetchWorkflowDefinitions,
@@ -139,7 +140,7 @@ export function WorkflowPanel({
   };
 
   return (
-    <Panel title={`Workflows — ${status}`}>
+    <Panel title={`Workflows: ${status}`}>
       {!changeSetId && instances.length === 0 && (
         <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--muted)' }}>
           <Clock size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
@@ -175,8 +176,12 @@ export function WorkflowPanel({
               {instances.map((inst) => (
                 <tr
                   key={inst.id}
-                  style={{ cursor: "pointer", background: inst.id === selectedId ? "var(--bg-muted, #f5f5f5)" : undefined }}
+                  className={`workflow-instance-row ${inst.id === selectedId ? "selected" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={inst.id === selectedId}
                   onClick={() => setSelectedId(inst.id)}
+                  onKeyDown={onActivate(() => setSelectedId(inst.id))}
                 >
                   <td>{inst.id.slice(0, 8)}</td>
                   <td>
@@ -198,9 +203,9 @@ export function WorkflowPanel({
       {detail && (
         <div className="workflow-detail">
           <h4>
-            {detail.definition.name} — Step {detail.instance.currentStepIndex + 1} of {detail.definition.steps.length}
+            {detail.definition.name}: Step {detail.instance.currentStepIndex + 1} of {detail.definition.steps.length}
           </h4>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-muted, #666)" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
             Current step: {detail.definition.steps[detail.instance.currentStepIndex]?.name ?? "Complete"}
           </p>
 
@@ -210,7 +215,7 @@ export function WorkflowPanel({
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {detail.actions.map((a) => (
                   <li key={a.id}>
-                    {a.action} by {a.actorId} {a.comment && `— "${a.comment}"`}
+                    {a.action} by {a.actorId} {a.comment && `("${a.comment}")`}
                   </li>
                 ))}
               </ul>

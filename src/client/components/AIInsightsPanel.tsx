@@ -127,7 +127,7 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
               <tbody>
                 {namingAnomalies.map((a, idx) => (
                   <tr key={idx}>
-                    <td><code>{a.targetMemberKey ?? "—"}</code></td>
+                    <td><code>{a.targetMemberKey ?? "n/a"}</code></td>
                     <td>
                       <StatusBadge tone="warning">{String(a.suggestion.anomalyType ?? "naming")}</StatusBadge>
                       {" "}{String(a.suggestion.description ?? "")}
