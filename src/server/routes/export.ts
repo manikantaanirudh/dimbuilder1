@@ -2,50 +2,80 @@ import { Router } from "express";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { exportMembersCsv, exportRelationshipsCsv, exportJsonBackup } from "../../shared/csvJsonExport";
+import {
+  assertDimensionExportWithinMemberLimit,
+  assertProjectExportWithinMemberLimit
+} from "../../shared/exportLimits";
 import { parseExportLoadMode, planRelationshipLoadMode } from "../../shared/relationshipOperations";
-import { exportProjectXml } from "../../shared/xmlExport";
+import { iterateProjectXmlChunks } from "../../shared/xmlExport";
 import { exportWorkbook } from "../../shared/xlsxExport";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { ParsedProject, ProjectMetadataState } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
-import { assertProjectCanExport, assertDimensionCanExport, parseExportGuardOptions, sendExportGuardError } from "../exportGuards";
+import {
+  assertProjectCanExport,
+  assertDimensionCanExport,
+  parseExportGuardOptions,
+  sendExportGuardError,
+  sendExportLimitError
+} from "../exportGuards";
 
 export function createExportRouter(repos: Repositories, config: AppConfig): Router {
   mkdirSync(config.paths.exportsDirectory, { recursive: true });
   const router = Router();
 
-  router.get("/:projectId/xml", (req, res) => {
-    if (!config.export.xml.enabled) return disabledFormat(res, "XML");
-    const dimensionId = optionalQuery(req.query.dimensionId);
-    const previewOnly = isTruthyFlag(req.query.preview);
-    const snapshot = readSnapshot(repos, req.params.projectId, dimensionId);
-    if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!previewOnly) {
+  router.get("/:projectId/xml", (req, res, next) => {
+    try {
+      if (!config.export.xml.enabled) return disabledFormat(res, "XML");
+      const projectId = req.params.projectId;
+      const dimensionId = optionalQuery(req.query.dimensionId);
+      const previewOnly = isTruthyFlag(req.query.preview);
+      const project = repos.projects.get(projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+
       if (dimensionId) {
-        if (!guardDimensionExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, dimensionId, "xml")) return;
+        assertDimensionExportWithinMemberLimit(repos, dimensionId, "xml", config);
       } else {
-        if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
+        assertProjectExportWithinMemberLimit(repos, projectId, "xml", config);
       }
+
+      const snapshot = readSnapshot(repos, projectId, dimensionId);
+      if (!snapshot) return res.status(404).json({ error: "project not found" });
+      if (!previewOnly) {
+        if (dimensionId) {
+          if (!guardDimensionExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, dimensionId, "xml")) return;
+        } else {
+          if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
+        }
+      }
+      const mode = parseExportLoadMode(req.query.mode);
+      const baselineId = optionalQuery(req.query.baselineId);
+      const baseline = baselineId ? repos.baselines.get(snapshot.project.id, baselineId) : null;
+      if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
+      const relationshipPlan = mode === "full"
+        ? undefined
+        : planRelationshipLoadMode(snapshot, baseline?.baseline as ProjectMetadataState | undefined, mode, { dimensionId });
+      const xmlOptions = {
+        oneStreamVersionFallback: config.application.oneStreamVersionFallback,
+        prettyPrint: config.export.xml.prettyPrint,
+        skipBlankMemberRows: config.export.xml.skipBlankMemberRows,
+        skipFormulaErrors: config.export.xml.skipFormulaErrors,
+        includeDimensionSourceAttributes: config.export.xml.includeDimensionSourceAttributes,
+        loadMode: mode,
+        relationshipPlan,
+        dimensionId
+      };
+      repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
+      res.type("application/xml");
+      for (const chunk of iterateProjectXmlChunks(snapshot, xmlOptions)) {
+        res.write(chunk);
+      }
+      res.end();
+    } catch (error) {
+      if (sendExportLimitError(res, error)) return;
+      if (sendExportGuardError(res, error)) return;
+      next(error);
     }
-    const mode = parseExportLoadMode(req.query.mode);
-    const baselineId = optionalQuery(req.query.baselineId);
-    const baseline = baselineId ? repos.baselines.get(snapshot.project.id, baselineId) : null;
-    if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
-    const relationshipPlan = mode === "full"
-      ? undefined
-      : planRelationshipLoadMode(snapshot, baseline?.baseline as ProjectMetadataState | undefined, mode, { dimensionId });
-    const xml = exportProjectXml(snapshot, {
-      oneStreamVersionFallback: config.application.oneStreamVersionFallback,
-      prettyPrint: config.export.xml.prettyPrint,
-      skipBlankMemberRows: config.export.xml.skipBlankMemberRows,
-      skipFormulaErrors: config.export.xml.skipFormulaErrors,
-      includeDimensionSourceAttributes: config.export.xml.includeDimensionSourceAttributes,
-      loadMode: mode,
-      relationshipPlan,
-      dimensionId
-    });
-    repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
-    res.type("application/xml").send(xml);
   });
 
   router.get("/:projectId/json", (req, res) => {
@@ -155,6 +185,7 @@ function guardExportRequest(
     assertProjectCanExport(projectId, config, repos, parseExportGuardOptions(source, exportType));
     return true;
   } catch (error) {
+    if (sendExportLimitError(res, error)) return false;
     if (sendExportGuardError(res, error)) return false;
     throw error;
   }
@@ -173,6 +204,7 @@ function guardDimensionExportRequest(
     assertDimensionCanExport(projectId, dimensionId, config, repos, parseExportGuardOptions(source, exportType));
     return true;
   } catch (error) {
+    if (sendExportLimitError(res, error)) return false;
     if (sendExportGuardError(res, error)) return false;
     throw error;
   }

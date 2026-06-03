@@ -263,6 +263,14 @@ export const defaultAppConfig: AppConfig = {
     requireApprovalForDeploy: true,
     defaultDefinition: "standard-review"
   },
+  operations: {
+    uploadMaxMb: 25,
+    exportRetentionDays: 30,
+    artifactRetentionDays: 30,
+    corsAllowLocalhostByDefault: true,
+    exportMaxMembers: 100_000,
+    appMode: "local"
+  },
   ai: {
     enabled: true,
     provider: 'none',

@@ -109,6 +109,15 @@ export function validateAppConfig(config: AppConfig): AppConfig {
     throw new Error("ui.gridPageSize must be a positive integer.");
   }
 
+  if (config.operations !== undefined) {
+    if (!Number.isInteger(config.operations.exportMaxMembers) || config.operations.exportMaxMembers < 0) {
+      throw new Error("operations.exportMaxMembers must be a non-negative integer.");
+    }
+    if (!Number.isFinite(config.operations.uploadMaxMb) || config.operations.uploadMaxMb <= 0) {
+      throw new Error("operations.uploadMaxMb must be a positive number.");
+    }
+  }
+
   validateOptionalBoolean("export.allowValidationBypass", config.export.allowValidationBypass);
   validateOptionalBoolean("export.validationBypassRequiresReason", config.export.validationBypassRequiresReason);
   validateOptionalBoolean("export.requireValidationBeforeExport", config.export.requireValidationBeforeExport);

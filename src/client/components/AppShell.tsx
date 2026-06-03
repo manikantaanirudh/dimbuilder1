@@ -436,6 +436,9 @@ export function AppShell({
           setStatus("Import complete");
           void store.refresh(projectId);
         }}
+        projects={store.projects}
+        selectedProjectId={store.selectedProjectId}
+        enabledDimensionTypes={appConfig.dimensions.enabledTypes}
       />
       <ExportModal
         open={exportOpen}

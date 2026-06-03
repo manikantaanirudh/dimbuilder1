@@ -340,6 +340,14 @@ export function createRepositories(db: AppDatabase) {
           ORDER BY d.sort_order, m.row_order
         `).all(projectId).map(mapMember);
       },
+      countByProject(projectId: string): number {
+        return Number(db.prepare(`
+          SELECT COUNT(*) AS count
+          FROM dimension_members m
+          JOIN dimensions d ON d.id = m.dimension_id
+          WHERE d.project_id = ? AND m.is_active = 1
+        `).get(projectId)?.count ?? 0);
+      },
       listAllByDimension(dimensionId: string): DimensionMemberRecord[] {
         return db.prepare(`
           SELECT * FROM dimension_members

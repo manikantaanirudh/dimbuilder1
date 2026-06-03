@@ -1,42 +1,168 @@
-import { Router } from "express";
-import multer from "multer";
-import { createReadStream, mkdirSync } from "node:fs";
+import { Router, type NextFunction, type Request, type Response } from "express";
+import multer, { type MulterError } from "multer";
+import { createReadStream, mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import type { AppConfig } from "../../shared/appConfigTypes";
+import {
+  buildMetadataCsvCommitPlan,
+  previewMetadataCsvImport,
+  type MetadataCsvFormDefaults,
+  type MetadataCsvImportContext
+} from "../../shared/metadataCsvImport";
 import { parseOneStreamXmlFromStream } from "../../shared/xmlImport";
 import { parseWorkbook } from "../../shared/workbookParser";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
-
-const ALLOWED_MIMETYPES = new Set([
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-  "application/xml",
-  "text/xml",
-  "text/csv",
-  "application/octet-stream"
-]);
+import { applyMetadataCsvCommitPlan } from "../metadataCsvCommit";
 
 const ALLOWED_EXTENSIONS = /\.(xlsx|xls|xml|csv)$/i;
+
+function resolveUploadMaxBytes(config: AppConfig): number {
+  const uploadMaxMb = config.operations?.uploadMaxMb ?? 25;
+  return Math.max(1, uploadMaxMb) * 1024 * 1024;
+}
+
+function readCsvFormDefaults(body: Record<string, unknown>): MetadataCsvFormDefaults {
+  return {
+    projectName: typeof body.projectName === "string" ? body.projectName : undefined,
+    dimensionType: typeof body.dimensionType === "string" ? body.dimensionType : undefined,
+    dimensionName: typeof body.dimensionName === "string" ? body.dimensionName : undefined
+  };
+}
+
+function buildCsvImportContext(
+  repos: Repositories,
+  config: AppConfig,
+  csvContent: string,
+  body: Record<string, unknown>
+): MetadataCsvImportContext {
+  const projectId = typeof body.projectId === "string" && body.projectId.trim() ? body.projectId.trim() : undefined;
+  const mode = projectId ? "existingProject" : "newProject";
+  const formDefaults = readCsvFormDefaults(body);
+  const context: MetadataCsvImportContext = {
+    csvContent,
+    formDefaults,
+    enabledDimensionTypes: config.dimensions.enabledTypes,
+    mode
+  };
+
+  if (mode === "existingProject") {
+    const project = repos.projects.get(projectId!);
+    if (!project) {
+      throw new Error("Project not found.");
+    }
+    context.projectId = project.id;
+    context.existingDimensions = repos.dimensions.listByProject(project.id);
+    context.existingMembers = repos.members.listByProject(project.id);
+    context.existingRelationships = repos.relationships.listByProject(project.id);
+  }
+
+  return context;
+}
 
 export function createImportRouter(repos: Repositories, config: AppConfig): Router {
   mkdirSync(config.paths.uploadsDirectory, { recursive: true });
   const upload = multer({
     dest: config.paths.uploadsDirectory,
-    limits: { fileSize: 50 * 1024 * 1024 },
+    limits: { fileSize: resolveUploadMaxBytes(config) },
     fileFilter: (_req, file, cb) => {
       const extOk = ALLOWED_EXTENSIONS.test(file.originalname);
-      const mimeOk = ALLOWED_MIMETYPES.has(file.mimetype);
-      if (extOk || mimeOk) {
+      if (extOk) {
         cb(null, true);
       } else {
         cb(new Error("Only .xlsx, .xls, .xml, and .csv files are allowed"));
       }
     }
   });
+
+  function uploadSingle(fieldName: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      upload.single(fieldName)(req, res, (error: unknown) => {
+        if (error && typeof error === "object" && "code" in error) {
+          const multerError = error as MulterError;
+          if (multerError.code === "LIMIT_FILE_SIZE") {
+            res.status(413).json({ error: "Upload exceeds configured size limit." });
+            return;
+          }
+        }
+        if (error instanceof Error && error.message.includes("Only .xlsx")) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        next(error);
+      });
+    };
+  }
+
   const router = Router();
 
-  router.post("/workbook", upload.single("file"), async (req, res, next) => {
+  router.post("/csv/preview", uploadSingle("file"), async (req, res, next) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "file is required" });
+      const csvContent = readFileSync(req.file.path, "utf8");
+      let context: MetadataCsvImportContext;
+      try {
+        context = buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
+      } catch (error) {
+        if (error instanceof Error && error.message === "Project not found.") {
+          return res.status(404).json({ error: error.message });
+        }
+        throw error;
+      }
+      const preview = previewMetadataCsvImport(context);
+      res.json({ preview });
+    } catch (error) {
+      next(error);
+    } finally {
+      if (req.file?.path) {
+        try {
+          unlinkSync(req.file.path);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
+  });
+
+  router.post("/csv/commit", uploadSingle("file"), async (req, res, next) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "file is required" });
+      const csvContent = readFileSync(req.file.path, "utf8");
+      let context: MetadataCsvImportContext;
+      try {
+        context = buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
+      } catch (error) {
+        if (error instanceof Error && error.message === "Project not found.") {
+          return res.status(404).json({ error: error.message });
+        }
+        throw error;
+      }
+      const { preview, plan } = buildMetadataCsvCommitPlan(context, req.file.originalname);
+      if (!preview.ok || !plan) {
+        return res.status(400).json({ error: "CSV preview has blocking errors.", preview });
+      }
+
+      const result = applyMetadataCsvCommitPlan(repos, config, plan);
+      const project = repos.projects.get(result.projectId);
+      res.json({
+        project,
+        preview,
+        importSummary: result.importSummary
+      });
+    } catch (error) {
+      next(error);
+    } finally {
+      if (req.file?.path) {
+        try {
+          unlinkSync(req.file.path);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
+  });
+
+  router.post("/workbook", uploadSingle("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
       const metadataReferencePath = config.import.metadataReference.enabled
@@ -96,7 +222,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
     }
   });
 
-  router.post("/xml", upload.single("file"), async (req, res, next) => {
+  router.post("/xml", uploadSingle("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
       const stream = createReadStream(req.file.path);

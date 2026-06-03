@@ -3,8 +3,13 @@ import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 import { createOneStreamClient } from "../connectors/onestream";
+import {
+  assertDimensionExportWithinMemberLimit,
+  assertProjectExportWithinMemberLimit
+} from "../../shared/exportLimits";
 import { exportProjectXml } from "../../shared/xmlExport";
 import { refreshSyncStatus, getSyncStatusSummary } from "../environments/syncStatus";
+import { sendExportLimitError } from "../exportGuards";
 
 const createEnvironmentSchema = z.object({
   name: z.string().min(1).max(255),
@@ -150,6 +155,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
   // Deploy to environment
   router.post("/:id/deploy", async (req, res) => {
+    try {
     const env = repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
 
@@ -173,6 +179,14 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
     if (filteredDimensions.length === 0) {
       return res.status(400).json({ error: "No dimensions to deploy" });
+    }
+
+    if (dimensionIds?.length) {
+      for (const dimensionId of dimensionIds) {
+        assertDimensionExportWithinMemberLimit(repos, dimensionId, "environment-xml", config);
+      }
+    } else {
+      assertProjectExportWithinMemberLimit(repos, projectId, "environment-xml", config);
     }
 
     const members = repos.members.listByProject(projectId);
@@ -225,6 +239,10 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         }))
       });
       res.status(500).json(deployment);
+    }
+    } catch (error) {
+      if (sendExportLimitError(res, error)) return;
+      throw error;
     }
   });
 

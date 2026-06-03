@@ -67,6 +67,18 @@ Source:
 - `src/shared/xmlImport.ts`
 - `src/shared/xmlExport.ts`
 
+## Simple CSV Metadata Import
+
+Users can import parent/child metadata CSV files with preview-before-commit for new projects or append/update on existing projects. This is for straightforward metadata CSVs, not Migration Cockpit legacy migration mapping.
+
+Source:
+
+- `src/client/components/ImportExportModals.tsx`
+- `src/client/api/client.ts`
+- `src/server/routes/import.ts`
+- `src/server/metadataCsvCommit.ts`
+- `src/shared/metadataCsvImport.ts`
+
 ## Metadata Reference Alignment
 
 Import can align workbook dimensions to existing metadata XML reference data.

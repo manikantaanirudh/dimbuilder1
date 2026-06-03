@@ -481,6 +481,58 @@ export async function uploadXml(file: File, projectName: string) {
   return apiPost<{ project: ProjectRecord; importSummary: Record<string, unknown> }>("/import/xml", formData);
 }
 
+export interface MetadataCsvPreviewResponse {
+  preview: {
+    ok: boolean;
+    errors: string[];
+    warnings: string[];
+    counts: {
+      rowCount: number;
+      dimensionsToCreate: number;
+      membersToCreate: number;
+      membersToUpdate: number;
+      relationshipsToCreate: number;
+      relationshipsSkipped: number;
+    };
+    suggestedProjectName?: string;
+  };
+}
+
+function appendCsvImportFields(formData: FormData, fields: {
+  projectId?: string;
+  projectName?: string;
+  dimensionType?: string;
+  dimensionName?: string;
+}) {
+  if (fields.projectId) formData.append("projectId", fields.projectId);
+  if (fields.projectName) formData.append("projectName", fields.projectName);
+  if (fields.dimensionType) formData.append("dimensionType", fields.dimensionType);
+  if (fields.dimensionName) formData.append("dimensionName", fields.dimensionName);
+}
+
+export async function previewCsvImport(
+  file: File,
+  fields: { projectId?: string; projectName?: string; dimensionType?: string; dimensionName?: string } = {}
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  appendCsvImportFields(formData, fields);
+  return apiPost<MetadataCsvPreviewResponse>("/import/csv/preview", formData);
+}
+
+export async function commitCsvImport(
+  file: File,
+  fields: { projectId?: string; projectName?: string; dimensionType?: string; dimensionName?: string } = {}
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  appendCsvImportFields(formData, fields);
+  return apiPost<{ project: ProjectRecord; preview: MetadataCsvPreviewResponse["preview"]; importSummary: Record<string, unknown> }>(
+    "/import/csv/commit",
+    formData
+  );
+}
+
 export function validateProject(
   projectId: string,
   duplicateSeverity = "warning",

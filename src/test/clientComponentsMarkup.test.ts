@@ -426,7 +426,10 @@ describe("client component markup", () => {
     const importMarkup = render(createElement(ImportModal, {
       open: true,
       onClose: () => undefined,
-      onImported: () => undefined
+      onImported: () => undefined,
+      projects: [],
+      selectedProjectId: null,
+      enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes
     }));
     const exportMarkup = render(createElement(ExportModal, {
       open: true,
@@ -494,13 +497,17 @@ describe("client component markup", () => {
     const importMarkup = render(createElement(ImportModal, {
       open: true,
       onClose: () => undefined,
-      onImported: () => undefined
+      onImported: () => undefined,
+      projects: [],
+      selectedProjectId: null,
+      enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes
     }));
 
     expect(importMarkup).toContain("Seed from XLSX");
     expect(importMarkup).toContain("Select an optional .xlsx OneStream metadata workbook to seed a project.");
     expect(importMarkup).toContain("Import XML");
-    expect(importMarkup).toContain("editable OneStream metadata XML import");
+    expect(importMarkup).toContain("Import CSV");
+    expect(importMarkup).toContain("simple parent-child CSV");
     expect(importMarkup).not.toContain("Select an optional `.xlsx` OneStream metadata workbook to seed a project.");
     expect(importMarkup).not.toContain("Import workbook");
   });

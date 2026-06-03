@@ -337,3 +337,6 @@ workflows:
   enabled: true
   requireApprovalForDeploy: true
   defaultDefinition: standard-review
+
+operations:
+  exportMaxMembers: 100000  # set to 0 to disable the limit

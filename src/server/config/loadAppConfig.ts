@@ -19,8 +19,21 @@ export function loadAppConfig(options: LoadAppConfigOptions = {}): AppConfig {
 }
 
 function applyEnvironmentOverrides(config: AppConfig): AppConfig {
+  const exportMaxMembers = parseOptionalNonNegativeInt(process.env.EXPORT_MAX_MEMBERS);
   return {
     ...config,
+    ...(exportMaxMembers !== undefined
+      ? {
+          operations: {
+            uploadMaxMb: config.operations?.uploadMaxMb ?? 25,
+            exportRetentionDays: config.operations?.exportRetentionDays ?? 30,
+            artifactRetentionDays: config.operations?.artifactRetentionDays ?? 30,
+            corsAllowLocalhostByDefault: config.operations?.corsAllowLocalhostByDefault ?? true,
+            exportMaxMembers,
+            appMode: config.operations?.appMode
+          }
+        }
+      : {}),
     paths: {
       ...config.paths,
       metadataDirectory: process.env.METADATA_DIRECTORY ?? config.paths.metadataDirectory,
@@ -39,4 +52,11 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
       ...(process.env.JWT_SECRET ? { jwt: { ...config.auth.jwt, secret: process.env.JWT_SECRET } } : {})
     }
   };
+}
+
+function parseOptionalNonNegativeInt(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) return undefined;
+  return parsed;
 }

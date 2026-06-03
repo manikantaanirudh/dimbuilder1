@@ -13,12 +13,15 @@ Server:
 
 - `POST /api/import/workbook`
 - `POST /api/import/xml`
+- `POST /api/import/csv/preview`
+- `POST /api/import/csv/commit`
 - `src/server/routes/import.ts`
 
 Parser:
 
 - `src/shared/workbookParser.ts`
 - `src/shared/xmlImport.ts`
+- `src/shared/metadataCsvImport.ts`
 
 ## Supported Workbook Detection
 
@@ -114,6 +117,46 @@ The XML parser supports the app's current OneStream XML export shape:
 Known properties are normalized through the shared OneStream property dictionary where possible. Unknown attributes, unknown property elements, and unsupported child elements are preserved so users can round-trip files through the app without silently dropping metadata.
 
 Unknown XML fields produce validation notes such as `XML_UNKNOWN_MEMBER_ATTRIBUTE` and `XML_UNSUPPORTED_ELEMENT_PRESERVED`; these are informational and do not block export by default.
+
+## Simple CSV Metadata Import
+
+Use **Import CSV** in the import modal for straightforward parent/child metadata files. This flow is separate from Migration Cockpit generic CSV migration.
+
+Multipart fields:
+
+- `file` (required)
+- `projectId` (existing project append/update)
+- `projectName` (new project)
+- `dimensionType` and `dimensionName` (defaults when the CSV omits them)
+
+Required CSV column:
+
+- `member`
+
+Optional columns:
+
+- `parent`
+- `dimensionType`, `dimensionName`
+- `description`, `alias`, `sortOrder`
+- `property.<Property Name>` (for example `property.Text1`)
+
+Example:
+
+```csv
+dimensionType,dimensionName,parent,member,description,alias,sortOrder,property.Text1
+Account,Accounts,Root,Revenue,Revenue accounts,Revenue,10,P&L
+Account,Accounts,Revenue,ProductRevenue,Product revenue,Product Revenue,20,P&L
+```
+
+### CSV Preview And Commit
+
+1. `POST /api/import/csv/preview` parses the file and returns counts, warnings, and blocking errors without writing records.
+2. `POST /api/import/csv/commit` re-parses the file, rejects commits when preview errors exist, and applies all database changes in a repository transaction.
+3. New projects are created from `projectName` or the uploaded file name.
+4. Existing projects match dimensions by `dimensionType + dimensionName`, update only provided member fields/properties, create missing members and relationships, and never delete existing metadata.
+5. Commit records `project.importCsv` or `project.importCsvAppend` and runs shared project validation through `runProjectValidation`.
+
+Upload size uses `operations.uploadMaxMb` (not a hard-coded CSV limit).
 
 ## Tests
 

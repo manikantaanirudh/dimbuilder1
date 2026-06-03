@@ -207,6 +207,15 @@ export interface WorkflowConfig {
   defaultDefinition: string;
 }
 
+export interface OperationsConfig {
+  uploadMaxMb: number;
+  exportRetentionDays: number;
+  artifactRetentionDays: number;
+  corsAllowLocalhostByDefault: boolean;
+  exportMaxMembers: number;
+  appMode?: "local" | "shared" | "production";
+}
+
 export interface AppConfig {
   application: ApplicationConfig;
   paths: PathsConfig;
@@ -220,6 +229,7 @@ export interface AppConfig {
   export: ExportConfig;
   ui: UiConfig;
   workflows?: WorkflowConfig;
+  operations?: OperationsConfig;
   ai?: AIConfigSection;
 }
 

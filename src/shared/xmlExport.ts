@@ -119,7 +119,7 @@ const memberAttributeFieldsByType: Record<string, Record<string, string>> = {
   UD8: { "Display Group": "displayMemberGroup" }
 };
 
-export function exportProjectXml(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string {
+export function buildProjectXmlLines(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string[] {
   const exportOptions = { ...defaultExportOptions, ...options };
   const oneStreamVersion = getOneStreamVersion(input.dimensions, options.oneStreamVersionFallback);
   const dimensionsToExport = options.dimensionId
@@ -177,8 +177,35 @@ export function exportProjectXml(input: ExportProjectXmlInput, options: ExportPr
     lines.push(...renderRelationshipOperationPlan(exportOptions.relationshipPlan, exportOptions));
   }
   lines.push("  </metadataRoot>", "</OneStreamXF>");
-  const xml = lines.join("\n");
+  return lines;
+}
+
+export function exportProjectXml(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): string {
+  const exportOptions = { ...defaultExportOptions, ...options };
+  const xml = buildProjectXmlLines(input, options).join("\n");
   return exportOptions.prettyPrint ? xml : xml.replace(/>\s+</g, "><");
+}
+
+export function* iterateProjectXmlChunks(input: ExportProjectXmlInput, options: ExportProjectXmlOptions = {}): Generator<string> {
+  const exportOptions = { ...defaultExportOptions, ...options };
+  if (!exportOptions.prettyPrint) {
+    yield exportProjectXml(input, options);
+    return;
+  }
+  const lines = buildProjectXmlLines(input, options);
+  for (let index = 0; index < lines.length; index++) {
+    yield index === 0 ? lines[index] : `\n${lines[index]}`;
+  }
+}
+
+export function writeProjectXmlToWritable(
+  writable: NodeJS.WritableStream,
+  input: ExportProjectXmlInput,
+  options: ExportProjectXmlOptions = {}
+): void {
+  for (const chunk of iterateProjectXmlChunks(input, options)) {
+    writable.write(chunk);
+  }
 }
 
 function renderRelationshipOperationPlan(

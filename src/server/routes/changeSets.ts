@@ -1,6 +1,8 @@
 import { Router } from "express";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { createWriteStream, mkdirSync, writeFileSync } from "node:fs";
+import { finished } from "node:stream/promises";
 import { join } from "node:path";
+import { assertProjectExportWithinMemberLimit } from "../../shared/exportLimits";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import {
   renderChangeSetManifest,
@@ -12,9 +14,10 @@ import {
   summarizeValidationIssues
 } from "../../shared/releasePackage";
 import type { ChangeSetDetail, ChangeSetStatus, ReleasePackageMode } from "../../shared/types";
-import { exportProjectXml } from "../../shared/xmlExport";
+import { writeProjectXmlToWritable } from "../../shared/xmlExport";
 import type { Repositories } from "../db/repositories";
 import { runProjectValidation } from "../helpers/runValidation";
+import { sendExportLimitError } from "../exportGuards";
 
 type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 
@@ -139,7 +142,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     res.json({ ...repos.changeSets.getDetail(project.id, detail.changeSet.id), changeSet: updated ?? detail.changeSet });
   });
 
-  router.post("/:changeSetId/package", (req, res, next) => {
+  router.post("/:changeSetId/package", async (req, res, next) => {
     try {
       const project = repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
@@ -148,6 +151,8 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       if (detail.changeSet.status !== "approved" && detail.changeSet.status !== "exported") {
         return res.status(409).json({ error: "change set must be approved before packaging" });
       }
+
+      assertProjectExportWithinMemberLimit(repos, project.id, "change-set-xml", config);
 
       const issues = runProjectValidation(repos, config, project.id);
       const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
@@ -171,13 +176,18 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       writeFileSync(join(packagePath, "02-change-set.json"), JSON.stringify(packagedDetail, null, 2));
       writeFileSync(join(packagePath, "03-diff-report.csv"), renderDiffReportCsv(packagedDetail.items));
       writeFileSync(join(packagePath, "04-validation-report.csv"), renderValidationReportCsv(issues));
-      writeFileSync(join(packagePath, "05-metadata.xml"), exportProjectXml(readSnapshot(repos, project.id), {
+      const snapshot = readSnapshot(repos, project.id);
+      const xmlOptions = {
         oneStreamVersionFallback: config.application.oneStreamVersionFallback,
         prettyPrint: config.export.xml.prettyPrint,
         skipBlankMemberRows: config.export.xml.skipBlankMemberRows,
         skipFormulaErrors: config.export.xml.skipFormulaErrors,
         includeDimensionSourceAttributes: config.export.xml.includeDimensionSourceAttributes
-      }));
+      };
+      const xmlStream = createWriteStream(join(packagePath, "05-metadata.xml"));
+      writeProjectXmlToWritable(xmlStream, snapshot, xmlOptions);
+      xmlStream.end();
+      await finished(xmlStream);
       writeFileSync(join(packagePath, "06-rollback-notes.md"), renderRollbackNotesMarkdown(packagedDetail));
       writeFileSync(join(packagePath, "manifest.json"), JSON.stringify(manifest, null, 2));
       const packageRecord = repos.changeSets.createReleasePackage({
@@ -197,6 +207,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
         validationSummary
       });
     } catch (error) {
+      if (sendExportLimitError(res, error)) return;
       next(error);
     }
   });

@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import type { AppConfig } from "../shared/appConfigTypes";
+import { ExportLimitError } from "../shared/exportLimits";
 import type { Severity, ValidationIssue } from "../shared/types";
 import type { Repositories } from "./db/repositories";
 
@@ -149,6 +150,12 @@ export function assertDimensionCanExport(
 
 export function sendExportGuardError(res: Response, error: unknown): boolean {
   if (!(error instanceof ExportGuardError)) return false;
+  res.status(error.status).json(error.payload);
+  return true;
+}
+
+export function sendExportLimitError(res: Response, error: unknown): boolean {
+  if (!(error instanceof ExportLimitError)) return false;
   res.status(error.status).json(error.payload);
   return true;
 }
