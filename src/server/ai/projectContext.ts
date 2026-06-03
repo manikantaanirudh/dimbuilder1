@@ -1,6 +1,6 @@
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
-import { runProjectValidation } from "../routes/projects";
+import { runProjectValidation } from "../helpers/runValidation";
 import { summarizeValidationIssues, type ValidationSummary } from "../../shared/releasePackage";
 
 export interface ProjectDimensionBreakdown {

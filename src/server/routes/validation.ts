@@ -68,6 +68,46 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
   return router;
 }
 
+type ProjectValidationRouterDeps = { repos: Repositories; config?: AppConfig; getAI?: unknown };
+
+export function createProjectValidationRouter({ repos }: ProjectValidationRouterDeps): Router {
+  const router = Router({ mergeParams: true });
+
+  router.get("/issues", (req, res) => {
+    const params = req.params as Record<string, string>;
+    res.json(repos.issues.listByProject(params.projectId));
+  });
+
+  router.get("/validation-config", (req, res) => {
+    const params = req.params as Record<string, string>;
+    const project = repos.projects.get(params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const overrides = repos.validationOverrides.listByProject(project.id);
+    res.json({ overrides });
+  });
+
+  router.post("/validation-config", (req, res) => {
+    const params = req.params as Record<string, string>;
+    const project = repos.projects.get(params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const overrides = req.body?.overrides;
+    if (!Array.isArray(overrides)) return res.status(400).json({ error: "overrides must be an array" });
+    for (const override of overrides) {
+      if (!override.ruleCode || !override.severity) continue;
+      if (override.severity === "default") {
+        repos.validationOverrides.deleteByProject(project.id, override.ruleCode);
+      } else {
+        repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
+      }
+    }
+    repos.audit.record({ projectId: project.id, action: "validation.configUpdate", entityType: "project", entityId: project.id, after: { overrides } });
+    const result = repos.validationOverrides.listByProject(project.id);
+    res.json({ overrides: result });
+  });
+
+  return router;
+}
+
 function resolveValidationProfile(body: unknown, config: AppConfig): OneStreamValidationProfileConfig | null {
   const request = isRecord(body) ? body : {};
   const profile = typeof request.profile === "string" ? request.profile : undefined;
