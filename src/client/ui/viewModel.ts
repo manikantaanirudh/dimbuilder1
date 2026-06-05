@@ -1,5 +1,6 @@
 import type { ClientAppConfig, ExportConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
+import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
 import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
 
 export interface IssueSummary {
@@ -25,7 +26,7 @@ export interface ExportFormatLink {
 type FactTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export interface WorkspaceTabItem {
-  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
+  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Property Defaults" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
 }
 
 export interface DimensionNavItem {
@@ -106,6 +107,7 @@ export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[]
     { label: "Relationships" },
     { label: "Hierarchy" },
     { label: "Varying" },
+    { label: "Property Defaults" },
     { label: "Bulk Update" },
     { label: "Compare" },
     { label: "Change Sets" },
@@ -169,7 +171,7 @@ export function buildDimensionNavItems(
   displayConfig: ClientAppConfig["dimensions"]["display"],
   blockedSeverities: Severity[]
 ): DimensionNavItem[] {
-  return dimensions.map((dimension) => ({
+  return sortDimensionsByType(dimensions).map((dimension) => ({
     id: dimension.id,
     label: getDimensionDisplayLabel(dimension, displayConfig),
     subtitle: getDimensionDisplaySubtitle(dimension, displayConfig),

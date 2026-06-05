@@ -1,6 +1,8 @@
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
+import { runMigrations } from "./migrations";
+import { seedPropertyDefaultCatalog } from "./seedPropertyDefaultCatalog";
 import { schemaSql } from "./schema";
 
 const require = createRequire(import.meta.url);
@@ -25,6 +27,8 @@ export function createDatabase(filename = "data/app.db"): AppDatabase {
   db.exec("PRAGMA busy_timeout=5000");
   db.exec(schemaSql);
   evolveSchema(db);
+  runMigrations(db);
+  seedPropertyDefaultCatalog(db);
   seedSecurity(db);
   seedDefaultWorkflow(db);
   return db;

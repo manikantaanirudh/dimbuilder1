@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="Accounts" description="Account metadata" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="AccountType" value="GroupLabel" />
+            </properties>
+          </member>
+          <member name="Revenue" alias="Rev" description="Revenue accounts">
+            <properties>
+              <property name="AccountType" value="Revenue" />
+            </properties>
+          </member>
+          <member name="Expense" alias="Exp" description="Expense accounts">
+            <properties>
+              <property name="AccountType" value="Expense" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="Revenue" aggregationWeight="1" />
+          <relationship parent="Root" child="Expense" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

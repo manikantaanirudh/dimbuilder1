@@ -1,0 +1,14 @@
+[
+  {
+    "id": "001_initial_schema",
+    "description": "Baseline schema applied by schema.ts (recorded, not re-applied)."
+  },
+  {
+    "id": "002_relationship_operation_columns",
+    "description": "Add operation, operation_source, operation_notes to dimension_relationships."
+  },
+  {
+    "id": "003_validation_waivers",
+    "description": "Add validation_waivers table for auditable issue waivers."
+  }
+]

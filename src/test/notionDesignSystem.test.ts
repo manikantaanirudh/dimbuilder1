@@ -34,6 +34,9 @@ describe("Notion-inspired design system CSS", () => {
     expect(css).toContain(".workspace-page-icon");
     expect(css).toContain(".workspace-document");
     expect(css).toContain(".workspace-tablist");
+    expect(css).toContain(".workspace-page-body");
+    expect(css).toContain(".workspace-primary");
+    expect(css).toContain(".workspace-grid--single");
     expect(css).toContain(".details-rail-page");
     expect(css).toContain(".rail-issue-summary");
     expect(css).toContain(".rail-property-section");

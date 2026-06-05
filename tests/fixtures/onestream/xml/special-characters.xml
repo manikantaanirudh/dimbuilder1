@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Scenario" name="SpecialCharScenarios" description="Escaping &amp; punctuation tests" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" description="Root &lt;baseline&gt;" />
+          <member name="SCN_Apos" description="O&apos;Reilly style name" />
+          <member name="SCN_Quote" description="He said &quot;forecast&quot; in notes" />
+          <member name="SCN_Amp" description="R&amp;D planning scenario" />
+          <member name="SCN_Padded" description="  leading and trailing spaces  " />
+        </members>
+        <relationships>
+          <relationship parent="Root" child="SCN_Apos" />
+          <relationship parent="Root" child="SCN_Quote" />
+          <relationship parent="Root" child="SCN_Amp" />
+          <relationship parent="Root" child="SCN_Padded" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

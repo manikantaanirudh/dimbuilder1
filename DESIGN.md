@@ -1,6 +1,6 @@
 ---
 name: OneStream Dimension Builder
-description: A precision metadata workbench for OneStream XF dimensions.
+description: A full-lifecycle implementation platform for OneStream XF dimensions.
 colors:
   navy-deep: "#00204A"
   navy-midnight: "#001528"
@@ -94,13 +94,13 @@ components:
 
 ## 1. Overview
 
-**Creative North Star: "The Control Room"**
+**Creative North Star: "The Control Room at Platform Scale"**
 
-A precision instrument for structured data work. The interface is clean, confident, and engineered. Every surface communicates clearly; nothing is decorative. The system earns trust through visual precision: aligned grids, consistent token usage, and predictable interaction patterns.
+A precision instrument for the full OneStream implementation lifecycle. The interface is clean, confident, and engineered. Every surface communicates clearly; nothing is decorative. The system earns trust through visual precision: aligned grids, consistent token usage, and predictable interaction patterns that hold across 20+ panels.
 
-This is not a consumer app; it's a professional tool that respects the domain expertise of OneStream consultants and finance architects. The design is dense without being chaotic, modern without chasing trends, and quiet without being lifeless.
+This is not a consumer app. It is a professional platform that respects the domain expertise of OneStream consultants, finance architects, and delivery managers. The design is dense without being chaotic, modern without chasing trends, and quiet without being lifeless. At platform scale, consistency is the primary design value: every new surface the user encounters should feel immediately familiar.
 
-The system explicitly rejects playful SaaS energy, legacy enterprise gray-on-gray, ultra-minimal whitespace waste, neon/cyberpunk dark aesthetics, and generic Bootstrap/Material templates. It occupies a narrow lane: technical confidence with structured warmth from the brass-gold accent.
+The system explicitly rejects playful SaaS energy, legacy enterprise gray-on-gray, ultra-minimal whitespace waste, neon/cyberpunk aesthetics, chatbot UI conventions, consumer collaboration patterns, and generic Bootstrap/Material templates. It occupies a narrow lane: technical authority with structured warmth from the brass-gold accent.
 
 **Key Characteristics:**
 - Information density served by structured whitespace, not by cramming
@@ -108,10 +108,11 @@ The system explicitly rejects playful SaaS energy, legacy enterprise gray-on-gra
 - Restrained color strategy: navy + tinted neutrals, with brass-gold accent at less than 10%
 - Gently layered elevation conveying surface relationships without dramatic depth
 - Tactile, engineered components that feel precise and responsive
+- AI and collaboration features that integrate invisibly into the tool's language
 
 ## 2. Colors
 
-A restrained palette grounded in deep navy and warm neutrals, with a distinctive brass-gold accent.
+A restrained palette grounded in deep navy and warm neutrals, with a distinctive brass-gold accent. Implemented in OKLCH for perceptually uniform light/dark switching; hex values here are the light-mode reference anchors.
 
 ### Primary
 - **Navy Deep** (#00204A): The primary brand color. Used for headings, primary button fills, and text. Conveys authority and precision.
@@ -213,10 +214,53 @@ Tactile and engineered. Every interactive element feels precise and responsive. 
 - **Secondary nav:** Horizontal button row below toolbar, active item bold + underlined
 - **Search:** Icon + input in a bordered container, focus-within ring on container
 
+### Toast Notifications
+- **Position:** Bottom-right, stacked with 8px gap between toasts
+- **Shape:** 10px radius, surface-white background, shadow-md elevation
+- **Structure:** Left border accent (4px) using the signal color; icon + message + optional dismiss
+- **Variants:** Success (green), warning (orange), danger (red), info (blue)
+- **Duration:** 4s auto-dismiss for info/success; no auto-dismiss for danger
+- **Animation:** Slide in from right (200ms ease-out-quart); fade out (150ms). Respects `prefers-reduced-motion`.
+
+### Skeleton Loaders
+- **Color:** Surface-muted background cycling to surface-subtle. No pulse animations on `prefers-reduced-motion`.
+- **Shape:** Matches the element being replaced. Text rows use 12px or 14px height. Panels use the full target height.
+- **Timing:** Show only after 200ms delay. Instant content never shows a skeleton.
+- **Rule:** Skeletons communicate shape, not content. Never use fake text strings as placeholders.
+
 ### Score Ring (Signature Component)
 An animated SVG ring gauge (88px featured, 64-120px range). Ease-out cubic animation fills from 0 to score over 800ms. Color shifts by threshold: green above 80, warning 50-80, danger below 50. Respects `prefers-reduced-motion`.
 
-## 6. Do's and Don'ts
+## 6. AI & Collaboration Components
+
+AI-assisted features and collaboration presence are integrated into the tool's visual language. They do not announce themselves as AI features or social features. They are instruments within the instrument.
+
+### Chat Assistant Panel
+The Chat Assistant is a command interface, not a companion experience. It communicates through structured output, not conversation styling.
+
+- **Layout:** Panel docked to the right side or bottom, resizable. Never a floating modal.
+- **Input:** Single-line text input at the bottom of the panel, same styling as tool inputs (border-strong, 10px radius). No decorative AI iconography around the input.
+- **Messages:** User queries rendered as plain text with muted background. Responses rendered as structured output: tables, code blocks, and labeled sections where appropriate. No chat bubble shapes. No alternating left/right alignment.
+- **No**: robot icons, pulsing AI indicators, "thinking..." spinners styled like consumer chat, suggestion chips, onboarding prompts, or any pattern borrowed from consumer LLM products.
+- **Yes**: a `[pending]` label using the existing status badge component; inline error messages using the existing danger badge; structured Markdown rendering in the response area.
+
+### AI Insights Panel
+Suggestions and anomaly detections surface as structured list items with signal badges, not as AI-branded cards.
+
+- **Format:** Each insight is a row: signal badge (warning/info/danger) + description + optional action button.
+- **No**: "AI found X issues" hero text, animated AI scanning indicators, or any UI that centers the AI itself rather than the findings.
+- **Loading state:** Use the standard skeleton loader rows. Not a "thinking" animation.
+
+### Collaboration Presence
+Presence awareness is ambient. It communicates at a glance without interrupting the workflow.
+
+- **Indicator:** Small avatar initials (24px circle) in the toolbar right area. Maximum 3 visible; overflow collapses to "+N" in the same style.
+- **Avatar color:** Assigned from a fixed set of surface-tinted hues (not brand colors). Each user gets a consistent color for the session.
+- **Tooltip on hover:** Shows the user's name and the surface they are currently on. Plain tooltip, no popover card.
+- **No**: typing indicators, "is viewing this section" banners, live cursor overlays on shared content, or real-time selection highlights.
+- **Conflict notification:** If a concurrent edit creates a conflict, surface it as a standard warning toast. Not a modal; not an inline banner.
+
+## 7. Do's and Don'ts
 
 ### Do:
 - **Do** use the spacing token scale (4/8/16/24/32/48px) for all gaps and padding. No arbitrary values.
@@ -227,6 +271,8 @@ An animated SVG ring gauge (88px featured, 64-120px range). Ease-out cubic anima
 - **Do** use `<details>` for progressive disclosure of secondary tools and advanced options.
 - **Do** persist user preferences (theme, disclosure state) in localStorage.
 - **Do** provide keyboard shortcuts for frequent actions (e.g., `/` to focus search).
+- **Do** show skeleton loaders only after a 200ms delay. Never flash a skeleton for instant content.
+- **Do** keep presence indicators ambient: visible without demanding attention.
 
 ### Don't:
 - **Don't** use playful SaaS energy: no confetti, emoji-heavy UI, rounded bubbly cards, or startup aesthetics.
@@ -242,3 +288,5 @@ An animated SVG ring gauge (88px featured, 64-120px range). Ease-out cubic anima
 - **Don't** use `transition: all`. Always specify exact properties.
 - **Don't** use hardcoded hex colors outside the token system. Every color must come from a CSS variable.
 - **Don't** use em dashes in UI copy. Use commas, colons, semicolons, or periods.
+- **Don't** style the AI Chat panel like a consumer chatbot: no bubble shapes, no SMS alignment, no companion iconography.
+- **Don't** style collaboration presence like a social product: no typing indicators, no "editing" banners, no animated cursor overlays.

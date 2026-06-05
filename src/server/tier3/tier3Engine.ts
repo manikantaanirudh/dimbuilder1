@@ -1,5 +1,13 @@
-import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecord } from "../../shared/types";
+import {
+  ONESTREAM_MEMBER_NAME_MAX_LENGTH,
+  ONESTREAM_MEMBER_NAME_RESTRICTED_CHARACTERS,
+  memberNameRequiresQueryBrackets
+} from "../../shared/memberNamingGuidelines";
+import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecord, ValidationIssue } from "../../shared/types";
 import type { MemberQualityScore, DimensionQualityScore, QualityRule } from "../../shared/tier3Types";
+
+/** Penalties aligned with readiness scoring so the headline quality ring reflects validation. */
+const VALIDATION_PENALTY = { error: 8, warning: 3, info: 1 } as const;
 
 export interface ProjectData {
   dimensions: DimensionRecord[];
@@ -53,15 +61,33 @@ export function scoreMemberQuality(
   return { memberKey: member.memberKey, dimensionType: dimension.dimensionType, overallScore, breakdown };
 }
 
+export function scoreValidationQuality(issues: ValidationIssue[]): number {
+  if (issues.length === 0) return 100;
+  let penalty = 0;
+  for (const issue of issues) {
+    penalty += VALIDATION_PENALTY[issue.severity] ?? 0;
+  }
+  return clampScore(100 - Math.min(90, penalty));
+}
+
+/** Blend metadata completeness/naming with validation so issues lower the headline score. */
+export function blendQualityScores(metadataScore: number, validationScore: number): number {
+  if (metadataScore >= 100 && validationScore >= 100) return 100;
+  return Math.round(metadataScore * 0.35 + validationScore * 0.65);
+}
+
 export function scoreDimensionQuality(
   dimension: DimensionRecord,
   members: DimensionMemberRecord[],
-  rules: QualityRule[]
+  rules: QualityRule[],
+  issues: ValidationIssue[] = []
 ): DimensionQualityScore {
   const memberScores = members.map(m => scoreMemberQuality(m, dimension, rules));
-  const avgScore = memberScores.length > 0
+  const metadataScore = memberScores.length > 0
     ? Math.round(memberScores.reduce((sum, s) => sum + s.overallScore, 0) / memberScores.length)
     : 100;
+  const validationScore = scoreValidationQuality(issues);
+  const avgScore = blendQualityScores(metadataScore, validationScore);
 
   const lowestScoreMembers = memberScores
     .sort((a, b) => a.overallScore - b.overallScore)
@@ -89,6 +115,40 @@ export function scoreDimensionQuality(
     lowestScoreMembers,
     ruleScores
   };
+}
+
+export function scoreProjectQuality(
+  dimensions: DimensionRecord[],
+  members: DimensionMemberRecord[],
+  rules: QualityRule[],
+  issues: ValidationIssue[]
+): { overallScore: number; metadataScore: number; validationScore: number; dimensions: DimensionQualityScore[] } {
+  const dimensionScores = dimensions.map((dim) => {
+    const dimMembers = members.filter((m) => m.dimensionId === dim.id);
+    const dimIssues = issues.filter((i) => i.dimensionId === dim.id);
+    return scoreDimensionQuality(dim, dimMembers, rules, dimIssues);
+  });
+
+  const metadataScore = dimensions.length > 0
+    ? Math.round(
+        dimensions.map((dim) => {
+          const dimMembers = members.filter((m) => m.dimensionId === dim.id);
+          const memberScores = dimMembers.map((m) => scoreMemberQuality(m, dim, rules));
+          return memberScores.length > 0
+            ? Math.round(memberScores.reduce((sum, s) => sum + s.overallScore, 0) / memberScores.length)
+            : 100;
+        }).reduce((sum, s) => sum + s, 0) / dimensions.length
+      )
+    : 100;
+
+  const validationScore = scoreValidationQuality(issues);
+  const overallScore = blendQualityScores(metadataScore, validationScore);
+
+  return { overallScore, metadataScore, validationScore, dimensions: dimensionScores };
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 export function generateDocumentContent(projectData: ProjectData): string {
@@ -153,10 +213,16 @@ function scoreCompleteness(member: DimensionMemberRecord): number {
 function scoreNaming(memberKey: string): number {
   let score = 100;
   if (memberKey.length < 2) score -= 30;
-  if (memberKey.length > 100) score -= 20;
-  if (/\s{2,}/.test(memberKey)) score -= 20;
-  if (/^[a-z]/.test(memberKey) && !/^[a-z]+$/.test(memberKey)) score -= 10;
-  if (/[^\w\-\s]/.test(memberKey)) score -= 15;
+  if (memberKey.length > ONESTREAM_MEMBER_NAME_MAX_LENGTH) score -= 50;
+  else if (memberKey.length > 100) score -= 10;
+  if (/\s{2,}/.test(memberKey)) score -= 10;
+  if (memberNameRequiresQueryBrackets(memberKey)) score -= 5;
+  for (const character of ONESTREAM_MEMBER_NAME_RESTRICTED_CHARACTERS) {
+    if (memberKey.includes(character)) {
+      score -= 25;
+      break;
+    }
+  }
   return Math.max(0, score);
 }
 

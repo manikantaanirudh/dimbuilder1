@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Flow" name="SyntheticFlow" description="Sanitized flow dimension" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" description="Flow root" />
+          <member name="FLW_EndingBal" description="Ending balance flow member" />
+          <member name="FLW_NetChange" description="Net change flow member" />
+        </members>
+        <relationships>
+          <relationship parent="Root" child="FLW_EndingBal" aggregationWeight="1" />
+          <relationship parent="Root" child="FLW_NetChange" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

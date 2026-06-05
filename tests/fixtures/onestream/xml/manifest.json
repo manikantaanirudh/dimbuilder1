@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "description": "Sanitized synthetic OneStream XML fixtures for import/export/round-trip tests. Not customer data.",
+  "fixtures": [
+    {
+      "file": "account-basic.xml",
+      "category": "valid",
+      "purpose": "Account types, alias, formula property, parent/child hierarchy",
+      "dimensionTypes": ["Account"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "entity-basic.xml",
+      "category": "valid",
+      "purpose": "Entity currency, consolidation ownership on relationships",
+      "dimensionTypes": ["Entity"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "scenario-basic.xml",
+      "category": "valid",
+      "purpose": "Scenario Type examples on scenario members",
+      "dimensionTypes": ["Scenario"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "flow-basic.xml",
+      "category": "valid",
+      "purpose": "Flow dimension hierarchy pattern",
+      "dimensionTypes": ["Flow"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "ud1-basic.xml",
+      "category": "valid",
+      "purpose": "UD1 hierarchy with alias and nested relationships",
+      "dimensionTypes": ["UD1"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "ud2-basic.xml",
+      "category": "valid",
+      "purpose": "UD2 hierarchy with aliases",
+      "dimensionTypes": ["UD2"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "relationship-properties.xml",
+      "category": "valid",
+      "purpose": "Entity relationship percent consolidation and ownership properties",
+      "dimensionTypes": ["Entity"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "varying-properties.xml",
+      "category": "valid",
+      "purpose": "Scenario/time/cube context on member properties (preserved via unknown XML when needed)",
+      "dimensionTypes": ["Account"],
+      "roundTripExpectation": "passed_with_warnings"
+    },
+    {
+      "file": "alternate-hierarchy.xml",
+      "category": "valid",
+      "purpose": "Single member referenced under multiple parents (shared hierarchy pattern)",
+      "dimensionTypes": ["Account"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "special-characters.xml",
+      "category": "valid",
+      "purpose": "XML entity escaping and padded descriptions",
+      "dimensionTypes": ["Scenario"],
+      "roundTripExpectation": "passed"
+    },
+    {
+      "file": "invalid-xml-missing-root.xml",
+      "category": "invalid",
+      "purpose": "Empty dimensions container — import yields no dimensions",
+      "dimensionTypes": [],
+      "roundTripExpectation": "not_applicable",
+      "invalidExpectation": { "maxDimensions": 0 }
+    },
+    {
+      "file": "invalid-xml-duplicate-member.xml",
+      "category": "invalid",
+      "purpose": "Duplicate member keys — validation should report DUPLICATE_MEMBER",
+      "dimensionTypes": ["Account"],
+      "roundTripExpectation": "not_applicable",
+      "invalidExpectation": { "validationCodes": ["DUPLICATE_MEMBER"] }
+    },
+    {
+      "file": "invalid-xml-bad-relationship.xml",
+      "category": "invalid",
+      "purpose": "Relationship child not defined as member — validation should report UNKNOWN_RELATIONSHIP_CHILD",
+      "dimensionTypes": ["Account"],
+      "roundTripExpectation": "not_applicable",
+      "invalidExpectation": { "validationCodes": ["UNKNOWN_RELATIONSHIP_CHILD"] }
+    }
+  ]
+}

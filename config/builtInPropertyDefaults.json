@@ -1,0 +1,2121 @@
+{
+  "source": {
+    "name": "Defaults from Dev_Metadata_20260519_181236Z.xml",
+    "sourceFileName": "Dev_Metadata_20260519_181236Z.xml",
+    "sourceXmlHash": "e4eeb7107ab3b0edb6b48a0249755cf59ea28d2b86f457588a19c4a19f29412a"
+  },
+  "values": [
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Account Type",
+      "xmlName": "AccountType",
+      "defaultValue": "Expense",
+      "enabled": true,
+      "confidence": 0.6476993326308395,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 8,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Adjustment Type",
+      "xmlName": "AdjustmentType",
+      "defaultValue": "Journals",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.9929750614682121,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Formula Type",
+      "xmlName": "FormulaType",
+      "defaultValue": "DynamicCalc",
+      "enabled": true,
+      "confidence": 0.90625,
+      "sampleCount": 2847,
+      "nonBlankCount": 32,
+      "distinctCount": 4,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "IC Constraint",
+      "xmlName": "ICConstraint",
+      "defaultValue": "Top",
+      "enabled": true,
+      "confidence": 0.991921320688444,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "IC Member Filter",
+      "xmlName": "ICMemberFilter",
+      "defaultValue": "Root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 5,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "InUse",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.9898138391289076,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Is IC",
+      "xmlName": "IsIC",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 0.9764664559185107,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Text4",
+      "xmlName": "Text4",
+      "defaultValue": "NO_BEGBAL",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 4,
+      "nonBlankCount": 3,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Text5",
+      "xmlName": "Text5",
+      "defaultValue": "HIS",
+      "enabled": true,
+      "confidence": 0.9661016949152542,
+      "sampleCount": 59,
+      "nonBlankCount": 59,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD2 Constraint",
+      "xmlName": "UD2Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD3 Constraint",
+      "xmlName": "UD3Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD4 Constraint",
+      "xmlName": "UD4Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD5 Constraint",
+      "xmlName": "UD5Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD6 Constraint",
+      "xmlName": "UD6Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD7 Constraint",
+      "xmlName": "UD7Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "UD8 Constraint",
+      "xmlName": "UD8Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Used On Cons Dim",
+      "xmlName": "UsedOnConsDim",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Used On Entity Dim",
+      "xmlName": "UsedOnEntityDim",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 0.991921320688444,
+      "sampleCount": 2847,
+      "nonBlankCount": 2847,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Account",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 3516,
+      "nonBlankCount": 3516,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailAcct",
+        "SummaryAcct"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Currency",
+      "xmlName": "Currency",
+      "defaultValue": "USD",
+      "enabled": true,
+      "confidence": 0.8641975308641975,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 6,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Flow Constraint",
+      "xmlName": "FlowConstraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "IC Constraint",
+      "xmlName": "ICConstraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Is IC",
+      "xmlName": "IsIC",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.8024691358024691,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Read Data Group",
+      "xmlName": "readDataGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Read Data Group 2",
+      "xmlName": "readDataGroup2",
+      "defaultValue": "Nobody",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Read Security Group",
+      "xmlName": "readSecurityGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Read Write Data Group 2",
+      "xmlName": "readWriteDataGroup2",
+      "defaultValue": "Nobody",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Sibling Repeat Calc Pass",
+      "xmlName": "SiblingRepeatCalcPass",
+      "defaultValue": "Unknown",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD1 Constraint",
+      "xmlName": "UD1Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD1 Default",
+      "xmlName": "UD1Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD2 Constraint",
+      "xmlName": "UD2Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD2 Default",
+      "xmlName": "UD2Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD3 Constraint",
+      "xmlName": "UD3Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD3 Default",
+      "xmlName": "UD3Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD4 Constraint",
+      "xmlName": "UD4Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD4 Default",
+      "xmlName": "UD4Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD5 Constraint",
+      "xmlName": "UD5Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD5 Default",
+      "xmlName": "UD5Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD6 Constraint",
+      "xmlName": "UD6Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD6 Default",
+      "xmlName": "UD6Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD7 Constraint",
+      "xmlName": "UD7Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD7 Default",
+      "xmlName": "UD7Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD8 Constraint",
+      "xmlName": "UD8Constraint",
+      "defaultValue": "root",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "UD8 Default",
+      "xmlName": "UD8Default",
+      "defaultValue": "None",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "member",
+      "propertyName": "Use Cube Data Access Security",
+      "xmlName": "UseCubeDataAccessSecurity",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 81,
+      "nonBlankCount": 81,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "relationship",
+      "propertyName": "Ownership Type",
+      "xmlName": "OwnershipType",
+      "defaultValue": "FullConsolidation",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 180,
+      "nonBlankCount": 180,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "relationship",
+      "propertyName": "Parent Sort Order",
+      "xmlName": "ParentSortOrder",
+      "defaultValue": "0",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 180,
+      "nonBlankCount": 180,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "relationship",
+      "propertyName": "Percent Consol",
+      "xmlName": "PercentConsolidation",
+      "defaultValue": "100",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 180,
+      "nonBlankCount": 180,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Entity",
+      "targetLevel": "relationship",
+      "propertyName": "Percent Ownership",
+      "xmlName": "PercentOwnership",
+      "defaultValue": "100",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 180,
+      "nonBlankCount": 180,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "LegalEntity"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 0.7857142857142857,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.9523809523809523,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "Switch Sign",
+      "xmlName": "SwitchSign",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "member",
+      "propertyName": "Switch Type",
+      "xmlName": "SwitchType",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 0.8095238095238095,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Flow",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 0.8488372093023255,
+      "sampleCount": 86,
+      "nonBlankCount": 86,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Flows"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Calculate from Grids Group",
+      "xmlName": "CalculateFromGridsGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Clear Calculated Data During Calc",
+      "xmlName": "ClearCalculatedDataDuringCalc",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Consolidation View",
+      "xmlName": "ConsolidationView",
+      "defaultValue": "Periodic",
+      "enabled": true,
+      "confidence": 0.7619047619047619,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Default View",
+      "xmlName": "DefaultView",
+      "defaultValue": "Periodic",
+      "enabled": true,
+      "confidence": 0.7619047619047619,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Input Frequency",
+      "xmlName": "InputFrequency",
+      "defaultValue": "Monthly",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Input View For Adj",
+      "xmlName": "InputViewForAdj",
+      "defaultValue": "Periodic",
+      "enabled": true,
+      "confidence": 0.7619047619047619,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Manage Data Group",
+      "xmlName": "ManageDataGroup",
+      "defaultValue": "Nobody",
+      "enabled": true,
+      "confidence": 0.9047619047619048,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "No Data Zero View For Adj",
+      "xmlName": "NoDataZeroViewForAdj",
+      "defaultValue": "Periodic",
+      "enabled": true,
+      "confidence": 0.7619047619047619,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "No Data Zero View For Non Adj",
+      "xmlName": "NoDataZeroViewForNonAdj",
+      "defaultValue": "Periodic",
+      "enabled": true,
+      "confidence": 0.7619047619047619,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Read Data Group",
+      "xmlName": "readDataGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Read Security Group",
+      "xmlName": "readSecurityGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Retain Next Period Data Using DefaultView",
+      "xmlName": "RetainNextPeriodDataUsingDefaultView",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Scenario Type",
+      "xmlName": "ScenarioType",
+      "defaultValue": "Budget",
+      "enabled": true,
+      "confidence": 0.9047619047619048,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Use Cube FX Settings",
+      "xmlName": "UseCubeFxSettings",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Use In Workflow",
+      "xmlName": "UseInWorkflow",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.8571428571428571,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Use Input View For Adj In Calcs",
+      "xmlName": "UseInputViewForAdjInCalcs",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "Scenario",
+      "targetLevel": "member",
+      "propertyName": "Workflow Tracking Frequency",
+      "xmlName": "WorkflowTrackingFrequency",
+      "defaultValue": "AllTimePeriods",
+      "enabled": true,
+      "confidence": 0.8095238095238095,
+      "sampleCount": 21,
+      "nonBlankCount": 21,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Scenarios"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 390,
+      "nonBlankCount": 390,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 390,
+      "nonBlankCount": 390,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 390,
+      "nonBlankCount": 390,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 390,
+      "nonBlankCount": 390,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 390,
+      "nonBlankCount": 390,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD1",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 859,
+      "nonBlankCount": 859,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Base_Department",
+        "Top_Department"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 292,
+      "nonBlankCount": 292,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD2",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 584,
+      "nonBlankCount": 584,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Location"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.9047619047619048,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD3",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 84,
+      "nonBlankCount": 84,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "DetailProduct",
+        "Product"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD4",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 43,
+      "nonBlankCount": 43,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Brand"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 0.9721236695387735,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1973,
+      "nonBlankCount": 1973,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD5",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 1970,
+      "nonBlankCount": 1970,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Project"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD6",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 986,
+      "nonBlankCount": 986,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "Channel",
+        "ForecastCustomer",
+        "StoreGroup"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "true",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 126,
+      "nonBlankCount": 126,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD7",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 198,
+      "nonBlankCount": 198,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "RecordType"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Allow Input",
+      "xmlName": "AllowInput",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 0.8842975206611571,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Display Group",
+      "xmlName": "displayMemberGroup",
+      "defaultValue": "Everyone",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Formula For Calc Drill Down",
+      "xmlName": "FormulaForCalcDrillDown",
+      "defaultValue": "Dim result As New DrillDownFormulaResult&#xD;&#xA;&#xD;&#xA;result.SourceDataCells.Add(\"A#\" & api.Pov.Account.Name & \":U8#None\")&#xD;&#xA;&#xD;&#xA;Return result",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 1,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Formula Type",
+      "xmlName": "FormulaType",
+      "defaultValue": "DynamicCalc",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 117,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "In Use",
+      "xmlName": "InUse",
+      "defaultValue": "True",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Is Attribute Member",
+      "xmlName": "AttributeMemberIsAttribute",
+      "defaultValue": "false",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Is Consolidated",
+      "xmlName": "IsConsolidated",
+      "defaultValue": "conditional",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "member",
+      "propertyName": "Workflow Channel",
+      "xmlName": "WorkflowChannel",
+      "defaultValue": "NoDataLock",
+      "enabled": true,
+      "confidence": 1,
+      "sampleCount": 121,
+      "nonBlankCount": 121,
+      "distinctCount": 1,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    },
+    {
+      "dimensionType": "UD8",
+      "targetLevel": "relationship",
+      "propertyName": "Aggregation Weight",
+      "xmlName": "AggregationWeight",
+      "defaultValue": "1",
+      "enabled": true,
+      "confidence": 0.9916666666666667,
+      "sampleCount": 120,
+      "nonBlankCount": 120,
+      "distinctCount": 2,
+      "sourceDimensionNames": [
+        "MetadataReview",
+        "Reporting"
+      ]
+    }
+  ]
+}

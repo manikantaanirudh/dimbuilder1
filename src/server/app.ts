@@ -16,6 +16,7 @@ import { createConfigRouter } from "./routes/config";
 import { createExportRouter } from "./routes/export";
 import { createImportRouter } from "./routes/import";
 import { createProjectRouter } from "./routes/projects";
+import { createPropertyDefaultsRouter } from "./routes/propertyDefaults";
 import { createSchemaRouter } from "./routes/schema";
 import { createValidationRouter } from "./routes/validation";
 import { createBlueprintRouter } from "./routes/blueprints";
@@ -79,6 +80,7 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/blueprints", createBlueprintRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
+  app.use("/api/projects", createPropertyDefaultsRouter(repos, config));
   app.use("/api/schema", createSchemaRouter());
   app.use("/api/import", createImportRouter(repos, config));
   app.use("/api/export", createExportRouter(repos, config));

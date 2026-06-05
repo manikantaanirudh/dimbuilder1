@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="AltHierarchyAccounts" description="Shared member under multiple parents" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="AccountType" value="Label" />
+            </properties>
+          </member>
+          <member name="ALT_BranchA" description="Branch A">
+            <properties>
+              <property name="AccountType" value="Label" />
+            </properties>
+          </member>
+          <member name="ALT_BranchB" description="Branch B">
+            <properties>
+              <property name="AccountType" value="Label" />
+            </properties>
+          </member>
+          <member name="ALT_SharedLeaf" alias="Shared" description="Leaf shared across branches">
+            <properties>
+              <property name="AccountType" value="Revenue" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="ALT_BranchA" aggregationWeight="1" />
+          <relationship parent="Root" child="ALT_BranchB" aggregationWeight="1" />
+          <relationship parent="ALT_BranchA" child="ALT_SharedLeaf" aggregationWeight="1" />
+          <relationship parent="ALT_BranchB" child="ALT_SharedLeaf" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

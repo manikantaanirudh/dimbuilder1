@@ -31,4 +31,12 @@ describe("database", () => {
     expect(repos.dimensions.listByProject(project.id)).toEqual([dimension]);
     db.close();
   });
+
+  it("seeds property default catalog on database startup", () => {
+    const db = createDatabase(":memory:");
+    const repos = createRepositories(db);
+    const count = Number(db.prepare("SELECT COUNT(*) AS count FROM property_default_catalog").get()?.count ?? 0);
+    expect(count).toBeGreaterThan(0);
+    db.close();
+  });
 });

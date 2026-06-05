@@ -138,6 +138,7 @@ function evaluateCondition(
       const dimensions = repos.dimensions.listByProject(projectId);
       const members = repos.members.listByProject(projectId);
       const rules = repos.qualityRules.listByProject(projectId);
+      const issues = repos.issues.listByProject(projectId);
 
       if (dimensions.length === 0) {
         return { condition, passed: true, detail: `No dimensions to score (passes by default)` };
@@ -145,7 +146,8 @@ function evaluateCondition(
 
       const scores = dimensions.map(dim => {
         const dimMembers = members.filter(m => m.dimensionId === dim.id);
-        return scoreDimensionQuality(dim, dimMembers, rules);
+        const dimIssues = issues.filter(i => i.dimensionId === dim.id);
+        return scoreDimensionQuality(dim, dimMembers, rules, dimIssues);
       });
       const avgScore = Math.round(scores.reduce((sum, s) => sum + s.overallScore, 0) / scores.length);
 

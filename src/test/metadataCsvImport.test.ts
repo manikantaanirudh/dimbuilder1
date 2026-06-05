@@ -90,10 +90,54 @@ describe("metadataCsvImport", () => {
     expect(preview.errors.some((error) => /dimension type and dimension name/i.test(error))).toBe(true);
   });
 
-  it("blocks self-reference when parent equals member", () => {
-    const preview = previewCsv("parent,member\nRevenue,Revenue");
-    expect(preview.ok).toBe(false);
-    expect(preview.errors.some((error) => /parent cannot equal member/i.test(error))).toBe(true);
+  it("skips self-reference rows with a warning so other rows can still import", () => {
+    const preview = previewCsv("parent,member\nRevenue,Revenue\nRoot,Product");
+    expect(preview.ok).toBe(true);
+    expect(preview.warnings.some((warning) => /skipped because parent equals member/i.test(warning))).toBe(true);
+    expect(preview.counts.membersToCreate).toBe(1);
+  });
+
+  it("parses semicolon Opex-style exports with hierarchy level columns", () => {
+    const sample = [
+      ";NK_GLAccountCode;GLAccountName;L01_OPEXGroup;L02_OPEXGroup;L03_OPEXGroup",
+      "1;619290;External Warehouse Fixed Cost;Operating Expenses Pro Forma;Gross Spending;Facilities"
+    ].join("\n");
+    const preview = previewCsv(sample);
+    expect(preview.ok).toBe(true);
+    expect(preview.counts.membersToCreate).toBe(4);
+    expect(preview.counts.relationshipsToCreate).toBe(3);
+  });
+
+  it("does not import non-dictionary Opex columns as member properties", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { dirname, join } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const csvContent = readFileSync(fixturePath, "utf8");
+    const { plan } = buildMetadataCsvCommitPlan({
+      csvContent,
+      enabledDimensionTypes: ["Account"],
+      mode: "newProject",
+      formDefaults: { dimensionType: "Account", dimensionName: "GLAccounts", defaultAccountType: "Expense" }
+    }, "opex.txt");
+    const leaf = plan?.membersToCreate.find((member) => member.memberKey === "619290");
+    expect(leaf?.properties.ActiveFlag).toBeUndefined();
+    expect(leaf?.properties["Account Type"]).toBe("Expense");
+  });
+
+  it("loads OpexAccount export fixture with hierarchy expansion", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { fileURLToPath } = await import("node:url");
+    const { dirname, join } = await import("node:path");
+    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const csvContent = readFileSync(fixturePath, "utf8");
+    const preview = previewCsv(csvContent, {
+      formDefaults: { dimensionType: "Account", dimensionName: "GLAccounts", projectName: "Opex Import" }
+    });
+    expect(preview.ok).toBe(true);
+    expect(preview.counts.rowCount).toBeGreaterThan(200);
+    expect(preview.counts.membersToCreate).toBeGreaterThan(preview.counts.rowCount);
+    expect(preview.counts.relationshipsToCreate).toBeGreaterThan(preview.counts.rowCount);
   });
 
   it("counts member updates for existing projects", () => {

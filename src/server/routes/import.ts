@@ -4,10 +4,12 @@ import { createReadStream, mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import {
   buildMetadataCsvCommitPlan,
+  inspectMetadataCsvFile,
   previewMetadataCsvImport,
   type MetadataCsvFormDefaults,
   type MetadataCsvImportContext
 } from "../../shared/metadataCsvImport";
+import { parseMetadataCsvColumnMapping } from "../../shared/metadataCsvMapping";
 import { parseOneStreamXmlFromStream } from "../../shared/xmlImport";
 import { parseWorkbook } from "../../shared/workbookParser";
 import { validateDimension } from "../../shared/validationEngine";
@@ -15,7 +17,7 @@ import type { Repositories } from "../db/repositories";
 import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
 import { applyMetadataCsvCommitPlan } from "../metadataCsvCommit";
 
-const ALLOWED_EXTENSIONS = /\.(xlsx|xls|xml|csv)$/i;
+const ALLOWED_EXTENSIONS = /\.(xlsx|xls|xml|csv|txt|tsv)$/i;
 
 function resolveUploadMaxBytes(config: AppConfig): number {
   const uploadMaxMb = config.operations?.uploadMaxMb ?? 25;
@@ -26,7 +28,8 @@ function readCsvFormDefaults(body: Record<string, unknown>): MetadataCsvFormDefa
   return {
     projectName: typeof body.projectName === "string" ? body.projectName : undefined,
     dimensionType: typeof body.dimensionType === "string" ? body.dimensionType : undefined,
-    dimensionName: typeof body.dimensionName === "string" ? body.dimensionName : undefined
+    dimensionName: typeof body.dimensionName === "string" ? body.dimensionName : undefined,
+    defaultAccountType: typeof body.defaultAccountType === "string" ? body.defaultAccountType : undefined
   };
 }
 
@@ -39,9 +42,11 @@ function buildCsvImportContext(
   const projectId = typeof body.projectId === "string" && body.projectId.trim() ? body.projectId.trim() : undefined;
   const mode = projectId ? "existingProject" : "newProject";
   const formDefaults = readCsvFormDefaults(body);
+  const columnMapping = parseMetadataCsvColumnMapping(body.columnMapping);
   const context: MetadataCsvImportContext = {
     csvContent,
     formDefaults,
+    columnMapping,
     enabledDimensionTypes: config.dimensions.enabledTypes,
     mode
   };
@@ -70,7 +75,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       if (extOk) {
         cb(null, true);
       } else {
-        cb(new Error("Only .xlsx, .xls, .xml, and .csv files are allowed"));
+        cb(new Error("Only .xlsx, .xls, .xml, .csv, .txt, and .tsv files are allowed"));
       }
     }
   });
@@ -95,6 +100,32 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
   }
 
   const router = Router();
+
+  router.post("/csv/inspect", uploadSingle("file"), async (req, res, next) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "file is required" });
+      const csvContent = readFileSync(req.file.path, "utf8");
+      const dimensionTypeRaw = typeof req.body.dimensionType === "string" ? req.body.dimensionType : "Account";
+      const dimensionType = config.dimensions.enabledTypes.find(
+        (type) => type.toLowerCase() === dimensionTypeRaw.toLowerCase()
+      );
+      if (!dimensionType) {
+        return res.status(400).json({ error: `Unsupported dimension type '${dimensionTypeRaw}'.` });
+      }
+      const inspection = inspectMetadataCsvFile(csvContent, dimensionType);
+      res.json(inspection);
+    } catch (error) {
+      next(error);
+    } finally {
+      if (req.file?.path) {
+        try {
+          unlinkSync(req.file.path);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
+  });
 
   router.post("/csv/preview", uploadSingle("file"), async (req, res, next) => {
     try {

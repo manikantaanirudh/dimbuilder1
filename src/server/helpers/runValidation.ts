@@ -1,4 +1,5 @@
 import type { AppConfig } from "../../shared/appConfigTypes";
+import { validateMemberUniquenessAcrossDimensionTypes } from "../../shared/memberUniquenessValidation";
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 
@@ -9,6 +10,7 @@ export function runProjectValidation(repos: Repositories, config: AppConfig, pro
   const members = repos.members.listByProject(project.id);
   const relationships = repos.relationships.listByProject(project.id);
   const varyingPropertyValues = repos.varyingProperties.listVaryingPropertyValues(project.id);
+  const propertyDefaults = repos.propertyDefaults.getEffectiveDefaultsForExport(project.id);
   const issues = dimensions.flatMap((dimension) =>
     validateDimension({
       project,
@@ -16,7 +18,8 @@ export function runProjectValidation(repos: Repositories, config: AppConfig, pro
       members: members.filter((member) => member.dimensionId === dimension.id),
       relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
       varyingPropertyValues: varyingPropertyValues.filter((value) => value.dimensionId === dimension.id),
-      severities: config.validation
+      severities: config.validation,
+      propertyDefaults: propertyDefaults.filter((entry) => entry.dimensionType === dimension.dimensionType)
     })
   );
 
@@ -70,6 +73,15 @@ export function runProjectValidation(repos: Repositories, config: AppConfig, pro
       }
     }
   }
+
+  issues.push(
+    ...validateMemberUniquenessAcrossDimensionTypes({
+      project,
+      dimensions,
+      members,
+      severity: config.validation.duplicateMemberSeverity
+    })
+  );
 
   repos.issues.replaceForProject(project.id, issues);
   return issues;

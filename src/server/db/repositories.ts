@@ -1,4 +1,12 @@
 import { nanoid } from "nanoid";
+import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
+import type { PropertyDefaultResolutionEntry } from "../../shared/effectiveProperties";
+import {
+  toPropertyDefaultDisplayRow,
+  toPropertyDefaultResolutionEntries,
+  type PropertyDefaultCatalogRecord,
+  type PropertyDefaultDisplayRow
+} from "../../shared/propertyDefaultResolver";
 import type { AppDatabase } from "./database";
 import type {
   WorkflowDefinition,
@@ -47,6 +55,37 @@ export interface SessionRow {
   expires_at: string;
   created_at: string;
 }
+
+export interface PropertyDefaultProfileRecord {
+  id: string;
+  projectId: string;
+  name: string;
+  sourceFileName: string;
+  sourceXmlHash: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PropertyDefaultValueRecord {
+  id: string;
+  profileId: string;
+  dimensionType: string;
+  targetLevel: "dimension" | "member" | "relationship";
+  propertyName: string;
+  xmlName: string;
+  defaultValue: string;
+  enabled: boolean;
+  confidence: number;
+  sampleCount: number;
+  nonBlankCount: number;
+  distinctCount: number;
+  sourceDimensionNames: string[];
+  updatedAt: string;
+}
+
+export type { PropertyDefaultCatalogRecord, PropertyDefaultDisplayRow };
 
 export interface ProjectPermissionRow {
   id: string;
@@ -267,7 +306,8 @@ export function createRepositories(db: AppDatabase) {
         return dimension;
       },
       listByProject(projectId: string): DimensionRecord[] {
-        return db.prepare("SELECT * FROM dimensions WHERE project_id = ? ORDER BY sort_order").all(projectId).map(mapDimension);
+        const dimensions = db.prepare("SELECT * FROM dimensions WHERE project_id = ?").all(projectId).map(mapDimension);
+        return sortDimensionsByType(dimensions);
       },
       get(dimensionId: string): DimensionRecord | null {
         const row = db.prepare("SELECT * FROM dimensions WHERE id = ?").get(dimensionId);
@@ -291,6 +331,17 @@ export function createRepositories(db: AppDatabase) {
           now(),
           dimensionId
         );
+      },
+      delete(dimensionId: string): boolean {
+        const current = this.get(dimensionId);
+        if (!current) return false;
+        runInTransaction(db, () => {
+          db.prepare("DELETE FROM edit_locks WHERE dimension_id = ?").run(dimensionId);
+          db.prepare("DELETE FROM collaboration_comments WHERE dimension_id = ?").run(dimensionId);
+          db.prepare("DELETE FROM ai_suggestions WHERE dimension_id = ?").run(dimensionId);
+          db.prepare("DELETE FROM dimensions WHERE id = ?").run(dimensionId);
+        });
+        return true;
       }
     },
     members: {
@@ -372,6 +423,16 @@ export function createRepositories(db: AppDatabase) {
       },
       softDelete(id: string): void {
         db.prepare("UPDATE dimension_members SET is_active = 0, updated_at = ? WHERE id = ?").run(now(), id);
+      },
+      softDeleteMany(ids: string[]): number {
+        if (ids.length === 0) return 0;
+        const placeholders = ids.map(() => "?").join(", ");
+        const result = db.prepare(`
+          UPDATE dimension_members
+          SET is_active = 0, updated_at = ?
+          WHERE id IN (${placeholders}) AND is_active = 1
+        `).run(now(), ...ids);
+        return Number(result.changes ?? 0);
       },
       listByIds(dimensionId: string, ids: string[]): DimensionMemberRecord[] {
         if (ids.length === 0) return [];
@@ -484,8 +545,28 @@ export function createRepositories(db: AppDatabase) {
           id
         );
       },
+      getById(id: string): DimensionRelationshipRecord | undefined {
+        const row = db.prepare("SELECT * FROM dimension_relationships WHERE id = ?").get(id);
+        return row ? mapRelationship(row) : undefined;
+      },
       delete(id: string): void {
         db.prepare("DELETE FROM dimension_relationships WHERE id = ?").run(id);
+      },
+      deleteMany(ids: string[]): number {
+        if (ids.length === 0) return 0;
+        const placeholders = ids.map(() => "?").join(", ");
+        const result = db.prepare(`DELETE FROM dimension_relationships WHERE id IN (${placeholders})`).run(...ids);
+        return Number(result.changes ?? 0);
+      },
+      deleteForMemberKeys(dimensionId: string, memberKeys: string[]): number {
+        if (memberKeys.length === 0) return 0;
+        const placeholders = memberKeys.map(() => "?").join(", ");
+        const result = db.prepare(`
+          DELETE FROM dimension_relationships
+          WHERE dimension_id = ?
+            AND (parent_key IN (${placeholders}) OR child_key IN (${placeholders}))
+        `).run(dimensionId, ...memberKeys, ...memberKeys);
+        return Number(result.changes ?? 0);
       },
       listByIds(dimensionId: string, ids: string[]): DimensionRelationshipRecord[] {
         if (ids.length === 0) return [];
@@ -2277,6 +2358,248 @@ export function createRepositories(db: AppDatabase) {
       },
       list(): RetentionPolicy[] { return db.prepare("SELECT * FROM retention_policies ORDER BY created_at DESC").all().map(row => ({ id: String(row.id), tenantId: row.tenant_id ? String(row.tenant_id) : null, entityType: String(row.entity_type), retentionDays: Number(row.retention_days), isActive: Boolean(row.is_active), createdAt: String(row.created_at) })); }
     },
+    propertyDefaults: {
+      createActiveProfile(input: {
+        projectId: string;
+        name: string;
+        sourceFileName: string;
+        sourceXmlHash: string;
+        createdBy?: string;
+        values: Array<{
+          dimensionType: string;
+          targetLevel: "dimension" | "member" | "relationship";
+          propertyName: string;
+          xmlName: string;
+          defaultValue: string;
+          enabled?: boolean;
+          confidence: number;
+          sampleCount: number;
+          nonBlankCount: number;
+          distinctCount: number;
+          sourceDimensionNames: string[];
+        }>;
+      }): { profile: PropertyDefaultProfileRecord; values: PropertyDefaultValueRecord[] } {
+        return runInTransaction(db, () => {
+          const timestamp = now();
+          db.prepare("UPDATE property_default_profiles SET is_active = 0, updated_at = ? WHERE project_id = ? AND is_active = 1")
+            .run(timestamp, input.projectId);
+
+          const profile: PropertyDefaultProfileRecord = {
+            id: nanoid(),
+            projectId: input.projectId,
+            name: input.name,
+            sourceFileName: input.sourceFileName,
+            sourceXmlHash: input.sourceXmlHash,
+            isActive: true,
+            createdBy: input.createdBy ?? "local-admin",
+            createdAt: timestamp,
+            updatedAt: timestamp
+          };
+
+          db.prepare(`
+            INSERT INTO property_default_profiles (
+              id, project_id, name, source_file_name, source_xml_hash, is_active, created_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
+          `).run(
+            profile.id,
+            profile.projectId,
+            profile.name,
+            profile.sourceFileName,
+            profile.sourceXmlHash,
+            profile.createdBy,
+            profile.createdAt,
+            profile.updatedAt
+          );
+
+          const insertValue = db.prepare(`
+            INSERT INTO property_default_values (
+              id, profile_id, dimension_type, target_level, property_name, xml_name, default_value, enabled,
+              confidence, sample_count, non_blank_count, distinct_count, source_dimension_names_json, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          const values: PropertyDefaultValueRecord[] = input.values.map((value) => {
+            const record: PropertyDefaultValueRecord = {
+              id: nanoid(),
+              profileId: profile.id,
+              dimensionType: value.dimensionType,
+              targetLevel: value.targetLevel,
+              propertyName: value.propertyName,
+              xmlName: value.xmlName,
+              defaultValue: value.defaultValue,
+              enabled: value.enabled ?? true,
+              confidence: value.confidence,
+              sampleCount: value.sampleCount,
+              nonBlankCount: value.nonBlankCount,
+              distinctCount: value.distinctCount,
+              sourceDimensionNames: value.sourceDimensionNames,
+              updatedAt: timestamp
+            };
+            insertValue.run(
+              record.id,
+              record.profileId,
+              record.dimensionType,
+              record.targetLevel,
+              record.propertyName,
+              record.xmlName,
+              record.defaultValue,
+              record.enabled ? 1 : 0,
+              record.confidence,
+              record.sampleCount,
+              record.nonBlankCount,
+              record.distinctCount,
+              JSON.stringify(record.sourceDimensionNames),
+              record.updatedAt
+            );
+            return record;
+          });
+
+          return { profile, values };
+        });
+      },
+      getActiveProfile(projectId: string): PropertyDefaultProfileRecord | null {
+        const row = db.prepare(
+          "SELECT * FROM property_default_profiles WHERE project_id = ? AND is_active = 1 ORDER BY updated_at DESC LIMIT 1"
+        ).get(projectId);
+        return row ? mapPropertyDefaultProfile(row) : null;
+      },
+      listValues(projectId: string, dimensionType?: string): PropertyDefaultValueRecord[] {
+        const profile = this.getActiveProfile(projectId);
+        if (!profile) return [];
+        if (dimensionType) {
+          return db.prepare(
+            "SELECT * FROM property_default_values WHERE profile_id = ? AND dimension_type = ? ORDER BY target_level, property_name"
+          ).all(profile.id, dimensionType).map(mapPropertyDefaultValue);
+        }
+        return db.prepare(
+          "SELECT * FROM property_default_values WHERE profile_id = ? ORDER BY dimension_type, target_level, property_name"
+        ).all(profile.id).map(mapPropertyDefaultValue);
+      },
+      getValueById(defaultId: string): PropertyDefaultValueRecord | null {
+        const row = db.prepare("SELECT * FROM property_default_values WHERE id = ?").get(defaultId);
+        return row ? mapPropertyDefaultValue(row) : null;
+      },
+      updateValue(
+        defaultId: string,
+        input: { defaultValue?: string; enabled?: boolean }
+      ): PropertyDefaultValueRecord | null {
+        const existing = this.getValueById(defaultId);
+        if (!existing) return null;
+        const updatedAt = now();
+        const defaultValue = input.defaultValue !== undefined ? input.defaultValue : existing.defaultValue;
+        const enabled = input.enabled !== undefined ? input.enabled : existing.enabled;
+        db.prepare(`
+          UPDATE property_default_values
+          SET default_value = ?, enabled = ?, updated_at = ?
+          WHERE id = ?
+        `).run(defaultValue, enabled ? 1 : 0, updatedAt, defaultId);
+        db.prepare("UPDATE property_default_profiles SET updated_at = ? WHERE id = ?")
+          .run(updatedAt, existing.profileId);
+        return { ...existing, defaultValue, enabled, updatedAt };
+      },
+      listCatalog(dimensionType?: string): PropertyDefaultCatalogRecord[] {
+        if (dimensionType) {
+          return db.prepare(
+            "SELECT * FROM property_default_catalog WHERE dimension_type = ? ORDER BY target_level, property_name"
+          ).all(dimensionType).map(mapPropertyDefaultCatalog);
+        }
+        return db.prepare(
+          "SELECT * FROM property_default_catalog ORDER BY dimension_type, target_level, property_name"
+        ).all().map(mapPropertyDefaultCatalog);
+      },
+      getCatalogById(catalogId: string): PropertyDefaultCatalogRecord | null {
+        const row = db.prepare("SELECT * FROM property_default_catalog WHERE id = ?").get(catalogId);
+        return row ? mapPropertyDefaultCatalog(row) : null;
+      },
+      updateCatalog(
+        catalogId: string,
+        input: { defaultValue?: string; enabled?: boolean }
+      ): PropertyDefaultCatalogRecord | null {
+        const existing = this.getCatalogById(catalogId);
+        if (!existing) return null;
+        const updatedAt = now();
+        const defaultValue = input.defaultValue !== undefined ? input.defaultValue : existing.defaultValue;
+        const enabled = input.enabled !== undefined ? input.enabled : existing.enabled;
+        db.prepare(`
+          UPDATE property_default_catalog
+          SET default_value = ?, enabled = ?, updated_at = ?
+          WHERE id = ?
+        `).run(defaultValue, enabled ? 1 : 0, updatedAt, catalogId);
+        return { ...existing, defaultValue, enabled, updatedAt };
+      },
+      listDisplayRows(_projectId: string, dimensionType?: string): PropertyDefaultDisplayRow[] {
+        return this.listCatalog(dimensionType).map(toPropertyDefaultDisplayRow);
+      },
+      listOverrides(projectId: string, dimensionType?: string): PropertyDefaultOverrideRecord[] {
+        if (dimensionType) {
+          return db.prepare(
+            "SELECT * FROM property_default_overrides WHERE project_id = ? AND dimension_type = ? ORDER BY target_level, property_name"
+          ).all(projectId, dimensionType).map(mapPropertyDefaultOverride);
+        }
+        return db.prepare(
+          "SELECT * FROM property_default_overrides WHERE project_id = ? ORDER BY dimension_type, target_level, property_name"
+        ).all(projectId).map(mapPropertyDefaultOverride);
+      },
+      getOverrideById(overrideId: string): PropertyDefaultOverrideRecord | null {
+        const row = db.prepare("SELECT * FROM property_default_overrides WHERE id = ?").get(overrideId);
+        return row ? mapPropertyDefaultOverride(row) : null;
+      },
+      upsertOverride(input: {
+        projectId: string;
+        dimensionType: string;
+        targetLevel: "dimension" | "member" | "relationship";
+        propertyName: string;
+        xmlName: string;
+        defaultValue: string;
+        enabled: boolean;
+      }): PropertyDefaultOverrideRecord {
+        const updatedAt = now();
+        const existing = db.prepare(`
+          SELECT id FROM property_default_overrides
+          WHERE project_id = ? AND dimension_type = ? AND target_level = ? AND property_name = ?
+        `).get(input.projectId, input.dimensionType, input.targetLevel, input.propertyName) as { id: string } | undefined;
+
+        if (existing) {
+          db.prepare(`
+            UPDATE property_default_overrides
+            SET default_value = ?, enabled = ?, xml_name = ?, updated_at = ?
+            WHERE id = ?
+          `).run(input.defaultValue, input.enabled ? 1 : 0, input.xmlName, updatedAt, existing.id);
+          return this.getOverrideById(existing.id)!;
+        }
+
+        const record: PropertyDefaultOverrideRecord = {
+          id: nanoid(),
+          projectId: input.projectId,
+          dimensionType: input.dimensionType as PropertyDefaultOverrideRecord["dimensionType"],
+          targetLevel: input.targetLevel,
+          propertyName: input.propertyName,
+          xmlName: input.xmlName,
+          defaultValue: input.defaultValue,
+          enabled: input.enabled,
+          updatedAt
+        };
+        db.prepare(`
+          INSERT INTO property_default_overrides (
+            id, project_id, dimension_type, target_level, property_name, xml_name, default_value, enabled, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          record.id,
+          record.projectId,
+          record.dimensionType,
+          record.targetLevel,
+          record.propertyName,
+          record.xmlName,
+          record.defaultValue,
+          record.enabled ? 1 : 0,
+          record.updatedAt
+        );
+        return record;
+      },
+      getEffectiveDefaultsForExport(_projectId: string): PropertyDefaultResolutionEntry[] {
+        return toPropertyDefaultResolutionEntries(this.listCatalog());
+      }
+    },
     projectMembers: {
       add(input: { projectId: string; userId: string; role: string; grantedBy: string }): { id: string; projectId: string; userId: string; role: string; grantedBy: string; grantedAt: string } {
         const id = nanoid(); const timestamp = now();
@@ -2636,7 +2959,9 @@ function buildProjectSnapshotState(db: AppDatabase, projectId: string): ProjectS
   if (!projectRow) throw new Error("Project not found.");
   return {
     project: mapProject(projectRow),
-    dimensions: db.prepare("SELECT * FROM dimensions WHERE project_id = ? ORDER BY sort_order").all(projectId).map(mapDimension),
+    dimensions: sortDimensionsByType(
+      db.prepare("SELECT * FROM dimensions WHERE project_id = ?").all(projectId).map(mapDimension)
+    ),
     members: db.prepare(`
       SELECT m.* FROM dimension_members m
       JOIN dimensions d ON d.id = m.dimension_id
@@ -3197,6 +3522,78 @@ function mapEnvironmentOverride(row: Record<string, unknown>): EnvironmentOverri
     reason: String(row.reason ?? ""),
     createdBy: String(row.created_by),
     createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapPropertyDefaultProfile(row: Record<string, unknown>): PropertyDefaultProfileRecord {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    name: String(row.name),
+    sourceFileName: String(row.source_file_name ?? ""),
+    sourceXmlHash: String(row.source_xml_hash ?? ""),
+    isActive: Boolean(row.is_active),
+    createdBy: String(row.created_by ?? "local-admin"),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapPropertyDefaultCatalog(row: Record<string, unknown>): PropertyDefaultCatalogRecord {
+  return {
+    id: String(row.id),
+    dimensionType: String(row.dimension_type) as PropertyDefaultCatalogRecord["dimensionType"],
+    targetLevel: String(row.target_level) as PropertyDefaultCatalogRecord["targetLevel"],
+    propertyName: String(row.property_name),
+    xmlName: String(row.xml_name),
+    defaultValue: String(row.default_value ?? ""),
+    enabled: Boolean(row.enabled),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+interface PropertyDefaultOverrideRecord {
+  id: string;
+  projectId: string;
+  dimensionType: string;
+  targetLevel: "dimension" | "member" | "relationship";
+  propertyName: string;
+  xmlName: string;
+  defaultValue: string;
+  enabled: boolean;
+  updatedAt: string;
+}
+
+function mapPropertyDefaultOverride(row: Record<string, unknown>): PropertyDefaultOverrideRecord {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    dimensionType: String(row.dimension_type) as PropertyDefaultOverrideRecord["dimensionType"],
+    targetLevel: String(row.target_level) as PropertyDefaultOverrideRecord["targetLevel"],
+    propertyName: String(row.property_name),
+    xmlName: String(row.xml_name),
+    defaultValue: String(row.default_value ?? ""),
+    enabled: Boolean(row.enabled),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapPropertyDefaultValue(row: Record<string, unknown>): PropertyDefaultValueRecord {
+  return {
+    id: String(row.id),
+    profileId: String(row.profile_id),
+    dimensionType: String(row.dimension_type),
+    targetLevel: String(row.target_level) as PropertyDefaultValueRecord["targetLevel"],
+    propertyName: String(row.property_name),
+    xmlName: String(row.xml_name),
+    defaultValue: String(row.default_value ?? ""),
+    enabled: Boolean(row.enabled),
+    confidence: Number(row.confidence ?? 0),
+    sampleCount: Number(row.sample_count ?? 0),
+    nonBlankCount: Number(row.non_blank_count ?? 0),
+    distinctCount: Number(row.distinct_count ?? 0),
+    sourceDimensionNames: parseJson<string[]>(String(row.source_dimension_names_json ?? "[]"), []),
     updatedAt: String(row.updated_at)
   };
 }

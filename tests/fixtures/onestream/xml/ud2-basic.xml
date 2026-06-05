@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="UD2" name="SyntheticChannels" description="Sanitized UD2 hierarchy" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" description="Channel root" />
+          <member name="CHN_Direct" alias="Direct" description="Direct channel" />
+          <member name="CHN_Partner" alias="Partner" description="Partner channel" />
+        </members>
+        <relationships>
+          <relationship parent="Root" child="CHN_Direct" aggregationWeight="1" />
+          <relationship parent="Root" child="CHN_Partner" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

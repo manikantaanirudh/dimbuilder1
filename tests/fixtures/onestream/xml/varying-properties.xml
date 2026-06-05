@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="VaryingAccounts" description="Varying property context coverage" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="AccountType" value="Label" />
+            </properties>
+          </member>
+          <member name="VAR_Member" description="Member with scenario/time context">
+            <properties>
+              <property name="AccountType" value="Asset" />
+              <property name="Text1" value="BaseText" />
+              <property name="Text1" value="ActualOverride" scenarioType="Actual" time="2024" cubeType="Standard" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="VAR_Member" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

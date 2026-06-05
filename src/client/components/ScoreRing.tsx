@@ -6,7 +6,7 @@ function scoreTone(score: number): string {
   return "var(--danger)";
 }
 
-export function ScoreRing({ score, size = 120, label = "Overall" }: { score: number; size?: number; label?: string }) {
+export function ScoreRing({ score, size = 120, label = "Overall", title }: { score: number; size?: number; label?: string; title?: string }) {
   const [displayScore, setDisplayScore] = useState(0);
   const animRef = useRef<number>(0);
   const radius = (size / 2) - 8;
@@ -33,7 +33,7 @@ export function ScoreRing({ score, size = 120, label = "Overall" }: { score: num
   }, [score, reducedMotion]);
 
   return (
-    <div style={{ width: size, height: size, position: "relative" }}>
+    <div style={{ width: size, height: size, position: "relative" }} title={title}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth="8" />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={scoreTone(score)} strokeWidth="8"

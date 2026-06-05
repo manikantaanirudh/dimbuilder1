@@ -402,6 +402,16 @@ export function AppShell({
             dimension={activeDimension}
             issues={store.issues}
             onRefresh={() => store.refresh(store.selectedProjectId ?? undefined)}
+            onDimensionDeleted={() => {
+              setStatus("Dimension deleted");
+              setActiveWorkspace(PROJECT_OVERVIEW_VALUE);
+              void store.refresh(store.selectedProjectId ?? undefined);
+            }}
+            onDimensionRecreated={(created) => {
+              setStatus(`Created ${created.dimensionName}`);
+              setActiveWorkspace(created.id);
+              void store.refresh(store.selectedProjectId ?? undefined);
+            }}
             appConfig={appConfig}
             exportAvailability={exportAvailability}
           />

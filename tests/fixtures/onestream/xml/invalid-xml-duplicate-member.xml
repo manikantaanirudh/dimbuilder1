@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="DupMembers" description="Duplicate member keys" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="AccountType" value="Label" />
+            </properties>
+          </member>
+          <member name="DUP_Key" description="First instance" />
+          <member name="DUP_Key" description="Second instance" />
+        </members>
+        <relationships>
+          <relationship parent="Root" child="DUP_Key" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

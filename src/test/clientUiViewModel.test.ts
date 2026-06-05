@@ -198,7 +198,7 @@ describe("client UI view model", () => {
   });
 
   it("keeps XML out of tabs when disabled", () => {
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
   });
 
   it("keeps null active dimension as project overview and falls back only for stale dimension ids", () => {
@@ -206,6 +206,19 @@ describe("client UI view model", () => {
     expect(resolveActiveDimensionId("missing", [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
     expect(resolveActiveDimensionId(sampleScenarioDimension.id, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
     expect(resolveActiveDimensionId(null, [])).toBeNull();
+  });
+
+  it("orders dimension nav items by canonical dimension type", () => {
+    const entity = { ...sampleScenarioDimension, id: "dim-entity", dimensionType: "Entity" as const, dimensionName: "Entities" };
+    const account = { ...sampleScenarioDimension, id: "dim-account", dimensionType: "Account" as const, dimensionName: "Accounts" };
+    const items = buildDimensionNavItems(
+      [account, sampleScenarioDimension, entity],
+      [],
+      defaultAppConfig.dimensions.display,
+      defaultAppConfig.validation.exportBlockedBySeverities
+    );
+
+    expect(items.map((item) => item.dimension.dimensionType)).toEqual(["Entity", "Scenario", "Account"]);
   });
 
   it("filters dimension nav items by label, subtitle, type, and sheet name", () => {
@@ -223,8 +236,8 @@ describe("client UI view model", () => {
   });
 
   it("uses the shorter XML tab label for the clean workbench", () => {
-    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "Workflows", "XML", "Issues"]);
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
+    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "XML", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
   });
 
   it("builds compact readiness labels and dimension facts", () => {

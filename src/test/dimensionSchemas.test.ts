@@ -25,6 +25,7 @@ describe("dimension schemas", () => {
     expect(schema.memberKeyField).toBe("Entity");
     expect(schema.relationshipFields.map((field) => field.name)).toEqual(["Parent", "Child"]);
     expect(schema.memberFields.map((field) => field.name)).not.toContain("Begin Members");
+    expect(schema.memberFields.map((field) => field.name)).toContain("Alias");
   });
 
   it("maps entity relationship ownership fields", () => {

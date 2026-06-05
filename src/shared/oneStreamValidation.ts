@@ -1,5 +1,13 @@
 import { nanoid } from "nanoid";
 import type { OneStreamValidationProfileConfig } from "./appConfigTypes";
+import {
+  formatQueryMemberReference,
+  memberNameRequiresQueryBrackets,
+  printableRestrictedCharacter
+} from "./memberNamingGuidelines";
+import { memberKeyHasAlphanumeric } from "./memberKeyValidation";
+import type { PropertyDefaultResolutionEntry } from "./effectiveProperties";
+import { filterDefaultsForTarget, resolveEffectiveProperties } from "./effectiveProperties";
 import { normalizePropertyLookupName } from "./oneStreamPropertyDictionary";
 import { normalizeCellValue } from "./text";
 import type {
@@ -20,6 +28,7 @@ export interface ValidateOneStreamProfileInput {
   relationships: DimensionRelationshipRecord[];
   varyingPropertyValues?: VaryingPropertyValueRecord[];
   profile: OneStreamValidationProfileConfig;
+  propertyDefaults?: PropertyDefaultResolutionEntry[];
 }
 
 type IssueParams = Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">;
@@ -46,7 +55,14 @@ export function validateOneStreamProfile(input: ValidateOneStreamProfileInput): 
   validateSortOrder(activeMembers, input.relationships, input.profile, addIssue);
   validateSharedMembers(input.dimension, input.relationships, input.profile, addIssue);
   validateParentInputWarnings(activeMembers, input.relationships, input.profile, addIssue);
-  validateDimensionSpecificRules(input.dimension, activeMembers, input.relationships, input.profile, addIssue);
+  validateDimensionSpecificRules(
+    input.dimension,
+    activeMembers,
+    input.relationships,
+    input.profile,
+    input.propertyDefaults,
+    addIssue
+  );
   validateOneStreamVaryingProperties(input.dimension, input.varyingPropertyValues ?? [], addIssue);
 
   return issues;
@@ -63,13 +79,25 @@ function validateMemberNames(
     const memberKey = normalizeCellValue(member.memberKey);
     if (!memberKey) continue;
 
+    if (!memberKeyHasAlphanumeric(memberKey)) {
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "error",
+        code: "MEMBER_NAME_ONLY_SPECIAL_CHARACTERS",
+        message: `Member '${memberKey}' must include at least one letter or number (cannot be only special characters).`,
+        fieldName: "Member Name",
+        rowNumber: member.sourceRowNumber
+      });
+    }
+
     if (memberKey.length > profile.memberNameMaxLength) {
       addIssue({
         entityType: "member",
         entityId: member.id,
-        severity: "warning",
+        severity: "error",
         code: "MEMBER_NAME_TOO_LONG",
-        message: `Member '${memberKey}' is longer than the OneStream profile limit of ${profile.memberNameMaxLength} characters.`,
+        message: `Member '${memberKey}' exceeds the OneStream limit of ${profile.memberNameMaxLength} characters.`,
         fieldName: "Member Name",
         rowNumber: member.sourceRowNumber
       });
@@ -79,9 +107,9 @@ function validateMemberNames(
       addIssue({
         entityType: "member",
         entityId: member.id,
-        severity: "warning",
+        severity: "info",
         code: "MEMBER_NAME_CONTAINS_SPACE",
-        message: `Member '${memberKey}' contains whitespace. OneStream member names are easier to migrate and script without spaces.`,
+        message: `Member '${memberKey}' contains a space. Spaces are allowed in OneStream but not recommended — prefer underscores (e.g. Gross_Income).`,
         fieldName: "Member Name",
         rowNumber: member.sourceRowNumber
       });
@@ -91,9 +119,22 @@ function validateMemberNames(
       addIssue({
         entityType: "member",
         entityId: member.id,
-        severity: "warning",
+        severity: "info",
         code: "MEMBER_NAME_CONTAINS_PERIOD",
-        message: `Member '${memberKey}' contains a period. Periods are high-risk in metadata scripts and filters.`,
+        message: `Member '${memberKey}' contains a period. Periods are allowed but not recommended — prefer underscores instead of periods in the stored name.`,
+        fieldName: "Member Name",
+        rowNumber: member.sourceRowNumber
+      });
+    }
+
+    if (memberNameRequiresQueryBrackets(memberKey)) {
+      const example = formatQueryMemberReference("Entity", memberKey);
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "info",
+        code: "MEMBER_NAME_QUERY_BRACKETS",
+        message: `Member '${memberKey}' contains a space or period. Use square brackets when querying, e.g. ${example}.`,
         fieldName: "Member Name",
         rowNumber: member.sourceRowNumber
       });
@@ -106,7 +147,7 @@ function validateMemberNames(
         entityId: member.id,
         severity: "error",
         code: "MEMBER_NAME_RESTRICTED_CHARACTER",
-        message: `Member '${memberKey}' contains restricted character '${printableCharacter(restricted)}'.`,
+        message: `Member '${memberKey}' contains restricted character '${printableRestrictedCharacter(restricted)}'.`,
         fieldName: "Member Name",
         rowNumber: member.sourceRowNumber
       });
@@ -302,11 +343,15 @@ function validateDimensionSpecificRules(
   members: DimensionMemberRecord[],
   relationships: DimensionRelationshipRecord[],
   profile: OneStreamValidationProfileConfig,
+  propertyDefaults: PropertyDefaultResolutionEntry[] | undefined,
   addIssue: (params: IssueParams) => void
 ): void {
+  const memberDefaults = filterDefaultsForTarget(propertyDefaults ?? [], dimension.dimensionType, "member");
+
   if (dimension.dimensionType === "Account") {
     for (const member of members.filter((candidate) => !isReservedMember(candidate.memberKey, profile))) {
-      if (getPropertyValue(member.properties, ["Account Type", "AccountType"])) continue;
+      const effectiveProperties = resolveEffectiveProperties(member.properties, memberDefaults);
+      if (getPropertyValue(effectiveProperties, ["Account Type", "AccountType"])) continue;
       addIssue({
         entityType: "member",
         entityId: member.id,
@@ -321,7 +366,8 @@ function validateDimensionSpecificRules(
 
   if (dimension.dimensionType === "Entity") {
     for (const member of members.filter((candidate) => !isReservedMember(candidate.memberKey, profile))) {
-      if (getPropertyValue(member.properties, ["Currency"])) continue;
+      const effectiveProperties = resolveEffectiveProperties(member.properties, memberDefaults);
+      if (getPropertyValue(effectiveProperties, ["Currency"])) continue;
       addIssue({
         entityType: "member",
         entityId: member.id,
@@ -426,9 +472,3 @@ function requiresAggregationWeight(dimension: DimensionRecord): boolean {
   return dimension.dimensionType !== "Scenario" && dimension.dimensionType !== "Entity";
 }
 
-function printableCharacter(value: string): string {
-  if (value === "\t") return "\\t";
-  if (value === "\r") return "\\r";
-  if (value === "\n") return "\\n";
-  return value;
-}

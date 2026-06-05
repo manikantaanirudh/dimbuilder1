@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.2.0.18004">
+  <Dimensions>
+    <Dimension type="Scenario" name="Scenarios" description="Test &amp; special">
+      <Members>
+        <Member name="Root" description="Root &lt;test&gt;" />
+        <Member name="Actual" description="  padded  " />
+      </Members>
+      <Relationships />
+    </Dimension>
+  </Dimensions>
+</OneStreamXF>

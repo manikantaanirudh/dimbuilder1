@@ -1,0 +1,50 @@
+member,description,L01_Group,L02_Category,L03_SubCategory,alias,sortOrder,AccountType
+410010,Product Sales Domestic,Income Statement,Revenue,Product Revenue,ProdDom,4001,Revenue
+410020,Product Sales Export,Income Statement,Revenue,Product Revenue,ProdExp,4002,Revenue
+410030,License Revenue,Income Statement,Revenue,Product Revenue,License,4003,Revenue
+420010,Consulting Revenue,Income Statement,Revenue,Service Revenue,Consult,5001,Revenue
+420020,Support Contracts,Income Statement,Revenue,Service Revenue,Support,5002,Revenue
+420030,Implementation Fees,Income Statement,Revenue,Service Revenue,Implement,5003,Revenue
+510010,Materials Direct,Income Statement,Expenses,COGS,Materials,6001,Expense
+510020,Freight Inbound,Income Statement,Expenses,COGS,Freight,6002,Expense
+510030,Subcontractor COGS,Income Statement,Expenses,COGS,Subcon,6003,Expense
+610010,Rent Expense,Income Statement,Operating Expenses,Facilities,Rent,1001,Expense
+610020,Utilities,Income Statement,Operating Expenses,Facilities,Utilities,1002,Expense
+610030,Building Maintenance,Income Statement,Operating Expenses,Facilities,Maintenance,1003,Expense
+610040,Security Services,Income Statement,Operating Expenses,Facilities,Security,1004,Expense
+610050,Janitorial,Income Statement,Operating Expenses,Facilities,Janitorial,1005,Expense
+610060,Property Tax,Income Statement,Operating Expenses,Facilities,PropTax,1006,Expense
+610070,Leasehold Improvements,Income Statement,Operating Expenses,Facilities,LeaseImp,1007,Expense
+619290,External Warehouse Fixed Cost,Income Statement,Operating Expenses,Facilities,WH Fixed,1100,Expense
+619280,External Warehouse Adhoc,Income Statement,Operating Expenses,Facilities,WH Adhoc,1101,Expense
+620010,Salaries Wages,Income Statement,Operating Expenses,Labor,Salaries,2001,Expense
+620020,Benefits Employer,Income Statement,Operating Expenses,Labor,Benefits,2002,Expense
+620030,Contract Labor,Income Statement,Operating Expenses,Labor,Contractors,2003,Expense
+620040,Training,Income Statement,Operating Expenses,Labor,Training,2004,Expense
+620050,Recruiting,Income Statement,Operating Expenses,Labor,Recruit,2005,Expense
+620060,Stock Compensation,Income Statement,Operating Expenses,Labor,StockComp,2006,Expense
+630010,Advertising,Income Statement,Operating Expenses,Marketing,Ads,3001,Expense
+630020,Events Trade Shows,Income Statement,Operating Expenses,Marketing,Events,3002,Expense
+630030,Digital Marketing,Income Statement,Operating Expenses,Marketing,Digital,3003,Expense
+630040,Campaign Analytics,Income Statement,Operating Expenses,Marketing,Analytics,3004,Expense
+910015,RWCGENO Assessment,Income Statement,Operating Expenses,Allocations,RWCGENO,7001,Expense
+910016,HQ MFG Admin,Income Statement,Operating Expenses,Allocations,HQAdmin,7002,Expense
+910017,RWC Admin Genotyping,Income Statement,Operating Expenses,Allocations,RWCGeno,7003,Expense
+651160,Government Grant SBC,Income Statement,Operating Expenses,PF Expenses,GrantSBC,8001,Expense
+641125,Transformation Expenses,Income Statement,Operating Expenses,PF Expenses,Transform,8002,Expense
+610080,Facilities Overhead,Income Statement,Operating Expenses,Facilities,OH,1008,Expense
+620070,Payroll Taxes,Income Statement,Operating Expenses,Labor,PayTax,2007,Expense
+630050,Brand Research,Income Statement,Operating Expenses,Marketing,Brand,3005,Expense
+410040,Subscription Revenue,Income Statement,Revenue,Product Revenue,SubRev,4004,Revenue
+420040,Managed Services,Income Statement,Revenue,Service Revenue,Managed,5004,Revenue
+510040,Scrap Variance,Income Statement,Expenses,COGS,Scrap,6004,Expense
+619270,External Warehouse Outbound,Income Statement,Operating Expenses,Facilities,WH Out,1102,Expense
+619260,External Warehouse Inbound,Income Statement,Operating Expenses,Facilities,WH In,1103,Expense
+619290,Duplicate 619290 row,Income Statement,Operating Expenses,Facilities,DupOpex,9001,Expense
+610010,Duplicate 610010 row,Income Statement,Operating Expenses,Facilities,Dup,9002,Expense
+,Missing member,Income Statement,Operating Expenses,Facilities,Missing,9003,Expense
+Bad?Name,Restricted character,Income Statement,Operating Expenses,Facilities,BadQ,9004,Expense
+ 610099 ,Whitespace padded member,Income Statement,Operating Expenses,Facilities,WS,9005,Expense
+TOOLONGNAME_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,Over 500 char member key,Income Statement,Operating Expenses,Facilities,Long,9006,Expense
+610999,Empty L03 subcategory,Income Statement,Operating Expenses,,NoL03,9007,Expense
+610998,Wrong L02 category,Income Statement,Revenue,Facilities,WrongL02,9008,Expense

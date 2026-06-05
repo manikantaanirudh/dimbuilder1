@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="Accounts" description="Account metadata" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="" customDimAttr="dim-custom">
+        <properties>
+          <property name="DimLegacyFlag" value="KeepDimension" />
+        </properties>
+        <unsupportedDimensionNode code="D1">Hold</unsupportedDimensionNode>
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="AccountType" value="GroupLabel" />
+            </properties>
+          </member>
+          <member name="Revenue" alias="Rev" description="Revenue accounts" customMemberAttr="member-custom">
+            <properties>
+              <property name="AccountType" value="Revenue" />
+              <property name="LegacyMemberFlag" value="PreserveMember" />
+            </properties>
+            <unsupportedMemberNode code="M1" />
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="Revenue" aggregationWeight="1" customRelationshipAttr="relationship-custom">
+            <properties>
+              <property name="LegacyRelationshipFlag" value="PreserveRelationship" />
+            </properties>
+            <unsupportedRelationshipNode code="R1">Rel</unsupportedRelationshipNode>
+          </relationship>
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

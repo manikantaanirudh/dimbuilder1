@@ -1,0 +1,86 @@
+import { AddressInfo } from "node:net";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createApp } from "../server/app";
+import { createDatabase } from "../server/db/database";
+import { defaultAppConfig } from "../shared/appConfigDefaults";
+import { withModules } from "./helpers/modules";
+
+describe("module-gated API routes", () => {
+  let baseUrl = "";
+  let closeServer: () => Promise<void>;
+
+  beforeEach(async () => {
+    const db = createDatabase(":memory:");
+    const config = withModules(defaultAppConfig, {
+      environmentManagement: false,
+      chatAssistant: false,
+      offlineSync: false,
+      apiPlatform: false,
+      multiTenancy: false,
+      platformExtras: false
+    });
+    const app = createApp(db, config);
+    const server = app.listen(0, "127.0.0.1");
+    await new Promise<void>((resolve) => server.once("listening", resolve));
+    const { port } = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${port}`;
+    closeServer = () => new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+  });
+
+  afterEach(async () => {
+    await closeServer();
+  });
+
+  it("does not mount environment routes when environmentManagement is disabled", async () => {
+    const res = await fetch(`${baseUrl}/api/environments`);
+    expect(res.status).toBe(404);
+  });
+
+  it("does not mount AI routes when chatAssistant is disabled", async () => {
+    const res = await fetch(`${baseUrl}/api/ai/config`);
+    expect(res.status).toBe(404);
+  });
+
+  it("does not mount tier4 tenant routes when multiTenancy is disabled", async () => {
+    const res = await fetch(`${baseUrl}/api/tenants`);
+    expect(res.status).toBe(404);
+  });
+
+  it("does not mount reporting routes when platformExtras is disabled", async () => {
+    const res = await fetch(`${baseUrl}/api/reports/definitions`);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("module-gated API routes when enabled", () => {
+  let baseUrl = "";
+  let closeServer: () => Promise<void>;
+
+  beforeEach(async () => {
+    const db = createDatabase(":memory:");
+    const config = withModules(
+      { ...defaultAppConfig, ai: { ...defaultAppConfig.ai!, enabled: true } },
+      {
+        environmentManagement: true,
+        chatAssistant: true,
+        multiTenancy: true,
+        platformExtras: true
+      }
+    );
+    const app = createApp(db, config);
+    const server = app.listen(0, "127.0.0.1");
+    await new Promise<void>((resolve) => server.once("listening", resolve));
+    const { port } = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${port}`;
+    closeServer = () => new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+  });
+
+  afterEach(async () => {
+    await closeServer();
+  });
+
+  it("mounts AI config when chatAssistant is enabled", async () => {
+    const res = await fetch(`${baseUrl}/api/ai/config`);
+    expect(res.status).toBe(200);
+  });
+});

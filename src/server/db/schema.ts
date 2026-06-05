@@ -902,4 +902,66 @@ CREATE TABLE IF NOT EXISTS project_members (
 );
 CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
+
+CREATE TABLE IF NOT EXISTS property_default_profiles (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  source_file_name TEXT NOT NULL DEFAULT '',
+  source_xml_hash TEXT NOT NULL DEFAULT '',
+  is_active INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL DEFAULT 'local-admin',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS property_default_values (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL REFERENCES property_default_profiles(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+  property_name TEXT NOT NULL,
+  xml_name TEXT NOT NULL,
+  default_value TEXT NOT NULL DEFAULT '',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  confidence REAL NOT NULL DEFAULT 0,
+  sample_count INTEGER NOT NULL DEFAULT 0,
+  non_blank_count INTEGER NOT NULL DEFAULT 0,
+  distinct_count INTEGER NOT NULL DEFAULT 0,
+  source_dimension_names_json TEXT NOT NULL DEFAULT '[]',
+  updated_at TEXT NOT NULL,
+  UNIQUE(profile_id, dimension_type, target_level, property_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_property_default_profiles_project ON property_default_profiles(project_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_property_default_values_profile ON property_default_values(profile_id, dimension_type);
+
+CREATE TABLE IF NOT EXISTS property_default_overrides (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  dimension_type TEXT NOT NULL,
+  target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+  property_name TEXT NOT NULL,
+  xml_name TEXT NOT NULL,
+  default_value TEXT NOT NULL DEFAULT '',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL,
+  UNIQUE(project_id, dimension_type, target_level, property_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_property_default_overrides_project ON property_default_overrides(project_id, dimension_type);
+
+CREATE TABLE IF NOT EXISTS property_default_catalog (
+  id TEXT PRIMARY KEY,
+  dimension_type TEXT NOT NULL,
+  target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+  property_name TEXT NOT NULL,
+  xml_name TEXT NOT NULL,
+  default_value TEXT NOT NULL DEFAULT '',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL,
+  UNIQUE(dimension_type, target_level, property_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_property_default_catalog_type ON property_default_catalog(dimension_type, target_level);
 `;

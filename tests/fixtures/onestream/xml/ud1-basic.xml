@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="UD1" name="SyntheticProducts" description="Sanitized UD1 hierarchy" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" description="Product root" />
+          <member name="PRD_FamilyA" alias="FamA" description="Product family A">
+            <properties>
+              <property name="Description" value="Product family A" />
+            </properties>
+          </member>
+          <member name="PRD_Item01" description="Product item 01">
+            <properties>
+              <property name="Description" value="Product item 01" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="PRD_FamilyA" aggregationWeight="1" />
+          <relationship parent="PRD_FamilyA" child="PRD_Item01" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

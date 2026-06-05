@@ -1,4 +1,8 @@
 import type { AppConfig } from "./appConfigTypes";
+import {
+  ONESTREAM_MEMBER_NAME_MAX_LENGTH,
+  ONESTREAM_MEMBER_NAME_RESTRICTED_CHARACTERS
+} from "./memberNamingGuidelines";
 
 export const defaultAppConfig: AppConfig = {
   application: {
@@ -60,7 +64,7 @@ export const defaultAppConfig: AppConfig = {
   dimensions: {
     expectedDimensionCount: 18,
     enabledTypes: ["Scenario", "Entity", "Account", "Flow", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7", "UD8"],
-    displayOrder: ["Scenario", "Entity", "Account", "Flow", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7", "UD8"],
+    displayOrder: ["Entity", "Scenario", "Account", "Flow", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7", "UD8"],
     display: {
       labelFormat: "{type} - {name}",
       showInheritedDimensionSubtitle: true,
@@ -195,7 +199,7 @@ export const defaultAppConfig: AppConfig = {
     relationshipsWithNoLocalMembersSeverity: "warning",
     oneStreamProfile: {
       enabled: true,
-      memberNameMaxLength: 500,
+      memberNameMaxLength: ONESTREAM_MEMBER_NAME_MAX_LENGTH,
       warnOnMemberNameSpaces: true,
       warnOnMemberNamePeriods: true,
       reservedWords: [
@@ -207,10 +211,7 @@ export const defaultAppConfig: AppConfig = {
         "Scenario", "Time", "UD1", "UD2", "UD3", "UD4", "UD5", "UD6", "UD7",
         "UD8", "UD1Default", "Unknown", "View", "WF", "Workflow", "XFCommon"
       ],
-      restrictedCharacters: [
-        "/", "|", "!", "@", "#", ",", ";", "^", "*", "+", "-", "=", "\\",
-        "?", "<", ">", "\"", "[", "]", "{", "}", "&", "\t", "\r", "\n"
-      ],
+      restrictedCharacters: [...ONESTREAM_MEMBER_NAME_RESTRICTED_CHARACTERS],
       duplicateAliasSeverity: "warning",
       invalidSortOrderSeverity: "warning",
       sharedMemberSeverity: "info",

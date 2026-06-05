@@ -393,4 +393,99 @@ describe("xml export", () => {
     const fullXml = exportProjectXml(target);
     expect(fullXml).not.toContain("<relationshipOperations");
   });
+
+  it("emits XML-derived member defaults for property-light members", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      id: "dim-account-defaults",
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const xml = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [accountDimension],
+        members: [
+          memberFixture({
+            dimensionId: accountDimension.id,
+            memberKey: "NoType",
+            properties: {
+              Account: "NoType",
+              Description: "Imported without account type"
+            }
+          })
+        ],
+        relationships: []
+      },
+      {
+        propertyDefaults: [{
+          dimensionType: "Account",
+          targetLevel: "member",
+          propertyName: "Account Type",
+          xmlName: "AccountType",
+          defaultValue: "Expense",
+          enabled: true
+        }]
+      }
+    );
+
+    expect(xml).toContain('<property name="AccountType" value="Expense" />');
+  });
+
+  it("does not emit disabled defaults and keeps explicit overrides", () => {
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      id: "dim-account-defaults-2",
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+      sheetName: "Accounts"
+    };
+    const xmlDisabled = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [accountDimension],
+        members: [memberFixture({ dimensionId: accountDimension.id, memberKey: "NoType", properties: { Account: "NoType" } })],
+        relationships: []
+      },
+      {
+        propertyDefaults: [{
+          dimensionType: "Account",
+          targetLevel: "member",
+          propertyName: "Account Type",
+          xmlName: "AccountType",
+          defaultValue: "Expense",
+          enabled: false
+        }]
+      }
+    );
+    expect(xmlDisabled).not.toContain('<property name="AccountType"');
+
+    const xmlOverride = exportProjectXml(
+      {
+        project: sampleProject,
+        dimensions: [accountDimension],
+        members: [
+          memberFixture({
+            dimensionId: accountDimension.id,
+            memberKey: "Revenue",
+            properties: { Account: "Revenue", "Account Type": "Revenue" }
+          })
+        ],
+        relationships: []
+      },
+      {
+        propertyDefaults: [{
+          dimensionType: "Account",
+          targetLevel: "member",
+          propertyName: "Account Type",
+          xmlName: "AccountType",
+          defaultValue: "Expense",
+          enabled: true
+        }]
+      }
+    );
+    expect(xmlOverride).toContain('<property name="AccountType" value="Revenue" />');
+    expect(xmlOverride).not.toContain('<property name="AccountType" value="Expense" />');
+  });
 });

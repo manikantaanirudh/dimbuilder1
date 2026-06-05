@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Entity" name="RelPropsEntities" description="Relationship property coverage" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" />
+          <member name="REL_Parent" description="Parent entity" />
+          <member name="REL_Child" description="Child entity" />
+        </members>
+        <relationships>
+          <relationship parent="Root" child="REL_Parent" aggregationWeight="1" />
+          <relationship parent="REL_Parent" child="REL_Child" aggregationWeight="1" percentConsol="75" percentOwnership="60" ownershipType="PercentConsolidation">
+            <properties>
+              <property name="Text1" value="Synthetic ownership note" />
+            </properties>
+          </relationship>
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

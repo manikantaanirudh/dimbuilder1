@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="UD1" name="Products" description="Product dimension" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root">
+            <properties>
+              <property name="Description" value="Root" />
+            </properties>
+          </member>
+          <member name="ProductA" description="Product A">
+            <properties>
+              <property name="Description" value="Product A" />
+              <property name="Text1" value="VaryingCandidate" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="ProductA" aggregationWeight="1" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

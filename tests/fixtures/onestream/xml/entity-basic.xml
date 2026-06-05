@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.3.0.0">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Entity" name="SyntheticEntities" description="Sanitized entity dimension" accessGroup="Everyone" maintenanceGroup="Admins" inheritedDim="">
+        <members>
+          <member name="Root" description="Entity root">
+            <properties>
+              <property name="Currency" value="USD" />
+            </properties>
+          </member>
+          <member name="ENT_US" description="US legal entity">
+            <properties>
+              <property name="Currency" value="USD" />
+              <property name="IsConsolidated" value="True" />
+            </properties>
+          </member>
+          <member name="ENT_EU" description="EU legal entity">
+            <properties>
+              <property name="Currency" value="EUR" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="ENT_US" aggregationWeight="1" />
+          <relationship parent="Root" child="ENT_EU" aggregationWeight="1" />
+          <relationship parent="ENT_US" child="ENT_EU" aggregationWeight="1" percentConsol="80" percentOwnership="80" ownershipType="FullConsolidation" />
+        </relationships>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

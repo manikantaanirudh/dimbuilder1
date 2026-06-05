@@ -1,0 +1,54 @@
+parent,member,description,alias,sortOrder,AccountType
+,Income Statement,Income Statement (root),,1,
+Income Statement,Revenue,Revenue,,10,Revenue
+Income Statement,Expenses,Expenses,,20,Expense
+Revenue,Product Revenue,Product Revenue,,11,Revenue
+Revenue,Service Revenue,Service Revenue,,12,Revenue
+Expenses,COGS,Cost of Goods Sold,,21,Expense
+Expenses,Operating Expenses,Operating Expenses,,22,Expense
+Operating Expenses,Facilities,Facilities,,221,Expense
+Operating Expenses,Labor,Labor,,222,Expense
+Operating Expenses,Marketing,Marketing,,223,Expense
+Operating Expenses,Allocations,Allocations,,224,Expense
+Operating Expenses,PF Expenses,PF Expenses,,225,Expense
+Facilities,610010,Rent Expense,Rent,1001,Expense
+Facilities,610020,Utilities,Utilities,1002,Expense
+Facilities,610030,Building Maintenance,Maintenance,1003,Expense
+Facilities,610040,Security Services,Security,1004,Expense
+Facilities,610050,Janitorial,Janitorial,1005,Expense
+Facilities,610060,Property Tax,PropTax,1006,Expense
+Facilities,610070,Leasehold Improvements,LeaseImp,1007,Expense
+Facilities,619290,External Warehouse Fixed Cost,WH Fixed,1100,Expense
+Facilities,619280,External Warehouse Adhoc,WH Adhoc,1101,Expense
+Labor,620010,Salaries Wages,Salaries,2001,Expense
+Labor,620020,Benefits Employer,Benefits,2002,Expense
+Labor,620030,Contract Labor,Contractors,2003,Expense
+Labor,620040,Training,Training,2004,Expense
+Labor,620050,Recruiting,Recruit,2005,Expense
+Labor,620060,Stock Compensation,StockComp,2006,Expense
+Marketing,630010,Advertising,Ads,3001,Expense
+Marketing,630020,Events Trade Shows,Events,3002,Expense
+Marketing,630030,Digital Marketing,Digital,3003,Expense
+Marketing,630040,Campaign Analytics,Analytics,3004,Expense
+Product Revenue,410010,Product Sales Domestic,ProdDom,4001,Revenue
+Product Revenue,410020,Product Sales Export,ProdExp,4002,Revenue
+Product Revenue,410030,License Revenue,License,4003,Revenue
+Service Revenue,420010,Consulting Revenue,Consult,5001,Revenue
+Service Revenue,420020,Support Contracts,Support,5002,Revenue
+Service Revenue,420030,Implementation Fees,Implement,5003,Revenue
+COGS,510010,Materials Direct,Materials,6001,Expense
+COGS,510020,Freight Inbound,Freight,6002,Expense
+COGS,510030,Subcontractor COGS,Subcon,6003,Expense
+Allocations,910015,RWCGENO Assessment,RWCGENO,7001,Expense
+Allocations,910016,HQ MFG Admin,HQAdmin,7002,Expense
+Allocations,910017,RWC Admin Genotyping,RWCGeno,7003,Expense
+PF Expenses,651160,Government Grant SBC,GrantSBC,8001,Expense
+PF Expenses,641125,Transformation Expenses,Transform,8002,Expense
+BAD_SELF,BAD_SELF,Self reference (parent equals member),,9001,Expense
+Facilities,610010,Duplicate member 610010,,9002,Expense
+MissingParent_XYZ,610998,Parent member does not exist in file,,9003,Expense
+, ,Missing member key,,9004,Expense
+Facilities,Bad?Name,Restricted character in name,,9005,Expense
+Operating Expenses, 610099 ,Leading and trailing whitespace,,9006,Expense
+Labor,TOOLONGNAME_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,Member name over 500 characters,,9007,Expense
+Income Statement,610999,Skipped Facilities level (jumps hierarchy),,9008,Expense

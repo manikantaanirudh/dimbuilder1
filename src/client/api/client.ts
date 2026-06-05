@@ -28,6 +28,7 @@ import type {
 } from "../../shared/types";
 import type { ClientAppConfig, OneStreamValidationProfileConfig } from "../../shared/appConfigTypes";
 import type { DimensionBlueprintConfig } from "../../shared/appConfigTypes";
+import type { MetadataCsvColumnMapping, MetadataCsvInspectResult } from "../../shared/metadataCsvMapping";
 import type { HierarchyAnalyticsResult } from "../../shared/hierarchyAnalytics";
 import type { GroupedOneStreamPropertyDictionary } from "../../shared/oneStreamPropertyDictionary";
 import type { RelationshipOperationPlan } from "../../shared/relationshipOperations";
@@ -250,16 +251,23 @@ export async function apiPatchJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function apiDelete(path: string): Promise<void> {
+  await apiDeleteJson(path);
+}
+
+export async function apiDeleteJson<T>(path: string): Promise<T> {
   const response = await fetch(`/api${path}`, { method: "DELETE", headers: authHeaders() });
   if (response.status === 401 && accessToken) {
     const refreshed = await attemptRefresh();
     if (refreshed) {
       const retryResponse = await fetch(`/api${path}`, { method: "DELETE", headers: authHeaders() });
       if (!retryResponse.ok) throw new Error(await retryResponse.text());
-      return;
+      const text = await retryResponse.text();
+      return (text ? JSON.parse(text) : {}) as T;
     }
   }
   if (!response.ok) throw new Error(await response.text());
+  const text = await response.text();
+  return (text ? JSON.parse(text) : {}) as T;
 }
 
 export function fetchProjects() {
@@ -313,6 +321,23 @@ export function fetchSummary(projectId: string) {
 
 export function fetchDimensions(projectId: string) {
   return apiGet<DimensionRecord[]>(`/projects/${projectId}/dimensions`);
+}
+
+export function createDimensionFromBlueprint(
+  projectId: string,
+  body: { dimensionType: string; dimensionName?: string }
+) {
+  return apiPost<DimensionRecord>(`/projects/${projectId}/dimensions`, body);
+}
+
+export function deleteDimension(projectId: string, dimensionId: string) {
+  return apiDeleteJson<{
+    dimensionId: string;
+    dimensionType: string;
+    dimensionName: string;
+    membersRemoved: number;
+    relationshipsRemoved: number;
+  }>(`/projects/${projectId}/dimensions/${dimensionId}`);
 }
 
 export function fetchIssues(projectId: string) {
@@ -503,16 +528,39 @@ function appendCsvImportFields(formData: FormData, fields: {
   projectName?: string;
   dimensionType?: string;
   dimensionName?: string;
+  defaultAccountType?: string;
+  columnMapping?: MetadataCsvColumnMapping;
 }) {
   if (fields.projectId) formData.append("projectId", fields.projectId);
   if (fields.projectName) formData.append("projectName", fields.projectName);
   if (fields.dimensionType) formData.append("dimensionType", fields.dimensionType);
   if (fields.dimensionName) formData.append("dimensionName", fields.dimensionName);
+  if (fields.defaultAccountType) formData.append("defaultAccountType", fields.defaultAccountType);
+  if (fields.columnMapping) {
+    formData.append("columnMapping", JSON.stringify(fields.columnMapping));
+  }
+}
+
+export async function inspectCsvImport(
+  file: File,
+  fields: { dimensionType?: string } = {}
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (fields.dimensionType) formData.append("dimensionType", fields.dimensionType);
+  return apiPost<MetadataCsvInspectResult>("/import/csv/inspect", formData);
 }
 
 export async function previewCsvImport(
   file: File,
-  fields: { projectId?: string; projectName?: string; dimensionType?: string; dimensionName?: string } = {}
+  fields: {
+    projectId?: string;
+    projectName?: string;
+    dimensionType?: string;
+    dimensionName?: string;
+    defaultAccountType?: string;
+    columnMapping?: MetadataCsvColumnMapping;
+  } = {}
 ) {
   const formData = new FormData();
   formData.append("file", file);
@@ -522,7 +570,14 @@ export async function previewCsvImport(
 
 export async function commitCsvImport(
   file: File,
-  fields: { projectId?: string; projectName?: string; dimensionType?: string; dimensionName?: string } = {}
+  fields: {
+    projectId?: string;
+    projectName?: string;
+    dimensionType?: string;
+    dimensionName?: string;
+    defaultAccountType?: string;
+    columnMapping?: MetadataCsvColumnMapping;
+  } = {}
 ) {
   const formData = new FormData();
   formData.append("file", file);
@@ -557,6 +612,13 @@ export function deleteMember(projectId: string, memberId: string) {
   return apiDelete(`/projects/${projectId}/members/${memberId}`);
 }
 
+export function bulkDeleteMembers(projectId: string, dimensionId: string, memberIds: string[]) {
+  return apiPost<{ membersDeleted: number; relationshipsDeleted: number }>(
+    `/projects/${projectId}/dimensions/${dimensionId}/members/bulk-delete`,
+    { memberIds }
+  );
+}
+
 export function createRelationship(projectId: string, dimensionId: string, body: { parentKey: string; childKey: string; properties: Record<string, unknown> }) {
   return apiPost<DimensionRelationshipRecord>(`/projects/${projectId}/dimensions/${dimensionId}/relationships`, body);
 }
@@ -567,6 +629,13 @@ export function patchRelationship(projectId: string, relationshipId: string, bod
 
 export function deleteRelationship(projectId: string, relationshipId: string) {
   return apiDelete(`/projects/${projectId}/relationships/${relationshipId}`);
+}
+
+export function bulkDeleteRelationships(projectId: string, dimensionId: string, relationshipIds: string[]) {
+  return apiPost<{ relationshipsDeleted: number }>(
+    `/projects/${projectId}/dimensions/${dimensionId}/relationships/bulk-delete`,
+    { relationshipIds }
+  );
 }
 
 export function createVaryingPropertyValue(projectId: string, body: Omit<VaryingPropertyValueInput, "projectId">) {
@@ -919,4 +988,35 @@ export function evaluateAutoAdvance(instanceId: string) {
 
 export function runAutoAdvanceCheck() {
   return apiPost<{ evaluated: number; advanced: number; results: Array<{ instanceId: string; advanced: boolean }> }>("/workflows/auto-advance/run", {});
+}
+
+// --- Property defaults (global catalog in database) ---
+
+export interface PropertyDefaultValueResponse {
+  id: string;
+  dimensionType: string;
+  targetLevel: "dimension" | "member" | "relationship";
+  propertyName: string;
+  xmlName: string;
+  defaultValue: string;
+  enabled: boolean;
+  updatedAt?: string;
+}
+
+export function fetchPropertyDefaults(projectId: string, dimensionType?: string) {
+  const query = dimensionType ? `?dimensionType=${encodeURIComponent(dimensionType)}` : "";
+  return apiGet<{
+    values: Record<string, PropertyDefaultValueResponse[]>;
+  }>(`/projects/${projectId}/property-defaults${query}`);
+}
+
+export function updatePropertyDefault(
+  projectId: string,
+  defaultId: string,
+  body: { defaultValue?: string; enabled?: boolean }
+) {
+  return apiPatchJson<{ value: PropertyDefaultValueResponse }>(
+    `/projects/${projectId}/property-defaults/${defaultId}`,
+    body
+  );
 }

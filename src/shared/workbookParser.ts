@@ -5,6 +5,7 @@ import {
   getSchemaByDimensionTypeText,
   getSchemaBySheetName
 } from "./dimensionSchemas";
+import { getDimensionTypeSortRank } from "./dimensionTypeOrder";
 import { defaultAppConfig } from "./appConfigDefaults";
 import type { AppConfig } from "./appConfigTypes";
 import type {
@@ -340,8 +341,9 @@ function applyCanonicalSortOrder(dimensions: DimensionRecord[], config: AppConfi
 }
 
 function getDimensionTypeRank(dimensionType: DimensionType, config: AppConfig): number {
-  const index = config.dimensions.displayOrder.indexOf(dimensionType);
-  return index === -1 ? config.dimensions.displayOrder.length + 1 : index + 1;
+  const configIndex = config.dimensions.displayOrder.indexOf(dimensionType);
+  if (configIndex !== -1) return configIndex + 1;
+  return getDimensionTypeSortRank(dimensionType) + 1;
 }
 
 function getDimensionLogicalKey(dimensionType: string, dimensionName: string, sheetName: string): string {

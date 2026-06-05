@@ -119,6 +119,23 @@ describe("simple CSV metadata import routes", () => {
     rmSync(uploadsDir, { recursive: true, force: true });
   });
 
+  it("inspect returns headers and suggested mapping", async () => {
+    const form = new FormData();
+    form.append("file", new Blob([SIMPLE_CSV], { type: "text/csv" }), "metadata.csv");
+    form.append("dimensionType", "Account");
+    const res = await fetch(`${baseUrl}/api/import/csv/inspect`, { method: "POST", body: form });
+    expect(res.status).toBe(200);
+    const body = await res.json() as {
+      headers: string[];
+      suggestedMapping: { member?: string; parent?: string };
+      rowCount: number;
+    };
+    expect(body.headers).toContain("member");
+    expect(body.suggestedMapping.member).toBe("member");
+    expect(body.suggestedMapping.parent).toBe("parent");
+    expect(body.rowCount).toBe(2);
+  });
+
   it("preview does not write project records", async () => {
     const before = await fetch(`${baseUrl}/api/projects`);
     const beforeProjects = await before.json() as unknown[];

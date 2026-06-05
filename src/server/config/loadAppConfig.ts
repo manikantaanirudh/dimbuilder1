@@ -42,7 +42,7 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
     server: {
       ...config.server,
       host: process.env.HOST ?? config.server.host,
-      port: process.env.PORT ? Number(process.env.PORT) : config.server.port
+      port: resolveApiPort(config, process.env.PORT)
     },
     auth: {
       ...config.auth,
@@ -52,6 +52,18 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
       ...(process.env.JWT_SECRET ? { jwt: { ...config.auth.jwt, secret: process.env.JWT_SECRET } } : {})
     }
   };
+}
+
+function resolveApiPort(config: AppConfig, portEnv: string | undefined): number {
+  const configured = portEnv ? Number(portEnv) : config.server.port;
+  if (!Number.isFinite(configured) || configured <= 0) {
+    return config.server.port;
+  }
+  // Vite owns clientDevPort during local dev; a mistaken PORT=5173 breaks npm run dev.
+  if (process.env.NODE_ENV !== "production" && configured === config.server.clientDevPort) {
+    return config.server.port;
+  }
+  return configured;
 }
 
 function parseOptionalNonNegativeInt(value: string | undefined): number | undefined {

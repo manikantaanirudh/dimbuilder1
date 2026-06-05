@@ -35,6 +35,7 @@ import {
   isRelationshipOperation
 } from "./relationshipOperations";
 import { UNKNOWN_XML_DATA_KEY } from "./xmlImport";
+import type { PropertyDefaultResolutionEntry } from "./effectiveProperties";
 import { validateOneStreamProfile } from "./oneStreamValidation";
 import type { OneStreamValidationProfileConfig } from "./appConfigTypes";
 
@@ -58,6 +59,8 @@ export interface ValidateDimensionInput {
   severities?: ValidationSeverityOptions;
   /** Per-rule-code severity overrides (from project admin panel). Checked for every issue. */
   ruleOverrides?: Map<string, Severity>;
+  /** Active XML-derived defaults for this dimension type (not materialized on rows). */
+  propertyDefaults?: PropertyDefaultResolutionEntry[];
 }
 
 export function validateDimension(input: ValidateDimensionInput): ValidationIssue[] {
@@ -262,21 +265,6 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     }
   }
 
-  // Member name starts with digit
-  for (const member of input.members) {
-    if (/^\d/.test(member.memberKey)) {
-      addIssue({
-        entityType: "member",
-        entityId: member.id,
-        severity: "warning",
-        code: "MEMBER_NAME_STARTS_WITH_DIGIT",
-        message: `Member '${member.memberKey}' starts with a digit. This may cause issues in OneStream expressions and business rules.`,
-        fieldName: "Member Key",
-        rowNumber: member.sourceRowNumber
-      });
-    }
-  }
-
   // Duplicate member (case-insensitive)
   const memberKeyLower = new Map<string, string>();
   for (const member of input.members) {
@@ -342,7 +330,8 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
       members: input.members,
       relationships: input.relationships,
       varyingPropertyValues: input.varyingPropertyValues,
-      profile: severities.oneStreamProfile
+      profile: severities.oneStreamProfile,
+      propertyDefaults: input.propertyDefaults
     }));
   }
 
@@ -565,6 +554,18 @@ function validateRelationships(
         code: "UNKNOWN_RELATIONSHIP_CHILD",
         message: `Relationship child '${relationship.childKey}' does not exist in local members.`,
         fieldName: "Child",
+        rowNumber: relationship.sourceRowNumber
+      });
+    }
+
+    if (relationship.parentKey && memberKeys.size > 0 && !memberKeys.has(relationship.parentKey) && !dimension.inheritedDimension) {
+      addIssue({
+        entityType: "relationship",
+        entityId: relationship.id,
+        severity: severities.unknownRelationshipMemberSeverity,
+        code: "UNKNOWN_RELATIONSHIP_PARENT",
+        message: `Relationship parent '${relationship.parentKey}' does not exist in local members.`,
+        fieldName: "Parent",
         rowNumber: relationship.sourceRowNumber
       });
     }

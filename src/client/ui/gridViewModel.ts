@@ -11,11 +11,18 @@ export function clampGridPageSize(pageSize: number) {
   return Math.min(MAX_GRID_PAGE_SIZE, Math.max(1, integerPageSize));
 }
 
-export function buildGridActionTitles(selectedId: string | null) {
+export function buildGridActionTitles(selectedId: string | null, selectedCount = selectedId ? 1 : 0) {
+  const count = selectedCount > 0 ? selectedCount : selectedId ? 1 : 0;
   return {
     duplicateTitle: selectedId ? "Duplicate selected row" : "Select a row to duplicate",
-    deleteTitle: selectedId ? "Delete selected row" : "Select a row to delete"
+    deleteTitle: count > 1 ? `Delete ${count} selected rows` : count === 1 ? "Delete selected row" : "Select a row to delete"
   };
+}
+
+export function buildGridSelectionSummary(kind: GridKind, selectedCount: number) {
+  if (selectedCount === 0) return "No rows selected";
+  const noun = kind === "members" ? "member" : "relationship";
+  return selectedCount === 1 ? `1 ${noun} selected` : `${selectedCount} ${noun}s selected`;
 }
 
 export function buildGridStatusTone(status: string): GridStatusTone {

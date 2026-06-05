@@ -197,9 +197,13 @@ describe("client component markup", () => {
 
     expect(markup).toContain("workspace-page");
     expect(markup).toContain("workspace-page-icon");
+    expect(markup).toContain("workspace-page-body");
+    expect(markup).toContain("workspace-primary");
     expect(markup).toContain("workspace-document");
     expect(markup).toContain("workspace-tablist");
     expect(markup).toContain("workspace-facts");
+    expect(markup).toContain("details-rail");
+    expect(markup).not.toContain("workspace-grid--single");
     expect(markup).toContain("Scenario - SampleScenario");
     expect(markup).toContain(">Varying</button>");
     expect(markup).toContain(">Bulk Update</button>");
@@ -208,6 +212,26 @@ describe("client component markup", () => {
     expect(markup).toContain(">XML</button>");
     expect(markup).not.toContain("XML Preview</button>");
     expect(markup).not.toContain("section-kicker\">Scenario dimension");
+  });
+
+  it("uses a single-column workspace grid on the Issues tab", () => {
+    const issuesTabConfig: ClientAppConfig = {
+      ...defaultAppConfig,
+      ui: { ...defaultAppConfig.ui, defaultWorkspaceTab: "Issues" }
+    };
+    const markup = render(createElement(DimensionWorkspace, {
+      projectId: sampleProject.id,
+      dimension: sampleScenarioDimension,
+      issues: [],
+      onRefresh: () => undefined,
+      appConfig: issuesTabConfig,
+      exportAvailability: readyExportAvailability
+    }));
+
+    expect(markup).toContain("workspace-grid--single");
+    expect(markup).toContain('aria-current="page">Issues</button>');
+    expect(markup).toContain("issue-panel expanded");
+    expect(markup).not.toContain("details-rail");
   });
 
   it("renders the validation rail as a compact details surface", () => {
@@ -254,6 +278,9 @@ describe("client component markup", () => {
     expect(markup).toContain("Filter by severity");
     expect(markup).toContain("Filter issue code");
     expect(markup).toContain("UNKNOWN_PROPERTY");
+    expect(markup).toContain('class="issue-summary"');
+    expect(markup).not.toContain("rail-issue-summary");
+    expect(markup).toContain("<b>1</b> warnings");
   });
 
   it("renders metadata editing as a Notion-style property list", () => {

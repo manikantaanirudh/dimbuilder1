@@ -32,13 +32,18 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
     }
     void load();
     return () => { cancelled = true; };
-  }, [projectId]);
+  }, [projectId, issueSummary.total]);
 
   return (
     <div className="kpi-section">
       <div className="kpi-featured">
         {qualityScore !== null ? (
-          <ScoreRing score={qualityScore} size={88} label="Quality" />
+          <ScoreRing
+            score={qualityScore}
+            size={88}
+            label="Quality"
+            title="Metadata completeness and naming, adjusted for validation issues"
+          />
         ) : (
           <div className="kpi-featured-skeleton" aria-label="Loading quality score" />
         )}

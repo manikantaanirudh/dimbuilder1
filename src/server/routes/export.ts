@@ -63,7 +63,8 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
         includeDimensionSourceAttributes: config.export.xml.includeDimensionSourceAttributes,
         loadMode: mode,
         relationshipPlan,
-        dimensionId
+        dimensionId,
+        propertyDefaults: repos.propertyDefaults.getEffectiveDefaultsForExport(snapshot.project.id)
       };
       repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
       res.type("application/xml");

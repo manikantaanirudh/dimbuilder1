@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { DimensionType } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
-import { scoreDimensionQuality, generateDocumentContent } from "../tier3/tier3Engine";
+import { scoreProjectQuality, generateDocumentContent } from "../tier3/tier3Engine";
 
 export function createTier3Router(repos: Repositories, _config: AppConfig): Router {
   const router = Router();
@@ -322,17 +322,16 @@ export function createTier3Router(repos: Repositories, _config: AppConfig): Rout
     const dimensions = repos.dimensions.listByProject(project.id);
     const members = repos.members.listByProject(project.id);
     const rules = repos.qualityRules.listByProject(project.id);
+    const issues = repos.issues.listByProject(project.id);
 
-    const scores = dimensions.map(dim => {
-      const dimMembers = members.filter(m => m.dimensionId === dim.id);
-      return scoreDimensionQuality(dim, dimMembers, rules);
+    const report = scoreProjectQuality(dimensions, members, rules, issues);
+    res.json({
+      overallScore: report.overallScore,
+      metadataScore: report.metadataScore,
+      validationScore: report.validationScore,
+      issueCount: issues.length,
+      dimensions: report.dimensions
     });
-
-    const overallScore = scores.length > 0
-      ? Math.round(scores.reduce((sum, s) => sum + s.overallScore, 0) / scores.length)
-      : 100;
-
-    res.json({ overallScore, dimensions: scores });
   });
 
   router.post("/projects/:id/quality/rules", (req, res) => {

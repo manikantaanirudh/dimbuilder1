@@ -2,8 +2,38 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Info, Shield, TriangleAlert } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
-import { buildDimensionFacts, buildIssueSummary, getReadinessLabel } from "../ui/viewModel";
+import { buildDimensionFacts, buildIssueSummary, getReadinessLabel, type IssueSummary } from "../ui/viewModel";
 import { EmptyState, FactItem, FactStrip, SeverityPill, StatusBadge } from "./ui";
+
+function IssueSummarySection({
+  expanded,
+  summary,
+  profileLabel
+}: {
+  expanded: boolean;
+  summary: IssueSummary;
+  profileLabel: string;
+}) {
+  if (expanded) {
+    return (
+      <div className="issue-summary">
+        <span><b>{summary.errors}</b> errors</span>
+        <span><b>{summary.warnings}</b> warnings</span>
+        <span><b>{summary.infos}</b> info</span>
+        <span><b>{profileLabel}</b> Validation profile</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rail-issue-summary">
+      <span><span>Errors</span><b>{summary.errors}</b></span>
+      <span><span>Warnings</span><b>{summary.warnings}</b></span>
+      <span><span>Info</span><b>{summary.infos}</b></span>
+      <span><span>Validation profile</span><b>{profileLabel}</b></span>
+    </div>
+  );
+}
 
 export function IssuePanel({
   dimension,
@@ -40,8 +70,8 @@ export function IssuePanel({
   const visibleIssues = filteredIssues.slice(0, maxVisible);
   const Container = expanded ? "section" : "aside";
   const pageClassName = expanded ? "issue-panel-page" : "details-rail-page";
-  const issueSummaryClassName = expanded ? "issue-summary" : "issue-summary rail-issue-summary";
   const issuesSectionClassName = expanded ? "issues-section" : "rail-issues-section";
+  const railFacts = facts.filter((fact) => fact.label !== "Errors" && fact.label !== "Warnings");
 
   return (
     <Container className={expanded ? "panel issue-panel expanded" : "panel issue-panel details-rail"}>
@@ -56,12 +86,7 @@ export function IssuePanel({
           </StatusBadge>
         </div>
 
-        <div className={issueSummaryClassName}>
-          <span><b>{summary.errors}</b> errors</span>
-          <span><b>{summary.warnings}</b> warnings</span>
-          {summary.infos > 0 && <span><b>{summary.infos}</b> info</span>}
-          <span><b>{profileLabel}</b> Validation profile</span>
-        </div>
+        <IssueSummarySection expanded={expanded} summary={summary} profileLabel={profileLabel} />
 
         {expanded && (
           <div className="issue-filters" aria-label="Validation issue filters">
@@ -85,7 +110,7 @@ export function IssuePanel({
           <div className="rail-section rail-property-section">
             <h3>Dimension details</h3>
             <FactStrip className="rail-facts">
-              {facts.map((fact) => (
+              {railFacts.map((fact) => (
                 <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
               ))}
             </FactStrip>

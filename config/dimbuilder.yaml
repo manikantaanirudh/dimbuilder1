@@ -69,8 +69,8 @@ dimensions:
     - UD7
     - UD8
   displayOrder:
-    - Scenario
     - Entity
+    - Scenario
     - Account
     - Flow
     - UD1
@@ -287,8 +287,6 @@ validation:
       - "<"
       - ">"
       - "\""
-      - "["
-      - "]"
       - "{"
       - "}"
       - "&"

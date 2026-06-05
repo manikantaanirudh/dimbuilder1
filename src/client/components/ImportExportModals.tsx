@@ -10,6 +10,7 @@ import {
   createProject,
   createProjectSnapshot,
   deleteProject,
+  inspectCsvImport,
   planRelationshipExport,
   previewCsvImport,
   uploadWorkbook,
@@ -17,6 +18,8 @@ import {
   type MetadataCsvPreviewResponse
 } from "../api/client";
 import { onActivate } from "../hooks/keyboardActivate";
+import type { MetadataCsvColumnMapping } from "../../shared/metadataCsvMapping";
+import { CsvColumnMappingPanel } from "./CsvColumnMappingPanel";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
 
 export function hasEnabledExportFormat(exportConfig: ClientAppConfig["export"]): boolean {
@@ -120,8 +123,12 @@ export function ImportModal({
   const [csvProjectName, setCsvProjectName] = useState("");
   const [csvDimensionType, setCsvDimensionType] = useState<DimensionType>(enabledDimensionTypes[0] ?? "Account");
   const [csvDimensionName, setCsvDimensionName] = useState("Accounts");
+  const [csvDefaultAccountType, setCsvDefaultAccountType] = useState("Expense");
   const [csvPreview, setCsvPreview] = useState<MetadataCsvPreviewResponse["preview"] | null>(null);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvMapping, setCsvMapping] = useState<MetadataCsvColumnMapping | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -136,18 +143,44 @@ export function ImportModal({
       setCsvProjectName("");
       setCsvDimensionType(enabledDimensionTypes[0] ?? "Account");
       setCsvDimensionName("Accounts");
+      setCsvDefaultAccountType("Expense");
       setCsvPreview(null);
+      setCsvHeaders([]);
+      setCsvMapping(null);
       setIsPreviewing(false);
+      setIsInspecting(false);
     }
   }, [open, selectedProjectId, enabledDimensionTypes]);
 
   if (!open) return null;
 
+  async function inspectCsvFile(nextFile: File, dimensionType: DimensionType = csvDimensionType) {
+    setIsInspecting(true);
+    setStatus("Reading CSV columns...");
+    try {
+      const inspection = await inspectCsvImport(nextFile, { dimensionType });
+      setCsvHeaders(inspection.headers);
+      setCsvMapping(inspection.suggestedMapping);
+      setStatus(`Found ${inspection.headers.length} columns in ${inspection.rowCount} rows. Review mapping, then preview.`);
+    } catch (caught) {
+      setCsvHeaders([]);
+      setCsvMapping(null);
+      setStatus(caught instanceof Error ? caught.message : "Could not read CSV columns");
+    } finally {
+      setIsInspecting(false);
+    }
+  }
+
   function handleFileChange(nextFile: File | null) {
-    if (isImporting || isPreviewing) return;
+    if (isImporting || isPreviewing || isInspecting) return;
     setFile(nextFile);
     setStatus("");
     setCsvPreview(null);
+    setCsvHeaders([]);
+    setCsvMapping(null);
+    if (nextFile && importMode === "csv") {
+      void inspectCsvFile(nextFile);
+    }
   }
 
   function selectImportMode(nextMode: "xlsx" | "xml" | "csv") {
@@ -157,6 +190,14 @@ export function ImportModal({
     setStatus("");
     setSummary(null);
     setCsvPreview(null);
+    setCsvHeaders([]);
+    setCsvMapping(null);
+  }
+
+  async function refreshCsvMappingForDimensionType(nextType: DimensionType) {
+    if (!file) return;
+    setCsvPreview(null);
+    await inspectCsvFile(file, nextType);
   }
 
   function csvFormFields() {
@@ -164,12 +205,18 @@ export function ImportModal({
       projectId: csvTarget === "existing" ? csvProjectId : undefined,
       projectName: csvTarget === "new" ? csvProjectName : undefined,
       dimensionType: csvDimensionType,
-      dimensionName: csvDimensionName
+      dimensionName: csvDimensionName,
+      defaultAccountType: csvDimensionType === "Account" ? csvDefaultAccountType : undefined,
+      columnMapping: csvMapping ?? undefined
     };
   }
 
   async function previewSelectedCsv() {
     if (!file || isImporting || isPreviewing) return;
+    if (!csvMapping?.member) {
+      setStatus("Map a Member key column before preview.");
+      return;
+    }
     setIsPreviewing(true);
     setStatus("Previewing CSV...");
     try {
@@ -270,7 +317,7 @@ export function ImportModal({
                 ? "Select an optional .xlsx OneStream metadata workbook to seed a project. Generated XML and formula columns are ignored."
                 : importMode === "xml"
                   ? "Upload OneStream metadata XML to create an editable project while preserving unknown XML fields for export."
-                  : "Upload parent/member CSV metadata. Preview counts and errors before commit. Existing projects are append/update only."}
+                  : "Upload CSV metadata, map file columns to dimension fields, preview counts, then commit. Existing projects are append/update only."}
             </p>
             {importMode === "csv" && (
               <div className="import-csv-panel">
@@ -318,7 +365,12 @@ export function ImportModal({
                   <select
                     value={csvDimensionType}
                     disabled={isImporting || isPreviewing}
-                    onChange={(event) => { setCsvDimensionType(event.target.value as DimensionType); setCsvPreview(null); }}
+                    onChange={(event) => {
+                      const nextType = event.target.value as DimensionType;
+                      setCsvDimensionType(nextType);
+                      setCsvPreview(null);
+                      void refreshCsvMappingForDimensionType(nextType);
+                    }}
                   >
                     {enabledDimensionTypes.map((type) => (
                       <option key={type} value={type}>{type}</option>
@@ -333,12 +385,38 @@ export function ImportModal({
                     onChange={(event) => { setCsvDimensionName(event.target.value); setCsvPreview(null); }}
                   />
                 </label>
+                {csvDimensionType === "Account" ? (
+                  <label className="modal-field">
+                    <span>Default account type</span>
+                    <select
+                      value={csvDefaultAccountType}
+                      disabled={isImporting || isPreviewing || isInspecting}
+                      onChange={(event) => { setCsvDefaultAccountType(event.target.value); setCsvPreview(null); }}
+                    >
+                      {["Expense", "Revenue", "Asset", "Liability", "Balance", "Flow", "Statistical", "NonFinancial"].map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {file && csvMapping && csvHeaders.length > 0 ? (
+                  <CsvColumnMappingPanel
+                    headers={csvHeaders}
+                    mapping={csvMapping}
+                    dimensionType={csvDimensionType}
+                    disabled={isImporting || isPreviewing || isInspecting}
+                    onChange={(next) => {
+                      setCsvMapping(next);
+                      setCsvPreview(null);
+                    }}
+                  />
+                ) : null}
               </div>
             )}
             <input
               type="file"
-              accept={importMode === "xlsx" ? ".xlsx" : importMode === "xml" ? ".xml,application/xml,text/xml" : ".csv,text/csv"}
-              disabled={isImporting || isPreviewing}
+              accept={importMode === "xlsx" ? ".xlsx" : importMode === "xml" ? ".xml,application/xml,text/xml" : ".csv,.txt,.tsv,text/csv,text/plain"}
+              disabled={isImporting || isPreviewing || isInspecting}
               onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)}
             />
             {importMode === "csv" && csvPreview && (
@@ -359,8 +437,16 @@ export function ImportModal({
               </div>
             )}
             {importMode === "csv" && csvPreview && csvPreview.errors.length > 0 && (
-              <div className="modal-status">
+              <div className="banner error">
+                <p style={{ margin: "0 0 6px", fontWeight: 600 }}>
+                  Commit is blocked until these rows are fixed in the CSV (or removed). Warnings above do not block commit.
+                </p>
                 {csvPreview.errors.map((error) => <div key={error}>{error}</div>)}
+              </div>
+            )}
+            {importMode === "csv" && csvPreview?.ok && csvPreview.counts.membersToCreate === 0 && csvPreview.counts.membersToUpdate === 0 && csvPreview.counts.relationshipsToCreate === 0 && (
+              <div className="banner">
+                Preview succeeded but nothing new would be written. The target dimension may already contain these members and relationships, or the dimension name/type does not match an existing dimension.
               </div>
             )}
           </>
@@ -381,10 +467,10 @@ export function ImportModal({
           {!importedProject && importMode === "csv" && (
             <ActionButton
               variant="secondary"
-              disabled={!file || isImporting || isPreviewing || (csvTarget === "existing" && !csvProjectId)}
+              disabled={!file || !csvMapping?.member || isImporting || isPreviewing || isInspecting || (csvTarget === "existing" && !csvProjectId)}
               onClick={() => void previewSelectedCsv()}
             >
-              {isPreviewing ? "Previewing..." : "Preview CSV"}
+              {isPreviewing ? "Previewing..." : isInspecting ? "Reading file..." : "Preview CSV"}
             </ActionButton>
           )}
           {!importedProject && (

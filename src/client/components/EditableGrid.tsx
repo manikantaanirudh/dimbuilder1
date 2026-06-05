@@ -11,6 +11,8 @@ import type {
   ValidationIssue
 } from "../../shared/types";
 import {
+  bulkDeleteMembers,
+  bulkDeleteRelationships,
   createMember,
   createRelationship,
   deleteMember,
@@ -22,6 +24,7 @@ import {
 } from "../api/client";
 import {
   buildGridActionTitles,
+  buildGridSelectionSummary,
   buildGridStatusTone,
   buildOptimisticGridRecord,
   clampGridPageSize,
@@ -56,6 +59,8 @@ export function EditableGrid({
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectionAnchorIndexRef = useRef<number | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [showColumns, setShowColumns] = useState(false);
   const [status, setStatus] = useState("");
@@ -65,7 +70,10 @@ export function EditableGrid({
   const saveSequenceRef = useRef(0);
   const rowSaveTokensRef = useRef(new Map<string, number>());
   const columnMenuId = `${kind}-column-menu`;
-  const actionTitles = buildGridActionTitles(selectedId);
+  const selectionCount = selectedIds.size > 0 ? selectedIds.size : (selectedId ? 1 : 0);
+  const actionTitles = buildGridActionTitles(selectedId, selectionCount);
+  const selectionSummary = buildGridSelectionSummary(kind, selectionCount);
+  const supportsMultiSelect = true;
   const statusTone = buildGridStatusTone(status);
   const visibleColumns = columns.filter((column) => !hiddenColumns.has(column.name));
   const gridTitle = kind === "members" ? "Members" : "Relationships";
@@ -78,12 +86,13 @@ export function EditableGrid({
       if (column.name === schema.memberKeyField || column.name === "Parent" || column.name === "Child") return "minmax(200px, 1.5fr)";
       return "minmax(160px, 1fr)";
     });
-    return `48px ${colWidths.join(" ")}`;
-  }, [visibleColumns, schema.memberKeyField]);
+    const selectWidth = supportsMultiSelect ? "72px" : "48px";
+    return `${selectWidth} ${colWidths.join(" ")}`;
+  }, [visibleColumns, schema.memberKeyField, supportsMultiSelect]);
 
   const gridMinWidth = useMemo(() => {
-    return 48 + visibleColumns.length * 160;
-  }, [visibleColumns.length]);
+    return (supportsMultiSelect ? 72 : 48) + visibleColumns.length * 160;
+  }, [visibleColumns.length, supportsMultiSelect]);
   const filteredRecords = useMemo(() => {
     const needle = search.toLowerCase();
     if (!needle) return records;
@@ -244,17 +253,86 @@ export function EditableGrid({
     }
   }
 
-  async function deleteSelected() {
-    if (!selectedId) return;
-    if (kind === "members") await deleteMember(projectId, selectedId);
-    else await deleteRelationship(projectId, selectedId);
-    recordsRef.current = recordsRef.current.filter((record) => record.id !== selectedId);
-    confirmedRecordsRef.current.delete(selectedId);
-    rowSaveQueuesRef.current.delete(selectedId);
-    rowSaveTokensRef.current.delete(selectedId);
-    setRecords((current) => current.filter((record) => record.id !== selectedId));
+  function clearSelectionState() {
+    setSelectedIds(new Set());
     setSelectedId(null);
-    setTotal((current) => Math.max(0, current - 1));
+    selectionAnchorIndexRef.current = null;
+  }
+
+  function toggleRowSelection(recordId: string, rowIndex: number, useRange: boolean, exclusive: boolean) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (useRange && selectionAnchorIndexRef.current !== null) {
+        const anchor = selectionAnchorIndexRef.current;
+        const start = Math.min(anchor, rowIndex);
+        const end = Math.max(anchor, rowIndex);
+        for (let index = start; index <= end; index += 1) {
+          next.add(filteredRecords[index]!.id);
+        }
+        return next;
+      }
+      if (exclusive) {
+        next.clear();
+        next.add(recordId);
+        return next;
+      }
+      if (next.has(recordId)) next.delete(recordId);
+      else next.add(recordId);
+      return next;
+    });
+    selectionAnchorIndexRef.current = rowIndex;
+    setSelectedId(recordId);
+  }
+
+  function toggleSelectAllOnPage(checked: boolean) {
+    if (!checked) {
+      clearSelectionState();
+      return;
+    }
+    const next = new Set(filteredRecords.map((record) => record.id));
+    setSelectedIds(next);
+    setSelectedId(filteredRecords[0]?.id ?? null);
+    selectionAnchorIndexRef.current = 0;
+  }
+
+  const allOnPageSelected = filteredRecords.length > 0 && filteredRecords.every((record) => selectedIds.has(record.id));
+
+  async function deleteSelected() {
+    const idsToDelete = selectedIds.size > 0 ? [...selectedIds] : selectedId ? [selectedId] : [];
+    if (idsToDelete.length === 0) return;
+
+    setStatus(idsToDelete.length > 1 ? `Deleting ${idsToDelete.length} rows...` : "Deleting row...");
+    try {
+      if (kind === "members") {
+        if (idsToDelete.length === 1) {
+          await deleteMember(projectId, idsToDelete[0]!);
+        } else {
+          const result = await bulkDeleteMembers(projectId, dimension.id, idsToDelete);
+          setStatus(`Deleted ${result.membersDeleted} members and ${result.relationshipsDeleted} relationships`);
+        }
+      } else if (idsToDelete.length === 1) {
+        await deleteRelationship(projectId, idsToDelete[0]!);
+      } else {
+        const result = await bulkDeleteRelationships(projectId, dimension.id, idsToDelete);
+        setStatus(`Deleted ${result.relationshipsDeleted} relationships`);
+      }
+
+      const deleteSet = new Set(idsToDelete);
+      recordsRef.current = recordsRef.current.filter((record) => !deleteSet.has(record.id));
+      for (const id of idsToDelete) {
+        confirmedRecordsRef.current.delete(id);
+        rowSaveQueuesRef.current.delete(id);
+        rowSaveTokensRef.current.delete(id);
+      }
+      setRecords((current) => current.filter((record) => !deleteSet.has(record.id)));
+      clearSelectionState();
+      setTotal((current) => Math.max(0, current - idsToDelete.length));
+      if (idsToDelete.length === 1) {
+        setStatus("Deleted");
+      }
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "Delete failed");
+    }
   }
 
   function valueFor(record: GridRecord, column: FieldDefinition): string {
@@ -290,14 +368,20 @@ export function EditableGrid({
           </StatusBadge>
         </div>
         <div className="grid-toolbar-actions grid-toolbar-tools" role="toolbar" aria-label={`${gridTitle} table actions`}>
-          <span className="grid-selection-summary">{selectedId ? "1 row selected" : "No row selected"}</span>
+          <span className="grid-selection-summary">{selectionSummary}</span>
           <IconButton className="grid-icon-button primary" aria-label={`Add ${rowNoun}`} title={`Add ${rowNoun}`} onClick={() => void addRow()}>
             <Plus size={15} />
           </IconButton>
           <IconButton className="grid-icon-button" aria-label="Duplicate selected row" disabled={!selectedId} title={actionTitles.duplicateTitle} onClick={() => void duplicateRow()}>
             <Copy size={15} />
           </IconButton>
-          <IconButton className="grid-icon-button danger" aria-label="Delete selected row" disabled={!selectedId} title={actionTitles.deleteTitle} onClick={() => void deleteSelected()}>
+          <IconButton
+            className="grid-icon-button danger"
+            aria-label="Delete selected rows"
+            disabled={selectionCount === 0}
+            title={actionTitles.deleteTitle}
+            onClick={() => void deleteSelected()}
+          >
             <Trash2 size={15} />
           </IconButton>
           <IconButton className="grid-icon-button" aria-label="Toggle columns" title="Toggle columns" aria-controls={columnMenuId} aria-expanded={showColumns} onClick={() => setShowColumns((current) => !current)}>
@@ -331,7 +415,14 @@ export function EditableGrid({
       <div className="data-grid workbench-data-grid" ref={parentRef}>
         <div className="grid-surface" style={{ minWidth: `${gridMinWidth}px` }}>
           <div className="grid-header" style={{ gridTemplateColumns }}>
-            <div className="grid-row-number">#</div>
+            <div className="grid-select-cell">
+              <input
+                type="checkbox"
+                aria-label="Select all rows on this page"
+                checked={allOnPageSelected}
+                onChange={(event) => toggleSelectAllOnPage(event.currentTarget.checked)}
+              />
+            </div>
             {visibleColumns.map((column) => <div key={column.name} title={columnTitle(column)}>{column.name}{column.required ? " *" : ""}</div>)}
           </div>
           <div className="grid-body" style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
@@ -344,12 +435,26 @@ export function EditableGrid({
               return (
                 <div
                   key={record.id}
-                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""} ${rowIssues.length > 0 ? "has-issues" : ""}`}
+                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${selectedIds.has(record.id) ? "multi-selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""} ${rowIssues.length > 0 ? "has-issues" : ""}`}
                   style={{ transform: `translateY(${item.start}px)`, gridTemplateColumns }}
-                  onClick={() => setSelectedId(record.id)}
+                  onClick={(event) => {
+                    toggleRowSelection(
+                      record.id,
+                      item.index,
+                      event.shiftKey,
+                      !event.ctrlKey && !event.metaKey
+                    );
+                  }}
                   title={rowTooltip}
                 >
-                  <span className="grid-row-number">{offset + item.index + 1}</span>
+                  <span className="grid-select-cell" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select row ${offset + item.index + 1}`}
+                      checked={selectedIds.has(record.id)}
+                      onChange={() => toggleRowSelection(record.id, item.index, false, false)}
+                    />
+                  </span>
                   {visibleColumns.map((column) => (
                     <GridCell
                       key={column.name}

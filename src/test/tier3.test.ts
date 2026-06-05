@@ -6,7 +6,14 @@ import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { AppConfig } from "../shared/appConfigTypes";
 import type { AppDatabase } from "../server/db/database";
 import type { DimensionMemberRecord, DimensionRecord } from "../shared/types";
-import { scoreMemberQuality, scoreDimensionQuality, generateDocumentContent } from "../server/tier3/tier3Engine";
+import {
+  scoreMemberQuality,
+  scoreDimensionQuality,
+  scoreValidationQuality,
+  blendQualityScores,
+  generateDocumentContent
+} from "../server/tier3/tier3Engine";
+import type { ValidationIssue } from "../shared/types";
 
 const testTimestamp = "2026-01-01T00:00:00.000Z";
 
@@ -58,6 +65,46 @@ describe("Tier 3 Engine: Quality Scoring", () => {
   it("empty dimension scores 100", () => {
     const dimScore = scoreDimensionQuality(dim, [], []);
     expect(dimScore.overallScore).toBe(100);
+  });
+
+  it("lowers dimension score when validation issues exist", () => {
+    const members = [memberFixture("A", "dim-acc", { X: "val" })];
+    const clean = scoreDimensionQuality(dim, members, []);
+    const issues: ValidationIssue[] = Array.from({ length: 34 }, (_, i) => ({
+      id: `issue-${i}`,
+      projectId: "proj-1",
+      dimensionId: "dim-acc",
+      entityType: "member",
+      entityId: "m-A",
+      severity: "warning",
+      code: "UNKNOWN_PROPERTY",
+      message: "Unknown property",
+      fieldName: "ActiveFlag",
+      rowNumber: null,
+      createdAt: testTimestamp
+    }));
+    const withIssues = scoreDimensionQuality(dim, members, [], issues);
+    expect(withIssues.overallScore).toBeLessThan(clean.overallScore);
+    expect(withIssues.overallScore).toBeLessThan(100);
+  });
+
+  it("scores validation quality from issue severities", () => {
+    expect(scoreValidationQuality([])).toBe(100);
+    const warnings: ValidationIssue[] = Array.from({ length: 34 }, (_, i) => ({
+      id: `w-${i}`,
+      projectId: "proj-1",
+      dimensionId: "dim-acc",
+      entityType: "member",
+      entityId: "m-1",
+      severity: "warning",
+      code: "UNKNOWN_PROPERTY",
+      message: "Unknown property",
+      fieldName: "",
+      rowNumber: null,
+      createdAt: testTimestamp
+    }));
+    expect(scoreValidationQuality(warnings)).toBe(10);
+    expect(blendQualityScores(100, 10)).toBe(42);
   });
 
   it("identifies lowest scoring members", () => {

@@ -5,7 +5,15 @@ import { parseExportLoadMode, planRelationshipLoadMode } from "../../shared/rela
 import { relationshipDefaultsToProperties, relationshipPropertiesToDefaults } from "../../shared/relationshipDefaults";
 import type { ProjectMetadataState } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
+import { deleteDimension } from "../helpers/dimensionDelete";
+import { deleteDimension } from "../helpers/dimensionDelete";
+import { deleteMembersWithRelationships } from "../helpers/memberDelete";
+import { deleteRelationshipsByIds } from "../helpers/relationshipDelete";
 import { loadProjectState } from "../helpers/projectState";
+import { validateMemberKey } from "../../shared/memberKeyValidation";
+import { nextSortOrderForDimensionType } from "../../shared/dimensionTypeOrder";
+import { createDimensionWithBlueprint } from "../projectBlueprints";
+import type { DimensionType } from "../../shared/types";
 
 type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 
@@ -28,6 +36,64 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     res.json({ ok: true });
   });
 
+  router.post("/dimensions", (req, res) => {
+    const projectId = (req.params as Record<string, string>).projectId;
+    const project = repos.projects.get(projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+
+    const dimensionType = String(req.body.dimensionType ?? "") as DimensionType;
+    if (!config.dimensions.enabledTypes.includes(dimensionType)) {
+      return res.status(400).json({ error: `Unsupported dimension type '${dimensionType}'.` });
+    }
+
+    const dimensionName =
+      typeof req.body.dimensionName === "string" && req.body.dimensionName.trim()
+        ? req.body.dimensionName.trim()
+        : undefined;
+    const existingDimensions = repos.dimensions.listByProject(projectId);
+    const sortOrder = nextSortOrderForDimensionType(dimensionType, existingDimensions);
+    const dimension = createDimensionWithBlueprint(repos, config, projectId, dimensionType, sortOrder, {
+      dimensionName
+    });
+
+    repos.audit.record({
+      projectId,
+      action: "dimension.create",
+      entityType: "dimension",
+      entityId: dimension.id,
+      after: { dimensionType: dimension.dimensionType, dimensionName: dimension.dimensionName, source: "blueprint" }
+    });
+
+    res.status(201).json(dimension);
+  });
+
+  router.delete("/dimensions/:dimensionId", (req, res) => {
+    const projectId = (req.params as Record<string, string>).projectId;
+    const dimensionId = (req.params as Record<string, string>).dimensionId;
+    const dimension = repos.dimensions.get(dimensionId);
+    if (!dimension || dimension.projectId !== projectId) {
+      return res.status(404).json({ error: "dimension not found" });
+    }
+
+    const result = deleteDimension(repos, dimensionId);
+    if (!result) return res.status(404).json({ error: "dimension not found" });
+
+    repos.audit.record({
+      projectId,
+      action: "dimension.delete",
+      entityType: "dimension",
+      entityId: dimensionId,
+      before: {
+        dimensionType: result.dimensionType,
+        dimensionName: result.dimensionName,
+        membersRemoved: result.membersRemoved,
+        relationshipsRemoved: result.relationshipsRemoved
+      }
+    });
+
+    res.json(result);
+  });
+
   router.get("/dimensions/:dimensionId/members", (req, res) => {
     const idsParam = typeof req.query.ids === "string" ? req.query.ids.trim() : "";
     if (idsParam) {
@@ -48,9 +114,12 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     if (!dimension) return res.status(404).json({ error: "dimension not found" });
     const schema = getDimensionSchema(dimension.dimensionType);
     const properties = req.body.properties ?? {};
+    const memberKey = String(req.body.memberKey ?? properties[schema.memberKeyField] ?? "");
+    const keyError = validateMemberKey(memberKey, config.validation.oneStreamProfile);
+    if (keyError) return res.status(400).json({ error: keyError });
     const member = repos.members.create({
       dimensionId: dimension.id,
-      memberKey: String(req.body.memberKey ?? properties[schema.memberKeyField] ?? ""),
+      memberKey,
       description: String(properties.Description ?? ""),
       properties,
       rowOrder: repos.members.countByDimension(dimension.id) + 1,
@@ -73,6 +142,8 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       if (!existing) return res.status(404).json({ error: "Member not found" });
 
       const finalKey = memberKey ?? existing.memberKey;
+      const keyError = validateMemberKey(finalKey, config.validation.oneStreamProfile);
+      if (keyError) return res.status(400).json({ error: keyError });
       const finalProps = properties ?? { ...existing.properties };
       if (req.body.description !== undefined) {
         finalProps.Description = req.body.description;
@@ -95,14 +166,38 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
   });
 
   router.delete("/members/:memberId", (req, res) => {
-    repos.members.softDelete((req.params as Record<string, string>).memberId);
+    const member = repos.members.getById((req.params as Record<string, string>).memberId);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+    const result = deleteMembersWithRelationships(repos, member.dimensionId, [member.id]);
     repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "member.delete",
       entityType: "member",
-      entityId: (req.params as Record<string, string>).memberId
+      entityId: member.id,
+      after: result
     });
-    res.json({ ok: true });
+    res.json({ ok: true, ...result });
+  });
+
+  router.post("/dimensions/:dimensionId/members/bulk-delete", (req, res) => {
+    const dimensionId = (req.params as Record<string, string>).dimensionId;
+    const dimension = repos.dimensions.get(dimensionId);
+    if (!dimension) return res.status(404).json({ error: "dimension not found" });
+    const memberIds = Array.isArray(req.body.memberIds)
+      ? req.body.memberIds.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0)
+      : [];
+    if (memberIds.length === 0) {
+      return res.status(400).json({ error: "memberIds array is required" });
+    }
+    const result = deleteMembersWithRelationships(repos, dimensionId, memberIds);
+    repos.audit.record({
+      projectId: (req.params as Record<string, string>).projectId,
+      action: "member.bulkDelete",
+      entityType: "dimension",
+      entityId: dimensionId,
+      after: { memberIds, ...result }
+    });
+    res.json(result);
   });
 
   router.get("/dimensions/:dimensionId/relationships", (req, res) => {
@@ -172,14 +267,40 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
   });
 
   router.delete("/relationships/:relationshipId", (req, res) => {
-    repos.relationships.delete((req.params as Record<string, string>).relationshipId);
+    const relationship = repos.relationships.getById((req.params as Record<string, string>).relationshipId);
+    if (!relationship) {
+      return res.status(404).json({ error: "Relationship not found" });
+    }
+    const result = deleteRelationshipsByIds(repos, relationship.dimensionId, [relationship.id]);
     repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.delete",
       entityType: "relationship",
-      entityId: (req.params as Record<string, string>).relationshipId
+      entityId: relationship.id,
+      after: result
     });
-    res.json({ ok: true });
+    res.json({ ok: true, ...result });
+  });
+
+  router.post("/dimensions/:dimensionId/relationships/bulk-delete", (req, res) => {
+    const dimensionId = (req.params as Record<string, string>).dimensionId;
+    const dimension = repos.dimensions.get(dimensionId);
+    if (!dimension) return res.status(404).json({ error: "dimension not found" });
+    const relationshipIds = Array.isArray(req.body.relationshipIds)
+      ? req.body.relationshipIds.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0)
+      : [];
+    if (relationshipIds.length === 0) {
+      return res.status(400).json({ error: "relationshipIds array is required" });
+    }
+    const result = deleteRelationshipsByIds(repos, dimensionId, relationshipIds);
+    repos.audit.record({
+      projectId: (req.params as Record<string, string>).projectId,
+      action: "relationship.bulkDelete",
+      entityType: "dimension",
+      entityId: dimensionId,
+      after: { relationshipIds, ...result }
+    });
+    res.json(result);
   });
 
   router.post("/relationship-plan", (req, res) => {

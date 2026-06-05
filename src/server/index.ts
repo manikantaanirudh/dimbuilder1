@@ -44,6 +44,16 @@ const server = createApp(db, config).listen(config.server.port, config.server.ho
   logger.info(`${config.application.productName} API listening on http://${config.server.host}:${config.server.port}`);
 });
 
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    logger.error(
+      `Port ${config.server.port} is already in use. Stop the other process or run scripts\\restart-services.bat, then try again.`
+    );
+    process.exit(1);
+  }
+  throw error;
+});
+
 function shutdown(signal: string) {
   logger.info(`${signal} received. Shutting down gracefully...`);
   server.close(() => {

@@ -7,6 +7,11 @@ import {
   type OneStreamPropertyTargetLevel,
   type OneStreamVaryingContextType
 } from "./oneStreamPropertyDictionary";
+import {
+  filterDefaultsForTarget,
+  resolveEffectiveProperties,
+  type PropertyDefaultResolutionEntry
+} from "./effectiveProperties";
 import type {
   DimensionType,
   DimensionMemberRecord,
@@ -41,6 +46,7 @@ export interface ExportProjectXmlOptions {
   loadMode?: ExportLoadMode;
   relationshipPlan?: RelationshipOperationPlan;
   dimensionId?: string;
+  propertyDefaults?: PropertyDefaultResolutionEntry[];
 }
 
 const DEFAULT_ONESTREAM_VERSION = "9.2.0.18004";
@@ -296,15 +302,21 @@ function renderMember(
     attributes[attributeName] = member.properties[fieldName];
   }
 
+  const effectiveMemberProperties = withEffectiveProperties(
+    member.properties,
+    dimension.dimensionType,
+    "member",
+    options as ExportProjectXmlOptions
+  );
   const renderedPropertyLines = renderPropertyLines(
     buildPropertyFields({
       baseFields: schema.memberFields.filter((field) => field.name !== schema.memberKeyField && field.name !== "Description" && !attributeFieldMap[field.name]),
-      properties: member.properties,
+      properties: effectiveMemberProperties,
       dimensionType: dimension.dimensionType,
       targetLevel: "member",
       excludedFieldNames: [schema.memberKeyField, "Description", ...Object.keys(attributeFieldMap)]
     }),
-    member.properties,
+    effectiveMemberProperties,
     12,
     options,
     dimension.dimensionType,
@@ -339,15 +351,20 @@ function renderRelationship(
   options: typeof defaultExportOptions
 ): string {
   const schema = getDimensionSchema(dimension.dimensionType);
-  const properties: Record<string, unknown> = {
-    ...relationship.properties,
-    Parent: relationship.parentKey,
-    Child: relationship.childKey,
-    "Aggregation Weight": relationship.aggregationWeight ?? relationship.properties["Aggregation Weight"],
-    "Percent Consol": relationship.percentConsol ?? relationship.properties["Percent Consol"],
-    "Percent Ownership": relationship.percentOwnership ?? relationship.properties["Percent Ownership"],
-    "Ownership Type": relationship.ownershipType || relationship.properties["Ownership Type"]
-  };
+  const properties: Record<string, unknown> = withEffectiveProperties(
+    {
+      ...relationship.properties,
+      Parent: relationship.parentKey,
+      Child: relationship.childKey,
+      "Aggregation Weight": relationship.aggregationWeight ?? relationship.properties["Aggregation Weight"],
+      "Percent Consol": relationship.percentConsol ?? relationship.properties["Percent Consol"],
+      "Percent Ownership": relationship.percentOwnership ?? relationship.properties["Percent Ownership"],
+      "Ownership Type": relationship.ownershipType || relationship.properties["Ownership Type"]
+    },
+    dimension.dimensionType,
+    "relationship",
+    options as ExportProjectXmlOptions
+  );
   const relationshipAttributes: Record<string, unknown> = {
     parent: relationship.parentKey,
     child: relationship.childKey
@@ -592,6 +609,17 @@ function addRepresentedField(
   for (const candidate of [definition.propertyKey, definition.displayName, definition.xmlName, ...definition.aliases]) {
     represented.add(normalizePropertyLookupName(candidate));
   }
+}
+
+function withEffectiveProperties(
+  properties: Record<string, unknown>,
+  dimensionType: DimensionType,
+  targetLevel: OneStreamPropertyTargetLevel,
+  options: ExportProjectXmlOptions
+): Record<string, unknown> {
+  const defaults = filterDefaultsForTarget(options.propertyDefaults ?? [], dimensionType, targetLevel);
+  if (!defaults.length) return properties;
+  return resolveEffectiveProperties(properties, defaults);
 }
 
 function getPropertyValue(

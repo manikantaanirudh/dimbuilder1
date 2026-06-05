@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.2.0.18004">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Scenario" name="ScenariosA" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootScenarioDim">
+        <members>
+          <member name="Actual" alias="" description="Actual">
+            <properties>
+              <property name="ScenarioType" value="Actual" />
+              <property name="DefaultView" value="YTD" />
+            </properties>
+          </member>
+          <member name="Budget" alias="" description="Budget">
+            <properties>
+              <property name="ScenarioType" value="Budget" />
+              <property name="DefaultView" value="YTD" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+      <dimension type="Account" name="AccountsA">
+        <members>
+          <member name="A1" description="Account 1">
+            <properties>
+              <property name="AccountType" value="Expense" />
+            </properties>
+          </member>
+          <member name="A2" description="Account 2">
+            <properties>
+              <property name="AccountType" value="Expense" />
+            </properties>
+          </member>
+          <member name="A3" description="Account 3">
+            <properties>
+              <property name="AccountType" value="Revenue" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+      <dimension type="Account" name="AccountsB">
+        <members>
+          <member name="B1" description="Account B1">
+            <properties>
+              <property name="AccountType" value="Expense" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+      <dimension type="Entity" name="Entities">
+        <members>
+          <member name="E1" description="Entity 1">
+            <properties>
+              <property name="Currency" value="USD" />
+            </properties>
+          </member>
+          <member name="E2" description="Entity 2">
+            <properties>
+              <property name="Currency" value="USD" />
+            </properties>
+          </member>
+        </members>
+        <relationships>
+          <relationship parent="Root" child="E1" aggregationWeight="1">
+            <properties>
+              <property name="PercentConsolidation" scenarioType="" time="" revertToDefaultScenarioType="false" value="100" />
+              <property name="PercentOwnership" scenarioType="" time="" revertToDefaultScenarioType="false" value="100" />
+            </properties>
+          </relationship>
+        </relationships>
+      </dimension>
+      <dimension type="Flow" name="Flows">
+        <members>
+          <member name="F1" description="Flow 1">
+            <properties>
+              <property name="FlowProcessingType" value="Standard" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+      <dimension type="UD1" name="Products">
+        <members>
+          <member name="P1" description="Product 1">
+            <properties>
+              <property name="Text1" value="DefaultText" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>

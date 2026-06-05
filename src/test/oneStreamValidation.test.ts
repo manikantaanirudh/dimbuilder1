@@ -65,6 +65,7 @@ describe("OneStream validation profile", () => {
       "MEMBER_NAME_TOO_LONG",
       "MEMBER_NAME_CONTAINS_SPACE",
       "MEMBER_NAME_CONTAINS_PERIOD",
+      "MEMBER_NAME_QUERY_BRACKETS",
       "MEMBER_NAME_RESTRICTED_CHARACTER",
       "RESERVED_MEMBER_NAME_CASE_MISMATCH",
       "DUPLICATE_ALIAS",
@@ -279,7 +280,7 @@ describe("OneStream validation profile", () => {
   });
 
   it("flags all official OneStream restricted characters", () => {
-    const restrictedChars = ["/", "|", "!", "@", "#", ",", ";", "^", "*", "+", "-", "=", "\\", "?", "<", ">", "\"", "[", "]", "{", "}", "&"];
+    const restrictedChars = ["/", "|", "!", "@", "#", ",", ";", "^", "*", "+", "-", "=", "\\", "?", "<", ">", "\"", "{", "}", "&"];
 
     for (const char of restrictedChars) {
       const memberKey = `Test${char}Member`;
@@ -301,6 +302,25 @@ describe("OneStream validation profile", () => {
       const restrictedIssues = issues.filter((issue) => issue.code === "MEMBER_NAME_RESTRICTED_CHARACTER");
       expect(restrictedIssues.length, `Expected restricted character '${char}' to be flagged`).toBeGreaterThan(0);
     }
+  });
+
+  it("allows square brackets in stored member names", () => {
+    const issues = validateOneStreamProfile({
+      project: sampleProject,
+      dimension: accountDimension,
+      members: [
+        memberFixture({
+          id: "m-brackets",
+          dimensionId: accountDimension.id,
+          memberKey: "Not[Required]",
+          properties: { Account: "Not[Required]", "Account Type": "Expense" }
+        })
+      ],
+      relationships: [],
+      profile: baseProfile
+    });
+
+    expect(issues.filter((issue) => issue.code === "MEMBER_NAME_RESTRICTED_CHARACTER")).toHaveLength(0);
   });
 
   it("flags reserved words with wrong casing from the full official list", () => {

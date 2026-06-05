@@ -13,6 +13,7 @@ const formula = (name: string): FieldDefinition => ({ name, kind: "formula" });
 const udMemberFields = [
   text("Member", true),
   text("Description"),
+  text("Alias"),
   text("Formula Type"),
   bool("Allow Input"),
   text("Is Consolidated"),
@@ -67,6 +68,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
     memberFields: [
       text("Entity", true),
       text("Description"),
+      text("Alias"),
       text("Scenario Type"),
       text("Read Data Group"),
       text("Read and Write Data Group"),
@@ -123,6 +125,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
     memberFields: [
       text("Entity", true),
       text("Description"),
+      text("Alias"),
       text("Currency"),
       bool("Is IC"),
       bool("IsConsolidated"),
@@ -197,6 +200,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
     memberFields: [
       text("Account", true),
       text("Description"),
+      text("Alias"),
       text("Account Type"),
       text("Formula Type"),
       bool("Allow Input"),
@@ -259,6 +263,7 @@ export const dimensionSchemas: Record<DimensionType, DimensionSchema> = {
     memberFields: [
       text("Flow Member", true),
       text("Description"),
+      text("Alias"),
       text("Formula Type"),
       bool("Allow Input"),
       text("Is Consolidated"),
