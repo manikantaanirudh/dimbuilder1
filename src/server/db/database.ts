@@ -20,17 +20,21 @@ export interface AppDatabase {
   close(): void;
 }
 
-export function createDatabase(filename = "data/app.db"): AppDatabase {
-  if (filename !== ":memory:") mkdirSync(dirname(filename), { recursive: true });
-  const db = new DatabaseSync(filename);
-  db.exec("PRAGMA journal_mode=WAL");
-  db.exec("PRAGMA busy_timeout=5000");
+export function bootstrapSqliteSchema(db: AppDatabase): void {
   db.exec(schemaSql);
   evolveSchema(db);
   runMigrations(db);
   seedPropertyDefaultCatalog(db);
   seedSecurity(db);
   seedDefaultWorkflow(db);
+}
+
+export function createDatabase(filename = "data/app.db"): AppDatabase {
+  if (filename !== ":memory:") mkdirSync(dirname(filename), { recursive: true });
+  const db = new DatabaseSync(filename);
+  db.exec("PRAGMA journal_mode=WAL");
+  db.exec("PRAGMA busy_timeout=5000");
+  bootstrapSqliteSchema(db);
   return db;
 }
 
