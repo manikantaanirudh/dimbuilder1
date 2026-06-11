@@ -1,0 +1,2 @@
+-- Baseline schema is applied by src/server/db/schema/postgres.sql
+-- This migration is recorded for parity with SQLite migration 001_initial_schema.
