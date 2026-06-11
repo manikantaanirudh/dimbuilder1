@@ -1,9 +1,11 @@
 node_modules/
 dist/
 data/app.db
+data/app.db-*
 data/uploads/*
 data/exports/*
 data/logs/
+data/cleanup-quarantine/
 !.gitkeep
 .env
 .superpowers/
@@ -12,8 +14,22 @@ coverage/
 playwright-report/
 test-results/
 *.xlsx
+__pycache__/
+*.pyc
 ~$*
 original/
 scripts/autoresearch/results.tsv
 scripts/autoresearch/run.log
 scripts/autoresearch/benchmark-cache.json
+.cortex/vitest-out.txt
+
+# Local scratch imports/exports created during manual OneStream metadata testing.
+/Dev_Metadata_*.xml
+/PRD_to_Dev_Metadata_*.xml
+/OUC_Hierarchy_Export_*.csv
+/Project_Export_*.txt
+/Project_XML.xml
+/Project_dim.csv
+/OpexAccount_Export_*.txt
+/parent-child.csv
+/snowflake.log
