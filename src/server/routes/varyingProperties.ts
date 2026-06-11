@@ -9,8 +9,8 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.get("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.varyingProperties.listVaryingPropertyValues(project.id, {
       dimensionId: optionalQuery(req.query.dimensionId),
@@ -20,8 +20,8 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
     }));
   });
 
-  router.post("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const input = toVaryingPropertyInput(project.id, req.body);
     if (!input) return res.status(400).json({ error: "targetType, targetId, propertyName, and dimensionId are required" });
@@ -32,8 +32,8 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
     res.status(201).json(value);
   });
 
-  router.patch("/:valueId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.patch("/:valueId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const input = toPartialVaryingPropertyInput(req.body);
     if (input.dimensionId) {
@@ -46,8 +46,8 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
     res.json(value);
   });
 
-  router.delete("/:valueId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.delete("/:valueId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const value = repos.varyingProperties.getVaryingPropertyValue(project.id, (req.params as Record<string, string>).valueId);
     if (!value) return res.status(404).json({ error: "varying property value not found" });

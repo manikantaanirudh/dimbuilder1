@@ -24,14 +24,14 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.get("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.changeSets.listByProject(project.id));
   });
 
-  router.post("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const body = req.body ?? {};
     const requestedDiffRunId = String(body.diffRunId ?? "").trim();
@@ -58,16 +58,16 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     res.status(201).json(repos.changeSets.getDetail(project.id, changeSet.id));
   });
 
-  router.get("/:changeSetId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/:changeSetId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
     res.json(detail);
   });
 
-  router.patch("/:changeSetId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.patch("/:changeSetId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const status = parseChangeSetStatus(req.body?.status);
     const updated = repos.changeSets.update(project.id, (req.params as Record<string, string>).changeSetId, {
@@ -81,12 +81,12 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     res.json(repos.changeSets.getDetail(project.id, updated.id));
   });
 
-  router.post("/:changeSetId/validate", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/:changeSetId/validate", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
-    const issues = runProjectValidation(repos, config, project.id);
+    const issues = await runProjectValidation(repos, config, project.id);
     const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
     const updated = validationSummary.blockingIssues === 0
       ? repos.changeSets.update(project.id, detail.changeSet.id, { status: "validated" })
@@ -105,12 +105,12 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     });
   });
 
-  router.post("/:changeSetId/approve", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/:changeSetId/approve", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
-    const issues = runProjectValidation(repos, config, project.id);
+    const issues = await runProjectValidation(repos, config, project.id);
     const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
     const bypassValidation = Boolean(req.body?.bypassValidation);
     if (validationSummary.blockingIssues > 0 && !bypassValidation) {
@@ -127,8 +127,8 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     res.json({ ...repos.changeSets.getDetail(project.id, detail.changeSet.id), changeSet: updated ?? detail.changeSet, validationSummary, issues });
   });
 
-  router.post("/:changeSetId/reject", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/:changeSetId/reject", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
@@ -144,7 +144,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
 
   router.post("/:changeSetId/package", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
       if (!detail) return res.status(404).json({ error: "change set not found" });
@@ -154,7 +154,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
 
       assertProjectExportWithinMemberLimit(repos, project.id, "change-set-xml", config);
 
-      const issues = runProjectValidation(repos, config, project.id);
+      const issues = await runProjectValidation(repos, config, project.id);
       const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
       const mode = selectXmlExportModeForChangeSet(detail, parsePackageMode(req.body?.mode));
       const packageName = safeFileSegment(String(req.body?.packageName ?? "").trim() || `${detail.changeSet.name}-${new Date().toISOString()}`);
@@ -176,7 +176,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       writeFileSync(join(packagePath, "02-change-set.json"), JSON.stringify(packagedDetail, null, 2));
       writeFileSync(join(packagePath, "03-diff-report.csv"), renderDiffReportCsv(packagedDetail.items));
       writeFileSync(join(packagePath, "04-validation-report.csv"), renderValidationReportCsv(issues));
-      const snapshot = readSnapshot(repos, project.id);
+      const snapshot = await readSnapshot(repos, project.id);
       const xmlOptions = {
         oneStreamVersionFallback: config.application.oneStreamVersionFallback,
         prettyPrint: config.export.xml.prettyPrint,
@@ -212,8 +212,8 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     }
   });
 
-  router.get("/:changeSetId/package", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/:changeSetId/package", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
@@ -224,8 +224,8 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
   return router;
 }
 
-function readSnapshot(repos: Repositories, projectId: string) {
-  const project = repos.projects.get(projectId);
+async function readSnapshot(repos: Repositories, projectId: string) {
+  const project = await repos.projects.get(projectId);
   if (!project) throw Object.assign(new Error("project not found"), { status: 404 });
   return {
     project,

@@ -303,8 +303,8 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     res.json(result);
   });
 
-  router.post("/relationship-plan", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/relationship-plan", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const mode = parseExportLoadMode(req.body?.mode);
     const baselineId = String(req.body?.baselineId ?? "").trim();
@@ -312,7 +312,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     const baseline = baselineId ? repos.baselines.get(project.id, baselineId) : null;
     if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
     const plan = planRelationshipLoadMode(
-      loadProjectState(repos, project.id),
+      await loadProjectState(repos, project.id),
       baseline?.baseline as ProjectMetadataState | undefined,
       mode,
       { dimensionId }

@@ -3,8 +3,8 @@ import { validateMemberUniquenessAcrossDimensionTypes } from "../../shared/membe
 import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
 
-export function runProjectValidation(repos: Repositories, config: AppConfig, projectId: string) {
-  const project = repos.projects.get(projectId);
+export async function runProjectValidation(repos: Repositories, config: AppConfig, projectId: string) {
+  const project = await repos.projects.get(projectId);
   if (!project) return [];
   const dimensions = repos.dimensions.listByProject(project.id);
   const members = repos.members.listByProject(project.id);

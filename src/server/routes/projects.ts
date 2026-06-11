@@ -15,16 +15,16 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
   const router = Router();
   const deps = { repos, config };
 
-  router.get("/", (_req, res) => {
-    res.json(repos.projects.list());
+  router.get("/", async (_req, res) => {
+    res.json(await repos.projects.list());
   });
 
-  router.post("/", (req, res, next) => {
+  router.post("/", async (req, res, next) => {
     try {
       const body = req.body ?? {};
       const name = String(body.name ?? "").trim() || "New Metadata Project";
       const description = String(body.description ?? "");
-      const project = createProjectFromBlueprints(repos, config, {
+      const project = await createProjectFromBlueprints(repos, config, {
         name,
         description,
         createdBy: "local-admin"
@@ -35,18 +35,18 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     }
   });
 
-  router.delete("/:projectId", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.delete("/:projectId", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    repos.projects.delete(project.id);
+    await repos.projects.delete(project.id);
     res.status(204).end();
   });
 
-  router.patch("/:projectId", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.patch("/:projectId", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const body = req.body ?? {};
-    const updated = repos.projects.update(project.id, {
+    const updated = await repos.projects.update(project.id, {
       name: body.name,
       description: body.description
     });
@@ -61,10 +61,10 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     res.json(updated);
   });
 
-  router.get("/:projectId/summary", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/summary", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    res.json(repos.projects.summary(project.id));
+    res.json(await repos.projects.summary(project.id));
   });
 
   router.use("/:projectId/snapshots", createSnapshotsRouter(deps));

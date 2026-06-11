@@ -10,13 +10,13 @@ interface CreateBlueprintProjectInput {
   createdBy: string;
 }
 
-export function createProjectFromBlueprints(
+export async function createProjectFromBlueprints(
   repos: Repositories,
   config: AppConfig,
   input: CreateBlueprintProjectInput
-): ProjectRecord {
-  return repos.transaction(() => {
-    const project = repos.projects.create({
+): Promise<ProjectRecord> {
+  return repos.transaction(async (tx) => {
+    const project = await tx.projects.create({
       name: input.name.trim() || "New Metadata Project",
       description: input.description,
       sourceFileName: "",
@@ -26,10 +26,10 @@ export function createProjectFromBlueprints(
     const orderedTypes = config.dimensions.displayOrder.filter((type) => enabledTypes.has(type));
 
     orderedTypes.forEach((dimensionType, index) => {
-      createDimensionWithBlueprint(repos, config, project.id, dimensionType, index + 1);
+      createDimensionWithBlueprint(tx, config, project.id, dimensionType, index + 1);
     });
 
-    repos.audit.record({
+    tx.audit.record({
       projectId: project.id,
       userId: input.createdBy,
       action: "project.create",

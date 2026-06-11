@@ -20,6 +20,12 @@ export interface AppDatabase {
   close(): void;
 }
 
+export function isAppDatabase(value: AppDatabase | unknown): value is AppDatabase {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as AppDatabase;
+  return typeof candidate.prepare === "function" && typeof candidate.exec === "function";
+}
+
 export function bootstrapSqliteSchema(db: AppDatabase): void {
   db.exec(schemaSql);
   evolveSchema(db);

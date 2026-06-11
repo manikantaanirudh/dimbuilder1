@@ -263,8 +263,8 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         createdBy: "local-admin"
       });
 
-      const project = repos.transaction(() => {
-        const savedProject = repos.projects.create({
+      const project = await repos.transaction(async (tx) => {
+        const savedProject = await tx.projects.create({
           name: parsed.project.name,
           description: parsed.project.description,
           sourceFileName: req.file?.originalname ?? parsed.project.sourceFileName,
@@ -273,15 +273,15 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
 
         const dimensionIdMap = new Map<string, string>();
         for (const dimension of parsed.dimensions) {
-          const saved = repos.dimensions.create({ ...dimension, projectId: savedProject.id });
+          const saved = tx.dimensions.create({ ...dimension, projectId: savedProject.id });
           dimensionIdMap.set(dimension.id, saved.id);
         }
 
-        repos.members.bulkInsert(parsed.members.map((member) => ({
+        tx.members.bulkInsert(parsed.members.map((member) => ({
           ...member,
           dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId
         })));
-        repos.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
+        tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
           ...relationship,
           dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId
         })));

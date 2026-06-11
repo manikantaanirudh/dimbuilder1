@@ -24,13 +24,13 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
   mkdirSync(config.paths.exportsDirectory, { recursive: true });
   const router = Router();
 
-  router.get("/:projectId/xml", (req, res, next) => {
+  router.get("/:projectId/xml", async (req, res, next) => {
     try {
       if (!config.export.xml.enabled) return disabledFormat(res, "XML");
       const projectId = req.params.projectId;
       const dimensionId = optionalQuery(req.query.dimensionId);
       const previewOnly = isTruthyFlag(req.query.preview);
-      const project = repos.projects.get(projectId);
+      const project = await repos.projects.get(projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
 
       if (dimensionId) {
@@ -39,7 +39,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
         assertProjectExportWithinMemberLimit(repos, projectId, "xml", config);
       }
 
-      const snapshot = readSnapshot(repos, projectId, dimensionId);
+      const snapshot = await readSnapshot(repos, projectId, dimensionId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
       if (!previewOnly) {
         if (dimensionId) {
@@ -79,25 +79,25 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     }
   });
 
-  router.get("/:projectId/json", (req, res) => {
+  router.get("/:projectId/json", async (req, res) => {
     if (!config.export.json.enabled) return disabledFormat(res, "JSON");
-    const snapshot = readSnapshot(repos, req.params.projectId);
+    const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "json")) return;
     res.type("application/json").send(exportJsonBackup({ ...snapshot, importSummary: emptyImportSummary() }));
   });
 
-  router.get("/:projectId/members.csv", (req, res) => {
+  router.get("/:projectId/members.csv", async (req, res) => {
     if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
-    const snapshot = readSnapshot(repos, req.params.projectId);
+    const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "members.csv")) return;
     res.type("text/csv").send(exportMembersCsv(snapshot.members));
   });
 
-  router.get("/:projectId/relationships.csv", (req, res) => {
+  router.get("/:projectId/relationships.csv", async (req, res) => {
     if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
-    const snapshot = readSnapshot(repos, req.params.projectId);
+    const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "relationships.csv")) return;
     res.type("text/csv").send(exportRelationshipsCsv(snapshot.relationships));
@@ -106,7 +106,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
   router.get("/:projectId/xlsx", async (req, res, next) => {
     try {
       if (!config.export.xlsx.enabled) return disabledFormat(res, "XLSX");
-      const snapshot = readSnapshot(repos, req.params.projectId);
+      const snapshot = await readSnapshot(repos, req.params.projectId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
       if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xlsx")) return;
       const filePath = join(config.paths.exportsDirectory, `${snapshot.project.id}.xlsx`);
@@ -121,8 +121,8 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     }
   });
 
-  router.post("/:projectId/snapshot", (req, res) => {
-    const snapshot = readSnapshot(repos, req.params.projectId);
+  router.post("/:projectId/snapshot", async (req, res) => {
+    const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
     if (!guardExportRequest(req.body as Record<string, unknown>, res, repos, config, snapshot.project.id, "snapshot")) return;
     const id = repos.snapshots.create({
@@ -142,8 +142,8 @@ function disabledFormat(res: import("express").Response, format: string) {
   return res.status(404).json({ error: `${format} export is disabled` });
 }
 
-function readSnapshot(repos: Repositories, projectId: string, dimensionId?: string) {
-  const project = repos.projects.get(projectId);
+async function readSnapshot(repos: Repositories, projectId: string, dimensionId?: string) {
+  const project = await repos.projects.get(projectId);
   if (!project) return null;
   if (dimensionId) {
     const dimensions = repos.dimensions.listByProject(project.id).filter((dimension) => dimension.id === dimensionId);

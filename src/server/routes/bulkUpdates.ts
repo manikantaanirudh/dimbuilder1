@@ -11,27 +11,27 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.post("/preview", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/preview", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const request = toBulkUpdateRequest(req.body);
     if (!request) return res.status(400).json({ error: "targetType, operation, and propertyName are required" });
-    res.json(previewBulkUpdate(loadProjectState(repos, project.id), request));
+    res.json(previewBulkUpdate(await loadProjectState(repos, project.id), request));
   });
 
-  router.post("/apply", (req, res, next) => {
+  router.post("/apply", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const request = toBulkUpdateRequest(req.body);
       if (!request) return res.status(400).json({ error: "targetType, operation, and propertyName are required" });
-      const state = loadProjectState(repos, project.id);
+      const state = await loadProjectState(repos, project.id);
       const preview = previewBulkUpdate(state, request);
       const dimensionsById = new Map(state.dimensions.map((dimension) => [dimension.id, dimension]));
       const membersById = new Map(state.members.map((member) => [member.id, member]));
       const relationshipsById = new Map(state.relationships.map((relationship) => [relationship.id, relationship]));
 
-      const detail = repos.transaction(() => {
+      const detail = await repos.transaction(async () => {
         for (const item of preview.previewItems) {
           const dimension = dimensionsById.get(item.dimensionId);
           if (!dimension) throw Object.assign(new Error("bulk update dimension target not found"), { status: 409 });
@@ -93,14 +93,14 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
     }
   });
 
-  router.get("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.bulkUpdates.listJobs(project.id));
   });
 
-  router.get("/:jobId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/:jobId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const detail = repos.bulkUpdates.getJobDetail(project.id, (req.params as Record<string, string>).jobId);
     if (!detail) return res.status(404).json({ error: "bulk update job not found" });

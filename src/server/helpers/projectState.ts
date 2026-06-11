@@ -1,8 +1,8 @@
 import type { ProjectMetadataState } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
 
-export function loadProjectState(repos: Repositories, projectId: string): ProjectMetadataState {
-  const project = repos.projects.get(projectId) ?? undefined;
+export async function loadProjectState(repos: Repositories, projectId: string): Promise<ProjectMetadataState> {
+  const project = await repos.projects.get(projectId) ?? undefined;
   return {
     project,
     dimensions: repos.dimensions.listByProject(projectId),

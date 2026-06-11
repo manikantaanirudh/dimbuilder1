@@ -7,8 +7,8 @@ import type { Repositories } from "../db/repositories";
 export function createValidationRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  router.post("/:projectId/run", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/run", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const oneStreamProfile = resolveValidationProfile(req.body, config);
     if (!oneStreamProfile) return res.status(400).json({ error: "profile must be 'default' or 'onestream'" });

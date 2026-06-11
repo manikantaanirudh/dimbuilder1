@@ -3,10 +3,10 @@ import { createDatabase } from "../server/db/database";
 import { createRepositories } from "../server/db/repositories";
 
 describe("database", () => {
-  it("creates a project and stores dimensions", () => {
+  it("creates a project and stores dimensions", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Test",
       description: "Import test",
       sourceFileName: "",

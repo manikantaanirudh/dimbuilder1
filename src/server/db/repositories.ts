@@ -8,6 +8,10 @@ import {
   type PropertyDefaultDisplayRow
 } from "../../shared/propertyDefaultResolver";
 import type { AppDatabase } from "./database";
+import { isAppDatabase } from "./database";
+import type { DbClient } from "./dbClient";
+import { appDatabaseAsDbClient } from "./migrations";
+import { booleanValue } from "./sql";
 import type {
   WorkflowDefinition,
   WorkflowInstance,
@@ -205,17 +209,26 @@ interface CreateProjectInput {
 
 let transactionCounter = 0;
 
-export function createRepositories(db: AppDatabase) {
+interface CreateRepositoriesOptions {
+  syncDb?: AppDatabase;
+}
+
+export function createRepositories(dbOrClient: AppDatabase | DbClient, options: CreateRepositoriesOptions = {}) {
+  const client: DbClient = isAppDatabase(dbOrClient)
+    ? appDatabaseAsDbClient(dbOrClient)
+    : dbOrClient;
+  const syncDb: AppDatabase | null = isAppDatabase(dbOrClient) ? dbOrClient : options.syncDb ?? null;
+  const db = syncDb as AppDatabase;
+
   return {
-    // Synchronous-only savepoint boundary. TypeScript rejects normal async/Promise-like
-    // callbacks, and runtime rejects native async callbacks plus returned thenables.
-    // Callers must not start async work inside the callback (async IIFEs, timers, etc.):
-    // JavaScript cannot cancel scheduled continuations after the transaction returns.
-    transaction<T>(action: () => T, ..._guard: T extends PromiseLike<unknown> ? [never] : []): T {
-      return runInTransaction(db, action);
+    async transaction<T>(fn: (repos: Repositories) => Promise<T>): Promise<T> {
+      return client.transaction(async (txClient) => {
+        const txRepos = createRepositories(txClient, { syncDb: syncDb ?? undefined });
+        return fn(txRepos);
+      });
     },
     projects: {
-      create(input: CreateProjectInput): ProjectRecord {
+      async create(input: CreateProjectInput): Promise<ProjectRecord> {
         const createdAt = now();
         const project: ProjectRecord = {
           id: nanoid(),
@@ -227,54 +240,66 @@ export function createRepositories(db: AppDatabase) {
           updatedAt: createdAt
         };
 
-        db.prepare(`
+        await client.exec(`
           INSERT INTO projects (id, name, description, source_file_name, created_by, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(project.id, project.name, project.description, project.sourceFileName, project.createdBy, project.createdAt, project.updatedAt);
+        `, [project.id, project.name, project.description, project.sourceFileName, project.createdBy, project.createdAt, project.updatedAt]);
 
         return project;
       },
-      list(): ProjectRecord[] {
-        return db.prepare("SELECT * FROM projects ORDER BY updated_at DESC").all().map(mapProject);
+      async list(): Promise<ProjectRecord[]> {
+        const rows = await client.query<Record<string, unknown>>("SELECT * FROM projects ORDER BY updated_at DESC");
+        return rows.map(mapProject);
       },
-      get(projectId: string): ProjectRecord | null {
-        const row = db.prepare("SELECT * FROM projects WHERE id = ?").get(projectId);
+      async get(projectId: string): Promise<ProjectRecord | null> {
+        const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM projects WHERE id = ?", [projectId]);
         return row ? mapProject(row) : null;
       },
-      delete(projectId: string): void {
-        db.prepare("DELETE FROM projects WHERE id = ?").run(projectId);
+      async delete(projectId: string): Promise<void> {
+        await client.exec("DELETE FROM projects WHERE id = ?", [projectId]);
       },
-      update(projectId: string, input: { name?: string; description?: string }): ProjectRecord | null {
-        const project = this.get(projectId);
+      async update(projectId: string, input: { name?: string; description?: string }): Promise<ProjectRecord | null> {
+        const project = await this.get(projectId);
         if (!project) return null;
         const name = input.name !== undefined ? input.name.trim() : project.name;
         const description = input.description !== undefined ? input.description : project.description;
         const updatedAt = now();
-        db.prepare("UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ?")
-          .run(name, description, updatedAt, projectId);
+        await client.exec("UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ?", [name, description, updatedAt, projectId]);
         return { ...project, name, description, updatedAt };
       },
-      summary(projectId: string): DashboardSummary {
-        const dimensions = this.getDimensions(projectId);
-        return {
-          totalDimensions: Number(db.prepare("SELECT COUNT(*) AS count FROM dimensions WHERE project_id = ?").get(projectId)?.count ?? 0),
-          totalMembers: Number(db.prepare(`
+      async summary(projectId: string): Promise<DashboardSummary> {
+        const dimensions = await this.getDimensions(projectId);
+        const activeMembers = booleanValue(client.dialect, true);
+        const [dimensionCount, memberCount, relationshipCount, errorCount, warningCount] = await Promise.all([
+          client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM dimensions WHERE project_id = ?", [projectId]),
+          client.queryOne<{ count: number | string }>(`
             SELECT COUNT(*) AS count FROM dimension_members m
             JOIN dimensions d ON d.id = m.dimension_id
-            WHERE d.project_id = ? AND m.is_active = 1
-          `).get(projectId)?.count ?? 0),
-          totalRelationships: Number(db.prepare(`
+            WHERE d.project_id = ? AND m.is_active = ?
+          `, [projectId, activeMembers]),
+          client.queryOne<{ count: number | string }>(`
             SELECT COUNT(*) AS count FROM dimension_relationships r
             JOIN dimensions d ON d.id = r.dimension_id
             WHERE d.project_id = ?
-          `).get(projectId)?.count ?? 0),
-          validationErrors: Number(db.prepare("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'error'").get(projectId)?.count ?? 0),
-          validationWarnings: Number(db.prepare("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'warning'").get(projectId)?.count ?? 0),
+          `, [projectId]),
+          client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'error'", [projectId]),
+          client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'warning'", [projectId])
+        ]);
+        return {
+          totalDimensions: Number(dimensionCount?.count ?? 0),
+          totalMembers: Number(memberCount?.count ?? 0),
+          totalRelationships: Number(relationshipCount?.count ?? 0),
+          validationErrors: Number(errorCount?.count ?? 0),
+          validationWarnings: Number(warningCount?.count ?? 0),
           recentDimensions: dimensions.slice(0, 5)
         };
       },
-      getDimensions(projectId: string): DimensionRecord[] {
-        return db.prepare("SELECT * FROM dimensions WHERE project_id = ? ORDER BY updated_at DESC LIMIT 5").all(projectId).map(mapDimension);
+      async getDimensions(projectId: string): Promise<DimensionRecord[]> {
+        const rows = await client.query<Record<string, unknown>>(
+          "SELECT * FROM dimensions WHERE project_id = ? ORDER BY updated_at DESC LIMIT 5",
+          [projectId]
+        );
+        return rows.map(mapDimension);
       }
     },
     dimensions: {
@@ -335,7 +360,7 @@ export function createRepositories(db: AppDatabase) {
       delete(dimensionId: string): boolean {
         const current = this.get(dimensionId);
         if (!current) return false;
-        runInTransaction(db, () => {
+        runInTransactionSync(db, () => {
           db.prepare("DELETE FROM edit_locks WHERE dimension_id = ?").run(dimensionId);
           db.prepare("DELETE FROM collaboration_comments WHERE dimension_id = ?").run(dimensionId);
           db.prepare("DELETE FROM ai_suggestions WHERE dimension_id = ?").run(dimensionId);
@@ -346,7 +371,7 @@ export function createRepositories(db: AppDatabase) {
     },
     members: {
       bulkInsert(records: DimensionMemberRecord[]): void {
-        runInTransaction(db, () => {
+        runInTransactionSync(db, () => {
           const stmt = db.prepare(`
             INSERT INTO dimension_members (
               id, dimension_id, member_key, description, properties_json, row_order,
@@ -446,7 +471,7 @@ export function createRepositories(db: AppDatabase) {
     },
     relationships: {
       bulkInsert(records: DimensionRelationshipRecord[]): void {
-        runInTransaction(db, () => {
+        runInTransactionSync(db, () => {
           const stmt = db.prepare(`
             INSERT INTO dimension_relationships (
               id, dimension_id, parent_key, child_key, aggregation_weight, percent_consol,
@@ -696,7 +721,7 @@ export function createRepositories(db: AppDatabase) {
         targetId: string,
         values: VaryingPropertyValueInput[]
       ): VaryingPropertyValueRecord[] {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           db.prepare("DELETE FROM varying_property_values WHERE project_id = ? AND target_type = ? AND target_id = ?").run(projectId, targetType, targetId);
           return values.map((value) => this.upsertVaryingPropertyValue({ ...value, projectId, targetType, targetId }));
         });
@@ -746,7 +771,7 @@ export function createRepositories(db: AppDatabase) {
         }>;
         createdBy?: string;
       }): { job: BulkUpdateJobRecord; items: BulkUpdateItemRecord[] } {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const id = nanoid();
           const createdAt = now();
           db.prepare(`
@@ -818,7 +843,7 @@ export function createRepositories(db: AppDatabase) {
     },
     issues: {
       replaceForProject(projectId: string, issues: ValidationIssue[]): void {
-        runInTransaction(db, () => {
+        runInTransactionSync(db, () => {
           db.prepare("DELETE FROM validation_issues WHERE project_id = ?").run(projectId);
           const stmt = db.prepare(`
             INSERT INTO validation_issues (
@@ -934,7 +959,7 @@ export function createRepositories(db: AppDatabase) {
         return row ? mapProjectSnapshot(row) : null;
       },
       restoreSnapshotIntoProject(projectId: string, snapshotId: string, options: { createdBy?: string; restoreValidationIssues?: boolean } = {}): SnapshotRestoreSummary {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const snapshot = this.get(projectId, snapshotId);
           if (!snapshot) throw new Error("Snapshot not found.");
           const safetySnapshotId = createProjectSnapshotRow(db, {
@@ -965,7 +990,7 @@ export function createRepositories(db: AppDatabase) {
         });
       },
       createProjectFromSnapshot(snapshotId: string, newProjectName: string, options: { createdBy?: string; description?: string } = {}): { project: ProjectRecord; summary: SnapshotRestoreSummary } {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const row = db.prepare("SELECT * FROM project_snapshots WHERE id = ?").get(snapshotId);
           if (!row) throw new Error("Snapshot not found.");
           const snapshot = mapProjectSnapshot(row);
@@ -1043,7 +1068,7 @@ export function createRepositories(db: AppDatabase) {
         items: Array<Omit<MetadataDiffItemRecord, "id" | "diffRunId">>;
         createdBy?: string;
       }): { run: MetadataDiffRunRecord; items: MetadataDiffItemRecord[] } {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const runId = nanoid();
           const createdAt = now();
           db.prepare(`
@@ -1124,7 +1149,7 @@ export function createRepositories(db: AppDatabase) {
         items?: MetadataDiffItemRecord[];
         createdBy?: string;
       }): ChangeSetRecord {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const id = nanoid();
           const timestamp = now();
           db.prepare(`
@@ -2379,7 +2404,7 @@ export function createRepositories(db: AppDatabase) {
           sourceDimensionNames: string[];
         }>;
       }): { profile: PropertyDefaultProfileRecord; values: PropertyDefaultValueRecord[] } {
-        return runInTransaction(db, () => {
+        return runInTransactionSync(db, () => {
           const timestamp = now();
           db.prepare("UPDATE property_default_profiles SET is_active = 0, updated_at = ? WHERE project_id = ? AND is_active = 1")
             .run(timestamp, input.projectId);
@@ -2627,7 +2652,7 @@ export function createRepositories(db: AppDatabase) {
 
 export type Repositories = ReturnType<typeof createRepositories>;
 
-function runInTransaction<T>(db: AppDatabase, action: () => T): T {
+function runInTransactionSync<T>(db: AppDatabase, action: () => T): T {
   if (isAsyncFunction(action)) {
     throw new Error("Repository transactions only support synchronous callbacks.");
   }

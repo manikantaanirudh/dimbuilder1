@@ -11,15 +11,15 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 export function createBaselinesRouter({ repos }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.post("/baselines", (req, res, next) => {
+  router.post("/baselines", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const body = req.body ?? {};
       const sourceType = parseBaselineSourceType(String(body.sourceType ?? "")) ?? (body.baseline ? "json" : body.xml || body.xmlContent ? "xml" : "snapshot");
       const name = String(body.name ?? "").trim() || defaultBaselineName(sourceType);
       const sourceFileName = String(body.sourceFileName ?? "").trim();
-      const baselineState = createBaselineState(repos, project.id, body, sourceType, sourceFileName);
+      const baselineState = await createBaselineState(repos, project.id, body, sourceType, sourceFileName);
       const baseline = repos.baselines.create({
         projectId: project.id,
         name,
@@ -35,29 +35,29 @@ export function createBaselinesRouter({ repos }: RouterDeps): Router {
     }
   });
 
-  router.get("/baselines", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/baselines", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.baselines.listByProject(project.id));
   });
 
-  router.get("/baselines/:baselineId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/baselines/:baselineId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const baseline = repos.baselines.get(project.id, (req.params as Record<string, string>).baselineId);
     if (!baseline) return res.status(404).json({ error: "baseline not found" });
     res.json(baseline);
   });
 
-  router.post("/diff", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.post("/diff", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const baselineId = String(req.body?.baselineId ?? "").trim();
     if (!baselineId) return res.status(400).json({ error: "baselineId is required" });
     const baseline = repos.baselines.get(project.id, baselineId);
     if (!baseline) return res.status(404).json({ error: "baseline not found" });
 
-    const targetState = createComparableProjectState(loadProjectState(repos, project.id));
+    const targetState = createComparableProjectState(await loadProjectState(repos, project.id));
     const result = diffProjectMetadata(baseline.baseline, targetState, isRecord(req.body?.options) ? req.body.options : {});
     const persisted = repos.diffRuns.createWithItems({
       projectId: project.id,
@@ -71,16 +71,16 @@ export function createBaselinesRouter({ repos }: RouterDeps): Router {
     res.status(201).json(persisted.run);
   });
 
-  router.get("/diff/:diffRunId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/diff/:diffRunId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const run = repos.diffRuns.get(project.id, (req.params as Record<string, string>).diffRunId);
     if (!run) return res.status(404).json({ error: "diff run not found" });
     res.json(run);
   });
 
-  router.get("/diff/:diffRunId/items", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/diff/:diffRunId/items", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const run = repos.diffRuns.get(project.id, (req.params as Record<string, string>).diffRunId);
     if (!run) return res.status(404).json({ error: "diff run not found" });
@@ -90,7 +90,7 @@ export function createBaselinesRouter({ repos }: RouterDeps): Router {
   return router;
 }
 
-function createBaselineState(
+async function createBaselineState(
   repos: Repositories,
   projectId: string,
   body: Record<string, unknown>,
@@ -98,7 +98,7 @@ function createBaselineState(
   sourceFileName: string
 ) {
   if (sourceType === "snapshot") {
-    return createComparableProjectState(loadProjectState(repos, projectId));
+    return createComparableProjectState(await loadProjectState(repos, projectId));
   }
 
   if (sourceType === "xml") {

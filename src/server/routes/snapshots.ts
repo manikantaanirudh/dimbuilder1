@@ -7,15 +7,15 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 export function createSnapshotsRouter({ repos }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.get("/", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(repos.snapshots.listByProject(project.id));
   });
 
-  router.post("/", (req, res, next) => {
+  router.post("/", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const body = req.body ?? {};
       const name = String(body.name ?? "").trim() || `Save ${new Date().toISOString()}`;
@@ -41,17 +41,17 @@ export function createSnapshotsRouter({ repos }: RouterDeps): Router {
     }
   });
 
-  router.get("/:snapshotId", (req, res) => {
-    const project = repos.projects.get((req.params as Record<string, string>).projectId);
+  router.get("/:snapshotId", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const snapshot = repos.snapshots.get(project.id, (req.params as Record<string, string>).snapshotId);
     if (!snapshot) return res.status(404).json({ error: "snapshot not found" });
     res.json(snapshot);
   });
 
-  router.post("/:snapshotId/restore", (req, res, next) => {
+  router.post("/:snapshotId/restore", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const snapshot = repos.snapshots.get(project.id, (req.params as Record<string, string>).snapshotId);
       if (!snapshot) return res.status(404).json({ error: "snapshot not found" });
@@ -72,9 +72,9 @@ export function createSnapshotsRouter({ repos }: RouterDeps): Router {
     }
   });
 
-  router.post("/:snapshotId/branch", (req, res, next) => {
+  router.post("/:snapshotId/branch", async (req, res, next) => {
     try {
-      const project = repos.projects.get((req.params as Record<string, string>).projectId);
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
       const snapshot = repos.snapshots.get(project.id, (req.params as Record<string, string>).snapshotId);
       if (!snapshot) return res.status(404).json({ error: "snapshot not found" });
