@@ -20,6 +20,8 @@ export function loadAppConfig(options: LoadAppConfigOptions = {}): AppConfig {
 
 function applyEnvironmentOverrides(config: AppConfig): AppConfig {
   const exportMaxMembers = parseOptionalNonNegativeInt(process.env.EXPORT_MAX_MEMBERS);
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const databasePoolMax = parseOptionalPositiveInt(process.env.DATABASE_POOL_MAX);
   return {
     ...config,
     ...(exportMaxMembers !== undefined
@@ -34,6 +36,11 @@ function applyEnvironmentOverrides(config: AppConfig): AppConfig {
           }
         }
       : {}),
+    database: {
+      ...config.database,
+      ...(databaseUrl ? { url: databaseUrl } : {}),
+      ...(databasePoolMax !== undefined ? { poolMax: databasePoolMax } : {})
+    },
     paths: {
       ...config.paths,
       metadataDirectory: process.env.METADATA_DIRECTORY ?? config.paths.metadataDirectory,
@@ -70,5 +77,12 @@ function parseOptionalNonNegativeInt(value: string | undefined): number | undefi
   if (value === undefined || value.trim() === "") return undefined;
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) return undefined;
+  return parsed;
+}
+
+function parseOptionalPositiveInt(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isInteger(parsed)) return undefined;
   return parsed;
 }

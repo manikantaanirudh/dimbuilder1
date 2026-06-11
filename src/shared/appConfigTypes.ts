@@ -21,6 +21,11 @@ export interface PathsConfig {
   databaseFile: string;
 }
 
+export interface DatabaseConfig {
+  url?: string;
+  poolMax?: number;
+}
+
 export interface ServerConfig {
   host: string;
   port: number;
@@ -219,6 +224,7 @@ export interface OperationsConfig {
 export interface AppConfig {
   application: ApplicationConfig;
   paths: PathsConfig;
+  database?: DatabaseConfig;
   server: ServerConfig;
   auth: AuthConfig;
   features: FeatureConfig;
