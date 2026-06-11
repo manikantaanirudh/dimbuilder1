@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
-import { runMigrations } from "./migrations";
+import { runMigrationsSync } from "./migrations";
 import { seedPropertyDefaultCatalog } from "./seedPropertyDefaultCatalog";
 import { schemaSql } from "./schema";
 
@@ -23,7 +23,7 @@ export interface AppDatabase {
 export function bootstrapSqliteSchema(db: AppDatabase): void {
   db.exec(schemaSql);
   evolveSchema(db);
-  runMigrations(db);
+  runMigrationsSync(db);
   seedPropertyDefaultCatalog(db);
   seedSecurity(db);
   seedDefaultWorkflow(db);

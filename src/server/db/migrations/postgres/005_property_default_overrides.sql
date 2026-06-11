@@ -1,0 +1,2 @@
+-- property_default_overrides is in postgres.sql baseline.
+-- Recorded for migration id parity with SQLite migration 005_property_default_overrides.

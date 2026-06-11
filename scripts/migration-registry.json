@@ -10,5 +10,17 @@
   {
     "id": "003_validation_waivers",
     "description": "Add validation_waivers table for auditable issue waivers."
+  },
+  {
+    "id": "004_property_default_profiles",
+    "description": "Add property_default_profiles and property_default_values for XML-derived dynamic defaults."
+  },
+  {
+    "id": "005_property_default_overrides",
+    "description": "Per-project overrides for built-in property defaults."
+  },
+  {
+    "id": "006_property_default_catalog",
+    "description": "Global property default catalog seeded for all projects and dimension types."
   }
 ]

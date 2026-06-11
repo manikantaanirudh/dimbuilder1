@@ -1,0 +1,2 @@
+-- property_default_profiles and property_default_values are in postgres.sql baseline.
+-- Recorded for migration id parity with SQLite migration 004_property_default_profiles.

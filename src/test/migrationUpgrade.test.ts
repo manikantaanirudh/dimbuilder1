@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
-import { migrations, runMigrations } from "../server/db/migrations";
+import { migrations, runMigrationsSync } from "../server/db/migrations";
 import type { AppDatabase } from "../server/db/database";
 
 const require = createRequire(import.meta.url);
@@ -30,7 +30,7 @@ describe("migration 002 upgrade", () => {
     `);
 
     const migration002 = migrations.filter((m) => m.id === "002_relationship_operation_columns");
-    const applied = runMigrations(db, migration002);
+    const applied = runMigrationsSync(db, migration002);
 
     expect(applied).toContain("002_relationship_operation_columns");
     const columns = db.prepare("PRAGMA table_info(dimension_relationships)").all()

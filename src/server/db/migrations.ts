@@ -1,11 +1,20 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { basename, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AppDatabase } from "./database";
-import { seedPropertyDefaultCatalog } from "./seedPropertyDefaultCatalog";
+import type { DbClient } from "./dbClient";
+import { ensureColumn, ensureColumnSync } from "./migrationUtils";
+import {
+  seedPropertyDefaultCatalog,
+  seedPropertyDefaultCatalogAsync
+} from "./seedPropertyDefaultCatalog";
+import type { SqlDialect } from "./sql";
 
 /**
  * Lightweight, idempotent migration runner.
  *
- * The base schema (see schema.ts) is applied with CREATE TABLE IF NOT EXISTS on every
- * startup. Named migrations run exactly once and are recorded in `schema_migrations`.
+ * The base schema (see schema.ts / postgres.sql) is applied on every startup.
+ * Named migrations run exactly once and are recorded in `schema_migrations`.
  *
  * Migration 001 represents the baseline schema. Add new migrations to the `migrations`
  * array; each `up` runs inside the shared connection when its id is not yet recorded.
@@ -13,140 +22,334 @@ import { seedPropertyDefaultCatalog } from "./seedPropertyDefaultCatalog";
 export interface Migration {
   id: string;
   description: string;
-  up: (db: AppDatabase) => void;
+  up: (client: DbClient) => Promise<void>;
   down?: string;
 }
 
-function ensureColumn(db: AppDatabase, tableName: string, columnName: string, definition: string): void {
-  const existingColumns = db.prepare(`PRAGMA table_info(${tableName})`).all()
-    .map((row) => String(row.name));
-  if (existingColumns.includes(columnName)) return;
-  db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
-}
+const postgresMigrationsDir = join(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "migrations",
+  "postgres"
+);
+
+const VALIDATION_WAIVERS_SQL = `
+  CREATE TABLE IF NOT EXISTS validation_waivers (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    issue_id TEXT NOT NULL,
+    rule_code TEXT NOT NULL,
+    dimension_id TEXT NOT NULL DEFAULT '',
+    member_key TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL,
+    user_id TEXT NOT NULL DEFAULT 'local-admin',
+    created_at TEXT NOT NULL,
+    revoked_at TEXT
+  )
+`;
+
+const PROPERTY_DEFAULT_PROFILES_SQL = `
+  CREATE TABLE IF NOT EXISTS property_default_profiles (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    source_file_name TEXT NOT NULL DEFAULT '',
+    source_xml_hash TEXT NOT NULL DEFAULT '',
+    is_active INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT 'local-admin',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS property_default_values (
+    id TEXT PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES property_default_profiles(id) ON DELETE CASCADE,
+    dimension_type TEXT NOT NULL,
+    target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+    property_name TEXT NOT NULL,
+    xml_name TEXT NOT NULL,
+    default_value TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    confidence REAL NOT NULL DEFAULT 0,
+    sample_count INTEGER NOT NULL DEFAULT 0,
+    non_blank_count INTEGER NOT NULL DEFAULT 0,
+    distinct_count INTEGER NOT NULL DEFAULT 0,
+    source_dimension_names_json TEXT NOT NULL DEFAULT '[]',
+    updated_at TEXT NOT NULL,
+    UNIQUE(profile_id, dimension_type, target_level, property_name)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_property_default_profiles_project ON property_default_profiles(project_id, is_active);
+  CREATE INDEX IF NOT EXISTS idx_property_default_values_profile ON property_default_values(profile_id, dimension_type);
+`;
+
+const PROPERTY_DEFAULT_OVERRIDES_SQL = `
+  CREATE TABLE IF NOT EXISTS property_default_overrides (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    dimension_type TEXT NOT NULL,
+    target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+    property_name TEXT NOT NULL,
+    xml_name TEXT NOT NULL,
+    default_value TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL,
+    UNIQUE(project_id, dimension_type, target_level, property_name)
+  );
+  CREATE INDEX IF NOT EXISTS idx_property_default_overrides_project ON property_default_overrides(project_id, dimension_type);
+`;
+
+const PROPERTY_DEFAULT_CATALOG_SQL = `
+  CREATE TABLE IF NOT EXISTS property_default_catalog (
+    id TEXT PRIMARY KEY,
+    dimension_type TEXT NOT NULL,
+    target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
+    property_name TEXT NOT NULL,
+    xml_name TEXT NOT NULL,
+    default_value TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL,
+    UNIQUE(dimension_type, target_level, property_name)
+  );
+  CREATE INDEX IF NOT EXISTS idx_property_default_catalog_type ON property_default_catalog(dimension_type, target_level);
+`;
+
+const syncMigrationAppliers: Record<string, (db: AppDatabase) => void> = {
+  "001_initial_schema": () => {},
+  "002_relationship_operation_columns": (db) => {
+    ensureColumnSync(db, "dimension_relationships", "operation", "TEXT");
+    ensureColumnSync(db, "dimension_relationships", "operation_source", "TEXT");
+    ensureColumnSync(db, "dimension_relationships", "operation_notes", "TEXT");
+  },
+  "003_validation_waivers": (db) => {
+    db.exec(VALIDATION_WAIVERS_SQL);
+  },
+  "004_property_default_profiles": (db) => {
+    db.exec(PROPERTY_DEFAULT_PROFILES_SQL);
+  },
+  "005_property_default_overrides": (db) => {
+    db.exec(PROPERTY_DEFAULT_OVERRIDES_SQL);
+  },
+  "006_property_default_catalog": (db) => {
+    db.exec(PROPERTY_DEFAULT_CATALOG_SQL);
+    seedPropertyDefaultCatalog(db);
+  }
+};
 
 export const migrations: Migration[] = [
   {
     id: "001_initial_schema",
     description: "Baseline schema applied by schema.ts (recorded, not re-applied).",
-    up: () => {
+    up: async () => {
       // No-op: the baseline schema is created idempotently by schemaSql in database.ts.
     }
   },
   {
     id: "002_relationship_operation_columns",
     description: "Add operation, operation_source, operation_notes to dimension_relationships.",
-    up: (db) => {
-      ensureColumn(db, "dimension_relationships", "operation", "TEXT");
-      ensureColumn(db, "dimension_relationships", "operation_source", "TEXT");
-      ensureColumn(db, "dimension_relationships", "operation_notes", "TEXT");
+    up: async (client) => {
+      await ensureColumn(client, "dimension_relationships", "operation", "TEXT");
+      await ensureColumn(client, "dimension_relationships", "operation_source", "TEXT");
+      await ensureColumn(client, "dimension_relationships", "operation_notes", "TEXT");
     },
     down: "-- Cannot drop columns in SQLite without table rebuild"
   },
   {
     id: "003_validation_waivers",
     description: "Add validation_waivers table for auditable issue waivers.",
-    up: (db) => {
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS validation_waivers (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-          issue_id TEXT NOT NULL,
-          rule_code TEXT NOT NULL,
-          dimension_id TEXT NOT NULL DEFAULT '',
-          member_key TEXT NOT NULL DEFAULT '',
-          reason TEXT NOT NULL,
-          user_id TEXT NOT NULL DEFAULT 'local-admin',
-          created_at TEXT NOT NULL,
-          revoked_at TEXT
-        )
-      `);
+    up: async (client) => {
+      await client.exec(VALIDATION_WAIVERS_SQL);
     }
   },
   {
     id: "004_property_default_profiles",
     description: "Add property_default_profiles and property_default_values for XML-derived dynamic defaults.",
-    up: (db) => {
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS property_default_profiles (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-          name TEXT NOT NULL,
-          source_file_name TEXT NOT NULL DEFAULT '',
-          source_xml_hash TEXT NOT NULL DEFAULT '',
-          is_active INTEGER NOT NULL DEFAULT 0,
-          created_by TEXT NOT NULL DEFAULT 'local-admin',
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS property_default_values (
-          id TEXT PRIMARY KEY,
-          profile_id TEXT NOT NULL REFERENCES property_default_profiles(id) ON DELETE CASCADE,
-          dimension_type TEXT NOT NULL,
-          target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
-          property_name TEXT NOT NULL,
-          xml_name TEXT NOT NULL,
-          default_value TEXT NOT NULL DEFAULT '',
-          enabled INTEGER NOT NULL DEFAULT 1,
-          confidence REAL NOT NULL DEFAULT 0,
-          sample_count INTEGER NOT NULL DEFAULT 0,
-          non_blank_count INTEGER NOT NULL DEFAULT 0,
-          distinct_count INTEGER NOT NULL DEFAULT 0,
-          source_dimension_names_json TEXT NOT NULL DEFAULT '[]',
-          updated_at TEXT NOT NULL,
-          UNIQUE(profile_id, dimension_type, target_level, property_name)
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_property_default_profiles_project ON property_default_profiles(project_id, is_active);
-        CREATE INDEX IF NOT EXISTS idx_property_default_values_profile ON property_default_values(profile_id, dimension_type);
-      `);
+    up: async (client) => {
+      await client.exec(PROPERTY_DEFAULT_PROFILES_SQL);
     }
   },
   {
     id: "005_property_default_overrides",
     description: "Per-project overrides for built-in property defaults.",
-    up: (db) => {
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS property_default_overrides (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-          dimension_type TEXT NOT NULL,
-          target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
-          property_name TEXT NOT NULL,
-          xml_name TEXT NOT NULL,
-          default_value TEXT NOT NULL DEFAULT '',
-          enabled INTEGER NOT NULL DEFAULT 1,
-          updated_at TEXT NOT NULL,
-          UNIQUE(project_id, dimension_type, target_level, property_name)
-        );
-        CREATE INDEX IF NOT EXISTS idx_property_default_overrides_project ON property_default_overrides(project_id, dimension_type);
-      `);
+    up: async (client) => {
+      await client.exec(PROPERTY_DEFAULT_OVERRIDES_SQL);
     }
   },
   {
     id: "006_property_default_catalog",
     description: "Global property default catalog seeded for all projects and dimension types.",
-    up: (db) => {
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS property_default_catalog (
-          id TEXT PRIMARY KEY,
-          dimension_type TEXT NOT NULL,
-          target_level TEXT NOT NULL CHECK (target_level IN ('dimension', 'member', 'relationship')),
-          property_name TEXT NOT NULL,
-          xml_name TEXT NOT NULL,
-          default_value TEXT NOT NULL DEFAULT '',
-          enabled INTEGER NOT NULL DEFAULT 1,
-          updated_at TEXT NOT NULL,
-          UNIQUE(dimension_type, target_level, property_name)
-        );
-        CREATE INDEX IF NOT EXISTS idx_property_default_catalog_type ON property_default_catalog(dimension_type, target_level);
-      `);
-      seedPropertyDefaultCatalog(db);
+    up: async (client) => {
+      await client.exec(PROPERTY_DEFAULT_CATALOG_SQL);
+      await seedPropertyDefaultCatalogAsync(client);
     }
   }
 ];
 
-export function runMigrations(db: AppDatabase, registry: Migration[] = migrations): string[] {
+function recordMigrationSql(dialect: SqlDialect): string {
+  if (dialect === "sqlite") {
+    return "INSERT OR IGNORE INTO schema_migrations (id, description, applied_at) VALUES (?, ?, ?)";
+  }
+  return `INSERT INTO schema_migrations (id, description, applied_at) VALUES (?, ?, ?)
+    ON CONFLICT (id) DO NOTHING`;
+}
+
+function listPostgresMigrationFiles(): string[] {
+  if (!existsSync(postgresMigrationsDir)) return [];
+  return readdirSync(postgresMigrationsDir)
+    .filter((name) => name.endsWith(".sql"))
+    .sort()
+    .map((name) => join(postgresMigrationsDir, name));
+}
+
+function migrationIdFromFilename(filePath: string): string {
+  return basename(filePath, ".sql");
+}
+
+function descriptionFromSql(sql: string, fallback: string): string {
+  const match = sql.match(/^--\s*(.+)$/m);
+  return match?.[1]?.trim() || fallback;
+}
+
+async function loadAppliedMigrationIds(client: DbClient): Promise<Set<string>> {
+  const rows = await client.query<{ id: string }>("SELECT id FROM schema_migrations");
+  return new Set(rows.map((row) => String(row.id)));
+}
+
+async function recordMigration(
+  client: DbClient,
+  id: string,
+  description: string
+): Promise<void> {
+  await client.exec(recordMigrationSql(client.dialect), [
+    id,
+    description,
+    new Date().toISOString()
+  ]);
+}
+
+async function applyPostgresSqlMigrations(
+  client: DbClient,
+  applied: Set<string>
+): Promise<string[]> {
+  const newlyApplied: string[] = [];
+
+  for (const filePath of listPostgresMigrationFiles()) {
+    const id = migrationIdFromFilename(filePath);
+    if (applied.has(id)) continue;
+
+    const sql = readFileSync(filePath, "utf8").trim();
+    if (sql) {
+      await client.exec(sql);
+    }
+
+    const description = descriptionFromSql(sql, `PostgreSQL migration ${id}`);
+    await recordMigration(client, id, description);
+    applied.add(id);
+    newlyApplied.push(id);
+  }
+
+  return newlyApplied;
+}
+
+export async function runMigrations(
+  client: DbClient,
+  registry: Migration[] = migrations
+): Promise<string[]> {
+  await client.exec(
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      description TEXT,
+      applied_at TEXT NOT NULL
+    )`
+  );
+
+  const applied = await loadAppliedMigrationIds(client);
+  const newlyApplied: string[] = [];
+
+  for (const migration of registry) {
+    if (applied.has(migration.id)) continue;
+    await migration.up(client);
+    await recordMigration(client, migration.id, migration.description);
+    applied.add(migration.id);
+    newlyApplied.push(migration.id);
+  }
+
+  if (client.dialect === "postgres") {
+    const sqlApplied = await applyPostgresSqlMigrations(client, applied);
+    newlyApplied.push(...sqlApplied);
+  }
+
+  return newlyApplied;
+}
+
+export function appDatabaseAsDbClient(db: AppDatabase): DbClient {
+  let depth = 0;
+
+  const client: DbClient = {
+    dialect: "sqlite",
+
+    exec(sql: string, params: unknown[] = []): Promise<void> {
+      return Promise.resolve().then(() => {
+        if (params.length === 0) {
+          db.exec(sql);
+          return;
+        }
+        db.prepare(sql).run(...params);
+      });
+    },
+
+    query<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+      return Promise.resolve(db.prepare(sql).all(...params) as T[]);
+    },
+
+    queryOne<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T | null> {
+      return Promise.resolve((db.prepare(sql).get(...params) ?? null) as T | null);
+    },
+
+    async transaction<T>(fn: (tx: DbClient) => Promise<T>): Promise<T> {
+      const isOuter = depth === 0;
+      const savepointName = `sp_${depth}`;
+
+      if (isOuter) {
+        await client.exec("BEGIN");
+      } else {
+        await client.exec(`SAVEPOINT ${savepointName}`);
+      }
+
+      depth++;
+      try {
+        const result = await fn(client);
+        depth--;
+        if (isOuter) {
+          await client.exec("COMMIT");
+        } else {
+          await client.exec(`RELEASE ${savepointName}`);
+        }
+        return result;
+      } catch (error) {
+        depth--;
+        if (isOuter) {
+          await client.exec("ROLLBACK");
+        } else {
+          try {
+            await client.exec(`ROLLBACK TO ${savepointName}`);
+            await client.exec(`RELEASE ${savepointName}`);
+          } catch {
+            // Preserve the original action error if savepoint cleanup fails.
+          }
+        }
+        throw error;
+      }
+    },
+
+    close(): Promise<void> {
+      return Promise.resolve().then(() => db.close());
+    }
+  };
+
+  return client;
+}
+
+export function runMigrationsSync(db: AppDatabase, registry: Migration[] = migrations): string[] {
   db.exec(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
       id TEXT PRIMARY KEY,
@@ -164,10 +367,17 @@ export function runMigrations(db: AppDatabase, registry: Migration[] = migration
   const newlyApplied: string[] = [];
   for (const migration of registry) {
     if (applied.has(migration.id)) continue;
-    migration.up(db);
+
+    const apply = syncMigrationAppliers[migration.id];
+    if (!apply) {
+      throw new Error(`No sync applier registered for migration ${migration.id}`);
+    }
+
+    apply(db);
     insert.run(migration.id, migration.description, new Date().toISOString());
     newlyApplied.push(migration.id);
   }
+
   return newlyApplied;
 }
 
@@ -177,6 +387,19 @@ export function listAppliedMigrations(db: AppDatabase): Array<{ id: string; appl
       .prepare("SELECT id, applied_at FROM schema_migrations ORDER BY applied_at, id")
       .all()
       .map((row) => ({ id: String(row.id), appliedAt: String(row.applied_at) }));
+  } catch {
+    return [];
+  }
+}
+
+export async function listAppliedMigrationsAsync(
+  client: DbClient
+): Promise<Array<{ id: string; appliedAt: string }>> {
+  try {
+    const rows = await client.query<{ id: string; applied_at: string }>(
+      "SELECT id, applied_at FROM schema_migrations ORDER BY applied_at, id"
+    );
+    return rows.map((row) => ({ id: String(row.id), appliedAt: String(row.applied_at) }));
   } catch {
     return [];
   }

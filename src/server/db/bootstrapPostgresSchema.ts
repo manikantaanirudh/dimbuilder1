@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { DbClient } from "./dbClient";
+import { runMigrations } from "./migrations";
 import { seedPropertyDefaultCatalogAsync } from "./seedPropertyDefaultCatalog";
 import { booleanValue, insertIgnoreSql } from "./sql";
 
@@ -60,16 +61,7 @@ export async function bootstrapPostgresSchema(client: DbClient): Promise<void> {
   const sql = readFileSync(schemaPath, "utf8");
   await client.exec(sql);
 
-  const now = new Date().toISOString();
-  await client.exec(
-    `INSERT INTO schema_migrations (id, description, applied_at) VALUES (?, ?, ?)
-     ON CONFLICT (id) DO NOTHING`,
-    [
-      "001_initial_schema",
-      "Baseline schema applied by postgres.sql (recorded, not re-applied).",
-      now
-    ]
-  );
+  await runMigrations(client);
 
   await seedSecurityAsync(client);
   await seedDefaultWorkflowAsync(client);

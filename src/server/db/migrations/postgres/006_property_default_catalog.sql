@@ -1,0 +1,2 @@
+-- property_default_catalog is in postgres.sql baseline; seed handled by bootstrap.
+-- Recorded for migration id parity with SQLite migration 006_property_default_catalog.
