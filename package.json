@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json && vite build",
     "docs:check": "node scripts/check-docs.mjs",
     "test": "vitest run",
-    "test:postgres": "vitest run --no-file-parallelism src/test/postgresParity.test.ts src/test/postgresClient.test.ts src/test/postgresSchema.test.ts src/test/dbBootstrapSeeds.test.ts src/test/postgresBulkInsert.test.ts",
+    "test:postgres": "vitest run --no-file-parallelism src/test/postgresParity.test.ts src/test/postgresClient.test.ts src/test/postgresSchema.test.ts src/test/dbBootstrapSeeds.test.ts src/test/postgresBulkInsert.test.ts src/test/sqliteToPostgres.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview --host 127.0.0.1",

@@ -288,23 +288,20 @@ export function appDatabaseAsDbClient(db: AppDatabase): DbClient {
     dialect: "sqlite",
 
     exec(sql: string, params: unknown[] = []): Promise<void> {
-      return Promise.resolve().then(() => {
-        if (params.length === 0) {
-          db.exec(sql);
-          return;
-        }
+      if (params.length === 0) {
+        db.exec(sql);
+      } else {
         db.prepare(sql).run(...params);
-      });
+      }
+      return Promise.resolve();
     },
 
     run(sql: string, params: unknown[] = []): Promise<unknown> {
-      return Promise.resolve().then(() => {
-        if (params.length === 0) {
-          db.exec(sql);
-          return { changes: 0 };
-        }
-        return db.prepare(sql).run(...params);
-      });
+      if (params.length === 0) {
+        db.exec(sql);
+        return Promise.resolve({ changes: 0 });
+      }
+      return Promise.resolve(db.prepare(sql).run(...params));
     },
 
     query<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
