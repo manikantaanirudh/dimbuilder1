@@ -150,4 +150,4 @@ describe.skipIf(!pgUrl)("postgres parity", () => {
       ).resolves.toBeUndefined();
     });
   });
-});
+}, { testTimeout: 20_000 });

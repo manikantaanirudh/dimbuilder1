@@ -15,14 +15,16 @@ Branch: `feature/postgresql-backend`
 npm test
 ```
 
-**43 failed / 767 passed** (100 files) — excludes Postgres-only tests via `vitest.config.ts`
+**814 passed / 2 skipped** (100 files) — after follow-up cleanup (`6f848ab`)
 
-Remaining failures are largely **pre-existing baseline** issues:
+Previously failing areas now fixed:
 - Missing fixture files (`OpexAccount_Export_3Jun.txt`)
 - Module-gated route tests (`moduleRoutes`, `modulesConfig`)
 - XML fixture manifest drift
 - Workflow e2e timing
 - Client component markup expectations
+
+`npm run build` — **PASS**
 
 PostgreSQL-specific regressions: none identified in core DB/repo paths.
 

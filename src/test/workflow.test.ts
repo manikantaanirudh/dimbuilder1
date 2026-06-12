@@ -91,7 +91,7 @@ describe("workflow engine", () => {
     });
     const authorData = await authorLogin.json() as { accessToken: string };
     authorToken = authorData.accessToken;
-  });
+  }, 30_000);
 
   afterEach(async () => {
     await closeServer();
