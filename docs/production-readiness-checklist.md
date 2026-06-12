@@ -5,7 +5,7 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 ## Application Behavior
 
 - [ ] Blank project creation works from `config/dimbuilder.yaml`.
-- [ ] XLSX seeding remains optional and clearly labeled.
+- [ ] Optional workbook seeding remains available and is clearly labeled **Seed from file** in the toolbar and import modal.
 - [ ] XML import round-trips representative OneStream metadata files with unknown fields preserved.
 - [ ] XML export works from app-authored records.
 - [ ] Varying property CRUD, validation, and XML output are verified for representative cube/scenario/time contexts.
@@ -31,6 +31,9 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 ## Data And Persistence
 
 - [ ] Database location is backed up.
+- [ ] PostgreSQL automated backups are enabled (Azure Flexible Server point-in-time restore or equivalent).
+- [ ] PostgreSQL connection pooling is configured (`DATABASE_POOL_MAX` reviewed for expected concurrency).
+- [ ] PostgreSQL `sslmode` is set to `require` (or stricter) for managed cloud databases.
 - [ ] Migration strategy exists.
 - [ ] Schema evolution for `varying_property_values` is covered by the migration strategy.
 - [ ] Schema evolution for baseline and diff tables is covered by the migration strategy.
@@ -82,6 +85,9 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 ## Verification
 
 - [ ] `npm.cmd test` passes.
+- [ ] `npm.cmd run test:postgres` passes when `PG_TEST_URL` is set.
 - [ ] `npm.cmd run build` passes.
+- [ ] `node scripts/smoke-test.mjs` passes against the target deployment.
+- [ ] `DATABASE_URL=... node scripts/smoke-test.mjs` passes against the PostgreSQL stack (Docker Compose or Azure).
 - [ ] Browser smoke test passes on desktop.
 - [ ] Browser smoke test passes on mobile.
