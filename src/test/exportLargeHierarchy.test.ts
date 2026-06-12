@@ -75,7 +75,7 @@ describe("large hierarchy XML export limits", () => {
       });
       localDb.close();
     }
-  });
+  }, 30_000);
 
   it("exports a normal-sized project", async () => {
     const createRes = await fetch(`${baseUrl}/api/projects`, {

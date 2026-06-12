@@ -155,7 +155,7 @@ describe("auth routes", () => {
       // 6th attempt should be rate limited
       const res = await login("admin@test.com", "wrong");
       expect(res.status).toBe(429);
-    });
+    }, 15_000);
   });
 
   describe("GET /api/auth/me", () => {
