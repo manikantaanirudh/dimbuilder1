@@ -80,15 +80,14 @@ describe("member delete cascade", () => {
     const account = dimensions.find((dimension) => dimension.dimensionType === "Account");
     expect(account).toBeDefined();
 
-    const created = await Promise.all(["M1", "M2", "M3"].map(async (memberKey) =>
-      (
-        await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/members`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberKey, properties: { Account: memberKey } })
-        })
-      ).json() as { id: string }
-    ));
+    const created = await Promise.all(["M1", "M2", "M3"].map(async (memberKey) => {
+      const res = await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberKey, properties: { Account: memberKey } })
+      });
+      return res.json() as Promise<{ id: string }>;
+    }));
 
     await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/relationships`, {
       method: "POST",
@@ -137,15 +136,14 @@ describe("member delete cascade", () => {
     const rels = await Promise.all([
       { parentKey: "P1", childKey: "P2" },
       { parentKey: "P2", childKey: "P1" }
-    ].map(async (body) =>
-      (
-        await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/relationships`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...body, properties: { Parent: body.parentKey, Child: body.childKey } })
-        })
-      ).json() as { id: string }
-    ));
+    ].map(async (body) => {
+      const res = await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/relationships`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, properties: { Parent: body.parentKey, Child: body.childKey } })
+      });
+      return res.json() as Promise<{ id: string }>;
+    }));
 
     const bulkRes = await fetch(`${baseUrl}/api/projects/${project.id}/dimensions/${account!.id}/relationships/bulk-delete`, {
       method: "POST",

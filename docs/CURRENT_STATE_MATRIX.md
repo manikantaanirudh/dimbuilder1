@@ -472,7 +472,7 @@
 
 2. **Single-Instance Architecture** - In-memory stores (presence, rate limiting, OIDC flows) don't scale. No Redis/shared state layer.
 
-3. **Missing Fixture for Workbook Tests** - 4 test failures due to `XF Dimensions Template - 29.04.2026.xlsx` not found. Parser may have untested regressions.
+3. **Large Real Workbook Regression Gap** - Workbook parser unit tests use generated XLSX fixtures, but a large real-world workbook is not part of the default test suite.
 
 4. **No E2E Tests** - All tests are unit/integration. No browser-based E2E testing of the full workflow.
 
@@ -492,7 +492,7 @@
 
 ## Recommended Next Actions
 
-1. **Fix test fixture path** - Restore or recreate `XF Dimensions Template - 29.04.2026.xlsx` to get 100% test pass rate.
+1. **Add optional large workbook regression pack** - Keep generated workbook fixtures in unit tests and add a separate opt-in path for real-world workbook stress coverage.
 
 2. **Implement real OneStream connector** - Replace mock with actual OneStream REST API integration using their documented endpoints.
 

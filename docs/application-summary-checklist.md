@@ -4,7 +4,7 @@ This short checklist is used when reviewing whether the documentation still repr
 
 - [ ] App name is SR Onestream Dim Builder.
 - [ ] Blank project creation is described as the primary workflow.
-- [ ] XLSX import is described as optional seeding.
+- [ ] Optional workbook seeding is described as **Seed from file** (`.xlsx` format).
 - [ ] Central YAML blueprints are documented.
 - [ ] XML export from app-authored records is documented.
 - [ ] Local-first limitations are documented.

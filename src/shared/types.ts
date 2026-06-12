@@ -164,7 +164,7 @@ export interface ValidationIssue {
   id: string;
   projectId: string;
   dimensionId: string;
-  entityType: "dimension" | "member" | "relationship";
+  entityType: "dimension" | "member" | "relationship" | "project";
   entityId: string;
   severity: Severity;
   code: string;

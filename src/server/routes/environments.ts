@@ -132,7 +132,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     const env = await repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
     try {
-      const client = createOneStreamClient(env);
+      const client = await createOneStreamClient(env);
       const result = await client.testConnection();
       res.json(result);
     } catch (err) {
@@ -145,7 +145,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     const env = await repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
     try {
-      const client = createOneStreamClient(env);
+      const client = await createOneStreamClient(env);
       const result = await client.pullDimensions();
       res.json(result);
     } catch (err) {
@@ -207,7 +207,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     const dimensionTypes = filteredDimensions.map(d => d.dimensionType);
 
     try {
-      const client = createOneStreamClient(env);
+      const client = await createOneStreamClient(env);
       const result = await client.pushXml(xml, dimensionTypes);
 
       const deployment = await repos.deployments.create({

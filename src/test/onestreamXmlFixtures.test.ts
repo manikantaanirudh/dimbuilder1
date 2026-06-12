@@ -44,7 +44,7 @@ describe("OneStream XML fixture pack", () => {
     const manifestFiles = new Set(manifest.fixtures.map((f) => f.file));
     const diskFiles = new Set(listOnestreamXmlFixtureFiles());
     expect(manifestFiles).toEqual(diskFiles);
-    expect(manifest.fixtures.length).toBe(13);
+    expect(manifest.fixtures.length).toBe(14);
   });
 
   describe.each(validFixtures.map((f) => [f.file, f] as const))(

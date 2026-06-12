@@ -11,9 +11,12 @@ The exporter receives:
 - `members`
 - `relationships`
 - `varyingPropertyValues`
+- optional effective property defaults from `repos.propertyDefaults.getEffectiveDefaultsForExport()`
 - optional relationship load mode and relationship operation plan
 
-These are the same records used by the rest of the app, so XML generation works for blank blueprint projects, edited projects, XLSX-seeded projects, and XML-imported projects.
+These are the same records used by the rest of the app, so XML generation works for blank blueprint projects, edited projects, workbook-seeded projects, XML-imported projects, and property-light CSV imports when defaults are configured.
+
+Effective defaults merge catalog/profile values with row-level member and relationship properties in `src/shared/effectiveProperties.ts` before `src/shared/xmlExport.ts` emits property nodes.
 
 ## Output Shape
 

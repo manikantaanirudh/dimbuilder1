@@ -191,6 +191,8 @@ describe("client component markup", () => {
       dimension: sampleScenarioDimension,
       issues: [],
       onRefresh: () => undefined,
+      onDimensionDeleted: () => undefined,
+      onDimensionRecreated: () => undefined,
       appConfig: defaultAppConfig,
       exportAvailability: readyExportAvailability
     }));
@@ -224,6 +226,8 @@ describe("client component markup", () => {
       dimension: sampleScenarioDimension,
       issues: [],
       onRefresh: () => undefined,
+      onDimensionDeleted: () => undefined,
+      onDimensionRecreated: () => undefined,
       appConfig: issuesTabConfig,
       exportAvailability: readyExportAvailability
     }));
@@ -362,7 +366,9 @@ describe("client component markup", () => {
     expect(markup).toContain('aria-label="Add member"');
     expect(markup).toContain('title="Add member"');
     expect(markup).toContain('aria-label="Duplicate selected row"');
-    expect(markup).toContain('aria-label="Delete selected row"');
+    expect(markup).toContain('title="Select a row to duplicate"');
+    expect(markup).toContain('aria-label="Delete selected rows"');
+    expect(markup).toContain('title="Select a row to delete"');
     expect(markup).toContain('aria-label="Toggle columns"');
     expect(markup).not.toContain(">Duplicate</button>");
     expect(markup).not.toContain(">Columns</button>");

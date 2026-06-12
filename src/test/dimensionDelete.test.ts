@@ -74,7 +74,7 @@ describe("dimension delete and recreate", () => {
       body: JSON.stringify({ dimensionType: "Account", dimensionName: "Fresh Accounts" })
     });
     expect(createRes.status).toBe(201);
-    const created = await createRes.json() as { dimensionName: string; dimensionType: string };
+    const created = await createRes.json() as { id: string; dimensionName: string; dimensionType: string };
     expect(created.dimensionName).toBe("Fresh Accounts");
     expect(created.dimensionType).toBe("Account");
 

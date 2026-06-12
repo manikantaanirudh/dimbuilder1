@@ -20,7 +20,7 @@ export interface JobSchedulerOptions {
 export interface JobScheduler {
   start(): void;
   stop(): void;
-  runDueJobs(): number; // returns count of jobs executed
+  runDueJobs(): Promise<number>; // returns count of jobs executed
   isRunning(): boolean;
 }
 
@@ -35,7 +35,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
 
     // Get all active jobs across all projects
     // We need to iterate all jobs that have triggerType = 'cron'
-    const allJobs = getAllCronJobs();
+    const allJobs = await getAllCronJobs();
 
     for (const job of allJobs) {
       const cronExpr = (job.triggerConfig as Record<string, unknown>)?.cron as string;

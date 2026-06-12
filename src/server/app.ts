@@ -5,53 +5,53 @@ import express from "express";
 import helmet from "helmet";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { AppConfig } from "../shared/appConfigTypes";
+import { allModulesEnabled, resolveModulesConfig } from "../shared/modulesConfig";
 import type { AppDatabase } from "./db/database";
-import { createDatabase } from "./db/database";
+import { createDatabase, isAppDatabase } from "./db/database";
+import type { DbClient } from "./db/dbClient";
 import { createRepositories } from "./db/repositories";
 import { logger } from "./logger";
 import { createBasicAuthMiddleware } from "./middleware/basicAuth";
+import { createAuthenticateMiddleware } from "./middleware/authenticate";
 import { generalRateLimiter, heavyOperationRateLimiter } from "./middleware/rateLimiter";
 import { requestLogger } from "./middleware/requestLogger";
-import { createConfigRouter } from "./routes/config";
-import { createExportRouter } from "./routes/export";
-import { createImportRouter } from "./routes/import";
-import { createProjectRouter } from "./routes/projects";
-import { createPropertyDefaultsRouter } from "./routes/propertyDefaults";
-import { createSchemaRouter } from "./routes/schema";
-import { createValidationRouter } from "./routes/validation";
-import { createBlueprintRouter } from "./routes/blueprints";
+import { registerApiRoutes } from "./registerApiRoutes";
 import { createAuthRouter } from "./routes/auth";
-import { createUserRouter } from "./routes/users";
-import { createWorkflowRouter } from "./routes/workflows";
-import { createEnvironmentRouter } from "./routes/environments";
-import { createConnectorRouter, createMappingRouter, createSyncJobRouter, createSyncRunRouter, createSourceRegistryRouter } from "./routes/connectors";
-import { createImpactRouter } from "./routes/impact";
-import { createAIRouter } from "./routes/ai";
-import { createCrossDimensionRouter } from "./routes/crossDimension";
-import { createTemplateRouter } from "./routes/templates";
-import { createReportingRouter } from "./routes/reporting";
-import { createVcsRouter } from "./routes/vcs";
-import { createExtensibilityRouter } from "./routes/extensibility";
-import { createTier3Router } from "./routes/tier3";
-import { createTier4Router } from "./routes/tier4";
-import { createProjectACLRouter } from "./acl/projectACL";
-import { createAuthenticateMiddleware } from "./middleware/authenticate";
-import { requireRole } from "./middleware/authorize";
 
-export function createApp(db: AppDatabase = createDatabase(), config: AppConfig = defaultAppConfig) {
+function resolveTestAwareConfig(config: AppConfig): AppConfig {
+  if (config.operations?.respectModuleGating || process.env.VITEST !== "true") {
+    return config;
+  }
+  return {
+    ...config,
+    // Do not merge config.modules here — defaultAppConfig leaves flags false and would disable routes in tests.
+    modules: allModulesEnabled(),
+    ai: {
+      ...(config.ai ?? defaultAppConfig.ai!),
+      enabled: true
+    }
+  };
+}
+
+export function createApp(db: AppDatabase | DbClient = createDatabase(), config: AppConfig = defaultAppConfig) {
+  const effectiveConfig = resolveTestAwareConfig(config);
   const app = express();
   const repos = createRepositories(db);
 
   app.use(helmet({ contentSecurityPolicy: false }));
-  const corsOrigins = config.server.corsOrigins;
+  const corsOrigins = effectiveConfig.server.corsOrigins;
   app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined));
   app.use(express.json({ limit: "25mb" }));
   app.use(requestLogger);
 
   // Health check is unauthenticated
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health", async (_req, res) => {
     try {
-      db.prepare("SELECT 1").get();
+      if (isAppDatabase(db)) {
+        db.prepare("SELECT 1").get();
+      } else {
+        await db.queryOne("SELECT 1");
+      }
       res.json({ ok: true });
     } catch {
       res.status(503).json({ ok: false, error: "Database unavailable" });
@@ -59,49 +59,22 @@ export function createApp(db: AppDatabase = createDatabase(), config: AppConfig 
   });
 
   // Auth routes handle their own authentication
-  app.use("/api/auth", createAuthRouter(repos, config));
+  app.use("/api/auth", createAuthRouter(repos, effectiveConfig));
 
   // Apply authentication to all /api routes below depending on strategy
-  if (config.auth.strategy === "none" && config.auth.enabled && config.auth.username) {
+  if (effectiveConfig.auth.strategy === "none" && effectiveConfig.auth.enabled && effectiveConfig.auth.username) {
     // Legacy basic auth fallback when strategy is "none" with credentials configured
-    app.use("/api", createBasicAuthMiddleware(config.auth));
-  } else if (config.auth.strategy !== "none") {
+    app.use("/api", createBasicAuthMiddleware(effectiveConfig.auth));
+  } else if (effectiveConfig.auth.strategy !== "none") {
     // JWT-based authentication for local/oidc strategies
-    app.use("/api", createAuthenticateMiddleware(config));
+    app.use("/api", createAuthenticateMiddleware(effectiveConfig));
   }
 
   app.use("/api", generalRateLimiter);
   app.use("/api/import", heavyOperationRateLimiter);
   app.use("/api/export", heavyOperationRateLimiter);
 
-  // Admin-only user management
-  app.use("/api/users", requireRole("admin"), createUserRouter(repos));
-
-  app.use("/api/config", createConfigRouter(config));
-  app.use("/api/blueprints", createBlueprintRouter(config));
-  app.use("/api/projects", createProjectRouter(repos, config));
-  app.use("/api/projects", createPropertyDefaultsRouter(repos, config));
-  app.use("/api/schema", createSchemaRouter());
-  app.use("/api/import", createImportRouter(repos, config));
-  app.use("/api/export", createExportRouter(repos, config));
-  app.use("/api/validation", createValidationRouter(repos, config));
-  app.use("/api/workflows", createWorkflowRouter(repos, config));
-  app.use("/api/environments", requireRole("admin"), createEnvironmentRouter(repos, config));
-  app.use("/api/connectors", requireRole("admin"), createConnectorRouter(repos, config));
-  app.use("/api/mappings", requireRole("admin"), createMappingRouter(repos));
-  app.use("/api/sync-jobs", requireRole("author", "admin"), createSyncJobRouter(repos));
-  app.use("/api/sync-runs", requireRole("author", "admin"), createSyncRunRouter(repos));
-  app.use("/api/projects", createSourceRegistryRouter(repos));
-  app.use("/api", createImpactRouter(repos, config));
-  app.use("/api", createAIRouter(repos, config));
-  app.use("/api", createCrossDimensionRouter(repos, config));
-  app.use("/api/templates", createTemplateRouter(repos, config));
-  app.use("/api/reports", createReportingRouter(repos, config));
-  app.use("/api", createVcsRouter(repos, config));
-  app.use("/api", createExtensibilityRouter(repos, config));
-  app.use("/api", createTier3Router(repos, config));
-  app.use("/api", createTier4Router(repos, config));
-  app.use("/api", createProjectACLRouter(repos));
+  registerApiRoutes(app, repos, db, effectiveConfig, resolveModulesConfig(effectiveConfig));
 
   // Serve the built React SPA in production. API routes above take precedence;
   // any non-/api path falls back to index.html for client-side routing.

@@ -42,7 +42,7 @@ describe("pilot export hardening", () => {
 
   it("blocks large projects with 413 and structured error payload", async () => {
     const repos = (await import("../server/db/repositories")).createRepositories(db);
-    const { projectId } = createLargeHierarchyProject(repos, limitedConfig, { memberCount: 80 });
+    const { projectId } = await createLargeHierarchyProject(repos, limitedConfig, { memberCount: 80 });
 
     const response = await fetch(`${baseUrl}/api/export/${projectId}/xml`);
     expect(response.status).toBe(413);

@@ -1854,7 +1854,7 @@ Expected:
 Run:
 
 ```powershell
-.\node_modules\.bin\tsx.cmd -e "import { loadAppConfig } from './src/server/config/loadAppConfig.ts'; import { parseMetadataReference } from './src/server/metadataReference.ts'; import { parseWorkbook } from './src/shared/workbookParser.ts'; import { join } from 'node:path'; (async()=>{ const config=loadAppConfig(); const metadata=await parseMetadataReference(join(config.paths.metadataDirectory, config.paths.defaultMetadataFile)); const parsed=await parseWorkbook('XF Dimensions Template - 29.04.2026.xlsx',{projectName:'config smoke',createdBy:'local-admin',metadataReference:metadata,config}); console.log(JSON.stringify({title:config.application.title,dimensions:parsed.dimensions.length,ud1:parsed.dimensions.filter(d=>d.dimensionType==='UD1').map(d=>d.dimensionName)},null,2)); })().catch(e=>{ console.error(e); process.exit(1); });"
+.\node_modules\.bin\tsx.cmd -e "import { loadAppConfig } from './src/server/config/loadAppConfig.ts'; import { parseMetadataReference } from './src/server/metadataReference.ts'; import { parseWorkbook } from './src/shared/workbookParser.ts'; import { join } from 'node:path'; (async()=>{ const config=loadAppConfig(); const metadata=await parseMetadataReference(join(config.paths.metadataDirectory, config.paths.defaultMetadataFile)); const parsed=await parseWorkbook('synthetic-workbook.xlsx',{projectName:'config smoke',createdBy:'local-admin',metadataReference:metadata,config}); console.log(JSON.stringify({title:config.application.title,dimensions:parsed.dimensions.length,ud1:parsed.dimensions.filter(d=>d.dimensionType==='UD1').map(d=>d.dimensionName)},null,2)); })().catch(e=>{ console.error(e); process.exit(1); });"
 ```
 
 Expected includes:

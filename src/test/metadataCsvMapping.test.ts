@@ -7,7 +7,7 @@ import { buildMetadataCsvCommitPlan, previewMetadataCsvImport } from "../shared/
 
 describe("metadataCsvMapping", () => {
   it("suggests member, description, and hierarchy columns for Opex export", () => {
-    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const fixturePath = join(process.cwd(), "tests/fixtures/csv/OpexAccount_Export_3Jun.txt");
     const csvContent = readFileSync(fixturePath, "utf8");
     const inspection = inspectMetadataCsvFile(csvContent, "Account");
 
@@ -22,7 +22,7 @@ describe("metadataCsvMapping", () => {
   });
 
   it("honors explicit flat mapping even when level columns exist", () => {
-    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const fixturePath = join(process.cwd(), "tests/fixtures/csv/OpexAccount_Export_3Jun.txt");
     const csvContent = readFileSync(fixturePath, "utf8");
     const suggested = suggestMetadataCsvColumnMapping(
       inspectMetadataCsvFile(csvContent, "Account").headers,
@@ -48,7 +48,7 @@ describe("metadataCsvMapping", () => {
   });
 
   it("builds hierarchy from custom level column order (not L01,L02,L03 default)", () => {
-    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const fixturePath = join(process.cwd(), "tests/fixtures/csv/OpexAccount_Export_3Jun.txt");
     const csvContent = readFileSync(fixturePath, "utf8");
     const sampleRow = [
       ";NK_GLAccountCode;GLAccountName;L01_OPEXGroup;L02_OPEXGroup;L03_OPEXGroup",

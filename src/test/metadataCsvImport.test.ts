@@ -112,7 +112,7 @@ describe("metadataCsvImport", () => {
     const { readFileSync } = await import("node:fs");
     const { dirname, join } = await import("node:path");
     const { fileURLToPath } = await import("node:url");
-    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const fixturePath = join(process.cwd(), "tests/fixtures/csv/OpexAccount_Export_3Jun.txt");
     const csvContent = readFileSync(fixturePath, "utf8");
     const { plan } = buildMetadataCsvCommitPlan({
       csvContent,
@@ -129,7 +129,7 @@ describe("metadataCsvImport", () => {
     const { readFileSync } = await import("node:fs");
     const { fileURLToPath } = await import("node:url");
     const { dirname, join } = await import("node:path");
-    const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../OpexAccount_Export_3Jun.txt");
+    const fixturePath = join(process.cwd(), "tests/fixtures/csv/OpexAccount_Export_3Jun.txt");
     const csvContent = readFileSync(fixturePath, "utf8");
     const preview = previewCsv(csvContent, {
       formDefaults: { dimensionType: "Account", dimensionName: "GLAccounts", projectName: "Opex Import" }

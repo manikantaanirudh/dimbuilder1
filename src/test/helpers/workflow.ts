@@ -7,6 +7,7 @@ import { createApp } from "../../server/app";
 import { createDatabase } from "../../server/db/database";
 import { defaultAppConfig } from "../../shared/appConfigDefaults";
 import type { AppConfig } from "../../shared/appConfigTypes";
+import { enablePlatformForTests } from "./modules";
 
 export interface WorkflowHarness {
   baseUrl: string;
@@ -20,12 +21,12 @@ export interface WorkflowHarness {
  */
 export async function startWorkflowHarness(overrides: Partial<AppConfig> = {}): Promise<WorkflowHarness> {
   const exportsDirectory = mkdtempSync(join(tmpdir(), "dimbuilder-e2e-"));
-  const config: AppConfig = {
+  const config: AppConfig = enablePlatformForTests({
     ...defaultAppConfig,
     ...overrides,
     paths: { ...defaultAppConfig.paths, exportsDirectory },
     dimensions: { ...defaultAppConfig.dimensions, enabledTypes: ["Account"], displayOrder: ["Account"] }
-  };
+  });
   const db = createDatabase(":memory:");
   const server: Server = createApp(db, config).listen(0);
   const { port } = server.address() as AddressInfo;

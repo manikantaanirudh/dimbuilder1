@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createProject, startWorkflowHarness } from "./helpers/workflow";
+import { createProject, startWorkflowHarness, type WorkflowHarness } from "./helpers/workflow";
 
 describe("validation waivers API", () => {
-  let harness: ReturnType<typeof startWorkflowHarness>;
+  let harness: WorkflowHarness;
 
   afterEach(async () => {
     await harness.close();
   });
 
   it("creates, lists, and revokes waivers with audit metadata", async () => {
-    harness = startWorkflowHarness();
+    harness = await startWorkflowHarness();
     const project = await createProject(harness.baseUrl, "Waiver test");
     const issueId = "issue-test-1";
     const ruleCode = "MISSING_REQUIRED_DIMENSION";

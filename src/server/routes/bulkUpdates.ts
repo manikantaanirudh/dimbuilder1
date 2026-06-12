@@ -1,6 +1,8 @@
 import { Router } from "express";
 import type { AppConfig } from "../../shared/appConfigTypes";
-import { previewBulkUpdate, type BulkUpdateRequest } from "../../shared/bulkUpdate";
+import { previewBulkUpdate, type BulkUpdateRequest, type BulkUpdateTarget } from "../../shared/bulkUpdate";
+import { previewBulkUpdateFromCsv, type BulkUpdateCsvMapping } from "../../shared/bulkUpdateCsv";
+import { applyBulkUpdatePreviewItems } from "../bulkUpdateApply";
 import { getDimensionSchema } from "../../shared/dimensionSchemas";
 import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecord } from "../../shared/types";
 import type { Repositories } from "../db/repositories";
@@ -10,6 +12,50 @@ type RouterDeps = { repos: Repositories; config: AppConfig; getAI?: unknown };
 
 export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
   const router = Router({ mergeParams: true });
+
+  router.post("/preview-csv", async (req, res) => {
+    const project = await repos.projects.get((req.params as Record<string, string>).projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const mapping = toBulkUpdateCsvMapping(req.body?.mapping);
+    const csv = String(req.body?.csv ?? "");
+    if (!mapping) return res.status(400).json({ error: "mapping with targetType and dimensionId is required" });
+    if (!csv.trim()) return res.status(400).json({ error: "csv content is required" });
+    res.json(previewBulkUpdateFromCsv(await loadProjectState(repos, project.id), mapping, csv));
+  });
+
+  router.post("/apply-csv", async (req, res, next) => {
+    try {
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+      const mapping = toBulkUpdateCsvMapping(req.body?.mapping);
+      const csv = String(req.body?.csv ?? "");
+      if (!mapping) return res.status(400).json({ error: "mapping with targetType and dimensionId is required" });
+      if (!csv.trim()) return res.status(400).json({ error: "csv content is required" });
+
+      const state = await loadProjectState(repos, project.id);
+      const preview = previewBulkUpdateFromCsv(state, mapping, csv);
+      const detail = await applyBulkUpdatePreviewItems(repos, project.id, state, preview.previewItems, {
+        request: {
+          targetType: mapping.targetType,
+          operation: "set",
+          propertyName: preview.previewItems[0]?.propertyName ?? "Text1",
+          filter: { dimensionId: mapping.dimensionId }
+        },
+        auditAction: "bulkUpdate.applyCsv",
+        summary: {
+          affectedCount: preview.affectedCount,
+          skippedCount: preview.skippedCount,
+          warningCount: preview.warnings.length,
+          warnings: preview.warnings,
+          source: "csv",
+          mapping
+        }
+      });
+      res.status(201).json(detail);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.post("/preview", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
@@ -107,7 +153,83 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
     res.json(detail);
   });
 
+  router.post("/:jobId/rollback", async (req, res, next) => {
+    try {
+      const project = await repos.projects.get((req.params as Record<string, string>).projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+      const jobId = (req.params as Record<string, string>).jobId;
+      const detail = await repos.bulkUpdates.getJobDetail(project.id, jobId);
+      if (!detail) return res.status(404).json({ error: "bulk update job not found" });
+      if (detail.job.status !== "applied") {
+        return res.status(409).json({ error: "only applied bulk update jobs can be rolled back" });
+      }
+
+      const rollback = Array.isArray(detail.job.rollback) ? detail.job.rollback as BulkUpdateRollbackEntry[] : [];
+      const state = await loadProjectState(repos, project.id);
+      const dimensionsById = new Map(state.dimensions.map((dimension) => [dimension.id, dimension]));
+      const membersById = new Map(state.members.map((member) => [member.id, member]));
+      const relationshipsById = new Map(state.relationships.map((relationship) => [relationship.id, relationship]));
+
+      const rolledBackDetail = await repos.transaction(async (txRepos: Repositories) => {
+        for (const entry of rollback) {
+          if (entry.targetType === "member") {
+            const member = membersById.get(entry.targetId);
+            if (!member) throw Object.assign(new Error("rollback member target not found"), { status: 409 });
+            const dimension = dimensionsById.get(member.dimensionId);
+            if (!dimension) throw Object.assign(new Error("rollback dimension target not found"), { status: 409 });
+            await applyMemberPreviewItem(txRepos, dimension, member, entry.propertyName, entry.oldValue);
+          } else {
+            const relationship = relationshipsById.get(entry.targetId);
+            if (!relationship) throw Object.assign(new Error("rollback relationship target not found"), { status: 409 });
+            await applyRelationshipPreviewItem(txRepos, relationship, entry.propertyName, entry.oldValue);
+          }
+        }
+
+        const rolledBack = await txRepos.bulkUpdates.markRolledBack(project.id, jobId);
+        if (!rolledBack) throw Object.assign(new Error("bulk update job could not be rolled back"), { status: 409 });
+        return rolledBack;
+      });
+      await repos.audit.record({
+        projectId: project.id,
+        action: "bulkUpdate.rollback",
+        entityType: "bulkUpdateJob",
+        entityId: jobId,
+        after: { status: "rolledBack" }
+      });
+      res.json(rolledBackDetail);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
+}
+
+interface BulkUpdateRollbackEntry {
+  targetType: BulkUpdateTarget;
+  targetId: string;
+  propertyName: string;
+  oldValue: string;
+  newValue: string;
+}
+
+function toBulkUpdateCsvMapping(body: unknown): BulkUpdateCsvMapping | null {
+  if (!isRecord(body)) return null;
+  const targetType = body.targetType === "relationship" ? "relationship" : body.targetType === "member" ? "member" : undefined;
+  const dimensionId = String(body.dimensionId ?? "").trim();
+  if (!targetType || !dimensionId) return null;
+  return {
+    targetType,
+    dimensionId,
+    keyColumn: optionalString(body.keyColumn),
+    parentColumn: optionalString(body.parentColumn),
+    childColumn: optionalString(body.childColumn),
+    propertyColumns: Array.isArray(body.propertyColumns)
+      ? body.propertyColumns.map((column) => String(column)).filter(Boolean)
+      : undefined,
+    delimiter: optionalString(body.delimiter),
+    treatBlankAsClear: typeof body.treatBlankAsClear === "boolean" ? body.treatBlankAsClear : undefined
+  };
 }
 
 function toBulkUpdateRequest(body: unknown): BulkUpdateRequest | null {

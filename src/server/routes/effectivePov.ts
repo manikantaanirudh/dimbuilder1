@@ -21,7 +21,7 @@ export function createEffectivePovRouter(repos: Repositories, _config: AppConfig
       return res.status(400).json({ error: "targetType must be member, relationship, or dimension" });
     }
 
-    const resolved = resolveTarget(repos, project.id, targetType, body);
+    const resolved = await resolveTarget(repos, project.id, targetType, body);
     if ("error" in resolved) return res.status(resolved.status).json({ error: resolved.error });
 
     const context = {
@@ -62,7 +62,7 @@ async function resolveTarget(
   if (targetType === "member") {
     const member = body.targetId
       ? await repos.members.getById(String(body.targetId))
-      : findMember(repos, projectId, String(body.dimensionId ?? ""), String(body.memberKey ?? ""));
+      : await findMember(repos, projectId, String(body.dimensionId ?? ""), String(body.memberKey ?? ""));
     if (!member) return { error: "member not found", status: 404 };
     const dimension = await repos.dimensions.get(member.dimensionId);
     if (!dimension || dimension.projectId !== projectId) return { error: "member not found", status: 404 };
@@ -77,7 +77,7 @@ async function resolveTarget(
   if (targetType === "relationship") {
     const relationship = body.targetId
       ? (await repos.relationships.listByProject(projectId)).find((r) => r.id === String(body.targetId))
-      : findRelationship(repos, projectId, String(body.dimensionId ?? ""), String(body.parentKey ?? ""), String(body.childKey ?? ""));
+      : await findRelationship(repos, projectId, String(body.dimensionId ?? ""), String(body.parentKey ?? ""), String(body.childKey ?? ""));
     if (!relationship) return { error: "relationship not found", status: 404 };
     const dimension = await repos.dimensions.get(relationship.dimensionId);
     if (!dimension || dimension.projectId !== projectId) return { error: "relationship not found", status: 404 };
@@ -105,8 +105,7 @@ async function resolveTarget(
 async function findMember(repos: Repositories, projectId: string, dimensionId: string, memberKey: string) {
   if (!memberKey) return undefined;
   const target = memberKey.trim().toLowerCase();
-  return await repos.members
-    .listByProject(projectId)
+  return (await repos.members.listByProject(projectId))
     .find((m) => (!dimensionId || m.dimensionId === dimensionId) && m.memberKey.trim().toLowerCase() === target);
 }
 
@@ -114,8 +113,7 @@ async function findRelationship(repos: Repositories, projectId: string, dimensio
   const parent = parentKey.trim().toLowerCase();
   const child = childKey.trim().toLowerCase();
   if (!child) return undefined;
-  return await repos.relationships
-    .listByProject(projectId)
+  return (await repos.relationships.listByProject(projectId))
     .find((r) =>
       (!dimensionId || r.dimensionId === dimensionId) &&
       r.parentKey.trim().toLowerCase() === parent &&

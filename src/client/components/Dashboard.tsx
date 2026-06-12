@@ -133,7 +133,7 @@ export function Dashboard({
             <p>
               {project
                 ? project.sourceFileName || project.description || "Created manually."
-                : "Create a project or seed one from XLSX."}
+                : "Create a project or seed from a file."}
             </p>
             {renameError && (
               <p className="rename-error" role="alert">
@@ -208,7 +208,7 @@ export function Dashboard({
             <EmptyState title={project ? "No dimensions available" : "No project open"}>
               {project
                 ? "This project has no configured dimensions to inspect."
-                : "Create a project or seed one from XLSX."}
+                : "Create a project or seed from a file."}
             </EmptyState>
           )}
         </section>

@@ -45,15 +45,29 @@ Source:
 - `src/client/components/BlueprintStudio.tsx`
 - `src/client/components/Dashboard.tsx`
 
-## Optional XLSX Seeding
+## Optional File Seeding (XLSX)
 
-Users can seed a project from an existing OneStream workbook.
+Users can seed a project from an existing OneStream workbook. The UI labels this workflow **Seed from file**; the accepted upload format is still `.xlsx`.
 
 Source:
 
+- `src/client/components/AppShell.tsx`
 - `src/client/components/ImportExportModals.tsx`
 - `src/server/routes/import.ts`
 - `src/shared/workbookParser.ts`
+
+## XML-Derived Property Defaults
+
+Users can maintain project-scoped property defaults derived from uploaded OneStream XML or built-in catalog seeds. The **Property Defaults** workspace tab lists defaults by dimension type, allows enable/disable and value edits, and feeds effective defaults into XML export and validation through `src/shared/effectiveProperties.ts`.
+
+Source:
+
+- `src/client/components/PropertyDefaultsPanel.tsx`
+- `src/server/routes/propertyDefaults.ts`
+- `src/shared/propertyDefaults.ts`
+- `src/shared/propertyDefaultResolver.ts`
+- `src/server/db/repositories.ts` (`propertyDefaults` repository)
+- `config/builtInPropertyDefaults.json`
 
 ## Editable XML Import
 

@@ -212,7 +212,7 @@ export function inspectMetadataCsvFile(csvContent: string, dimensionType: Dimens
 
 export function parseMetadataCsvColumnMapping(raw: unknown): MetadataCsvColumnMapping | undefined {
   if (!raw) return undefined;
-  let value = raw;
+  let value: unknown = raw;
   if (typeof raw === "string") {
     try {
       value = JSON.parse(raw) as unknown;

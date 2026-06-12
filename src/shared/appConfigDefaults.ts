@@ -29,6 +29,15 @@ export const defaultAppConfig: AppConfig = {
     port: 8787,
     clientDevPort: 5173
   },
+  modules: {
+    multiTenancy: false,
+    offlineSync: false,
+    apiPlatform: false,
+    environmentManagement: false,
+    chatAssistant: false,
+    scheduler: false,
+    platformExtras: false
+  },
   auth: {
     enabled: false,
     strategy: "none",
@@ -200,6 +209,7 @@ export const defaultAppConfig: AppConfig = {
     missingRequiredFieldSeverity: "error",
     circularHierarchySeverity: "error",
     relationshipsWithNoLocalMembersSeverity: "warning",
+    defaultProfileId: "consultant-review",
     oneStreamProfile: {
       enabled: true,
       memberNameMaxLength: ONESTREAM_MEMBER_NAME_MAX_LENGTH,
@@ -221,7 +231,8 @@ export const defaultAppConfig: AppConfig = {
       parentInputWarningSeverity: "warning",
       unknownPropertySeverity: "warning",
       invalidEnumSeverity: "error",
-      invalidPropertyTypeSeverity: "error"
+      invalidPropertyTypeSeverity: "error",
+      maxHierarchyDepth: 30
     },
     exportBlockedBySeverities: ["error"]
   },
@@ -276,7 +287,7 @@ export const defaultAppConfig: AppConfig = {
     appMode: "local"
   },
   ai: {
-    enabled: true,
+    enabled: false,
     provider: 'none',
     model: '',
     apiKey: '',

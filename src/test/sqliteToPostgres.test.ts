@@ -83,6 +83,7 @@ describe.skipIf(!pgUrl)("sqlite-to-postgres migration", () => {
       await bootstrapPostgresSchema(pgClient);
       await pgClient.close();
 
+      // @ts-expect-error migration script is plain ESM without TypeScript declarations
       const { migrateSqliteToPostgres } = await import("../../scripts/sqlite-to-postgres.mjs");
       const { mismatches, results } = await migrateSqliteToPostgres({
         sqlitePath,
@@ -93,7 +94,7 @@ describe.skipIf(!pgUrl)("sqlite-to-postgres migration", () => {
       expect(mismatches).toEqual([]);
 
       for (const { table, count } of sourceCounts) {
-        const migrated = results.find((result) => result.table === table);
+        const migrated = results.find((result: { table: string }) => result.table === table);
         if (!migrated || migrated.skipped) continue;
         expect(migrated.source, `${table} source count`).toBe(count);
         expect(migrated.dest, `${table} dest count`).toBe(count);

@@ -258,7 +258,7 @@ export function ImportModal({
       return;
     }
 
-    setStatus(importMode === "xlsx" ? "Seeding project from XLSX..." : "Importing editable OneStream metadata XML...");
+    setStatus(importMode === "xlsx" ? "Seeding project from file..." : "Importing editable OneStream metadata XML...");
     setIsImporting(true);
     try {
       const defaultProjectName = file.name.replace(importMode === "xlsx" ? /\.xlsx$/i : /\.xml$/i, "");
@@ -283,7 +283,7 @@ export function ImportModal({
           <h2 id="import-modal-title">Import metadata</h2>
           {importedProject ? <StatusBadge tone="success"><CheckCircle2 size={14} /> {importMode === "xlsx" ? "Seeded" : "Imported"}</StatusBadge> : null}
         </div>
-        <p>Seed from XLSX, import OneStream XML, or import a simple parent-child CSV with preview-before-commit.</p>
+        <p>Seed from file, import OneStream XML, or import a simple parent-child CSV with preview-before-commit.</p>
         {!importedProject && (
           <>
             <div className="import-mode-selector" role="tablist" aria-label="Import source">
@@ -293,7 +293,7 @@ export function ImportModal({
                 aria-selected={importMode === "xlsx"}
                 onClick={() => selectImportMode("xlsx")}
               >
-                <FileUp size={15} /> Seed from XLSX
+                <FileUp size={15} /> Seed from file
               </ActionButton>
               <ActionButton
                 className="import-mode-button"

@@ -178,7 +178,7 @@ export function AppShell({
           </ActionButton>
           {toolbar.showImport && (
             <ActionButton onClick={() => setImportOpen(true)}>
-              <FileUp size={16} /> Seed from XLSX
+              <FileUp size={16} /> Seed from file
             </ActionButton>
           )}
           {toolbar.showValidate && (

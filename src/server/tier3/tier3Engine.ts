@@ -65,7 +65,7 @@ export function scoreValidationQuality(issues: ValidationIssue[]): number {
   if (issues.length === 0) return 100;
   let penalty = 0;
   for (const issue of issues) {
-    penalty += VALIDATION_PENALTY[issue.severity] ?? 0;
+    penalty += issue.severity === "off" ? 0 : (VALIDATION_PENALTY[issue.severity] ?? 0);
   }
   return clampScore(100 - Math.min(90, penalty));
 }

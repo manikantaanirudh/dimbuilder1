@@ -25,7 +25,7 @@ export function createAssistantRouter(repos: Repositories, config: AppConfig): R
     const question = typeof req.body?.question === "string" ? req.body.question.trim() : "";
     if (!question) return res.status(400).json({ error: "question is required" });
 
-    const answer = answerProjectQuestion(question, buildContext(repos, config, artifactStore, project.id, project.name));
+    const answer = answerProjectQuestion(question, await buildContext(repos, config, artifactStore, project.id, project.name));
     res.json({ question, answer });
   });
 
@@ -52,10 +52,12 @@ async function buildContext(
     weights: config.readiness?.categoryWeights
   });
 
-  const changeSets = (await repos.changeSets.listByProject(projectId)).map((cs) => {
-    const detail = await repos.changeSets.getDetail(projectId, cs.id);
-    return { id: cs.id, name: cs.name, status: cs.status, itemCount: detail?.items.length ?? 0 };
-  });
+  const changeSets = await Promise.all(
+    (await repos.changeSets.listByProject(projectId)).map(async (cs) => {
+      const detail = await repos.changeSets.getDetail(projectId, cs.id);
+      return { id: cs.id, name: cs.name, status: cs.status, itemCount: detail?.items.length ?? 0 };
+    })
+  );
 
   const latest = await repos.diffRuns.getLatest(projectId);
   const latestDiffSummary = latest

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppConfig, ModulesConfig } from "../shared/appConfigTypes";
 import type { AppDatabase } from "./db/database";
+import type { DbClient } from "./db/dbClient";
 import type { Repositories } from "./db/repositories";
 import { createProjectACLRouter } from "./acl/projectACL";
 import { requireRole } from "./middleware/authorize";
@@ -33,6 +34,7 @@ import { createTier3Router } from "./routes/tier3";
 import { createTier4Router } from "./routes/tier4";
 import { createUserRouter } from "./routes/users";
 import { createValidationRouter } from "./routes/validation";
+import { createWaiversRouter } from "./routes/waivers";
 import { createVcsRouter } from "./routes/vcs";
 import { createWorkflowRouter } from "./routes/workflows";
 import { createWorkflowStatusRouter } from "./routes/workflowStatus";
@@ -41,7 +43,7 @@ import { createXdXrayRouter } from "./routes/xdXray";
 export function registerApiRoutes(
   app: Express,
   repos: Repositories,
-  _db: AppDatabase,
+  _db: AppDatabase | DbClient,
   config: AppConfig,
   modules: ModulesConfig
 ): void {
@@ -50,6 +52,7 @@ export function registerApiRoutes(
   app.use("/api/blueprints", createBlueprintRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
   app.use("/api/projects", createCertificationRouter(repos, config));
+  app.use("/api/projects", createWaiversRouter(repos));
   app.use("/api/projects", createReadinessRouter(repos, config));
   app.use("/api/projects", createWorkflowStatusRouter(repos, config));
   app.use("/api/projects", createArtifactRouter(repos, config));

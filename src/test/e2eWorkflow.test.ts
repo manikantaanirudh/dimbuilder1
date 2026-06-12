@@ -20,7 +20,7 @@ import {
 describe("core OneStream metadata workflow", () => {
   let h: WorkflowHarness;
 
-  beforeEach(() => { h = startWorkflowHarness(); });
+  beforeEach(async () => { h = await startWorkflowHarness(); });
   afterEach(async () => { await h.close(); });
 
   it("creates a project, edits metadata, packages a release, and exports certified XML", async () => {

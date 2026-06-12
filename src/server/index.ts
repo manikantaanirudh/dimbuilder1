@@ -35,7 +35,7 @@ async function main() {
   const config = loadAppConfig();
   const db = await createDbClient(dbConfigFromAppConfig(config));
   const repos = createRepositories(db);
-  const app = createApp({ db, repos, config });
+  const app = createApp(db, config);
 
   // Security: warn if JWT secret is still the default placeholder
   if (config.auth.enabled && config.auth.jwt.secret === "change-me-in-production") {

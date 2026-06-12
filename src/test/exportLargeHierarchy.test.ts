@@ -44,7 +44,7 @@ describe("large hierarchy XML export limits", () => {
 
   it("returns 413 when memberCount exceeds exportMaxMembers", async () => {
     const repos = (await import("../server/db/repositories")).createRepositories(db);
-    const { projectId } = createLargeHierarchyProject(repos, buildTestConfig(100), { memberCount: 150 });
+    const { projectId } = await createLargeHierarchyProject(repos, buildTestConfig(100), { memberCount: 150 });
 
     const response = await fetch(`${baseUrl}/api/export/${projectId}/xml`);
     expect(response.status).toBe(413);
@@ -64,7 +64,7 @@ describe("large hierarchy XML export limits", () => {
 
     try {
       const repos = (await import("../server/db/repositories")).createRepositories(localDb);
-      const { projectId } = createLargeHierarchyProject(repos, buildTestConfig(0), { memberCount: 150 });
+      const { projectId } = await createLargeHierarchyProject(repos, buildTestConfig(0), { memberCount: 150 });
       const response = await fetch(`${localBase}/api/export/${projectId}/xml`);
       expect(response.status).toBe(200);
       const xml = await response.text();

@@ -367,16 +367,30 @@ function validateDimensionSpecificRules(
   if (dimension.dimensionType === "Entity") {
     for (const member of members.filter((candidate) => !isReservedMember(candidate.memberKey, profile))) {
       const effectiveProperties = resolveEffectiveProperties(member.properties, memberDefaults);
-      if (getPropertyValue(effectiveProperties, ["Currency"])) continue;
-      addIssue({
-        entityType: "member",
-        entityId: member.id,
-        severity: "warning",
-        code: "ENTITY_CURRENCY_MISSING",
-        message: `Entity member '${member.memberKey}' is missing Currency.`,
-        fieldName: "Currency",
-        rowNumber: member.sourceRowNumber
-      });
+      const currency = getPropertyValue(effectiveProperties, ["Currency"]);
+      if (!currency) {
+        addIssue({
+          entityType: "member",
+          entityId: member.id,
+          severity: "warning",
+          code: "ENTITY_CURRENCY_MISSING",
+          message: `Entity member '${member.memberKey}' is missing Currency.`,
+          fieldName: "Currency",
+          rowNumber: member.sourceRowNumber
+        });
+        continue;
+      }
+      if (profile.validCurrencyCodes && profile.validCurrencyCodes.length > 0 && !profile.validCurrencyCodes.includes(currency)) {
+        addIssue({
+          entityType: "member",
+          entityId: member.id,
+          severity: "warning",
+          code: "CROSS_DIMENSION_CURRENCY_INVALID",
+          message: `Entity member '${member.memberKey}' has currency '${currency}' outside the configured list.`,
+          fieldName: "Currency",
+          rowNumber: member.sourceRowNumber
+        });
+      }
     }
 
     for (const relationship of relationships) {
@@ -391,6 +405,23 @@ function validateDimensionSpecificRules(
         message: `Entity relationship '${relationship.parentKey} -> ${relationship.childKey}' has ownership or consolidation percentage outside 0-100.`,
         fieldName: "Ownership",
         rowNumber: relationship.sourceRowNumber
+      });
+    }
+  }
+
+  if (profile.securityGroups && profile.securityGroups.length > 0) {
+    for (const member of members.filter((candidate) => !isReservedMember(candidate.memberKey, profile))) {
+      const effectiveProperties = resolveEffectiveProperties(member.properties, memberDefaults);
+      const accessGroup = getPropertyValue(effectiveProperties, ["Access Group", "AccessGroup"]);
+      if (!accessGroup || profile.securityGroups.includes(accessGroup)) continue;
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "warning",
+        code: "SECURITY_GROUP_REFERENCE_MISSING",
+        message: `Member '${member.memberKey}' references access group '${accessGroup}' which is not in the configured list.`,
+        fieldName: "Access Group",
+        rowNumber: member.sourceRowNumber
       });
     }
   }

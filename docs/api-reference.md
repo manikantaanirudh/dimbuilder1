@@ -442,8 +442,10 @@ Supported package modes are `full`, `additive`, `propertyUpdate`, `relationshipD
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/import/workbook` | Multipart XLSX upload used to seed a project. |
+| POST | `/api/import/workbook` | Multipart `.xlsx` upload used to seed a project (**Seed from file** in the UI). |
 | POST | `/api/import/xml` | Multipart OneStream metadata XML upload used to create an editable project while preserving unknown XML fields. |
+| POST | `/api/import/csv/preview` | Parse a metadata CSV and return counts, warnings, and blocking errors without writing records. |
+| POST | `/api/import/csv/commit` | Re-parse and commit a metadata CSV when preview is clean; creates a new project or appends/updates an existing one. |
 
 Workbook form fields:
 
@@ -476,6 +478,26 @@ XML import response:
 ```
 
 XML import is implemented in `src/shared/xmlImport.ts` and persisted by `src/server/routes/import.ts`. Unknown XML data is stored in existing metadata/properties JSON fields and is re-emitted by XML export when not overwritten by known edited fields.
+
+CSV import is implemented in `src/shared/metadataCsvImport.ts` and `src/server/metadataCsvCommit.ts`.
+
+## Property Defaults
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/projects/:projectId/property-defaults` | List property default display rows grouped by dimension type. Optional query: `dimensionType`. |
+| PATCH | `/api/projects/:projectId/property-defaults/:defaultId` | Update a catalog default `defaultValue` and/or `enabled` flag. |
+
+PATCH body:
+
+```json
+{
+  "defaultValue": "Local",
+  "enabled": true
+}
+```
+
+Effective defaults are applied during XML export through `repos.propertyDefaults.getEffectiveDefaultsForExport()` in `src/server/routes/export.ts`.
 
 ## Validation Config (Per-Project Overrides)
 

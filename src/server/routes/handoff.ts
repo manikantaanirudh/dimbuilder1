@@ -16,16 +16,18 @@ import type { Repositories } from "../db/repositories";
 export function createHandoffRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  function loadContext(projectId: string, changeSetId: string):
-    | { error: string; status: number }
-    | {
-        project: NonNullable<ReturnType<typeof repos.projects.get>>;
-        detail: NonNullable<ReturnType<typeof repos.changeSets.getDetail>>;
-        issues: ReturnType<typeof repos.issues.listByProject>;
-        validationStatus: string;
-        readiness: ReturnType<typeof computeReadinessScore>;
-        dimensionNames: Record<string, string>;
-      } {
+  async function loadContext(projectId: string, changeSetId: string):
+    Promise<
+      | { error: string; status: number }
+      | {
+          project: NonNullable<Awaited<ReturnType<typeof repos.projects.get>>>;
+          detail: NonNullable<Awaited<ReturnType<typeof repos.changeSets.getDetail>>>;
+          issues: Awaited<ReturnType<typeof repos.issues.listByProject>>;
+          validationStatus: string;
+          readiness: ReturnType<typeof computeReadinessScore>;
+          dimensionNames: Record<string, string>;
+        }
+    > {
     const project = await repos.projects.get(projectId);
     if (!project) return { error: "project not found", status: 404 };
     const detail = await repos.changeSets.getDetail(projectId, changeSetId);
@@ -58,7 +60,7 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
     if (config.integrations?.acm?.enabled === false) {
       return res.status(403).json({ error: "ACM handoff is disabled in configuration" });
     }
-    const ctx = loadContext(req.params.projectId, req.params.changeSetId);
+    const ctx = await loadContext(req.params.projectId, req.params.changeSetId);
     if ("error" in ctx) return res.status(ctx.status).json({ error: ctx.error });
 
     const waivers = await repos.validationWaivers.listByProject(ctx.project.id);
@@ -86,7 +88,7 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
     if (config.integrations?.epmware?.enabled === false) {
       return res.status(403).json({ error: "EPMware handoff is disabled in configuration" });
     }
-    const ctx = loadContext(req.params.projectId, req.params.changeSetId);
+    const ctx = await loadContext(req.params.projectId, req.params.changeSetId);
     if ("error" in ctx) return res.status(ctx.status).json({ error: ctx.error });
 
     const result = buildEpmwareHandoff({

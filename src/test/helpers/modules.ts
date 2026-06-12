@@ -1,3 +1,5 @@
+import type { AppDatabase } from "../../server/db/database";
+import { createApp } from "../../server/app";
 import type { AppConfig, ModulesConfig } from "../../shared/appConfigTypes";
 import { defaultAppConfig } from "../../shared/appConfigDefaults";
 import { allModulesEnabled } from "../../shared/modulesConfig";
@@ -18,4 +20,9 @@ export function enablePlatformForTests(config: AppConfig = defaultAppConfig): Ap
       enabled: true
     }
   };
+}
+
+/** Express app with platform modules enabled for integration tests. */
+export function createTestApp(db: AppDatabase, config: AppConfig = defaultAppConfig) {
+  return createApp(db, enablePlatformForTests(config));
 }

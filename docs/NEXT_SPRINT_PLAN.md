@@ -130,8 +130,8 @@
 ## QA Tasks
 
 ### Q1: Fix Failing Tests
-- Restore or recreate the missing fixture file `XF Dimensions Template - 29.04.2026.xlsx`
-- Verify all 541 tests pass (currently 537/541)
+- Keep workbook parser coverage on generated XLSX fixtures, not uncommitted local files
+- Verify focused parser tests pass and triage remaining suite failures separately
 - Target: 0 test failures
 
 ### Q2: Add Round-Trip XML Test (Story 4)

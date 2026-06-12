@@ -48,7 +48,8 @@ The server lives under `src/server`.
 - `middleware/requestLogger.ts` logs method, path, status, and duration for every request.
 - `middleware/validate.ts` validates request bodies against Zod schemas, returning structured errors on failure.
 - `routes/projects.ts` handles project CRUD-adjacent operations, dimension edits, members, relationships, varying properties, bulk updates, baselines, metadata diff runs, change sets, release package creation, and issue listing.
-- `routes/import.ts` handles optional XLSX seeding.
+- `routes/import.ts` handles optional workbook seeding (**Seed from file**), XML import, and CSV preview/commit.
+- `routes/propertyDefaults.ts` serves project property default catalog rows for the Property Defaults workspace tab.
 - `routes/export.ts` handles XML, XLSX, CSV, JSON, and snapshots.
 - `routes/validation.ts` runs validation and persists issues.
 - `routes/config.ts` returns the client-safe config.

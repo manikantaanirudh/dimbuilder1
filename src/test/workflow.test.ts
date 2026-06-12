@@ -154,7 +154,7 @@ describe("workflow engine", () => {
 
   it("submits a change set into workflow", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     const res = await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",
@@ -169,7 +169,7 @@ describe("workflow engine", () => {
 
   it("approve → workflow advances and completes", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     // Submit as admin
     const submitRes = await fetch(`${baseUrl}/api/workflows/submit`, {
@@ -199,7 +199,7 @@ describe("workflow engine", () => {
 
   it("reject → workflow rejected, change set status updated", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     const submitRes = await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",
@@ -226,7 +226,7 @@ describe("workflow engine", () => {
 
   it("prevents self-approval", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     const submitRes = await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",
@@ -248,7 +248,7 @@ describe("workflow engine", () => {
 
   it("enforces role requirements", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     const submitRes = await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",
@@ -270,7 +270,7 @@ describe("workflow engine", () => {
 
   it("allows cancellation by submitter", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     const submitRes = await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",
@@ -291,7 +291,7 @@ describe("workflow engine", () => {
 
   it("lists pending workflows for a reviewer", async () => {
     const projectId = await createProject(adminToken);
-    const changeSetId = createDraftChangeSet(projectId);
+    const changeSetId = await createDraftChangeSet(projectId);
 
     await fetch(`${baseUrl}/api/workflows/submit`, {
       method: "POST",

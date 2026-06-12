@@ -35,7 +35,7 @@ export function createCertificationRouter(repos: Repositories, config: AppConfig
   }
 
   router.post("/:projectId/xml/certification", async (req, res) => {
-    const snapshot = loadSnapshot(req.params.projectId);
+    const snapshot = await loadSnapshot(req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
 
     const report = certifyXmlRoundTrip(snapshot, {

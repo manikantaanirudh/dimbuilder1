@@ -24,8 +24,8 @@ SR Onestream Dim Builder is a local-first metadata workbench for building, valid
 1. Create a blank project.
    The client opens the New Project modal, posts to `POST /api/projects`, and the server seeds dimensions from configured blueprints.
 
-2. Seed from XLSX.
-   The client uploads an optional OneStream metadata workbook to `POST /api/import/workbook`. The parser reads supported sheets, merges duplicate dimension sheets when configured, aligns to metadata XML reference data when enabled, and persists the imported records.
+2. Seed from file.
+   The toolbar and import modal expose this workflow as **Seed from file** (`.xlsx` workbook). The client uploads an optional OneStream metadata workbook to `POST /api/import/workbook`. The parser reads supported sheets, merges duplicate dimension sheets when configured, aligns to metadata XML reference data when enabled, and persists the imported records.
 
 3. Import XML.
    The client uploads OneStream metadata XML to `POST /api/import/xml`. The shared XML parser creates editable dimensions, members, and relationships, stores unknown XML data in JSON fields, validates the project, and records `project.importXml`.

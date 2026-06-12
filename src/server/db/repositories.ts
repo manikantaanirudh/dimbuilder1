@@ -221,15 +221,15 @@ function sqliteOrUpsert(
   return upsertSql(table, columns, conflictTarget, updateColumns);
 }
 
-export function createRepositories(dbOrClient: AppDatabase | DbClient) {
+function buildRepositories(dbOrClient: AppDatabase | DbClient) {
   const client: DbClient = isAppDatabase(dbOrClient)
     ? appDatabaseAsDbClient(dbOrClient)
     : dbOrClient;
 
   return {
-    async transaction<T>(fn: (txRepos: Repositories) => Promise<T>): Promise<T> {
+    async transaction<T>(fn: (txRepos: any) => Promise<T>): Promise<T> {
       return client.transaction(async (txClient) => {
-        const txRepos = createRepositories(txClient);
+        const txRepos = buildRepositories(txClient);
         return fn(txRepos);
       });
     },
@@ -337,11 +337,10 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient) {
         return dimension;
       },
       async listByProject(projectId: string): Promise<DimensionRecord[]> {
-        const dimensions = (await client.query<Record<string, unknown>>(
-          "SELECT * FROM dimensions WHERE project_id = ?",
+        return (await client.query<Record<string, unknown>>(
+          "SELECT * FROM dimensions WHERE project_id = ? ORDER BY sort_order",
           [projectId]
         )).map(mapDimension);
-        return sortDimensionsByType(dimensions);
       },
       async get(dimensionId: string): Promise<DimensionRecord | null> {
         const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM dimensions WHERE id = ?", [dimensionId]);
@@ -832,6 +831,13 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient) {
         const job = await this.getJob(projectId, jobId);
         if (!job) return null;
         return { job, items: await this.listItems(job.id) };
+      },
+      async markRolledBack(projectId: string, jobId: string): Promise<{ job: BulkUpdateJobRecord; items: BulkUpdateItemRecord[] } | null> {
+        const job = await this.getJob(projectId, jobId);
+        if (!job || job.status !== "applied") return null;
+        await client.exec("UPDATE bulk_update_jobs SET status = ? WHERE project_id = ? AND id = ?", ["rolledBack", projectId, jobId]);
+        await client.exec("UPDATE bulk_update_items SET status = ? WHERE job_id = ?", ["rolledBack", jobId]);
+        return this.getJobDetail(projectId, jobId);
       }
     },
     issues: {
@@ -903,6 +909,70 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient) {
       },
       async deleteByProject(projectId: string, ruleCode: string): Promise<void>{
         await client.exec("DELETE FROM project_validation_overrides WHERE project_id = ? AND rule_code = ?", [projectId, ruleCode]);
+      }
+    },
+    validationWaivers: {
+      async listByProject(projectId: string): Promise<Array<{
+        id: string;
+        projectId: string;
+        issueId: string;
+        ruleCode: string;
+        dimensionId: string;
+        memberKey: string;
+        reason: string;
+        userId: string;
+        createdAt: string;
+        revokedAt: string | null;
+      }>> {
+        return (await client.query(
+          "SELECT * FROM validation_waivers WHERE project_id = ? AND revoked_at IS NULL ORDER BY created_at DESC",
+          [projectId]
+        )).map((row) => ({
+          id: String(row.id),
+          projectId: String(row.project_id),
+          issueId: String(row.issue_id),
+          ruleCode: String(row.rule_code),
+          dimensionId: String(row.dimension_id ?? ""),
+          memberKey: String(row.member_key ?? ""),
+          reason: String(row.reason),
+          userId: String(row.user_id),
+          createdAt: String(row.created_at),
+          revokedAt: row.revoked_at ? String(row.revoked_at) : null
+        }));
+      },
+      async create(input: {
+        projectId: string;
+        issueId: string;
+        ruleCode: string;
+        reason: string;
+        dimensionId?: string;
+        memberKey?: string;
+        userId?: string;
+      }): Promise<{ id: string }> {
+        const id = nanoid();
+        const createdAt = now();
+        await client.exec(
+          "INSERT INTO validation_waivers (id, project_id, issue_id, rule_code, dimension_id, member_key, reason, user_id, created_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+          [
+            id,
+            input.projectId,
+            input.issueId,
+            input.ruleCode,
+            input.dimensionId ?? "",
+            input.memberKey ?? "",
+            input.reason,
+            input.userId ?? "local-admin",
+            createdAt
+          ]
+        );
+        return { id };
+      },
+      async revoke(projectId: string, waiverId: string): Promise<boolean> {
+        const result = await client.run(
+          "UPDATE validation_waivers SET revoked_at = ? WHERE id = ? AND project_id = ? AND revoked_at IS NULL",
+          [now(), waiverId, projectId]
+        );
+        return normalizeWriteResult(client.dialect, result).changes > 0;
       }
     },
     audit: {
@@ -2610,7 +2680,11 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient) {
   };
 }
 
-export type Repositories = ReturnType<typeof createRepositories>;
+export function createRepositories(dbOrClient: AppDatabase | DbClient): Repositories {
+  return buildRepositories(dbOrClient);
+}
+
+export type Repositories = ReturnType<typeof buildRepositories>;
 
 const BULK_INSERT_BATCH_SIZE = 500;
 

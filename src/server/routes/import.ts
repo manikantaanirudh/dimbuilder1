@@ -219,7 +219,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         const savedProject = await tx.projects.create({
           name: parsed.project.name,
           description: parsed.project.description,
-          sourceFileName: req.file.originalname,
+          sourceFileName: req.file?.originalname ?? "upload",
           createdBy: "local-admin"
         });
 

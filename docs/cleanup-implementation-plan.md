@@ -121,7 +121,7 @@ Treat SaaS/platform capabilities as optional modules and documentation-only futu
 
 ### Developer Experience
 
-- Full `npm test` currently fails because `src/test/workbookParser.test.ts` expects `XF Dimensions Template - 29.04.2026.xlsx`, which is not committed.
+- Workbook parser tests now generate representative XLSX fixtures in temp directories instead of depending on an uncommitted local workbook file.
 - The repo has many docs that are now stale relative to the route split, upload policy, migration framework, module flags, and production build.
 - `docs/feature-catalog.md` still maps many features to `src/server/routes/projects.ts`.
 - `.env.example`, `docker-compose.yml`, backup/cleanup scripts, and smoke tests exist or are being added, but the deployment story needs one clean “local dev / shared pilot / Docker” path.
@@ -545,9 +545,9 @@ Recommendation metadata:
 
 Objective: Restore reliable full test runs.
 
-Current behavior: `src/test/workbookParser.test.ts` expects `XF Dimensions Template - 29.04.2026.xlsx`, which is not present. Several other workbook tests generate synthetic workbooks and do not need the missing file.
+Current behavior: `src/test/workbookParser.test.ts` uses generated workbook fixtures for normal parser coverage, including supported sheet detection, generated-column filtering, metadata-reference alignment, duplicate sheet merging, and metadata-only dimensions.
 
-Proposed change: Replace missing external fixture dependency with checked-in minimal fixtures or generated workbook fixtures.
+Remaining change: Decide whether a large real-world workbook belongs in a separate optional/manual regression pack outside the default unit test suite.
 
 Files/modules affected:
 

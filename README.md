@@ -6,7 +6,7 @@ A local-first metadata workbench for building, validating, previewing, and expor
 
 - Create blank OneStream metadata projects from central YAML blueprints
 - Import existing OneStream metadata XML as editable project data (round-trip safe)
-- Optionally seed projects from XLSX workbooks
+- Optionally seed projects from a file (`.xlsx` workbook) via **Seed from file**
 - Edit dimensions, members, and relationships in a dense workbench UI
 - Manage varying property values by cube type, scenario type, and time context
 - Validate metadata against configurable rules and a OneStream design-quality profile

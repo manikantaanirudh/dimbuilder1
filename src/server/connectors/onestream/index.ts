@@ -5,7 +5,7 @@ import { createHttpClient } from "./httpClient";
 
 export type { OneStreamApiClient } from "./types";
 
-export function createOneStreamClient(env: Environment): OneStreamApiClient {
+export async function createOneStreamClient(env: Environment): Promise<OneStreamApiClient> {
   if (env.type === "mock") {
     return createMockClient(env);
   }

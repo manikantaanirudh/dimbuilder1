@@ -312,7 +312,7 @@ export const sampleProject: ProjectRecord = {
   id: "project-1",
   name: "XF Dimensions Template",
   description: "Sample import",
-  sourceFileName: "XF Dimensions Template - 29.04.2026.xlsx",
+  sourceFileName: "synthetic-workbook.xlsx",
   createdBy: "local-admin",
   createdAt: "2026-05-16T00:00:00.000Z",
   updatedAt: "2026-05-16T00:00:00.000Z"
@@ -1237,7 +1237,7 @@ import { parseWorkbook } from "../shared/workbookParser";
 
 describe("workbook parser", () => {
   it("imports all supported sheets from the supplied template", async () => {
-    const parsed = await parseWorkbook("XF Dimensions Template - 29.04.2026.xlsx", {
+    const parsed = await parseWorkbook("synthetic-workbook.xlsx", {
       projectName: "XF Dimensions Template",
       createdBy: "local-admin"
     });
@@ -1250,7 +1250,7 @@ describe("workbook parser", () => {
   }, 120000);
 
   it("ignores generated XML columns", async () => {
-    const parsed = await parseWorkbook("XF Dimensions Template - 29.04.2026.xlsx", {
+    const parsed = await parseWorkbook("synthetic-workbook.xlsx", {
       projectName: "XF Dimensions Template",
       createdBy: "local-admin"
     });
@@ -3105,7 +3105,7 @@ Use browser:
 
 1. Open `http://127.0.0.1:5173`.
 2. Click Import.
-3. Select `XF Dimensions Template - 29.04.2026.xlsx`.
+3. Select a OneStream dimension workbook.
 4. Confirm import summary returns.
 5. Validate that dimension sidebar lists imported dimensions.
 6. Click Export and download XML.
@@ -3171,7 +3171,7 @@ npm run dev
 In the UI, import:
 
 ```text
-XF Dimensions Template - 29.04.2026.xlsx
+synthetic-workbook.xlsx
 ```
 
 Expected import summary:

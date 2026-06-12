@@ -1,6 +1,6 @@
 # Current State Baseline
 
-This baseline describes the application state as of 2026-05-26.
+This baseline describes the application state as of 2026-06-05.
 
 ## Implemented
 
@@ -11,7 +11,9 @@ This baseline describes the application state as of 2026-05-26.
 - Blank metadata projects can be created from blueprints.
 - Blueprint-created projects seed dimensions, root members, optional members, optional relationships, and relationship defaults.
 - Blueprint Studio can validate blueprint drafts, generate YAML fragments, and derive drafts from existing project dimensions without automatically writing config files.
-- XLSX import is an optional seed workflow.
+- Workbook import is an optional seed workflow exposed in the UI as **Seed from file** (`.xlsx` upload to `POST /api/import/workbook`).
+- Simple parent/child CSV metadata import supports preview-before-commit for new projects and append/update on existing projects (`POST /api/import/csv/preview`, `POST /api/import/csv/commit`).
+- XML-derived property defaults can be listed and edited per dimension type in the **Property Defaults** workspace tab and are applied during XML export/validation through `src/shared/effectiveProperties.ts`.
 - OneStream metadata XML can be imported directly as an editable project.
 - Metadata reference XML can align imported dimensions and add metadata-only dimensions.
 - Members and relationships can be edited in the workbench. Member PATCH supports partial updates (any combination of `memberKey`, `properties`, `description`).

@@ -4,6 +4,12 @@ XLSX import is an optional seed workflow. It no longer defines the application n
 
 ## Entry Point
 
+UI labels:
+
+- Toolbar button: **Seed from file** in `src/client/components/AppShell.tsx`
+- Import modal tab: **Seed from file** (workbook format remains `.xlsx`)
+- Dashboard empty state: "Create a project or seed from a file."
+
 Client:
 
 - `src/client/components/ImportExportModals.tsx`

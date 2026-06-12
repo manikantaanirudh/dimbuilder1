@@ -55,6 +55,49 @@ export interface AuthConfig {
   password?: string;
 }
 
+export interface ModulesConfig {
+  multiTenancy: boolean;
+  offlineSync: boolean;
+  apiPlatform: boolean;
+  environmentManagement: boolean;
+  chatAssistant: boolean;
+  scheduler: boolean;
+  platformExtras: boolean;
+}
+
+export interface ReadinessConfig {
+  minimumScoreForExportWarning?: number;
+  categoryWeights?: Record<string, number>;
+}
+
+export interface AcmIntegrationConfig {
+  enabled?: boolean;
+  exportFields?: string[];
+  fieldLabels?: Record<string, string>;
+}
+
+export interface EpmwareIntegrationConfig {
+  enabled?: boolean;
+  dimensionMappings?: Record<string, string>;
+  propertyMappings?: Record<string, string>;
+  fieldMappings?: Record<string, string>;
+}
+
+export interface IntegrationsConfig {
+  acm?: AcmIntegrationConfig;
+  epmware?: EpmwareIntegrationConfig;
+}
+
+export interface ExtensibilityConfig {
+  dimensionLinks?: Array<{ extended: string; base: string }>;
+  namingPatterns?: string[];
+}
+
+export interface PatternProfilerConfig {
+  minimumConfidence?: number;
+  maxGeneratedRules?: number;
+}
+
 export interface FeatureConfig {
   enableMetadataReferenceAlignment: boolean;
   includeMetadataOnlyDimensions: boolean;
@@ -147,6 +190,7 @@ export interface ValidationConfig {
   missingRequiredFieldSeverity: Severity;
   circularHierarchySeverity: Severity;
   relationshipsWithNoLocalMembersSeverity: Severity;
+  defaultProfileId?: "local-draft" | "consultant-review" | "acm-handoff" | "strict-import-readiness";
   oneStreamProfile: OneStreamValidationProfileConfig;
   exportBlockedBySeverities: Severity[];
 }
@@ -165,6 +209,11 @@ export interface OneStreamValidationProfileConfig {
   unknownPropertySeverity: Severity;
   invalidEnumSeverity: Severity;
   invalidPropertyTypeSeverity: Severity;
+  expectedDimensionTypes?: DimensionType[];
+  missingDimensionSeverity?: Severity;
+  validCurrencyCodes?: string[];
+  securityGroups?: string[];
+  maxHierarchyDepth?: number;
 }
 
 export interface ExportConfig {
@@ -219,6 +268,8 @@ export interface OperationsConfig {
   corsAllowLocalhostByDefault: boolean;
   exportMaxMembers: number;
   appMode?: "local" | "shared" | "production";
+  /** When true, honor modules config instead of auto-enabling platform routes in Vitest. */
+  respectModuleGating?: boolean;
 }
 
 export interface AppConfig {
@@ -227,6 +278,7 @@ export interface AppConfig {
   database?: DatabaseConfig;
   server: ServerConfig;
   auth: AuthConfig;
+  modules?: ModulesConfig;
   features: FeatureConfig;
   dashboard: DashboardConfig;
   dimensions: DimensionsConfig;
@@ -236,6 +288,10 @@ export interface AppConfig {
   ui: UiConfig;
   workflows?: WorkflowConfig;
   operations?: OperationsConfig;
+  readiness?: ReadinessConfig;
+  integrations?: IntegrationsConfig;
+  extensibility?: ExtensibilityConfig;
+  patternProfiler?: PatternProfilerConfig;
   ai?: AIConfigSection;
 }
 

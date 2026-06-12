@@ -127,7 +127,7 @@ It covers the Bulk Update workspace tab and compact preview/apply wizard surface
 It covers the Hierarchy analytics panel and CSV export controls.
 It covers the dashboard Snapshot Manager restore and branch affordances.
 It covers the dashboard Blueprint Studio authoring aid, validation/YAML actions, and no automatic config-write copy.
-Import modal coverage checks that XLSX seeding remains available and XML import is presented as editable OneStream metadata import.
+Import modal coverage checks that file seeding remains available as **Seed from file** and XML import is presented as editable OneStream metadata import.
 
 ### Design System
 
@@ -144,7 +144,7 @@ Recommended checks:
 - desktop app shell
 - mobile app shell
 - New Project modal
-- Import metadata modal for Seed from XLSX and Import XML
+- Import metadata modal for Seed from file and Import XML
 - members grid
 - relationships grid
 - XML preview tab

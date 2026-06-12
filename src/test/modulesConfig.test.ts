@@ -17,7 +17,10 @@ describe("modules feature flags", () => {
 
   it("does not mount tier4 routes when multiTenancy is disabled", async () => {
     const db = createDatabase(":memory:");
-    const app = createApp(db, withModules(defaultAppConfig, { multiTenancy: false }));
+    const app = createApp(db, {
+      ...withModules(defaultAppConfig, { multiTenancy: false }),
+      operations: { ...defaultAppConfig.operations!, respectModuleGating: true }
+    });
     const server = app.listen(0);
     const { port } = server.address() as { port: number };
     const response = await fetch(`http://127.0.0.1:${port}/api/tenants`);
@@ -28,7 +31,10 @@ describe("modules feature flags", () => {
 
   it("mounts tier4 routes when multiTenancy is enabled", async () => {
     const db = createDatabase(":memory:");
-    const app = createApp(db, withModules(defaultAppConfig, { multiTenancy: true }));
+    const app = createApp(db, {
+      ...withModules(defaultAppConfig, { multiTenancy: true }),
+      operations: { ...defaultAppConfig.operations!, respectModuleGating: true }
+    });
     const server = app.listen(0);
     const { port } = server.address() as { port: number };
     const response = await fetch(`http://127.0.0.1:${port}/api/tenants`);

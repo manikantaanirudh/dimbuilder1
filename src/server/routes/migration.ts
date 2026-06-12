@@ -177,7 +177,7 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
         });
         existingKeys.add(member.memberKey.toLowerCase());
       });
-      if (newMembers.length > 0) { repos.members.bulkInsert(newMembers); createdMembers += newMembers.length; }
+      if (newMembers.length > 0) { await repos.members.bulkInsert(newMembers); createdMembers += newMembers.length; }
 
       const newRelationships: DimensionRelationshipRecord[] = mapped.relationships.map((rel, index) => ({
         id: `rel-${dimension.id}-${Date.now()}-${index}`,
@@ -194,7 +194,7 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }));
-      if (newRelationships.length > 0) { repos.relationships.bulkInsert(newRelationships); createdRelationships += newRelationships.length; }
+      if (newRelationships.length > 0) { await repos.relationships.bulkInsert(newRelationships); createdRelationships += newRelationships.length; }
     }
 
     session.status = "committed";

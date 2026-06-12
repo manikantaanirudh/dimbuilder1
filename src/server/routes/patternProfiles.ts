@@ -43,7 +43,7 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
     for (const dimension of dimensions) {
       membersByDimension.set(dimension.id, { dimensionType: dimension.dimensionType, members: [] });
     }
-    for (const member of repos.members.listByProject(projectId)) {
+    for (const member of await repos.members.listByProject(projectId)) {
       const entry = membersByDimension.get(member.dimensionId);
       if (entry) entry.members.push({ memberKey: member.memberKey, description: member.description ?? "", properties: member.properties ?? {} });
     }
@@ -53,7 +53,7 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
   router.post("/:projectId/pattern-profiles", async (req, res) => {
     const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const profile = buildPatternProfile(project.id, project.name, buildProfilerDimensions(project.id), {
+    const profile = buildPatternProfile(project.id, project.name, await buildProfilerDimensions(project.id), {
       minimumConfidence: config.patternProfiler?.minimumConfidence,
       maxGeneratedRules: config.patternProfiler?.maxGeneratedRules
     });
@@ -75,7 +75,7 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
     if (!project) return res.status(404).json({ error: "project not found" });
     const profile = readProfiles(project.id).find((p) => p.id === req.params.profileId);
     if (!profile) return res.status(404).json({ error: "profile not found" });
-    const evaluation = evaluatePatternProfile(profile, buildProfilerDimensions(project.id));
+    const evaluation = evaluatePatternProfile(profile, await buildProfilerDimensions(project.id));
     res.json({ evaluation });
   });
 

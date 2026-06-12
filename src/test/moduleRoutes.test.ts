@@ -11,14 +11,17 @@ describe("module-gated API routes", () => {
 
   beforeEach(async () => {
     const db = createDatabase(":memory:");
-    const config = withModules(defaultAppConfig, {
-      environmentManagement: false,
-      chatAssistant: false,
-      offlineSync: false,
-      apiPlatform: false,
-      multiTenancy: false,
-      platformExtras: false
-    });
+    const config = {
+      ...withModules(defaultAppConfig, {
+        environmentManagement: false,
+        chatAssistant: false,
+        offlineSync: false,
+        apiPlatform: false,
+        multiTenancy: false,
+        platformExtras: false
+      }),
+      operations: { ...defaultAppConfig.operations!, respectModuleGating: true }
+    };
     const app = createApp(db, config);
     const server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));
@@ -58,15 +61,18 @@ describe("module-gated API routes when enabled", () => {
 
   beforeEach(async () => {
     const db = createDatabase(":memory:");
-    const config = withModules(
-      { ...defaultAppConfig, ai: { ...defaultAppConfig.ai!, enabled: true } },
-      {
-        environmentManagement: true,
-        chatAssistant: true,
-        multiTenancy: true,
-        platformExtras: true
-      }
-    );
+    const config = {
+      ...withModules(
+        { ...defaultAppConfig, ai: { ...defaultAppConfig.ai!, enabled: true } },
+        {
+          environmentManagement: true,
+          chatAssistant: true,
+          multiTenancy: true,
+          platformExtras: true
+        }
+      ),
+      operations: { ...defaultAppConfig.operations!, respectModuleGating: true }
+    };
     const app = createApp(db, config);
     const server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));

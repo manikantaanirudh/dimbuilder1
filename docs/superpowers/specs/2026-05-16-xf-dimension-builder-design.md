@@ -8,7 +8,7 @@ The first release is a single-user local enterprise app. It must fully handle th
 
 ## Source Workbook Facts
 
-The workspace contains `XF Dimensions Template - 29.04.2026.xlsx`.
+The workspace can import a user-provided OneStream dimension workbook.
 
 The workbook contains 12 sheets:
 
@@ -532,7 +532,7 @@ Implementation choices:
 
 The first release is complete when:
 
-- User can import `XF Dimensions Template - 29.04.2026.xlsx`.
+- User can import a OneStream dimension workbook.
 - All 12 sheets are parsed.
 - Members and relationships are persisted and editable.
 - Generated XML/formula columns are ignored during import.

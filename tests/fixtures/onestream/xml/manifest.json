@@ -95,6 +95,13 @@
       "dimensionTypes": ["Account"],
       "roundTripExpectation": "not_applicable",
       "invalidExpectation": { "validationCodes": ["UNKNOWN_RELATIONSHIP_CHILD"] }
+    },
+    {
+      "file": "property-defaults-sample.xml",
+      "category": "valid",
+      "purpose": "Sample dimension XML for property default catalog analysis",
+      "dimensionTypes": ["Scenario", "Account", "Account", "Entity", "Flow", "UD1"],
+      "roundTripExpectation": "passed"
     }
   ]
 }

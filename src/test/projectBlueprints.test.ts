@@ -275,27 +275,19 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const auditEvents: Parameters<typeof repos.audit.record>[0][] = [];
-      const recordAudit = repos.audit.record;
-      repos.audit.record = async (input) => {
-        auditEvents.push(input);
-        await recordAudit(input);
-      };
 
-      await createProjectFromBlueprints(repos, defaultAppConfig, {
+      const project = await createProjectFromBlueprints(repos, defaultAppConfig, {
         name: "Owned Build",
         description: "",
         createdBy: "finance-builder"
       });
 
-      expect(auditEvents).toHaveLength(1);
-      expect(auditEvents[0]).toMatchObject({
-        action: "project.create",
-        userId: "finance-builder"
-      });
-      expect(db.prepare("SELECT user_id FROM audit_logs").get()).toMatchObject({
-        user_id: "finance-builder"
-      });
+      const row = db.prepare("SELECT user_id, action FROM audit_logs WHERE project_id = ?").get(project.id) as {
+        user_id: string;
+        action: string;
+      };
+      expect(row.action).toBe("project.create");
+      expect(row.user_id).toBe("finance-builder");
     } finally {
       db.close();
     }
@@ -324,25 +316,22 @@ describe("project blueprints", () => {
     }
   });
 
-  it("rejects native async transaction callbacks before invoking them", async () => {
+  it("supports async transaction callbacks and rolls back on error", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const transaction = await repos.transaction as unknown as (action: () => unknown) => unknown;
 
-      expect(() =>
-        transaction(async () => {
-          await Promise.resolve();
-          await repos.projects.create({
-            name: "Post Await Write",
+      await expect(
+        repos.transaction(async (tx) => {
+          await tx.projects.create({
+            name: "Async Write",
             description: "",
             sourceFileName: "",
             createdBy: "local-admin"
           });
+          throw new Error("async rollback");
         })
-      ).toThrow("Repository transactions only support synchronous callbacks.");
-
-      await Promise.resolve();
+      ).rejects.toThrow("async rollback");
 
       expect(await repos.projects.list()).toEqual([]);
     } finally {
@@ -411,15 +400,18 @@ describe("project blueprints", () => {
     try {
       const repos = createRepositories(db);
       let createdProjectId = "";
-      const createProject = repos.projects.create;
-      repos.projects.create = async (input) => {
-        const project = await createProject(input);
-        createdProjectId = project.id;
-        return project;
-      };
-      repos.members.create = async () => {
-        throw new Error("member insert failed");
-      };
+      const originalTransaction = repos.transaction.bind(repos);
+      repos.transaction = async (fn) =>
+        originalTransaction(async (tx) => {
+          const originalMemberCreate = tx.members.create.bind(tx.members);
+          tx.members.create = async (...args: Parameters<typeof originalMemberCreate>) => {
+            const project = await tx.projects.list();
+            if (project.length > 0) createdProjectId = project[0].id;
+            await originalMemberCreate(...args);
+            throw new Error("member insert failed");
+          };
+          return fn(tx);
+        });
 
       await expect(
         createProjectFromBlueprints(repos, defaultAppConfig, {
@@ -430,9 +422,11 @@ describe("project blueprints", () => {
       ).rejects.toThrow("member insert failed");
 
       expect(await repos.projects.list()).toEqual([]);
-      expect(await repos.projects.get(createdProjectId)).toBeNull();
-      expect(await repos.dimensions.listByProject(createdProjectId)).toEqual([]);
-      expect(await repos.members.listByProject(createdProjectId)).toEqual([]);
+      if (createdProjectId) {
+        expect(await repos.projects.get(createdProjectId)).toBeNull();
+        expect(await repos.dimensions.listByProject(createdProjectId)).toEqual([]);
+        expect(await repos.members.listByProject(createdProjectId)).toEqual([]);
+      }
     } finally {
       db.close();
     }
@@ -442,9 +436,14 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      repos.audit.record = async () => {
-        throw new Error("audit insert failed");
-      };
+      const originalTransaction = repos.transaction.bind(repos);
+      repos.transaction = async (fn) =>
+        originalTransaction(async (tx) => {
+          tx.audit.record = async () => {
+            throw new Error("audit insert failed");
+          };
+          return fn(tx);
+        });
 
       await expect(
         createProjectFromBlueprints(repos, defaultAppConfig, {

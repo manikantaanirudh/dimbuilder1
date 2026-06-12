@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createWriteStream, mkdirSync, writeFileSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { finished } from "node:stream/promises";
 import { join } from "node:path";
 import { assertProjectExportWithinMemberLimit } from "../../shared/exportLimits";
@@ -13,6 +13,8 @@ import {
   selectXmlExportModeForChangeSet,
   summarizeValidationIssues
 } from "../../shared/releasePackage";
+import { buildReleaseEvidence, defaultEvidenceOptions } from "../../shared/releaseEvidence";
+import { computeReadinessScore, type ReadinessCertificationInput } from "../../shared/readinessScore";
 import type { ChangeSetDetail, ChangeSetStatus, ReleasePackageMode } from "../../shared/types";
 import { writeProjectXmlToWritable } from "../../shared/xmlExport";
 import type { Repositories } from "../db/repositories";
@@ -190,6 +192,44 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       await finished(xmlStream);
       writeFileSync(join(packagePath, "06-rollback-notes.md"), renderRollbackNotesMarkdown(packagedDetail));
       writeFileSync(join(packagePath, "manifest.json"), JSON.stringify(manifest, null, 2));
+
+      const dimensions = await repos.dimensions.listByProject(project.id);
+      const readiness = computeReadinessScore({
+        issues,
+        dimensions: dimensions.map((d) => ({ dimensionType: d.dimensionType })),
+        expectedDimensionTypes: config.validation.oneStreamProfile?.expectedDimensionTypes ?? [],
+        certification: loadCertificationStatus(config.paths.exportsDirectory, project.id),
+        exportBlockedBySeverities: config.validation.exportBlockedBySeverities,
+        weights: config.readiness?.categoryWeights
+      });
+      const waivers = await repos.validationWaivers.listByProject(project.id);
+      const waivedIssueIds = new Set(waivers.map((w) => w.issueId));
+      const waivedIssues = issues.filter((i) => waivedIssueIds.has(i.id));
+      const impactAnalyses = await repos.impactAnalyses.listByProject(project.id);
+      const evidence = buildReleaseEvidence({
+        detail: packagedDetail,
+        projectName: project.name,
+        issues,
+        readiness,
+        validationProfileId: config.validation.defaultProfileId,
+        waivedIssues,
+        certification: null,
+        certificationMarkdown: null,
+        impact: impactAnalyses.map((analysis) => ({
+          id: analysis.id,
+          analysisType: analysis.analysisType,
+          severity: analysis.severity,
+          summary: analysis.summary,
+          createdAt: analysis.createdAt
+        })),
+        options: defaultEvidenceOptions
+      });
+      const evidenceDir = join(packagePath, "evidence");
+      mkdirSync(evidenceDir, { recursive: true });
+      for (const file of evidence.files) {
+        writeFileSync(join(evidenceDir, file.fileName), file.content);
+      }
+
       const packageRecord = await repos.changeSets.createReleasePackage({
         changeSetId: detail.changeSet.id,
         packageName,
@@ -229,10 +269,10 @@ async function readSnapshot(repos: Repositories, projectId: string) {
   if (!project) throw Object.assign(new Error("project not found"), { status: 404 });
   return {
     project,
-    dimensions: repos.dimensions.listByProject(project.id),
-    members: repos.members.listByProject(project.id),
-    relationships: repos.relationships.listByProject(project.id),
-    varyingPropertyValues: repos.varyingProperties.listVaryingPropertyValues(project.id)
+    dimensions: await repos.dimensions.listByProject(project.id),
+    members: await repos.members.listByProject(project.id),
+    relationships: await repos.relationships.listByProject(project.id),
+    varyingPropertyValues: await repos.varyingProperties.listVaryingPropertyValues(project.id)
   };
 }
 
@@ -251,4 +291,18 @@ function safeFileSegment(value: string): string {
     .replace(/[^A-Za-z0-9._-]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 80) || "release-package";
+}
+
+function loadCertificationStatus(exportsDirectory: string, projectId: string): ReadinessCertificationInput | null {
+  const path = join(exportsDirectory, `${projectId}.certification.json`);
+  if (!existsSync(path)) return null;
+  try {
+    const report = JSON.parse(readFileSync(path, "utf8")) as { status?: ReadinessCertificationInput["status"] };
+    if (report.status === "passed" || report.status === "passed_with_warnings" || report.status === "failed") {
+      return { status: report.status };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
