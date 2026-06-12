@@ -34,7 +34,27 @@ A multi-stage Dockerfile is provided for production deployment.
 docker build -t dimbuilder .
 ```
 
-### Run the container
+### Run with Docker Compose (PostgreSQL)
+
+`docker-compose.yml` runs the app with PostgreSQL 16:
+
+```powershell
+docker compose up --build
+```
+
+The stack includes:
+
+- `postgres` — `postgres:16-alpine`, published as `localhost:5433` → container `5432`
+- `app` — API on port `8787`, `DATABASE_URL=postgresql://postgres:postgres@postgres:5432/dimbuilder`
+
+**Port expectations:**
+
+- **Inside Compose:** the app connects to `postgres:5432`.
+- **On the host:** use `localhost:5433` for `psql`, `PG_TEST_URL`, `scripts/migrate-pg.mjs`, and other local tools so you do not collide with a system Postgres on `5432`.
+
+Copy `.env.example` to `.env` and set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` before shared deployment.
+
+### Run a single SQLite container
 
 ```powershell
 docker run -p 8787:8787 -v dimbuilder-data:/app/data dimbuilder
@@ -53,6 +73,25 @@ To override configuration, mount a custom YAML file:
 ```powershell
 docker run -p 8787:8787 -v ./my-config.yaml:/app/config/dimbuilder.yaml dimbuilder
 ```
+
+## Azure Container Apps + PostgreSQL Flexible Server
+
+Reference production stack (documented; not automated in v1):
+
+1. **Container image** — build from the repo `Dockerfile` and push to Azure Container Registry.
+2. **Azure Database for PostgreSQL Flexible Server** — create a database named `dimbuilder`, enable TLS, and restrict firewall rules to the Container Apps environment.
+3. **Connection string** — store in Azure Key Vault as `DATABASE_URL`, for example:
+   `postgresql://<user>:<password>@<server>.postgres.database.azure.com:5432/dimbuilder?sslmode=require`
+4. **Container Apps** — deploy the image with:
+   - `DATABASE_URL` from Key Vault secret reference
+   - `JWT_SECRET` from Key Vault
+   - `AUTH_ENABLED=true`
+   - `HOST=0.0.0.0`
+   - Azure Files mount for `/app/data/uploads` and `/app/data/exports` (PostgreSQL holds OLTP data; file shares hold uploads and exports)
+5. **Migrations** — run `node scripts/migrate-pg.mjs` against the target `DATABASE_URL` before or during rollout.
+6. **Smoke test** — after deploy, run `node scripts/smoke-test.mjs https://<your-app-url>` (set `SMOKE_TEST_EMAIL` / `SMOKE_TEST_PASSWORD` when auth is enabled).
+
+Review `DATABASE_POOL_MAX` and SSL mode (`sslmode=require` for Azure) in the production readiness checklist before go-live.
 
 ## CI Pipeline
 
@@ -77,7 +116,9 @@ Environment overrides:
 
 - `DIMBUILDER_CONFIG_FILE`
 - `METADATA_DIRECTORY`
-- `DATABASE_FILE`
+- `DATABASE_URL`: PostgreSQL connection string (selects Postgres backend)
+- `DATABASE_FILE`: SQLite path when `DATABASE_URL` is unset
+- `DATABASE_POOL_MAX`: optional PostgreSQL pool size (default `10`)
 - `PORT`
 - `LOG_LEVEL`: controls Pino log verbosity (default `info`).
 
@@ -122,7 +163,7 @@ Before shared deployment:
 - Add upload controls.
 - Add database backup and migration process.
 - Move static client serving behind a configured production server.
-- Decide whether SQLite is acceptable or a managed database is required.
+- Use PostgreSQL (`DATABASE_URL`) for shared or production deployments; keep SQLite for single-user local use.
 
 ## Operational Smoke Test
 

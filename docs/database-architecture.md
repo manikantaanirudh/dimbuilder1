@@ -1,6 +1,23 @@
 # Database Architecture
 
-The app uses SQLite through `better-sqlite3`. Schema creation lives in `src/server/db/schema.ts`, database creation lives in `src/server/db/database.ts`, and all access should go through `src/server/db/repositories.ts`.
+The app supports two OLTP backends selected at runtime:
+
+| Backend | Client | Selection |
+|---------|--------|-----------|
+| SQLite (default) | `better-sqlite3` via `src/server/db/sqliteClient.ts` | `DATABASE_FILE` when `DATABASE_URL` is unset |
+| PostgreSQL | `pg` via `src/server/db/postgresClient.ts` | `DATABASE_URL` set (takes precedence) |
+
+Use SQLite for local development and the default Vitest suite. Use PostgreSQL for shared pilots, Docker Compose stacks, and production deployments. Both backends share one async repository layer in `src/server/db/repositories.ts`.
+
+## Configuration
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string, e.g. `postgresql://postgres:postgres@localhost:5433/dimbuilder`. When set, the app ignores `DATABASE_FILE` for persistence. |
+| `DATABASE_FILE` | SQLite file path (default `data/app.db`). Used only when `DATABASE_URL` is unset. |
+| `DATABASE_POOL_MAX` | Optional PostgreSQL pool size (default `10`). |
+
+Schema creation for SQLite lives in `src/server/db/schema.ts`. PostgreSQL DDL lives in `src/server/db/schema/postgres.sql`. Legacy SQLite bootstrap also lives in `src/server/db/database.ts`.
 
 ## Tables
 
@@ -298,12 +315,25 @@ Reserved identity and role tables. The current app uses `local-admin` rather tha
 
 Project-owned records use `ON DELETE CASCADE` so deleting a project removes dimensions, members, relationships, varying property values, issues, audit logs, snapshots, baselines, diff runs/items, change sets, related release records, and bulk update jobs/items.
 
+### `property_default_catalog`
+
+Built-in default property catalog seeded from `config/builtInPropertyDefaults.json` on database startup through `src/server/db/seedPropertyDefaultCatalog.ts`.
+
+### `property_default_profiles` and `property_default_values`
+
+Project-scoped profiles created from analyzed OneStream XML uploads. `property_default_values` stores inferred defaults per dimension type, target level, and property name with confidence metadata.
+
+### `property_default_overrides`
+
+Project-level overrides that adjust effective defaults without replacing the entire profile.
+
+Property default resolution for export and validation is implemented in `src/shared/propertyDefaultResolver.ts` and `src/shared/effectiveProperties.ts`.
+
 ## Repository Rules
 
 - Use repository methods instead of direct SQL in route handlers.
-- Keep repository transactions synchronous.
+- Repository methods and `repos.transaction()` are async for both dialects.
 - Use `repos.transaction()` when a workflow inserts multiple related records.
-- Do not pass async callbacks into `repos.transaction()`. It rejects async functions and thenables.
 
 ## Indexes
 
@@ -326,4 +356,4 @@ Indexes support common lookups:
 
 ## Schema Evolution
 
-`src/server/db/database.ts` runs a minimal startup evolution step for additive columns that were introduced after the initial table creation. The relationship operation columns are added with `ALTER TABLE` when an existing local database is opened and the columns are missing.
+`src/server/db/database.ts` applies `schemaSql` on startup, runs additive `evolveSchema()` helpers, and records named migrations from `src/server/db/migrations.ts` in `schema_migrations`. Migration `002_relationship_operation_columns` adds relationship operation metadata columns when missing from older local databases.

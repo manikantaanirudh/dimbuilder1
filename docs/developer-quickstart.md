@@ -32,6 +32,30 @@ Run focused tests by passing paths:
 npm.cmd test -- src/test/appConfig.test.ts
 ```
 
+### PostgreSQL parity tests
+
+Start a local Postgres instance (Docker Compose or standalone):
+
+```powershell
+docker compose up -d postgres
+```
+
+Host tools connect on port **5433** (mapped from container `5432`):
+
+```powershell
+$env:PG_TEST_URL = "postgresql://postgres:postgres@127.0.0.1:5433/dimbuilder"
+npm.cmd run test:postgres
+```
+
+`PG_TEST_URL` is optional. Tests that require Postgres skip automatically when it is unset. Use the same URL pattern for `DATABASE_URL` when running the API against Postgres locally.
+
+Apply PostgreSQL schema migrations manually when needed:
+
+```powershell
+$env:DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5433/dimbuilder"
+node scripts/migrate-pg.mjs
+```
+
 ### Watch Mode
 
 ```powershell
@@ -45,6 +69,17 @@ npm.cmd run test:coverage
 ```
 
 Coverage uses `@vitest/coverage-v8` with thresholds of 60% lines and 50% branches. Configuration is in `vitest.config.ts`.
+
+### PostgreSQL Tests
+
+Optional parity and performance tests run against a live Postgres instance when `PG_TEST_URL` is set. Start Postgres locally (for example via Docker on port 5433), then run:
+
+```powershell
+$env:PG_TEST_URL="postgresql://postgres:postgres@127.0.0.1:5433/dimbuilder"
+npm.cmd run test:postgres
+```
+
+Without `PG_TEST_URL`, the Postgres-gated tests are skipped and the rest of the suite still runs.
 
 ## Build
 
@@ -70,8 +105,10 @@ Run this after source changes. If a source change affects behavior, APIs, config
 | `server` | Run server only in watch mode |
 | `build` | TypeScript compile + Vite production build |
 | `test` | Run Vitest once |
+| `test:postgres` | Run Postgres parity and schema tests (requires `PG_TEST_URL`) |
 | `test:watch` | Run Vitest in watch mode |
 | `test:coverage` | Run Vitest with V8 coverage |
+| `test:postgres` | Run PostgreSQL parity suite (requires `PG_TEST_URL`) |
 | `docs:check` | Validate documentation freshness |
 | `preview` | Vite production preview server |
 | `benchmark` | Run autoresearch benchmark |
@@ -88,7 +125,10 @@ Supported environment overrides:
 
 - `DIMBUILDER_CONFIG_FILE`: alternate YAML configuration file.
 - `METADATA_DIRECTORY`: overrides `paths.metadataDirectory`.
-- `DATABASE_FILE`: overrides `paths.databaseFile`.
+- `DATABASE_URL`: PostgreSQL connection string; selects Postgres when set.
+- `DATABASE_FILE`: SQLite path when `DATABASE_URL` is unset.
+- `DATABASE_POOL_MAX`: optional PostgreSQL pool size (default `10`).
+- `PG_TEST_URL`: connection string for optional Postgres parity tests (typically `localhost:5433` with Docker Compose).
 - `PORT`: overrides `server.port`.
 - `LOG_LEVEL`: controls Pino log verbosity (default `info`).
 

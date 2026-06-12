@@ -1,6 +1,26 @@
 # Pilot/shared deployment: copy .env.example to .env and set JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD.
 # AUTH_ENABLED defaults to true so the app can bind to 0.0.0.0 safely (see startupSafety).
+#
+# PostgreSQL port mapping: host tools (psql, PG_TEST_URL, migrate-pg) use localhost:5433.
+# In-compose traffic uses postgres:5432 (see app DATABASE_URL below).
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dimbuilder
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dimbuilder"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     ports:
@@ -16,7 +36,10 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - DATABASE_FILE=/app/data/app.db
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/dimbuilder
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/health').then(r=>{if(!r.ok)process.exit(1)})"]
@@ -26,3 +49,4 @@ services:
 
 volumes:
   app-data:
+  pg-data:

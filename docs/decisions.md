@@ -85,11 +85,37 @@ Database access goes through `src/server/db/repositories.ts`.
 
 Rationale:
 
-Routes stay focused on HTTP behavior. The repository layer centralizes mapping between SQLite rows and app records.
+Routes stay focused on HTTP behavior. The repository layer centralizes mapping between database rows and app records.
 
 Important rule:
 
-Repository transactions are synchronous only.
+Repository methods and transactions are async for both SQLite and PostgreSQL.
+
+## 2026-06-12: PostgreSQL for Production OLTP; SQLite for Dev and Tests
+
+Decision:
+
+PostgreSQL is the production and shared-deployment OLTP backend. SQLite remains the default for local development and the primary Vitest suite.
+
+Rationale:
+
+Shared pilots and Azure-hosted deployments need a managed, concurrent-safe database. SQLite stays fast and zero-ops for day-to-day consultant work and unit tests. Backend selection is environment-driven: `DATABASE_URL` selects PostgreSQL; `DATABASE_FILE` applies when `DATABASE_URL` is unset.
+
+Tradeoffs:
+
+- Two schema/migration paths must stay in sync (`schema.ts` / `postgres.sql` and dialect-specific migration folders).
+- Operators need backup, pooling, and SSL configuration for PostgreSQL.
+- One-time `scripts/sqlite-to-postgres.mjs` may be required when promoting a pilot SQLite database.
+
+Impacted files:
+
+- `src/server/db/createDbClient.ts`
+- `src/server/db/postgresClient.ts`
+- `src/server/db/schema/postgres.sql`
+- `scripts/migrate-pg.mjs`
+- `docker-compose.yml`
+- `docs/database-architecture.md`
+- `docs/deployment-guide.md`
 
 ## 2026-05-19: Docs As Code With Lightweight Check
 
