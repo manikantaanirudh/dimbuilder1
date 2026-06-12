@@ -25,6 +25,16 @@ function createClient(db: AppDatabase): DbClient {
       });
     },
 
+    run(sql: string, params: unknown[] = []): Promise<unknown> {
+      return Promise.resolve().then(() => {
+        if (params.length === 0) {
+          db.exec(sql);
+          return { changes: 0 };
+        }
+        return db.prepare(sql).run(...params);
+      });
+    },
+
     query<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
       return Promise.resolve(db.prepare(sql).all(...params) as T[]);
     },

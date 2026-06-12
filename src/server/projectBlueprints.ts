@@ -25,9 +25,9 @@ export async function createProjectFromBlueprints(
     const enabledTypes = new Set(config.dimensions.enabledTypes);
     const orderedTypes = config.dimensions.displayOrder.filter((type) => enabledTypes.has(type));
 
-    orderedTypes.forEach((dimensionType, index) => {
-      createDimensionWithBlueprint(tx, config, project.id, dimensionType, index + 1);
-    });
+    for (const [index, dimensionType] of orderedTypes.entries()) {
+      await createDimensionWithBlueprint(tx, config, project.id, dimensionType, index + 1);
+    }
 
     tx.audit.record({
       projectId: project.id,
@@ -45,17 +45,17 @@ export async function createProjectFromBlueprints(
   });
 }
 
-export function createDimensionWithBlueprint(
+export async function createDimensionWithBlueprint(
   repos: Repositories,
   config: AppConfig,
   projectId: string,
   dimensionType: DimensionType,
   sortOrder: number,
   options?: { dimensionName?: string }
-): DimensionRecord {
+): Promise<DimensionRecord> {
   const schema = getDimensionSchema(dimensionType);
   const blueprint = resolveBlueprint(config, dimensionType);
-  const dimension = repos.dimensions.create({
+  const dimension = await repos.dimensions.create({
     projectId,
     sheetName: schema.sheetNames[0] ?? dimensionType,
     dimensionType,
@@ -90,9 +90,9 @@ export function createDimensionWithBlueprint(
     });
   });
   const configuredMembers = [...configuredMemberMap.values()];
-  configuredMembers.forEach((configuredMember, memberIndex) => {
+  for (const [memberIndex, configuredMember] of configuredMembers.entries()) {
     const description = configuredMember.description ?? "";
-    repos.members.create({
+    await repos.members.create({
       dimensionId: dimension.id,
       memberKey: configuredMember.memberKey,
       description,
@@ -105,10 +105,10 @@ export function createDimensionWithBlueprint(
       sourceRowNumber: 0,
       isActive: true
     });
-  });
+  }
 
   const supportedRelationshipFields = new Set(schema.relationshipFields.map((field) => field.name));
-  blueprint.relationships?.forEach((relationship, relationshipIndex) => {
+  for (const [relationshipIndex, relationship] of (blueprint.relationships ?? []).entries()) {
     const relationshipPropertyValues = relationshipPropertiesToDefaults(
       relationship.properties ?? {},
       supportedRelationshipFields
@@ -127,7 +127,7 @@ export function createDimensionWithBlueprint(
       Parent: relationship.parentKey,
       Child: relationship.childKey
     };
-    repos.relationships.create({
+    await repos.relationships.create({
       dimensionId: dimension.id,
       parentKey: relationship.parentKey,
       childKey: relationship.childKey,
@@ -139,7 +139,7 @@ export function createDimensionWithBlueprint(
       rowOrder: relationshipIndex + 1,
       sourceRowNumber: 0
     });
-  });
+  }
 
   return dimension;
 }

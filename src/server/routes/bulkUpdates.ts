@@ -38,11 +38,11 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
           if (item.targetType === "member") {
             const member = membersById.get(item.targetId);
             if (!member) throw Object.assign(new Error("bulk update member target not found"), { status: 409 });
-            applyMemberPreviewItem(repos, dimension, member, item.propertyName, item.newValue);
+            await applyMemberPreviewItem(repos, dimension, member, item.propertyName, item.newValue);
           } else {
             const relationship = relationshipsById.get(item.targetId);
             if (!relationship) throw Object.assign(new Error("bulk update relationship target not found"), { status: 409 });
-            applyRelationshipPreviewItem(repos, relationship, item.propertyName, item.newValue);
+            await applyRelationshipPreviewItem(repos, relationship, item.propertyName, item.newValue);
           }
         }
 
@@ -179,13 +179,13 @@ function optionalString(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
-function applyMemberPreviewItem(
+export async function applyMemberPreviewItem(
   repos: Repositories,
   dimension: DimensionRecord,
   member: DimensionMemberRecord,
   propertyName: string,
   newValue: string
-): void {
+): Promise<void> {
   const schema = getDimensionSchema(dimension.dimensionType);
   const properties = { ...member.properties, [propertyName]: newValue };
   let memberKey = member.memberKey;
@@ -194,15 +194,15 @@ function applyMemberPreviewItem(
     properties[schema.memberKeyField] = newValue;
   }
   if (propertyName === "Description") properties.Description = newValue;
-  repos.members.update(member.id, { memberKey, properties });
+  await repos.members.update(member.id, { memberKey, properties });
 }
 
-function applyRelationshipPreviewItem(
+export async function applyRelationshipPreviewItem(
   repos: Repositories,
   relationship: DimensionRelationshipRecord,
   propertyName: string,
   newValue: string
-): void {
+): Promise<void> {
   const properties = { ...relationship.properties, [propertyName]: newValue };
   let parentKey = relationship.parentKey;
   let childKey = relationship.childKey;
@@ -214,5 +214,5 @@ function applyRelationshipPreviewItem(
     childKey = newValue;
     properties.Child = newValue;
   }
-  repos.relationships.update(relationship.id, { parentKey, childKey, properties });
+  await repos.relationships.update(relationship.id, { parentKey, childKey, properties });
 }

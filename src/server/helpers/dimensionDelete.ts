@@ -12,14 +12,14 @@ export interface DeleteDimensionResult {
  * Removes a dimension and all dependent metadata (members, relationships, validation issues,
  * varying properties cascade via FK). Cleans ancillary rows without FK constraints.
  */
-export function deleteDimension(repos: Repositories, dimensionId: string): DeleteDimensionResult | null {
-  const dimension = repos.dimensions.get(dimensionId);
+export async function deleteDimension(repos: Repositories, dimensionId: string): Promise<DeleteDimensionResult | null> {
+  const dimension = await repos.dimensions.get(dimensionId);
   if (!dimension) return null;
 
-  const membersRemoved = repos.members.countByDimension(dimensionId);
-  const relationshipsRemoved = repos.relationships.countByDimension(dimensionId);
+  const membersRemoved = await repos.members.countByDimension(dimensionId);
+  const relationshipsRemoved = await repos.relationships.countByDimension(dimensionId);
 
-  if (!repos.dimensions.delete(dimensionId)) return null;
+  if (!(await repos.dimensions.delete(dimensionId))) return null;
 
   return {
     dimensionId: dimension.id,

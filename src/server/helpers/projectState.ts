@@ -3,11 +3,16 @@ import type { Repositories } from "../db/repositories";
 
 export async function loadProjectState(repos: Repositories, projectId: string): Promise<ProjectMetadataState> {
   const project = await repos.projects.get(projectId) ?? undefined;
+  const [dimensions, members, relationships] = await Promise.all([
+    repos.dimensions.listByProject(projectId),
+    repos.members.listByProject(projectId),
+    repos.relationships.listByProject(projectId)
+  ]);
   return {
     project,
-    dimensions: repos.dimensions.listByProject(projectId),
-    members: repos.members.listByProject(projectId),
-    relationships: repos.relationships.listByProject(projectId)
+    dimensions,
+    members,
+    relationships
   };
 }
 

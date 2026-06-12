@@ -3,16 +3,16 @@ import { createDatabase } from "../server/db/database";
 import { createRepositories } from "../server/db/repositories";
 
 describe("grid editing repositories", () => {
-  it("lists and updates member and relationship rows by dimension", () => {
+  it("lists and updates member and relationship rows by dimension", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Test",
       description: "",
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Scenarios",
       dimensionType: "Scenario",
@@ -24,7 +24,7 @@ describe("grid editing repositories", () => {
       sortOrder: 1,
       metadata: {}
     });
-    const member = repos.members.create({
+    const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Actual",
       description: "Actual scenario",
@@ -33,7 +33,7 @@ describe("grid editing repositories", () => {
       sourceRowNumber: 9,
       isActive: true
     });
-    const relationship = repos.relationships.create({
+    const relationship = await repos.relationships.create({
       dimensionId: dimension.id,
       parentKey: "Root",
       childKey: "Actual",
@@ -46,31 +46,31 @@ describe("grid editing repositories", () => {
       sourceRowNumber: 16
     });
 
-    repos.members.update(member.id, {
+    await repos.members.update(member.id, {
       memberKey: "Actuals",
       properties: { Entity: "Actuals", Description: "Actual scenario" }
     });
-    repos.relationships.update(relationship.id, {
+    await repos.relationships.update(relationship.id, {
       parentKey: "Root",
       childKey: "Actuals",
       properties: { Parent: "Root", Child: "Actuals" }
     });
 
-    expect(repos.members.listByDimension(dimension.id)[0].memberKey).toBe("Actuals");
-    expect(repos.relationships.listByDimension(dimension.id)[0].childKey).toBe("Actuals");
+    expect((await repos.members.listByDimension(dimension.id))[0].memberKey).toBe("Actuals");
+    expect((await repos.relationships.listByDimension(dimension.id))[0].childKey).toBe("Actuals");
     db.close();
   });
 
-  it("upserts and replaces varying property values by target/context", () => {
+  it("upserts and replaces varying property values by target/context", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Varying Properties",
       description: "",
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Accounts",
       dimensionType: "Account",
@@ -82,7 +82,7 @@ describe("grid editing repositories", () => {
       sortOrder: 1,
       metadata: {}
     });
-    const member = repos.members.create({
+    const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Revenue",
       description: "Revenue",
@@ -157,10 +157,10 @@ describe("grid editing repositories", () => {
     db.close();
   });
 
-  it("persists change sets, approvals, and release package records", () => {
+  it("persists change sets, approvals, and release package records", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Release Package Project",
       description: "",
       sourceFileName: "",
@@ -237,16 +237,16 @@ describe("grid editing repositories", () => {
     db.close();
   });
 
-  it("persists bulk update jobs and rolls back partial transactional edits", () => {
+  it("persists bulk update jobs and rolls back partial transactional edits", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Bulk Update Project",
       description: "",
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Accounts",
       dimensionType: "Account",
@@ -258,7 +258,7 @@ describe("grid editing repositories", () => {
       sortOrder: 1,
       metadata: {}
     });
-    const member = repos.members.create({
+    const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Revenue",
       description: "Revenue",
@@ -294,8 +294,8 @@ describe("grid editing repositories", () => {
       { targetId: member.id, targetKey: "Revenue", propertyName: "Text1", oldValue: "Before", newValue: "After", status: "applied" }
     ]);
 
-    expect(() => repos.transaction<void>(() => {
-      repos.members.update(member.id, {
+    await expect(repos.transaction(async () => {
+      await repos.members.update(member.id, {
         memberKey: "Revenue",
         properties: { Account: "Revenue", Text1: "Partial" }
       });
@@ -310,23 +310,23 @@ describe("grid editing repositories", () => {
         items: []
       });
       throw new Error("simulated failure");
-    })).toThrow("simulated failure");
+    })).rejects.toThrow("simulated failure");
 
-    expect(repos.members.listByDimension(dimension.id)[0].properties.Text1).toBe("Before");
+    expect((await repos.members.listByDimension(dimension.id))[0].properties.Text1).toBe("Before");
     expect(repos.bulkUpdates.listJobs(project.id)).toHaveLength(1);
     db.close();
   });
 
-  it("lists snapshots and restores a snapshot into the current project transactionally", () => {
+  it("lists snapshots and restores a snapshot into the current project transactionally", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Snapshot Restore Project",
       description: "Before restore",
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Accounts",
       dimensionType: "Account",
@@ -338,7 +338,7 @@ describe("grid editing repositories", () => {
       sortOrder: 1,
       metadata: {}
     });
-    const member = repos.members.create({
+    const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Revenue",
       description: "Revenue",
@@ -347,7 +347,7 @@ describe("grid editing repositories", () => {
       sourceRowNumber: 2,
       isActive: true
     });
-    const relationship = repos.relationships.create({
+    const relationship = await repos.relationships.create({
       dimensionId: dimension.id,
       parentKey: "Root",
       childKey: "Revenue",
@@ -386,12 +386,12 @@ describe("grid editing repositories", () => {
     expect(repos.snapshots.listByProject(project.id)).toMatchObject([{ id: snapshotId, name: "Original snapshot" }]);
     expect(repos.snapshots.get(project.id, snapshotId)).toMatchObject({ id: snapshotId, description: "Restore point" });
 
-    repos.members.update(member.id, {
+    await repos.members.update(member.id, {
       memberKey: "RevenueRenamed",
       properties: { Account: "RevenueRenamed", Description: "Changed", Text1: "Changed" }
     });
-    repos.relationships.delete(relationship.id);
-    repos.members.create({
+    await repos.relationships.delete(relationship.id);
+    await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Temporary",
       description: "Temporary",
@@ -413,23 +413,23 @@ describe("grid editing repositories", () => {
       varyingPropertiesRestored: 1
     });
     expect(summary.safetySnapshotId).toBeTruthy();
-    expect(repos.members.listByDimension(dimension.id).map((row) => row.memberKey)).toEqual(["Revenue"]);
-    expect(repos.relationships.listByDimension(dimension.id)).toMatchObject([{ parentKey: "Root", childKey: "Revenue" }]);
+    expect((await repos.members.listByDimension(dimension.id)).map((row) => row.memberKey)).toEqual(["Revenue"]);
+    expect(await repos.relationships.listByDimension(dimension.id)).toMatchObject([{ parentKey: "Root", childKey: "Revenue" }]);
     expect(repos.varyingProperties.listVaryingPropertyValues(project.id)).toMatchObject([{ targetId: member.id, value: "Original varying" }]);
     expect(repos.snapshots.listByProject(project.id)).toHaveLength(2);
     db.close();
   });
 
-  it("creates a new project branch from a snapshot and remaps record ids", () => {
+  it("creates a new project branch from a snapshot and remaps record ids", async () => {
     const db = createDatabase(":memory:");
     const repos = createRepositories(db);
-    const project = repos.projects.create({
+    const project = await repos.projects.create({
       name: "Snapshot Source Project",
       description: "",
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Accounts",
       dimensionType: "Account",
@@ -441,7 +441,7 @@ describe("grid editing repositories", () => {
       sortOrder: 1,
       metadata: {}
     });
-    const member = repos.members.create({
+    const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey: "Revenue",
       description: "Revenue",
@@ -450,7 +450,7 @@ describe("grid editing repositories", () => {
       sourceRowNumber: 2,
       isActive: true
     });
-    const relationship = repos.relationships.create({
+    const relationship = await repos.relationships.create({
       dimensionId: dimension.id,
       parentKey: "Root",
       childKey: "Revenue",
@@ -484,9 +484,9 @@ describe("grid editing repositories", () => {
     });
 
     const result = repos.snapshots.createProjectFromSnapshot(snapshotId, "Branch Project");
-    const branchDimensions = repos.dimensions.listByProject(result.project.id);
-    const branchMembers = repos.members.listByProject(result.project.id);
-    const branchRelationships = repos.relationships.listByProject(result.project.id);
+    const branchDimensions = await repos.dimensions.listByProject(result.project.id);
+    const branchMembers = await repos.members.listByProject(result.project.id);
+    const branchRelationships = await repos.relationships.listByProject(result.project.id);
     const branchVarying = repos.varyingProperties.listVaryingPropertyValues(result.project.id);
 
     expect(result.project).toMatchObject({ name: "Branch Project", createdBy: "local-admin" });

@@ -33,12 +33,12 @@ function readCsvFormDefaults(body: Record<string, unknown>): MetadataCsvFormDefa
   };
 }
 
-function buildCsvImportContext(
+async function buildCsvImportContext(
   repos: Repositories,
   config: AppConfig,
   csvContent: string,
   body: Record<string, unknown>
-): MetadataCsvImportContext {
+): Promise<MetadataCsvImportContext> {
   const projectId = typeof body.projectId === "string" && body.projectId.trim() ? body.projectId.trim() : undefined;
   const mode = projectId ? "existingProject" : "newProject";
   const formDefaults = readCsvFormDefaults(body);
@@ -52,14 +52,19 @@ function buildCsvImportContext(
   };
 
   if (mode === "existingProject") {
-    const project = repos.projects.get(projectId!);
+    const project = await repos.projects.get(projectId!);
     if (!project) {
       throw new Error("Project not found.");
     }
     context.projectId = project.id;
-    context.existingDimensions = repos.dimensions.listByProject(project.id);
-    context.existingMembers = repos.members.listByProject(project.id);
-    context.existingRelationships = repos.relationships.listByProject(project.id);
+    const [existingDimensions, existingMembers, existingRelationships] = await Promise.all([
+      repos.dimensions.listByProject(project.id),
+      repos.members.listByProject(project.id),
+      repos.relationships.listByProject(project.id)
+    ]);
+    context.existingDimensions = existingDimensions;
+    context.existingMembers = existingMembers;
+    context.existingRelationships = existingRelationships;
   }
 
   return context;
@@ -133,7 +138,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const csvContent = readFileSync(req.file.path, "utf8");
       let context: MetadataCsvImportContext;
       try {
-        context = buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
+        context = await buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
       } catch (error) {
         if (error instanceof Error && error.message === "Project not found.") {
           return res.status(404).json({ error: error.message });
@@ -161,7 +166,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const csvContent = readFileSync(req.file.path, "utf8");
       let context: MetadataCsvImportContext;
       try {
-        context = buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
+        context = await buildCsvImportContext(repos, config, csvContent, req.body as Record<string, unknown>);
       } catch (error) {
         if (error instanceof Error && error.message === "Project not found.") {
           return res.status(404).json({ error: error.message });
@@ -173,8 +178,8 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         return res.status(400).json({ error: "CSV preview has blocking errors.", preview });
       }
 
-      const result = applyMetadataCsvCommitPlan(repos, config, plan);
-      const project = repos.projects.get(result.projectId);
+      const result = await applyMetadataCsvCommitPlan(repos, config, plan);
+      const project = await repos.projects.get(result.projectId);
       res.json({
         project,
         preview,
@@ -210,25 +215,37 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         metadataReference
       });
 
-      const project = repos.projects.create({
-        name: parsed.project.name,
-        description: parsed.project.description,
-        sourceFileName: req.file.originalname,
-        createdBy: "local-admin"
+      const project = await repos.transaction(async (tx) => {
+        const savedProject = await tx.projects.create({
+          name: parsed.project.name,
+          description: parsed.project.description,
+          sourceFileName: req.file.originalname,
+          createdBy: "local-admin"
+        });
+
+        const dimensionIdMap = new Map<string, string>();
+        for (const dimension of parsed.dimensions) {
+          const saved = await tx.dimensions.create({ ...dimension, projectId: savedProject.id });
+          dimensionIdMap.set(dimension.id, saved.id);
+        }
+
+        await tx.members.bulkInsert(parsed.members.map((member) => ({
+          ...member,
+          dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId
+        })));
+        await tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
+          ...relationship,
+          dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId
+        })));
+
+        return savedProject;
       });
 
-      const dimensionIdMap = new Map<string, string>();
-      for (const dimension of parsed.dimensions) {
-        const saved = repos.dimensions.create({ ...dimension, projectId: project.id });
-        dimensionIdMap.set(dimension.id, saved.id);
-      }
-
-      repos.members.bulkInsert(parsed.members.map((member) => ({ ...member, dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId })));
-      repos.relationships.bulkInsert(parsed.relationships.map((relationship) => ({ ...relationship, dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId })));
-
-      const dimensions = repos.dimensions.listByProject(project.id);
-      const members = repos.members.listByProject(project.id);
-      const relationships = repos.relationships.listByProject(project.id);
+      const [dimensions, members, relationships] = await Promise.all([
+        repos.dimensions.listByProject(project.id),
+        repos.members.listByProject(project.id),
+        repos.relationships.listByProject(project.id)
+      ]);
       const issues = dimensions.flatMap((dimension) =>
         validateDimension({
           project,
@@ -273,15 +290,15 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
 
         const dimensionIdMap = new Map<string, string>();
         for (const dimension of parsed.dimensions) {
-          const saved = tx.dimensions.create({ ...dimension, projectId: savedProject.id });
+          const saved = await tx.dimensions.create({ ...dimension, projectId: savedProject.id });
           dimensionIdMap.set(dimension.id, saved.id);
         }
 
-        tx.members.bulkInsert(parsed.members.map((member) => ({
+        await tx.members.bulkInsert(parsed.members.map((member) => ({
           ...member,
           dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId
         })));
-        tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
+        await tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
           ...relationship,
           dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId
         })));
@@ -289,9 +306,11 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         return savedProject;
       });
 
-      const dimensions = repos.dimensions.listByProject(project.id);
-      const members = repos.members.listByProject(project.id);
-      const relationships = repos.relationships.listByProject(project.id);
+      const [dimensions, members, relationships] = await Promise.all([
+        repos.dimensions.listByProject(project.id),
+        repos.members.listByProject(project.id),
+        repos.relationships.listByProject(project.id)
+      ]);
       const issues = dimensions.flatMap((dimension) =>
         validateDimension({
           project,

@@ -19,6 +19,11 @@ function createSessionClient(poolClient: PoolClient): DbClient {
       await runQuery(text, values);
     },
 
+    async run(sql: string, params: unknown[] = []): Promise<unknown> {
+      const { text, values } = toPostgresParams(sql, params);
+      return runQuery(text, values);
+    },
+
     async query<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
       const { text, values } = toPostgresParams(sql, params);
       const result = await runQuery(text, values);
@@ -70,6 +75,11 @@ export async function createPostgresClient(connectionString: string, poolMax = 1
     async exec(sql: string, params: unknown[] = []): Promise<void> {
       const { text, values } = toPostgresParams(sql, params);
       await pool.query(text, values);
+    },
+
+    async run(sql: string, params: unknown[] = []): Promise<unknown> {
+      const { text, values } = toPostgresParams(sql, params);
+      return pool.query(text, values);
     },
 
     async query<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {

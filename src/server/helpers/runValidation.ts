@@ -6,9 +6,11 @@ import type { Repositories } from "../db/repositories";
 export async function runProjectValidation(repos: Repositories, config: AppConfig, projectId: string) {
   const project = await repos.projects.get(projectId);
   if (!project) return [];
-  const dimensions = repos.dimensions.listByProject(project.id);
-  const members = repos.members.listByProject(project.id);
-  const relationships = repos.relationships.listByProject(project.id);
+  const [dimensions, members, relationships] = await Promise.all([
+    repos.dimensions.listByProject(project.id),
+    repos.members.listByProject(project.id),
+    repos.relationships.listByProject(project.id)
+  ]);
   const varyingPropertyValues = repos.varyingProperties.listVaryingPropertyValues(project.id);
   const propertyDefaults = repos.propertyDefaults.getEffectiveDefaultsForExport(project.id);
   const issues = dimensions.flatMap((dimension) =>

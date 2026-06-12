@@ -1,9 +1,9 @@
 import type { BulkUpdatePreviewItem, BulkUpdateRequest } from "../shared/bulkUpdate";
 import type { Repositories } from "./db/repositories";
 import type { ProjectMetadataState } from "../shared/types";
-import { applyMemberPreviewItem, applyRelationshipPreviewItem } from "./routes/dimensions";
+import { applyMemberPreviewItem, applyRelationshipPreviewItem } from "./routes/bulkUpdates";
 
-export function applyBulkUpdatePreviewItems(
+export async function applyBulkUpdatePreviewItems(
   repos: Repositories,
   projectId: string,
   state: ProjectMetadataState,
@@ -19,22 +19,22 @@ export function applyBulkUpdatePreviewItems(
   const membersById = new Map(state.members.map((member) => [member.id, member]));
   const relationshipsById = new Map(state.relationships.map((relationship) => [relationship.id, relationship]));
 
-  return repos.transaction(() => {
+  return repos.transaction(async () => {
     for (const item of previewItems) {
       const dimension = dimensionsById.get(item.dimensionId);
       if (!dimension) throw Object.assign(new Error("bulk update dimension target not found"), { status: 409 });
 
       if (item.targetType === "member") {
-        let member = membersById.get(item.targetId);
+        const member = membersById.get(item.targetId);
         if (!member) throw Object.assign(new Error("bulk update member target not found"), { status: 409 });
-        applyMemberPreviewItem(repos, dimension, member, item.propertyName, item.newValue);
-        const refreshed = repos.members.listByIds(dimension.id, [member.id])[0];
+        await applyMemberPreviewItem(repos, dimension, member, item.propertyName, item.newValue);
+        const refreshed = (await repos.members.listByIds(dimension.id, [member.id]))[0];
         if (refreshed) membersById.set(member.id, refreshed);
       } else {
         const relationship = relationshipsById.get(item.targetId);
         if (!relationship) throw Object.assign(new Error("bulk update relationship target not found"), { status: 409 });
-        applyRelationshipPreviewItem(repos, relationship, item.propertyName, item.newValue);
-        const refreshed = repos.relationships.listByIds(dimension.id, [relationship.id])[0];
+        await applyRelationshipPreviewItem(repos, relationship, item.propertyName, item.newValue);
+        const refreshed = (await repos.relationships.listByIds(dimension.id, [relationship.id]))[0];
         if (refreshed) relationshipsById.set(relationship.id, refreshed);
       }
     }

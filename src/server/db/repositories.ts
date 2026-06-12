@@ -11,6 +11,7 @@ import type { AppDatabase } from "./database";
 import { isAppDatabase } from "./database";
 import type { DbClient } from "./dbClient";
 import { appDatabaseAsDbClient } from "./migrations";
+import { normalizeBoolean, normalizeWriteResult } from "./migrationUtils";
 import { booleanValue } from "./sql";
 import type {
   WorkflowDefinition,
@@ -303,16 +304,16 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient, options: 
       }
     },
     dimensions: {
-      create(input: Omit<DimensionRecord, "id" | "createdAt" | "updatedAt">): DimensionRecord {
+      async create(input: Omit<DimensionRecord, "id" | "createdAt" | "updatedAt">): Promise<DimensionRecord> {
         const createdAt = now();
         const dimension: DimensionRecord = { id: nanoid(), ...input, createdAt, updatedAt: createdAt };
 
-        db.prepare(`
+        await client.exec(`
           INSERT INTO dimensions (
             id, project_id, sheet_name, dimension_type, dimension_name, description, access_group,
             maintenance_group, inherited_dimension, sort_order, metadata_json, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
+        `, [
           dimension.id,
           dimension.projectId,
           dimension.sheetName,
@@ -326,27 +327,30 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient, options: 
           JSON.stringify(dimension.metadata),
           dimension.createdAt,
           dimension.updatedAt
-        );
+        ]);
 
         return dimension;
       },
-      listByProject(projectId: string): DimensionRecord[] {
-        const dimensions = db.prepare("SELECT * FROM dimensions WHERE project_id = ?").all(projectId).map(mapDimension);
+      async listByProject(projectId: string): Promise<DimensionRecord[]> {
+        const dimensions = (await client.query<Record<string, unknown>>(
+          "SELECT * FROM dimensions WHERE project_id = ?",
+          [projectId]
+        )).map(mapDimension);
         return sortDimensionsByType(dimensions);
       },
-      get(dimensionId: string): DimensionRecord | null {
-        const row = db.prepare("SELECT * FROM dimensions WHERE id = ?").get(dimensionId);
+      async get(dimensionId: string): Promise<DimensionRecord | null> {
+        const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM dimensions WHERE id = ?", [dimensionId]);
         return row ? mapDimension(row) : null;
       },
-      update(dimensionId: string, input: Partial<Pick<DimensionRecord, "dimensionName" | "description" | "accessGroup" | "maintenanceGroup" | "inheritedDimension" | "metadata">>): void {
-        const current = this.get(dimensionId);
+      async update(dimensionId: string, input: Partial<Pick<DimensionRecord, "dimensionName" | "description" | "accessGroup" | "maintenanceGroup" | "inheritedDimension" | "metadata">>): Promise<void> {
+        const current = await this.get(dimensionId);
         if (!current) return;
-        db.prepare(`
+        await client.exec(`
           UPDATE dimensions
           SET dimension_name = ?, description = ?, access_group = ?, maintenance_group = ?,
               inherited_dimension = ?, metadata_json = ?, updated_at = ?
           WHERE id = ?
-        `).run(
+        `, [
           input.dimensionName ?? current.dimensionName,
           input.description ?? current.description,
           input.accessGroup ?? current.accessGroup,
@@ -355,207 +359,192 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient, options: 
           JSON.stringify(input.metadata ?? current.metadata),
           now(),
           dimensionId
-        );
+        ]);
       },
-      delete(dimensionId: string): boolean {
-        const current = this.get(dimensionId);
+      async delete(dimensionId: string): Promise<boolean> {
+        const current = await this.get(dimensionId);
         if (!current) return false;
-        runInTransactionSync(db, () => {
-          db.prepare("DELETE FROM edit_locks WHERE dimension_id = ?").run(dimensionId);
-          db.prepare("DELETE FROM collaboration_comments WHERE dimension_id = ?").run(dimensionId);
-          db.prepare("DELETE FROM ai_suggestions WHERE dimension_id = ?").run(dimensionId);
-          db.prepare("DELETE FROM dimensions WHERE id = ?").run(dimensionId);
+        await client.transaction(async (tx) => {
+          await tx.exec("DELETE FROM edit_locks WHERE dimension_id = ?", [dimensionId]);
+          await tx.exec("DELETE FROM collaboration_comments WHERE dimension_id = ?", [dimensionId]);
+          await tx.exec("DELETE FROM ai_suggestions WHERE dimension_id = ?", [dimensionId]);
+          await tx.exec("DELETE FROM dimensions WHERE id = ?", [dimensionId]);
         });
         return true;
       }
     },
     members: {
-      bulkInsert(records: DimensionMemberRecord[]): void {
-        runInTransactionSync(db, () => {
-          const stmt = db.prepare(`
-            INSERT INTO dimension_members (
-              id, dimension_id, member_key, description, properties_json, row_order,
-              source_row_number, is_active, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-          for (const record of records) {
-            stmt.run(
-              record.id,
-              record.dimensionId,
-              record.memberKey,
-              record.description,
-              JSON.stringify(record.properties),
-              record.rowOrder,
-              record.sourceRowNumber,
-              record.isActive ? 1 : 0,
-              record.createdAt,
-              record.updatedAt
-            );
-          }
-        });
+      async bulkInsert(records: DimensionMemberRecord[]): Promise<void> {
+        await bulkInsertMembers(client, records);
       },
-      create(input: Omit<DimensionMemberRecord, "id" | "createdAt" | "updatedAt">): DimensionMemberRecord {
+      async create(input: Omit<DimensionMemberRecord, "id" | "createdAt" | "updatedAt">): Promise<DimensionMemberRecord> {
         const createdAt = now();
         const record: DimensionMemberRecord = { id: nanoid(), ...input, createdAt, updatedAt: createdAt };
-        this.bulkInsert([record]);
+        await this.bulkInsert([record]);
         return record;
       },
-      listByDimension(dimensionId: string, paging = { offset: 0, limit: 200 }): DimensionMemberRecord[] {
-        return db.prepare(`
+      async listByDimension(dimensionId: string, paging = { offset: 0, limit: 200 }): Promise<DimensionMemberRecord[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_members
-          WHERE dimension_id = ? AND is_active = 1
+          WHERE dimension_id = ? AND is_active = ?
           ORDER BY row_order
           LIMIT ? OFFSET ?
-        `).all(dimensionId, paging.limit, paging.offset).map(mapMember);
+        `, [dimensionId, activeMembers, paging.limit, paging.offset]);
+        return rows.map(mapMember);
       },
-      listByProject(projectId: string): DimensionMemberRecord[] {
-        return db.prepare(`
+      async listByProject(projectId: string): Promise<DimensionMemberRecord[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT m.* FROM dimension_members m
           JOIN dimensions d ON d.id = m.dimension_id
-          WHERE d.project_id = ? AND m.is_active = 1
+          WHERE d.project_id = ? AND m.is_active = ?
           ORDER BY d.sort_order, m.row_order
-        `).all(projectId).map(mapMember);
+        `, [projectId, activeMembers]);
+        return rows.map(mapMember);
       },
-      countByProject(projectId: string): number {
-        return Number(db.prepare(`
+      async countByProject(projectId: string): Promise<number> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const row = await client.queryOne<{ count: number | string }>(`
           SELECT COUNT(*) AS count
           FROM dimension_members m
           JOIN dimensions d ON d.id = m.dimension_id
-          WHERE d.project_id = ? AND m.is_active = 1
-        `).get(projectId)?.count ?? 0);
+          WHERE d.project_id = ? AND m.is_active = ?
+        `, [projectId, activeMembers]);
+        return Number(row?.count ?? 0);
       },
-      listAllByDimension(dimensionId: string): DimensionMemberRecord[] {
-        return db.prepare(`
+      async listAllByDimension(dimensionId: string): Promise<DimensionMemberRecord[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_members
-          WHERE dimension_id = ? AND is_active = 1
+          WHERE dimension_id = ? AND is_active = ?
           ORDER BY row_order
-        `).all(dimensionId).map(mapMember);
+        `, [dimensionId, activeMembers]);
+        return rows.map(mapMember);
       },
-      countByDimension(dimensionId: string): number {
-        return Number(db.prepare("SELECT COUNT(*) AS count FROM dimension_members WHERE dimension_id = ? AND is_active = 1").get(dimensionId)?.count ?? 0);
+      async countByDimension(dimensionId: string): Promise<number> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const row = await client.queryOne<{ count: number | string }>(
+          "SELECT COUNT(*) AS count FROM dimension_members WHERE dimension_id = ? AND is_active = ?",
+          [dimensionId, activeMembers]
+        );
+        return Number(row?.count ?? 0);
       },
-      update(id: string, input: { memberKey: string; properties: Record<string, unknown> }): void {
+      async update(id: string, input: { memberKey: string; properties: Record<string, unknown> }): Promise<void> {
         const description = String(input.properties.Description ?? "");
-        db.prepare(`
+        await client.exec(`
           UPDATE dimension_members
           SET member_key = ?, description = ?, properties_json = ?, updated_at = ?
           WHERE id = ?
-        `).run(input.memberKey, description, JSON.stringify(input.properties), now(), id);
+        `, [input.memberKey, description, JSON.stringify(input.properties), now(), id]);
       },
-      getById(id: string): DimensionMemberRecord | undefined {
-        const row = db.prepare("SELECT * FROM dimension_members WHERE id = ? AND is_active = 1").get(id);
+      async getById(id: string): Promise<DimensionMemberRecord | undefined> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const row = await client.queryOne<Record<string, unknown>>(
+          "SELECT * FROM dimension_members WHERE id = ? AND is_active = ?",
+          [id, activeMembers]
+        );
         return row ? mapMember(row) : undefined;
       },
-      softDelete(id: string): void {
-        db.prepare("UPDATE dimension_members SET is_active = 0, updated_at = ? WHERE id = ?").run(now(), id);
+      async softDelete(id: string): Promise<void> {
+        const inactive = booleanValue(client.dialect, false);
+        await client.exec(
+          "UPDATE dimension_members SET is_active = ?, updated_at = ? WHERE id = ?",
+          [inactive, now(), id]
+        );
       },
-      softDeleteMany(ids: string[]): number {
+      async softDeleteMany(ids: string[]): Promise<number> {
         if (ids.length === 0) return 0;
+        const inactive = booleanValue(client.dialect, false);
+        const activeMembers = booleanValue(client.dialect, true);
         const placeholders = ids.map(() => "?").join(", ");
-        const result = db.prepare(`
+        const result = await client.run(`
           UPDATE dimension_members
-          SET is_active = 0, updated_at = ?
-          WHERE id IN (${placeholders}) AND is_active = 1
-        `).run(now(), ...ids);
-        return Number(result.changes ?? 0);
+          SET is_active = ?, updated_at = ?
+          WHERE id IN (${placeholders}) AND is_active = ?
+        `, [inactive, now(), ...ids, activeMembers]);
+        return normalizeWriteResult(client.dialect, result).changes;
       },
-      listByIds(dimensionId: string, ids: string[]): DimensionMemberRecord[] {
+      async listByIds(dimensionId: string, ids: string[]): Promise<DimensionMemberRecord[]> {
         if (ids.length === 0) return [];
+        const activeMembers = booleanValue(client.dialect, true);
         const placeholders = ids.map(() => "?").join(", ");
-        return db.prepare(`
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_members
-          WHERE dimension_id = ? AND id IN (${placeholders}) AND is_active = 1
+          WHERE dimension_id = ? AND id IN (${placeholders}) AND is_active = ?
           ORDER BY row_order
-        `).all(dimensionId, ...ids).map(mapMember);
+        `, [dimensionId, ...ids, activeMembers]);
+        return rows.map(mapMember);
       }
     },
     relationships: {
-      bulkInsert(records: DimensionRelationshipRecord[]): void {
-        runInTransactionSync(db, () => {
-          const stmt = db.prepare(`
-            INSERT INTO dimension_relationships (
-              id, dimension_id, parent_key, child_key, aggregation_weight, percent_consol,
-              percent_ownership, ownership_type, properties_json, operation, operation_source,
-              operation_notes, row_order, source_row_number,
-              created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-          for (const record of records) {
-            stmt.run(
-              record.id,
-              record.dimensionId,
-              record.parentKey,
-              record.childKey,
-              record.aggregationWeight,
-              record.percentConsol,
-              record.percentOwnership,
-              record.ownershipType,
-              JSON.stringify(record.properties),
-              record.operation || null,
-              record.operationSource || null,
-              record.operationNotes || null,
-              record.rowOrder,
-              record.sourceRowNumber,
-              record.createdAt,
-              record.updatedAt
-            );
-          }
-        });
+      async bulkInsert(records: DimensionRelationshipRecord[]): Promise<void> {
+        await bulkInsertRelationships(client, records);
       },
-      create(input: Omit<DimensionRelationshipRecord, "id" | "createdAt" | "updatedAt">): DimensionRelationshipRecord {
+      async create(input: Omit<DimensionRelationshipRecord, "id" | "createdAt" | "updatedAt">): Promise<DimensionRelationshipRecord> {
         const createdAt = now();
         const record: DimensionRelationshipRecord = { id: nanoid(), ...input, createdAt, updatedAt: createdAt };
-        this.bulkInsert([record]);
+        await this.bulkInsert([record]);
         return record;
       },
-      listByDimension(dimensionId: string, paging = { offset: 0, limit: 200 }): DimensionRelationshipRecord[] {
-        return db.prepare(`
+      async listByDimension(dimensionId: string, paging = { offset: 0, limit: 200 }): Promise<DimensionRelationshipRecord[]> {
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_relationships
           WHERE dimension_id = ?
           ORDER BY row_order
           LIMIT ? OFFSET ?
-        `).all(dimensionId, paging.limit, paging.offset).map(mapRelationship);
+        `, [dimensionId, paging.limit, paging.offset]);
+        return rows.map(mapRelationship);
       },
-      listByProject(projectId: string): DimensionRelationshipRecord[] {
-        return db.prepare(`
+      async listByProject(projectId: string): Promise<DimensionRelationshipRecord[]> {
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT r.* FROM dimension_relationships r
           JOIN dimensions d ON d.id = r.dimension_id
           WHERE d.project_id = ?
           ORDER BY d.sort_order, r.row_order
-        `).all(projectId).map(mapRelationship);
+        `, [projectId]);
+        return rows.map(mapRelationship);
       },
-      listAllByDimension(dimensionId: string): DimensionRelationshipRecord[] {
-        return db.prepare(`
+      async listAllByDimension(dimensionId: string): Promise<DimensionRelationshipRecord[]> {
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_relationships
           WHERE dimension_id = ?
           ORDER BY row_order
-        `).all(dimensionId).map(mapRelationship);
+        `, [dimensionId]);
+        return rows.map(mapRelationship);
       },
-      countByDimension(dimensionId: string): number {
-        return Number(db.prepare("SELECT COUNT(*) AS count FROM dimension_relationships WHERE dimension_id = ?").get(dimensionId)?.count ?? 0);
+      async countByDimension(dimensionId: string): Promise<number> {
+        const row = await client.queryOne<{ count: number | string }>(
+          "SELECT COUNT(*) AS count FROM dimension_relationships WHERE dimension_id = ?",
+          [dimensionId]
+        );
+        return Number(row?.count ?? 0);
       },
-      update(id: string, input: {
+      async update(id: string, input: {
         parentKey: string;
         childKey: string;
         properties: Record<string, unknown>;
         operation?: DimensionRelationshipRecord["operation"];
         operationSource?: string;
         operationNotes?: string;
-      }): void {
-        const current = db.prepare("SELECT * FROM dimension_relationships WHERE id = ?").get(id);
+      }): Promise<void> {
+        const current = await client.queryOne<Record<string, unknown>>(
+          "SELECT * FROM dimension_relationships WHERE id = ?",
+          [id]
+        );
         const nextAggregationWeight = nullableNumber(input.properties["Aggregation Weight"] ?? current?.aggregation_weight);
         const nextPercentConsol = nullableNumber(input.properties["Percent Consol"] ?? current?.percent_consol);
         const nextPercentOwnership = nullableNumber(input.properties["Percent Ownership"] ?? current?.percent_ownership);
         const nextOwnershipType = input.properties["Ownership Type"] !== undefined
           ? String(input.properties["Ownership Type"] ?? "")
           : String(current?.ownership_type ?? "");
-        db.prepare(`
+        await client.exec(`
           UPDATE dimension_relationships
           SET parent_key = ?, child_key = ?, aggregation_weight = ?, percent_consol = ?,
               percent_ownership = ?, ownership_type = ?, properties_json = ?,
               operation = ?, operation_source = ?, operation_notes = ?, updated_at = ?
           WHERE id = ?
-        `).run(
+        `, [
           input.parentKey,
           input.childKey,
           nextAggregationWeight,
@@ -568,39 +557,43 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient, options: 
           (input.operationNotes ?? String(current?.operation_notes ?? "")) || null,
           now(),
           id
-        );
+        ]);
       },
-      getById(id: string): DimensionRelationshipRecord | undefined {
-        const row = db.prepare("SELECT * FROM dimension_relationships WHERE id = ?").get(id);
+      async getById(id: string): Promise<DimensionRelationshipRecord | undefined> {
+        const row = await client.queryOne<Record<string, unknown>>(
+          "SELECT * FROM dimension_relationships WHERE id = ?",
+          [id]
+        );
         return row ? mapRelationship(row) : undefined;
       },
-      delete(id: string): void {
-        db.prepare("DELETE FROM dimension_relationships WHERE id = ?").run(id);
+      async delete(id: string): Promise<void> {
+        await client.exec("DELETE FROM dimension_relationships WHERE id = ?", [id]);
       },
-      deleteMany(ids: string[]): number {
+      async deleteMany(ids: string[]): Promise<number> {
         if (ids.length === 0) return 0;
         const placeholders = ids.map(() => "?").join(", ");
-        const result = db.prepare(`DELETE FROM dimension_relationships WHERE id IN (${placeholders})`).run(...ids);
-        return Number(result.changes ?? 0);
+        const result = await client.run(`DELETE FROM dimension_relationships WHERE id IN (${placeholders})`, ids);
+        return normalizeWriteResult(client.dialect, result).changes;
       },
-      deleteForMemberKeys(dimensionId: string, memberKeys: string[]): number {
+      async deleteForMemberKeys(dimensionId: string, memberKeys: string[]): Promise<number> {
         if (memberKeys.length === 0) return 0;
         const placeholders = memberKeys.map(() => "?").join(", ");
-        const result = db.prepare(`
+        const result = await client.run(`
           DELETE FROM dimension_relationships
           WHERE dimension_id = ?
             AND (parent_key IN (${placeholders}) OR child_key IN (${placeholders}))
-        `).run(dimensionId, ...memberKeys, ...memberKeys);
-        return Number(result.changes ?? 0);
+        `, [dimensionId, ...memberKeys, ...memberKeys]);
+        return normalizeWriteResult(client.dialect, result).changes;
       },
-      listByIds(dimensionId: string, ids: string[]): DimensionRelationshipRecord[] {
+      async listByIds(dimensionId: string, ids: string[]): Promise<DimensionRelationshipRecord[]> {
         if (ids.length === 0) return [];
         const placeholders = ids.map(() => "?").join(", ");
-        return db.prepare(`
+        const rows = await client.query<Record<string, unknown>>(`
           SELECT * FROM dimension_relationships
           WHERE dimension_id = ? AND id IN (${placeholders})
           ORDER BY row_order
-        `).all(dimensionId, ...ids).map(mapRelationship);
+        `, [dimensionId, ...ids]);
+        return rows.map(mapRelationship);
       }
     },
     varyingProperties: {
@@ -2652,6 +2645,115 @@ export function createRepositories(dbOrClient: AppDatabase | DbClient, options: 
 
 export type Repositories = ReturnType<typeof createRepositories>;
 
+const BULK_INSERT_BATCH_SIZE = 500;
+
+const MEMBER_INSERT_COLUMNS = [
+  "id", "dimension_id", "member_key", "description", "properties_json", "row_order",
+  "source_row_number", "is_active", "created_at", "updated_at"
+].join(", ");
+
+const RELATIONSHIP_INSERT_COLUMNS = [
+  "id", "dimension_id", "parent_key", "child_key", "aggregation_weight", "percent_consol",
+  "percent_ownership", "ownership_type", "properties_json", "operation", "operation_source",
+  "operation_notes", "row_order", "source_row_number", "created_at", "updated_at"
+].join(", ");
+
+function memberInsertParams(record: DimensionMemberRecord, dialect: DbClient["dialect"]): unknown[] {
+  return [
+    record.id,
+    record.dimensionId,
+    record.memberKey,
+    record.description,
+    JSON.stringify(record.properties),
+    record.rowOrder,
+    record.sourceRowNumber,
+    booleanValue(dialect, record.isActive),
+    record.createdAt,
+    record.updatedAt
+  ];
+}
+
+function relationshipInsertParams(record: DimensionRelationshipRecord): unknown[] {
+  return [
+    record.id,
+    record.dimensionId,
+    record.parentKey,
+    record.childKey,
+    record.aggregationWeight,
+    record.percentConsol,
+    record.percentOwnership,
+    record.ownershipType,
+    JSON.stringify(record.properties),
+    record.operation || null,
+    record.operationSource || null,
+    record.operationNotes || null,
+    record.rowOrder,
+    record.sourceRowNumber,
+    record.createdAt,
+    record.updatedAt
+  ];
+}
+
+async function bulkInsertBatched(
+  tx: DbClient,
+  table: string,
+  columns: string,
+  records: unknown[][],
+  valuesPerRow: number
+): Promise<void> {
+  const rowPlaceholder = `(${Array(valuesPerRow).fill("?").join(", ")})`;
+  for (let i = 0; i < records.length; i += BULK_INSERT_BATCH_SIZE) {
+    const chunk = records.slice(i, i + BULK_INSERT_BATCH_SIZE);
+    const placeholders = chunk.map(() => rowPlaceholder).join(", ");
+    await tx.exec(
+      `INSERT INTO ${table} (${columns}) VALUES ${placeholders}`,
+      chunk.flat()
+    );
+  }
+}
+
+async function bulkInsertMembers(client: DbClient, records: DimensionMemberRecord[]): Promise<void> {
+  if (records.length === 0) return;
+  const rowPlaceholder = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  await client.transaction(async (tx) => {
+    if (tx.dialect === "postgres") {
+      await bulkInsertBatched(
+        tx,
+        "dimension_members",
+        MEMBER_INSERT_COLUMNS,
+        records.map((record) => memberInsertParams(record, tx.dialect)),
+        10
+      );
+      return;
+    }
+    const sql = `INSERT INTO dimension_members (${MEMBER_INSERT_COLUMNS}) VALUES ${rowPlaceholder}`;
+    for (const record of records) {
+      await tx.exec(sql, memberInsertParams(record, tx.dialect));
+    }
+  });
+}
+
+async function bulkInsertRelationships(client: DbClient, records: DimensionRelationshipRecord[]): Promise<void> {
+  if (records.length === 0) return;
+  const rowPlaceholder = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  await client.transaction(async (tx) => {
+    if (tx.dialect === "postgres") {
+      await bulkInsertBatched(
+        tx,
+        "dimension_relationships",
+        RELATIONSHIP_INSERT_COLUMNS,
+        records.map((record) => relationshipInsertParams(record)),
+        16
+      );
+      return;
+    }
+    const sql = `INSERT INTO dimension_relationships (${RELATIONSHIP_INSERT_COLUMNS}) VALUES ${rowPlaceholder}`;
+    for (const record of records) {
+      await tx.exec(sql, relationshipInsertParams(record));
+    }
+  });
+}
+
 function runInTransactionSync<T>(db: AppDatabase, action: () => T): T {
   if (isAsyncFunction(action)) {
     throw new Error("Repository transactions only support synchronous callbacks.");
@@ -2729,7 +2831,7 @@ function mapMember(row: Record<string, unknown>): DimensionMemberRecord {
     properties: parseJson(String(row.properties_json ?? "{}"), {}),
     rowOrder: Number(row.row_order),
     sourceRowNumber: Number(row.source_row_number),
-    isActive: Number(row.is_active) === 1,
+    isActive: normalizeBoolean(row.is_active),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
   };

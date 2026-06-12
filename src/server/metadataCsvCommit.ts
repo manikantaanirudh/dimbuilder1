@@ -11,28 +11,28 @@ export interface MetadataCsvCommitResult {
   validationIssues: number;
 }
 
-export function applyMetadataCsvCommitPlan(
+export async function applyMetadataCsvCommitPlan(
   repos: Repositories,
   config: AppConfig,
   plan: MetadataCsvCommitPlan
-): MetadataCsvCommitResult {
+): Promise<MetadataCsvCommitResult> {
   const timestamp = new Date().toISOString();
-  const projectId = repos.transaction(() => {
+  const projectId = await repos.transaction(async () => {
     let projectId = plan.projectId;
     if (plan.mode === "newProject") {
-      const project = repos.projects.create({
+      const project = await repos.projects.create({
         name: plan.projectName,
         description: "Imported from simple parent-child CSV metadata.",
         sourceFileName: plan.sourceFileName,
         createdBy: "local-admin"
       });
       projectId = project.id;
-    } else if (!projectId || !repos.projects.get(projectId)) {
+    } else if (!projectId || !(await repos.projects.get(projectId))) {
       throw new Error("Existing project was not found.");
     }
 
     const dimensionIdByKey = new Map<string, string>();
-    const existingDimensions = repos.dimensions.listByProject(projectId!);
+    const existingDimensions = await repos.dimensions.listByProject(projectId!);
     for (const dimension of existingDimensions) {
       dimensionIdByKey.set(`${dimension.dimensionType}\u0000${dimension.dimensionName.trim().toLowerCase()}`, dimension.id);
     }
@@ -43,7 +43,7 @@ export function applyMetadataCsvCommitPlan(
         dimensionIdByKey.set(dimensionPlan.key, dimensionPlan.existingDimensionId);
         continue;
       }
-      const created = repos.dimensions.create({
+      const created = await repos.dimensions.create({
         projectId: projectId!,
         sheetName: dimensionPlan.dimensionName,
         dimensionType: dimensionPlan.dimensionType,
@@ -76,11 +76,11 @@ export function applyMetadataCsvCommitPlan(
       };
     });
     if (membersToInsert.length > 0) {
-      repos.members.bulkInsert(membersToInsert);
+      await repos.members.bulkInsert(membersToInsert);
     }
 
     for (const update of plan.membersToUpdate) {
-      repos.members.update(update.memberId, { memberKey: update.memberKey, properties: update.properties });
+      await repos.members.update(update.memberId, { memberKey: update.memberKey, properties: update.properties });
     }
 
     const relationshipsToInsert: DimensionRelationshipRecord[] = plan.relationshipsToCreate.map((relationship) => {
@@ -103,7 +103,7 @@ export function applyMetadataCsvCommitPlan(
       };
     });
     if (relationshipsToInsert.length > 0) {
-      repos.relationships.bulkInsert(relationshipsToInsert);
+      await repos.relationships.bulkInsert(relationshipsToInsert);
     }
 
     const auditAction = plan.mode === "newProject" ? "project.importCsv" : "project.importCsvAppend";
@@ -125,7 +125,7 @@ export function applyMetadataCsvCommitPlan(
     return projectId!;
   });
 
-  const issues = runProjectValidation(repos, config, projectId);
+  const issues = await runProjectValidation(repos, config, projectId);
   return {
     projectId,
     validationIssues: issues.length,
