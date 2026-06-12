@@ -13,14 +13,14 @@ import type { Repositories } from "../db/repositories";
 export function createWorkflowStatusRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  router.get("/:projectId/workflow-status", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/workflow-status", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
-    const dimensionCount = repos.dimensions.listByProject(project.id).length;
-    const memberCount = repos.members.listByProject(project.id).length;
+    const dimensionCount = (await repos.dimensions.listByProject(project.id)).length;
+    const memberCount = (await repos.members.listByProject(project.id)).length;
 
-    const issues = repos.issues.listByProject(project.id);
+    const issues = await repos.issues.listByProject(project.id);
     const validation = {
       hasRun: issues.length > 0,
       errorCount: issues.filter((i) => i.severity === "error").length,
@@ -28,14 +28,14 @@ export function createWorkflowStatusRouter(repos: Repositories, config: AppConfi
     };
 
     const certificationStatus = loadCertificationStatus(config.paths.exportsDirectory, project.id);
-    const baselineCount = repos.baselines.listByProject(project.id).length;
-    const impactRunCount = repos.impactAnalyses.listByProject(project.id).length;
+    const baselineCount = (await repos.baselines.listByProject(project.id)).length;
+    const impactRunCount = (await repos.impactAnalyses.listByProject(project.id)).length;
 
-    const changeSets = repos.changeSets.listByProject(project.id);
+    const changeSets = await repos.changeSets.listByProject(project.id);
     const latest = pickLatestChangeSet(changeSets);
     let hasPackage = false;
     if (latest) {
-      const detail = repos.changeSets.getDetail(project.id, latest.id);
+      const detail = await repos.changeSets.getDetail(project.id, latest.id);
       hasPackage = Boolean(detail?.latestPackage);
     }
 

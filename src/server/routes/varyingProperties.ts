@@ -12,7 +12,7 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
   router.get("/", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    res.json(repos.varyingProperties.listVaryingPropertyValues(project.id, {
+    res.json(await repos.varyingProperties.listVaryingPropertyValues(project.id, {
       dimensionId: optionalQuery(req.query.dimensionId),
       targetType: parseTargetType(optionalQuery(req.query.targetType)),
       targetId: optionalQuery(req.query.targetId),
@@ -25,10 +25,10 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
     if (!project) return res.status(404).json({ error: "project not found" });
     const input = toVaryingPropertyInput(project.id, req.body);
     if (!input) return res.status(400).json({ error: "targetType, targetId, propertyName, and dimensionId are required" });
-    const dimension = repos.dimensions.get(input.dimensionId);
+    const dimension = await repos.dimensions.get(input.dimensionId);
     if (!dimension || dimension.projectId !== project.id) return res.status(404).json({ error: "dimension not found" });
-    const value = repos.varyingProperties.upsertVaryingPropertyValue(input);
-    repos.audit.record({ projectId: project.id, action: "varyingProperty.create", entityType: input.targetType, entityId: input.targetId, after: value });
+    const value = await repos.varyingProperties.upsertVaryingPropertyValue(input);
+    await repos.audit.record({ projectId: project.id, action: "varyingProperty.create", entityType: input.targetType, entityId: input.targetId, after: value });
     res.status(201).json(value);
   });
 
@@ -37,22 +37,22 @@ export function createVaryingPropertiesRouter({ repos }: RouterDeps): Router {
     if (!project) return res.status(404).json({ error: "project not found" });
     const input = toPartialVaryingPropertyInput(req.body);
     if (input.dimensionId) {
-      const dimension = repos.dimensions.get(input.dimensionId);
+      const dimension = await repos.dimensions.get(input.dimensionId);
       if (!dimension || dimension.projectId !== project.id) return res.status(404).json({ error: "dimension not found" });
     }
-    const value = repos.varyingProperties.updateVaryingPropertyValue(project.id, (req.params as Record<string, string>).valueId, input);
+    const value = await repos.varyingProperties.updateVaryingPropertyValue(project.id, (req.params as Record<string, string>).valueId, input);
     if (!value) return res.status(404).json({ error: "varying property value not found" });
-    repos.audit.record({ projectId: project.id, action: "varyingProperty.update", entityType: value.targetType, entityId: value.targetId, after: value });
+    await repos.audit.record({ projectId: project.id, action: "varyingProperty.update", entityType: value.targetType, entityId: value.targetId, after: value });
     res.json(value);
   });
 
   router.delete("/:valueId", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const value = repos.varyingProperties.getVaryingPropertyValue(project.id, (req.params as Record<string, string>).valueId);
+    const value = await repos.varyingProperties.getVaryingPropertyValue(project.id, (req.params as Record<string, string>).valueId);
     if (!value) return res.status(404).json({ error: "varying property value not found" });
-    repos.varyingProperties.deleteVaryingPropertyValue(project.id, value.id);
-    repos.audit.record({ projectId: project.id, action: "varyingProperty.delete", entityType: value.targetType, entityId: value.targetId, before: value });
+    await repos.varyingProperties.deleteVaryingPropertyValue(project.id, value.id);
+    await repos.audit.record({ projectId: project.id, action: "varyingProperty.delete", entityType: value.targetType, entityId: value.targetId, before: value });
     res.json({ ok: true });
   });
 

@@ -11,14 +11,14 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
   const router = Router();
 
   // GET /reports/definitions — list report definitions
-  router.get("/definitions", (req, res) => {
+  router.get("/definitions", async (req, res) => {
     const reportType = req.query.type as ReportType | undefined;
-    const definitions = repos.reportDefinitions.list({ reportType });
+    const definitions = await repos.reportDefinitions.list({ reportType });
     res.json(definitions);
   });
 
   // POST /reports/definitions — create report definition
-  router.post("/definitions", (req, res) => {
+  router.post("/definitions", async (req, res) => {
     const schema = z.object({
       name: z.string().min(1),
       reportType: z.enum(['health', 'velocity', 'compliance', 'coverage', 'custom']),
@@ -30,7 +30,7 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const def = repos.reportDefinitions.create({
+    const def = await repos.reportDefinitions.create({
       ...parsed.data,
       createdBy: req.user?.id ?? "system"
     });
@@ -38,32 +38,32 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
   });
 
   // DELETE /reports/definitions/:id
-  router.delete("/definitions/:id", (req, res) => {
-    const def = repos.reportDefinitions.get(req.params.id);
+  router.delete("/definitions/:id", async (req, res) => {
+    const def = await repos.reportDefinitions.get(req.params.id);
     if (!def) return res.status(404).json({ error: "Report definition not found" });
-    repos.reportDefinitions.delete(req.params.id);
+    await repos.reportDefinitions.delete(req.params.id);
     res.status(204).end();
   });
 
   // POST /reports/generate/health — generate health report for a project
-  router.post("/generate/health", (req, res) => {
+  router.post("/generate/health", async (req, res) => {
     const schema = z.object({ projectId: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
-    const existingSnapshots = repos.healthSnapshots.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
+    const existingSnapshots = await repos.healthSnapshots.listByProject(project.id);
 
     const report = generateHealthReport(project.id, { dimensions, members, relationships }, existingSnapshots);
 
     // Store new snapshots
     for (const snapshot of report.snapshots) {
-      repos.healthSnapshots.create({
+      await repos.healthSnapshots.create({
         projectId: snapshot.projectId,
         dimensionType: snapshot.dimensionType,
         qualityScore: snapshot.qualityScore,
@@ -80,51 +80,51 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
   });
 
   // POST /reports/generate/velocity
-  router.post("/generate/velocity", (req, res) => {
+  router.post("/generate/velocity", async (req, res) => {
     const schema = z.object({ projectId: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const report = generateVelocityReport(project.id, { dimensions, members, relationships });
     res.json(report);
   });
 
   // POST /reports/generate/coverage
-  router.post("/generate/coverage", (req, res) => {
+  router.post("/generate/coverage", async (req, res) => {
     const schema = z.object({ projectId: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const report = generateCoverageReport(project.id, { dimensions, members, relationships });
     res.json(report);
   });
 
   // POST /reports/generate/compliance
-  router.post("/generate/compliance", (req, res) => {
+  router.post("/generate/compliance", async (req, res) => {
     const schema = z.object({ projectId: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     // Get validation issue counts per dimension (from validation_issues table)
     const validationSummaries = dimensions.map(dim => ({
@@ -138,17 +138,17 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
   });
 
   // GET /reports/health-history/:projectId — get health snapshots over time
-  router.get("/health-history/:projectId", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/health-history/:projectId", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const dimensionType = req.query.dimensionType as string | undefined;
-    const snapshots = repos.healthSnapshots.listByProject(project.id, dimensionType);
+    const snapshots = await repos.healthSnapshots.listByProject(project.id, dimensionType);
     res.json(snapshots);
   });
 
   // POST /reports/export/:type — export a report in a given format (html, csv, json)
-  router.post("/export/:type", (req, res) => {
+  router.post("/export/:type", async (req, res) => {
     const schema = z.object({
       projectId: z.string().min(1),
       format: z.enum(['html', 'csv', 'json']).default('html')
@@ -161,12 +161,12 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
       return res.status(400).json({ error: `Invalid report type: ${reportType}` });
     }
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
     const dataCtx = { dimensions, members, relationships };
 
     let report: unknown;
@@ -174,7 +174,7 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
 
     switch (reportType) {
       case 'health': {
-        const existingSnapshots = repos.healthSnapshots.listByProject(project.id);
+        const existingSnapshots = await repos.healthSnapshots.listByProject(project.id);
         report = generateHealthReport(project.id, dataCtx, existingSnapshots);
         title = `Health Report - ${project.name}`;
         break;

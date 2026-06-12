@@ -112,8 +112,8 @@ describe("workflow engine", () => {
     return project.id;
   }
 
-  function createDraftChangeSet(projectId: string): string {
-    const cs = repos.changeSets.create({
+  async function createDraftChangeSet(projectId: string): Promise<string> {
+    const cs = await repos.changeSets.create({
       projectId,
       name: "Test Change Set",
       description: "For workflow testing",

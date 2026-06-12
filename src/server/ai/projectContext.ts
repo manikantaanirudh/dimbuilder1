@@ -32,24 +32,24 @@ export interface ProjectAIContext {
  * and export-readiness questions instead of falling back to keyword search.
  * Returns null when the project does not exist.
  */
-export function buildProjectAIContext(
+export async function buildProjectAIContext(
   repos: Repositories,
   config: AppConfig,
   projectId: string
-): ProjectAIContext | null {
-  const project = repos.projects.get(projectId);
+): Promise<ProjectAIContext | null> {
+  const project = await repos.projects.get(projectId);
   if (!project) return null;
 
-  const dimensions = repos.dimensions.listByProject(project.id);
-  const members = repos.members.listByProject(project.id);
-  const relationships = repos.relationships.listByProject(project.id);
+  const dimensions = await repos.dimensions.listByProject(project.id);
+  const members = await repos.members.listByProject(project.id);
+  const relationships = await repos.relationships.listByProject(project.id);
 
   const memberCountByDimension = new Map<string, number>();
   for (const member of members) {
     memberCountByDimension.set(member.dimensionId, (memberCountByDimension.get(member.dimensionId) ?? 0) + 1);
   }
 
-  const issues = runProjectValidation(repos, config, project.id);
+  const issues = await runProjectValidation(repos, config, project.id);
   const validation = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
 
   const issuesByCode = new Map<string, ProjectTopIssue>();

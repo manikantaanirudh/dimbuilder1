@@ -13,12 +13,12 @@ import type { Repositories } from "../db/repositories";
 export function createReadinessRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  router.get("/:projectId/readiness", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/readiness", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
-    const issues = repos.issues.listByProject(project.id);
-    const dimensions = repos.dimensions.listByProject(project.id).map((d) => ({ dimensionType: d.dimensionType }));
+    const issues = await repos.issues.listByProject(project.id);
+    const dimensions = (await repos.dimensions.listByProject(project.id)).map((d) => ({ dimensionType: d.dimensionType }));
     const expectedDimensionTypes = config.validation.oneStreamProfile?.expectedDimensionTypes ?? [];
     const certification = loadCertificationStatus(config.paths.exportsDirectory, project.id);
 

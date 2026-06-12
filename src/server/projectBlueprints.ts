@@ -15,7 +15,7 @@ export async function createProjectFromBlueprints(
   config: AppConfig,
   input: CreateBlueprintProjectInput
 ): Promise<ProjectRecord> {
-  return repos.transaction(async (tx) => {
+  return await repos.transaction(async (tx) => {
     const project = await tx.projects.create({
       name: input.name.trim() || "New Metadata Project",
       description: input.description,
@@ -29,7 +29,7 @@ export async function createProjectFromBlueprints(
       await createDimensionWithBlueprint(tx, config, project.id, dimensionType, index + 1);
     }
 
-    tx.audit.record({
+    await tx.audit.record({
       projectId: project.id,
       userId: input.createdBy,
       action: "project.create",

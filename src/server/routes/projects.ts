@@ -50,7 +50,7 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
       name: body.name,
       description: body.description
     });
-    repos.audit.record({
+    await repos.audit.record({
       projectId: project.id,
       action: "project.rename",
       entityType: "project",

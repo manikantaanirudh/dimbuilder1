@@ -9,9 +9,9 @@ export const testTimestamp = "2026-05-16T00:00:00.000Z";
 
 export const sampleProject: ProjectRecord = {
   id: "project-1",
-  name: "XF Dimensions Template",
+  name: "Synthetic Workbook Fixture",
   description: "Sample import",
-  sourceFileName: "XF Dimensions Template - 29.04.2026.xlsx",
+  sourceFileName: "synthetic-workbook.xlsx",
   createdBy: "local-admin",
   createdAt: testTimestamp,
   updatedAt: testTimestamp

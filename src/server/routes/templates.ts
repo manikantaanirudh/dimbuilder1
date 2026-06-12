@@ -9,16 +9,16 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
   const router = Router();
 
   // GET /templates — list with filters
-  router.get("/", (req, res) => {
+  router.get("/", async (req, res) => {
     const category = req.query.category as TemplateCategory | undefined;
     const industry = req.query.industry as TemplateIndustry | undefined;
     const search = req.query.search as string | undefined;
-    const templates = repos.templates.list({ category, industry, search });
+    const templates = await repos.templates.list({ category, industry, search });
     res.json(templates);
   });
 
   // POST /templates — create new template
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const schema = z.object({
       name: z.string().min(1),
       description: z.string().optional(),
@@ -47,7 +47,7 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const template = repos.templates.create({
+    const template = await repos.templates.create({
       ...parsed.data,
       createdBy: req.user?.id ?? "system"
     });
@@ -55,7 +55,7 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
   });
 
   // POST /templates/from-project — extract template from project
-  router.post("/from-project", (req, res) => {
+  router.post("/from-project", async (req, res) => {
     const schema = z.object({
       projectId: z.string().min(1),
       dimensionTypes: z.array(z.string().min(1)).min(1),
@@ -68,19 +68,19 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const templateData = extractTemplateFromProject(
       { dimensions, members, relationships },
       parsed.data.dimensionTypes
     );
 
-    const template = repos.templates.create({
+    const template = await repos.templates.create({
       name: parsed.data.name,
       description: parsed.data.description,
       category: parsed.data.category,
@@ -95,8 +95,8 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
   });
 
   // GET /templates/:id/preview — preview template before applying
-  router.get("/:id/preview", (req, res) => {
-    const template = repos.templates.get(req.params.id);
+  router.get("/:id/preview", async (req, res) => {
+    const template = await repos.templates.get(req.params.id);
     if (!template) return res.status(404).json({ error: "Template not found" });
 
     const preview = buildTemplatePreview(template);
@@ -104,8 +104,8 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
   });
 
   // POST /templates/:id/apply — apply template to project
-  router.post("/:id/apply", (req, res) => {
-    const template = repos.templates.get(req.params.id);
+  router.post("/:id/apply", async (req, res) => {
+    const template = await repos.templates.get(req.params.id);
     if (!template) return res.status(404).json({ error: "Template not found" });
 
     const schema = z.object({
@@ -115,40 +115,40 @@ export function createTemplateRouter(repos: Repositories, _config: AppConfig): R
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const project = repos.projects.get(parsed.data.projectId);
+    const project = await repos.projects.get(parsed.data.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const result = applyTemplate(template, project.id, repos, parsed.data.renameMapping);
+    const result = await applyTemplate(template, project.id, repos, parsed.data.renameMapping);
 
     // Record application
-    const application = repos.templateApplications.create({
+    const application = await repos.templateApplications.create({
       templateId: template.id,
       projectId: project.id,
       appliedBy: req.user?.id ?? "system",
       renameMapping: parsed.data.renameMapping
     });
 
-    repos.templates.incrementUsage(template.id);
+    await repos.templates.incrementUsage(template.id);
 
     res.status(201).json({ ...result, applicationId: application.id });
   });
 
   // DELETE /templates/:id
-  router.delete("/:id", (req, res) => {
-    const template = repos.templates.get(req.params.id);
+  router.delete("/:id", async (req, res) => {
+    const template = await repos.templates.get(req.params.id);
     if (!template) return res.status(404).json({ error: "Template not found" });
-    repos.templates.delete(req.params.id);
+    await repos.templates.delete(req.params.id);
     res.status(204).end();
   });
 
   // POST /templates/seed — seed builtin templates (admin utility)
-  router.post("/seed", (req, res) => {
+  router.post("/seed", async (req, res) => {
     const builtins = getBuiltinTemplates();
     const created = [];
     for (const tpl of builtins) {
-      const existing = repos.templates.list({ search: tpl.name });
+      const existing = await repos.templates.list({ search: tpl.name });
       if (existing.length === 0) {
-        const template = repos.templates.create({
+        const template = await repos.templates.create({
           name: tpl.name,
           description: tpl.description,
           category: tpl.category,

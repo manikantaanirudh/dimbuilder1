@@ -11,14 +11,14 @@ import type { Repositories } from "../db/repositories";
 export function createXdXrayRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  router.get("/:projectId/extensibility/xray", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/extensibility/xray", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
     const report = buildXdXray({
-      dimensions: repos.dimensions.listByProject(project.id),
-      members: repos.members.listByProject(project.id),
-      relationships: repos.relationships.listByProject(project.id),
+      dimensions: await repos.dimensions.listByProject(project.id),
+      members: await repos.members.listByProject(project.id),
+      relationships: await repos.relationships.listByProject(project.id),
       dimensionLinks: config.extensibility?.dimensionLinks,
       namingPatterns: config.extensibility?.namingPatterns
     });

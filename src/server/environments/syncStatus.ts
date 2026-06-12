@@ -2,14 +2,14 @@ import { createHash } from "node:crypto";
 import type { Repositories } from "../db/repositories";
 import type { SyncStatus, EnvironmentSyncStatus } from "../../shared/multiEnvTypes";
 
-export function computeLocalHash(repos: Repositories, projectId: string, dimensionType: string): string {
-  const dimensions = repos.dimensions.listByProject(projectId).filter(d => d.dimensionType === dimensionType);
+export async function computeLocalHash(repos: Repositories, projectId: string, dimensionType: string): Promise<string> {
+  const dimensions = (await repos.dimensions.listByProject(projectId)).filter(d => d.dimensionType === dimensionType);
   if (dimensions.length === 0) return "";
 
   const hash = createHash("sha256");
   for (const dim of dimensions) {
-    const members = repos.members.listAllByDimension(dim.id);
-    const relationships = repos.relationships.listByDimension(dim.id);
+    const members = await repos.members.listAllByDimension(dim.id);
+    const relationships = await repos.relationships.listByDimension(dim.id);
 
     hash.update(`dim:${dim.id}:${dim.dimensionName}\n`);
     for (const m of members) {
@@ -23,10 +23,10 @@ export function computeLocalHash(repos: Repositories, projectId: string, dimensi
   return hash.digest("hex");
 }
 
-export function refreshSyncStatus(repos: Repositories, projectId: string, environmentId?: string): EnvironmentSyncStatus[] {
-  const dimensions = repos.dimensions.listByProject(projectId);
+export async function refreshSyncStatus(repos: Repositories, projectId: string, environmentId?: string): Promise<EnvironmentSyncStatus[]> {
+  const dimensions = await repos.dimensions.listByProject(projectId);
   const dimensionTypes = [...new Set(dimensions.map(d => d.dimensionType))];
-  const environments = repos.environments.list();
+  const environments = await repos.environments.list();
   const targetEnvs = environmentId
     ? environments.filter(e => e.id === environmentId)
     : environments;
@@ -35,8 +35,8 @@ export function refreshSyncStatus(repos: Repositories, projectId: string, enviro
 
   for (const env of targetEnvs) {
     for (const dimType of dimensionTypes) {
-      const localHash = computeLocalHash(repos, projectId, dimType);
-      const existing = repos.environmentSyncStatus.listByEnvironment(env.id, projectId)
+      const localHash = await computeLocalHash(repos, projectId, dimType);
+      const existing = (await repos.environmentSyncStatus.listByEnvironment(env.id, projectId))
         .find(s => s.dimensionType === dimType);
 
       let syncStatus: SyncStatus = "unknown";
@@ -48,7 +48,7 @@ export function refreshSyncStatus(repos: Repositories, projectId: string, enviro
         syncStatus = "local_ahead";
       }
 
-      const status = repos.environmentSyncStatus.upsert({
+      const status = await repos.environmentSyncStatus.upsert({
         environmentId: env.id,
         projectId,
         dimensionType: dimType,
@@ -74,9 +74,9 @@ export interface SyncStatusSummary {
   unknown: number;
 }
 
-export function getSyncStatusSummary(repos: Repositories, projectId: string): SyncStatusSummary[] {
-  const allStatuses = repos.environmentSyncStatus.listByProject(projectId);
-  const environments = repos.environments.list();
+export async function getSyncStatusSummary(repos: Repositories, projectId: string): Promise<SyncStatusSummary[]> {
+  const allStatuses = await repos.environmentSyncStatus.listByProject(projectId);
+  const environments = await repos.environments.list();
 
   const byEnv = new Map<string, EnvironmentSyncStatus[]>();
   for (const s of allStatuses) {

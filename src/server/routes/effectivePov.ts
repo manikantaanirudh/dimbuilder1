@@ -11,8 +11,8 @@ import type { Repositories } from "../db/repositories";
 export function createEffectivePovRouter(repos: Repositories, _config: AppConfig): Router {
   const router = Router();
 
-  router.post("/:projectId/effective-pov", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/effective-pov", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
     const body = req.body ?? {};
@@ -33,7 +33,7 @@ export function createEffectivePovRouter(repos: Repositories, _config: AppConfig
       ? body.propertyNames.filter((n: unknown): n is string => typeof n === "string")
       : undefined;
 
-    const varyingValues = repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, targetType, resolved.targetId);
+    const varyingValues = await repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, targetType, resolved.targetId);
     const report = resolveEffectivePov({
       dimensionType: resolved.dimensionType,
       targetType,
@@ -53,18 +53,18 @@ type ResolvedTarget =
   | { targetId: string; dimensionType: DimensionType; baseProperties: Record<string, unknown>; summary: Record<string, unknown> }
   | { error: string; status: number };
 
-function resolveTarget(
+async function resolveTarget(
   repos: Repositories,
   projectId: string,
   targetType: EffectivePovTargetType,
   body: Record<string, unknown>
-): ResolvedTarget {
+): Promise<ResolvedTarget> {
   if (targetType === "member") {
     const member = body.targetId
-      ? repos.members.getById(String(body.targetId))
+      ? await repos.members.getById(String(body.targetId))
       : findMember(repos, projectId, String(body.dimensionId ?? ""), String(body.memberKey ?? ""));
     if (!member) return { error: "member not found", status: 404 };
-    const dimension = repos.dimensions.get(member.dimensionId);
+    const dimension = await repos.dimensions.get(member.dimensionId);
     if (!dimension || dimension.projectId !== projectId) return { error: "member not found", status: 404 };
     return {
       targetId: member.id,
@@ -76,10 +76,10 @@ function resolveTarget(
 
   if (targetType === "relationship") {
     const relationship = body.targetId
-      ? repos.relationships.listByProject(projectId).find((r) => r.id === String(body.targetId))
+      ? (await repos.relationships.listByProject(projectId)).find((r) => r.id === String(body.targetId))
       : findRelationship(repos, projectId, String(body.dimensionId ?? ""), String(body.parentKey ?? ""), String(body.childKey ?? ""));
     if (!relationship) return { error: "relationship not found", status: 404 };
-    const dimension = repos.dimensions.get(relationship.dimensionId);
+    const dimension = await repos.dimensions.get(relationship.dimensionId);
     if (!dimension || dimension.projectId !== projectId) return { error: "relationship not found", status: 404 };
     return {
       targetId: relationship.id,
@@ -91,8 +91,8 @@ function resolveTarget(
 
   // dimension
   const dimension = body.targetId
-    ? repos.dimensions.get(String(body.targetId))
-    : repos.dimensions.get(String(body.dimensionId ?? ""));
+    ? await repos.dimensions.get(String(body.targetId))
+    : await repos.dimensions.get(String(body.dimensionId ?? ""));
   if (!dimension || dimension.projectId !== projectId) return { error: "dimension not found", status: 404 };
   return {
     targetId: dimension.id,
@@ -102,19 +102,19 @@ function resolveTarget(
   };
 }
 
-function findMember(repos: Repositories, projectId: string, dimensionId: string, memberKey: string) {
+async function findMember(repos: Repositories, projectId: string, dimensionId: string, memberKey: string) {
   if (!memberKey) return undefined;
   const target = memberKey.trim().toLowerCase();
-  return repos.members
+  return await repos.members
     .listByProject(projectId)
     .find((m) => (!dimensionId || m.dimensionId === dimensionId) && m.memberKey.trim().toLowerCase() === target);
 }
 
-function findRelationship(repos: Repositories, projectId: string, dimensionId: string, parentKey: string, childKey: string) {
+async function findRelationship(repos: Repositories, projectId: string, dimensionId: string, parentKey: string, childKey: string) {
   const parent = parentKey.trim().toLowerCase();
   const child = childKey.trim().toLowerCase();
   if (!child) return undefined;
-  return repos.relationships
+  return await repos.relationships
     .listByProject(projectId)
     .find((r) =>
       (!dimensionId || r.dimensionId === dimensionId) &&

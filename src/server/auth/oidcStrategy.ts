@@ -107,16 +107,16 @@ export async function createOidcHandlers(
         const userSub = userInfo.sub;
 
         // Find or create user
-        let user = repos.users.findUserByProviderId("oidc", userSub);
+        let user = await repos.users.findUserByProviderId("oidc", userSub);
         if (!user) {
-          user = repos.users.findUserByEmail(email);
+          user = await repos.users.findUserByEmail(email);
           if (user) {
             // Link existing user to OIDC provider
-            repos.users.updateUser(user.id, { authProvider: "oidc", authProviderId: userSub });
+            await repos.users.updateUser(user.id, { authProvider: "oidc", authProviderId: userSub });
           } else {
             // Create new user
             const userId = nanoid();
-            repos.users.createUser({
+            await repos.users.createUser({
               id: userId,
               email,
               displayName,
@@ -124,7 +124,7 @@ export async function createOidcHandlers(
               authProviderId: userSub,
               role: config.auth.defaultRole
             });
-            user = repos.users.findUserById(userId);
+            user = await repos.users.findUserById(userId);
           }
         }
 
@@ -143,10 +143,10 @@ export async function createOidcHandlers(
         // Store session
         const refreshHash = await hashPassword(refreshToken);
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        repos.sessions.deleteSessionsByUserId(user.id);
-        repos.sessions.createSession({ id: nanoid(), userId: user.id, refreshTokenHash: refreshHash, expiresAt });
+        await repos.sessions.deleteSessionsByUserId(user.id);
+        await repos.sessions.createSession({ id: nanoid(), userId: user.id, refreshTokenHash: refreshHash, expiresAt });
 
-        repos.users.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
+        await repos.users.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
 
         res.json({
           accessToken: jwtAccessToken,

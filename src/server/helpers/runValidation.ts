@@ -7,12 +7,12 @@ export async function runProjectValidation(repos: Repositories, config: AppConfi
   const project = await repos.projects.get(projectId);
   if (!project) return [];
   const [dimensions, members, relationships] = await Promise.all([
-    repos.dimensions.listByProject(project.id),
-    repos.members.listByProject(project.id),
-    repos.relationships.listByProject(project.id)
+    await repos.dimensions.listByProject(project.id),
+    await repos.members.listByProject(project.id),
+    await repos.relationships.listByProject(project.id)
   ]);
-  const varyingPropertyValues = repos.varyingProperties.listVaryingPropertyValues(project.id);
-  const propertyDefaults = repos.propertyDefaults.getEffectiveDefaultsForExport(project.id);
+  const varyingPropertyValues = await repos.varyingProperties.listVaryingPropertyValues(project.id);
+  const propertyDefaults = await repos.propertyDefaults.getEffectiveDefaultsForExport(project.id);
   const issues = dimensions.flatMap((dimension) =>
     validateDimension({
       project,
@@ -85,6 +85,6 @@ export async function runProjectValidation(repos: Repositories, config: AppConfi
     })
   );
 
-  repos.issues.replaceForProject(project.id, issues);
+  await repos.issues.replaceForProject(project.id, issues);
   return issues;
 }

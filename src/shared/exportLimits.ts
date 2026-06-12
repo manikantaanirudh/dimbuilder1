@@ -54,24 +54,24 @@ export function assertExportWithinMemberLimit(input: {
 
 type ExportLimitRepos = Pick<Repositories, "members">;
 
-export function assertProjectExportWithinMemberLimit(
+export async function assertProjectExportWithinMemberLimit(
   repos: ExportLimitRepos,
   projectId: string,
   exportType: string,
   config: AppConfig
-): void {
+): Promise<void> {
   const limit = resolveExportMaxMembers(config);
-  const memberCount = repos.members.countByProject(projectId);
+  const memberCount = await repos.members.countByProject(projectId);
   assertExportWithinMemberLimit({ memberCount, exportType, limit });
 }
 
-export function assertDimensionExportWithinMemberLimit(
+export async function assertDimensionExportWithinMemberLimit(
   repos: ExportLimitRepos,
   dimensionId: string,
   exportType: string,
   config: AppConfig
-): void {
+): Promise<void> {
   const limit = resolveExportMaxMembers(config);
-  const memberCount = repos.members.countByDimension(dimensionId);
+  const memberCount = await repos.members.countByDimension(dimensionId);
   assertExportWithinMemberLimit({ memberCount, exportType, limit });
 }

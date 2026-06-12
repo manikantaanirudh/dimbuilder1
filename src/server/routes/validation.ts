@@ -14,7 +14,7 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
     if (!oneStreamProfile) return res.status(400).json({ error: "profile must be 'default' or 'onestream'" });
 
     // Load per-project validation overrides
-    const projectOverrides = repos.validationOverrides.listByProject(project.id);
+    const projectOverrides = await repos.validationOverrides.listByProject(project.id);
     const overrideSeverityMap = new Map(projectOverrides.map(o => [o.ruleCode, o.severity as Severity]));
 
     const baseSeverities: any = {
@@ -43,10 +43,10 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
       baseSeverities.oneStreamProfile = profile;
     }
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
-    const varyingPropertyValues = repos.varyingProperties.listVaryingPropertyValues(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
+    const varyingPropertyValues = await repos.varyingProperties.listVaryingPropertyValues(project.id);
     const issues = dimensions.flatMap((dimension) =>
       validateDimension({
         project,
@@ -60,8 +60,8 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
       })
     );
 
-    repos.issues.replaceForProject(project.id, issues);
-    repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: issues.length } });
+    await repos.issues.replaceForProject(project.id, issues);
+    await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: issues.length } });
     res.json({ issues });
   });
 
@@ -73,35 +73,35 @@ type ProjectValidationRouterDeps = { repos: Repositories; config?: AppConfig; ge
 export function createProjectValidationRouter({ repos }: ProjectValidationRouterDeps): Router {
   const router = Router({ mergeParams: true });
 
-  router.get("/issues", (req, res) => {
+  router.get("/issues", async (req, res) => {
     const params = req.params as Record<string, string>;
-    res.json(repos.issues.listByProject(params.projectId));
+    res.json(await repos.issues.listByProject(params.projectId));
   });
 
-  router.get("/validation-config", (req, res) => {
+  router.get("/validation-config", async (req, res) => {
     const params = req.params as Record<string, string>;
-    const project = repos.projects.get(params.projectId);
+    const project = await repos.projects.get(params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const overrides = repos.validationOverrides.listByProject(project.id);
+    const overrides = await repos.validationOverrides.listByProject(project.id);
     res.json({ overrides });
   });
 
-  router.post("/validation-config", (req, res) => {
+  router.post("/validation-config", async (req, res) => {
     const params = req.params as Record<string, string>;
-    const project = repos.projects.get(params.projectId);
+    const project = await repos.projects.get(params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const overrides = req.body?.overrides;
     if (!Array.isArray(overrides)) return res.status(400).json({ error: "overrides must be an array" });
     for (const override of overrides) {
       if (!override.ruleCode || !override.severity) continue;
       if (override.severity === "default") {
-        repos.validationOverrides.deleteByProject(project.id, override.ruleCode);
+        await repos.validationOverrides.deleteByProject(project.id, override.ruleCode);
       } else {
-        repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
+        await repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
       }
     }
-    repos.audit.record({ projectId: project.id, action: "validation.configUpdate", entityType: "project", entityId: project.id, after: { overrides } });
-    const result = repos.validationOverrides.listByProject(project.id);
+    await repos.audit.record({ projectId: project.id, action: "validation.configUpdate", entityType: "project", entityId: project.id, after: { overrides } });
+    const result = await repos.validationOverrides.listByProject(project.id);
     res.json({ overrides: result });
   });
 

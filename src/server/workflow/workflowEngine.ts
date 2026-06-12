@@ -17,15 +17,15 @@ function isRoleSufficient(userRole: SystemRole, requiredRole: string): boolean {
   return (hierarchy[userRole] ?? 0) >= (hierarchy[requiredRole] ?? 0);
 }
 
-export function submitWorkflow(
+export async function submitWorkflow(
   repos: Repositories,
   changeSetId: string,
   projectId: string,
   submittedBy: string,
   definitionId?: string
-): WorkflowInstance | WorkflowEngineError {
+): Promise<WorkflowInstance | WorkflowEngineError> {
   // Find the change set
-  const changeSet = repos.changeSets.get(projectId, changeSetId);
+  const changeSet = await repos.changeSets.get(projectId, changeSetId);
   if (!changeSet) return err("CHANGE_SET_NOT_FOUND", "Change set not found", 404);
 
   // Verify change set status
@@ -34,7 +34,7 @@ export function submitWorkflow(
   }
 
   // Check no active workflow exists for this change set
-  const existingInstance = repos.workflows.instances.getByChangeSet(changeSetId);
+  const existingInstance = await repos.workflows.instances.getByChangeSet(changeSetId);
   if (existingInstance && existingInstance.status === "in_progress") {
     return err("ALREADY_IN_WORKFLOW", "Change set already has an active workflow", 409);
   }
@@ -42,17 +42,17 @@ export function submitWorkflow(
   // Resolve definition
   let defId = definitionId;
   if (!defId) {
-    const definitions = repos.workflows.definitions.list();
+    const definitions = await repos.workflows.definitions.list();
     if (definitions.length === 0) return err("NO_DEFINITION", "No active workflow definitions found", 404);
     defId = definitions[0].id;
   }
 
-  const definition = repos.workflows.definitions.get(defId);
+  const definition = await repos.workflows.definitions.get(defId);
   if (!definition) return err("DEFINITION_NOT_FOUND", "Workflow definition not found", 404);
   if (!definition.isActive) return err("DEFINITION_INACTIVE", "Workflow definition is not active", 409);
 
   // Create the workflow instance
-  const instance = repos.workflows.instances.create({
+  const instance = await repos.workflows.instances.create({
     definitionId: definition.id,
     changeSetId,
     projectId,
@@ -62,20 +62,20 @@ export function submitWorkflow(
   // Notify eligible reviewers for step 0
   const firstStep = definition.steps[0];
   if (firstStep) {
-    notifyReviewers(repos, instance.id, firstStep, changeSet.name, submittedBy);
+    await notifyReviewers(repos, instance.id, firstStep, changeSet.name, submittedBy);
   }
 
   return instance;
 }
 
-export function approveStep(
+export async function approveStep(
   repos: Repositories,
   instanceId: string,
   actorId: string,
   actorRole: SystemRole,
   comment?: string
-): WorkflowInstanceDetail | WorkflowEngineError {
-  const instance = repos.workflows.instances.get(instanceId);
+): Promise<WorkflowInstanceDetail | WorkflowEngineError> {
+  const instance = await repos.workflows.instances.get(instanceId);
   if (!instance) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
   if (instance.status !== "in_progress") return err("NOT_IN_PROGRESS", "Workflow is not in progress", 409);
 
@@ -84,7 +84,7 @@ export function approveStep(
     return err("SELF_APPROVAL", "Cannot approve your own submission", 403);
   }
 
-  const definition = repos.workflows.definitions.get(instance.definitionId);
+  const definition = await repos.workflows.definitions.get(instance.definitionId);
   if (!definition) return err("DEFINITION_NOT_FOUND", "Workflow definition not found", 500);
 
   const currentStep = definition.steps[instance.currentStepIndex] as WorkflowStepDefinition | undefined;
@@ -96,7 +96,7 @@ export function approveStep(
   }
 
   // Record the approve action
-  repos.workflows.stepActions.record({
+  await repos.workflows.stepActions.record({
     instanceId,
     stepIndex: instance.currentStepIndex,
     action: "approve",
@@ -105,42 +105,44 @@ export function approveStep(
   });
 
   // Check if we have enough approvals
-  const approvalCount = repos.workflows.stepActions.countApprovalsForStep(instanceId, instance.currentStepIndex);
+  const approvalCount = await repos.workflows.stepActions.countApprovalsForStep(instanceId, instance.currentStepIndex);
   if (approvalCount >= currentStep.minApprovals) {
     const nextStepIndex = instance.currentStepIndex + 1;
     if (nextStepIndex >= definition.steps.length) {
       // Workflow complete
       const completedAt = new Date().toISOString();
-      repos.workflows.instances.updateStatus(instanceId, "approved", completedAt);
+      await repos.workflows.instances.updateStatus(instanceId, "approved", completedAt);
       // Update change set status
-      repos.changeSets.update(instance.projectId, instance.changeSetId, { status: "approved" });
+      await repos.changeSets.update(instance.projectId, instance.changeSetId, { status: "approved" });
     } else {
       // Advance to next step
-      repos.workflows.instances.advanceStep(instanceId, nextStepIndex);
+      await repos.workflows.instances.advanceStep(instanceId, nextStepIndex);
       // Notify reviewers for next step
       const nextStep = definition.steps[nextStepIndex];
-      const changeSet = repos.changeSets.get(instance.projectId, instance.changeSetId);
+      const changeSet = await repos.changeSets.get(instance.projectId, instance.changeSetId);
       if (nextStep && changeSet) {
-        notifyReviewers(repos, instanceId, nextStep, changeSet.name, instance.submittedBy);
+        await notifyReviewers(repos, instanceId, nextStep, changeSet.name, instance.submittedBy);
       }
     }
   }
 
-  return getInstanceDetail(repos, instanceId)!;
+  const detail = await getInstanceDetail(repos, instanceId);
+  if (!detail) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
+  return detail;
 }
 
-export function rejectWorkflow(
+export async function rejectWorkflow(
   repos: Repositories,
   instanceId: string,
   actorId: string,
   actorRole: SystemRole,
   comment?: string
-): WorkflowInstanceDetail | WorkflowEngineError {
-  const instance = repos.workflows.instances.get(instanceId);
+): Promise<WorkflowInstanceDetail | WorkflowEngineError> {
+  const instance = await repos.workflows.instances.get(instanceId);
   if (!instance) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
   if (instance.status !== "in_progress") return err("NOT_IN_PROGRESS", "Workflow is not in progress", 409);
 
-  const definition = repos.workflows.definitions.get(instance.definitionId);
+  const definition = await repos.workflows.definitions.get(instance.definitionId);
   if (!definition) return err("DEFINITION_NOT_FOUND", "Workflow definition not found", 500);
 
   const currentStep = definition.steps[instance.currentStepIndex] as WorkflowStepDefinition | undefined;
@@ -151,7 +153,7 @@ export function rejectWorkflow(
     return err("INSUFFICIENT_ROLE", `Role '${currentStep.requiredRole}' or higher required for this step`, 403);
   }
 
-  repos.workflows.stepActions.record({
+  await repos.workflows.stepActions.record({
     instanceId,
     stepIndex: instance.currentStepIndex,
     action: "reject",
@@ -160,19 +162,21 @@ export function rejectWorkflow(
   });
 
   const completedAt = new Date().toISOString();
-  repos.workflows.instances.updateStatus(instanceId, "rejected", completedAt);
-  repos.changeSets.update(instance.projectId, instance.changeSetId, { status: "rejected" });
+  await repos.workflows.instances.updateStatus(instanceId, "rejected", completedAt);
+  await repos.changeSets.update(instance.projectId, instance.changeSetId, { status: "rejected" });
 
-  return getInstanceDetail(repos, instanceId)!;
+  const detail = await getInstanceDetail(repos, instanceId);
+  if (!detail) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
+  return detail;
 }
 
-export function cancelWorkflow(
+export async function cancelWorkflow(
   repos: Repositories,
   instanceId: string,
   actorId: string,
   actorRole: SystemRole
-): WorkflowInstanceDetail | WorkflowEngineError {
-  const instance = repos.workflows.instances.get(instanceId);
+): Promise<WorkflowInstanceDetail | WorkflowEngineError> {
+  const instance = await repos.workflows.instances.get(instanceId);
   if (!instance) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
   if (instance.status !== "in_progress") return err("NOT_IN_PROGRESS", "Workflow is not in progress", 409);
 
@@ -182,20 +186,22 @@ export function cancelWorkflow(
   }
 
   const completedAt = new Date().toISOString();
-  repos.workflows.instances.updateStatus(instanceId, "cancelled", completedAt);
+  await repos.workflows.instances.updateStatus(instanceId, "cancelled", completedAt);
 
-  return getInstanceDetail(repos, instanceId)!;
+  const detail = await getInstanceDetail(repos, instanceId);
+  if (!detail) return err("INSTANCE_NOT_FOUND", "Workflow instance not found", 404);
+  return detail;
 }
 
-export function getInstanceDetail(repos: Repositories, instanceId: string): WorkflowInstanceDetail | null {
-  const instance = repos.workflows.instances.get(instanceId);
+export async function getInstanceDetail(repos: Repositories, instanceId: string): Promise<WorkflowInstanceDetail | null> {
+  const instance = await repos.workflows.instances.get(instanceId);
   if (!instance) return null;
 
-  const definition = repos.workflows.definitions.get(instance.definitionId);
+  const definition = await repos.workflows.definitions.get(instance.definitionId);
   if (!definition) return null;
 
-  const actions = repos.workflows.stepActions.listByInstance(instanceId);
-  const notifications = repos.workflows.notifications.listByInstance(instanceId);
+  const actions = await repos.workflows.stepActions.listByInstance(instanceId);
+  const notifications = await repos.workflows.notifications.listByInstance(instanceId);
 
   return { instance, definition, actions, notifications };
 }
@@ -204,17 +210,17 @@ export function isWorkflowEngineError(value: unknown): value is WorkflowEngineEr
   return typeof value === "object" && value !== null && "code" in value && "message" in value && "status" in value;
 }
 
-function notifyReviewers(
+async function notifyReviewers(
   repos: Repositories,
   instanceId: string,
   step: WorkflowStepDefinition,
   changeSetName: string,
   submittedBy: string
-): void {
-  const reviewers = repos.workflows.getEligibleReviewers(step.requiredRole);
+): Promise<void> {
+  const reviewers = await repos.workflows.getEligibleReviewers(step.requiredRole);
   for (const reviewer of reviewers) {
     if (reviewer.id === submittedBy) continue;
-    repos.workflows.notifications.create({
+    await repos.workflows.notifications.create({
       instanceId,
       recipientId: reviewer.id,
       subject: `Approval needed: ${changeSetName}`,

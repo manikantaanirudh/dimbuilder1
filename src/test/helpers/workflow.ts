@@ -18,7 +18,7 @@ export interface WorkflowHarness {
  * Spin up the full app against an in-memory database and a temp exports directory.
  * Used by the end-to-end regression suite (TASK-18) to exercise the real HTTP workflow.
  */
-export function startWorkflowHarness(overrides: Partial<AppConfig> = {}): WorkflowHarness {
+export async function startWorkflowHarness(overrides: Partial<AppConfig> = {}): Promise<WorkflowHarness> {
   const exportsDirectory = mkdtempSync(join(tmpdir(), "dimbuilder-e2e-"));
   const config: AppConfig = {
     ...defaultAppConfig,

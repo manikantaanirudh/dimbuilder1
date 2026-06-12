@@ -15,7 +15,7 @@ describe("database", () => {
 
     expect(project.sourceFileName).toBe("");
 
-    const dimension = repos.dimensions.create({
+    const dimension = await repos.dimensions.create({
       projectId: project.id,
       sheetName: "Scenarios",
       dimensionType: "Scenario",
@@ -28,7 +28,7 @@ describe("database", () => {
       metadata: {}
     });
 
-    expect(repos.dimensions.listByProject(project.id)).toEqual([dimension]);
+    expect(await repos.dimensions.listByProject(project.id)).toEqual([dimension]);
     db.close();
   });
 

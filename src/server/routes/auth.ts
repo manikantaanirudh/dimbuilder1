@@ -130,7 +130,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
         return res.status(429).json({ error: "Too many failed login attempts. Please try again later." });
       }
 
-      const user = repos.users.findUserByEmail(email);
+      const user = await repos.users.findUserByEmail(email);
       if (!user || !user.password_hash) {
         recordFailedAttempt(email);
         return res.status(401).json({ error: "Invalid email or password" });
@@ -162,8 +162,8 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       const expiresAt = new Date(Date.now() + parseRefreshTokenExpiryMs(tokenConfig.refreshTokenExpiry)).toISOString();
 
       // Delete old sessions and create new one
-      repos.sessions.deleteSessionsByUserId(user.id);
-      repos.sessions.createSession({
+      await repos.sessions.deleteSessionsByUserId(user.id);
+      await repos.sessions.createSession({
         id: nanoid(),
         userId: user.id,
         refreshTokenHash,
@@ -171,7 +171,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       });
 
       // Update last login
-      repos.users.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
+      await repos.users.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
 
       return res.json({
         accessToken,
@@ -205,14 +205,14 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       }
 
       // Find session
-      const session = repos.sessions.findSessionByUserId(payload.sub);
+      const session = await repos.sessions.findSessionByUserId(payload.sub);
       if (!session) {
         return res.status(401).json({ error: "Session not found" });
       }
 
       // Check expiry
       if (new Date(session.expires_at) < new Date()) {
-        repos.sessions.deleteSessionsByUserId(payload.sub);
+        await repos.sessions.deleteSessionsByUserId(payload.sub);
         return res.status(401).json({ error: "Session expired" });
       }
 
@@ -223,7 +223,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       }
 
       // Get user to populate new access token
-      const user = repos.users.findUserById(payload.sub);
+      const user = await repos.users.findUserById(payload.sub);
       if (!user || user.is_active === 0) {
         return res.status(401).json({ error: "User not found or deactivated" });
       }
@@ -241,14 +241,14 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
   });
 
   // POST /logout
-  router.post("/logout", (req, res) => {
+  router.post("/logout", async (req, res) => {
     // Parse Bearer token but don't fail if missing
     const header = req.headers.authorization;
     if (header && header.startsWith("Bearer ")) {
       const token = header.slice(7);
       try {
         const payload = verifyAccessToken(token, tokenConfig);
-        repos.sessions.deleteSessionsByUserId(payload.sub);
+        await repos.sessions.deleteSessionsByUserId(payload.sub);
       } catch {
         // Token invalid or expired, nothing to do
       }
@@ -276,7 +276,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       }
 
       const { email, password, displayName } = parsed.data;
-      const allUsers = repos.users.listUsers();
+      const allUsers = await repos.users.listUsers();
       // Treat the seeded system user (local-admin) as not a real user for first-user detection
       const realUsers = allUsers.filter(u => u.id !== "local-admin");
       const isFirstUser = realUsers.length === 0;
@@ -286,7 +286,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       }
 
       // Check if email already exists
-      const existing = repos.users.findUserByEmail(email);
+      const existing = await repos.users.findUserByEmail(email);
       if (existing) {
         return res.status(409).json({ error: "A user with this email already exists" });
       }
@@ -295,7 +295,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
       const role: SystemRole = isFirstUser ? "admin" : config.auth.defaultRole;
       const id = nanoid();
 
-      repos.users.createUser({
+      await repos.users.createUser({
         id,
         email,
         displayName,
@@ -304,7 +304,7 @@ export function createAuthRouter(repos: Repositories, config: AppConfig): Router
         role
       });
 
-      const created = repos.users.findUserById(id);
+      const created = await repos.users.findUserById(id);
       if (!created) {
         return res.status(500).json({ error: "Failed to create user" });
       }

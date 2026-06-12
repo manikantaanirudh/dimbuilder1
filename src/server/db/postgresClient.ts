@@ -6,7 +6,7 @@ const { Pool } = pg;
 type PoolClient = pg.PoolClient;
 type QueryResult<T extends pg.QueryResultRow = pg.QueryResultRow> = pg.QueryResult<T>;
 
-function createSessionClient(poolClient: PoolClient): DbClient {
+async function createSessionClient(poolClient: PoolClient): Promise<DbClient> {
   let depth = 0;
 
   const runQuery = (text: string, values: unknown[]): Promise<QueryResult> => poolClient.query(text, values);

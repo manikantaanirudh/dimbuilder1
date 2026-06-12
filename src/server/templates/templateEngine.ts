@@ -62,12 +62,12 @@ export function buildTemplatePreview(template: Template): TemplatePreview {
   };
 }
 
-export function applyTemplate(
+export async function applyTemplate(
   template: Template,
   projectId: string,
   repos: Repositories,
   renameMapping?: Record<string, string>
-): ApplyTemplateResult {
+): Promise<ApplyTemplateResult> {
   let dimensionsCreated = 0;
   let membersCreated = 0;
   let relationshipsCreated = 0;
@@ -77,14 +77,14 @@ export function applyTemplate(
     const dimensionType = dimData.dimensionType as DimensionRecord['dimensionType'];
 
     // Check if dimension already exists in project
-    const existingDims = repos.dimensions.listByProject(projectId);
+    const existingDims = await repos.dimensions.listByProject(projectId);
     const existing = existingDims.find(d => d.dimensionType === dimensionType);
 
     let dimensionId: string;
     if (existing) {
       dimensionId = existing.id;
     } else {
-      const created = repos.dimensions.create({
+      const created = await repos.dimensions.create({
         projectId,
         sheetName: dimensionName,
         dimensionType,
@@ -118,7 +118,7 @@ export function applyTemplate(
     });
 
     if (memberRecords.length > 0) {
-      repos.members.bulkInsert(memberRecords);
+      await repos.members.bulkInsert(memberRecords);
       membersCreated += memberRecords.length;
     }
 
@@ -144,7 +144,7 @@ export function applyTemplate(
     });
 
     if (relRecords.length > 0) {
-      repos.relationships.bulkInsert(relRecords);
+      await repos.relationships.bulkInsert(relRecords);
       relationshipsCreated += relRecords.length;
     }
   }

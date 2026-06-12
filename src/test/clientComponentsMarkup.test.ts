@@ -161,7 +161,7 @@ describe("client component markup", () => {
 
     expect(markup).toContain(">SR Onestream Dim Builder<");
     expect(markup).toMatch(/<button[^>]*>[\s\S]*New Project<\/button>/);
-    expect(markup).toMatch(/<button[^>]*>[\s\S]*Seed from XLSX<\/button>/);
+    expect(markup).toMatch(/<button[^>]*>[\s\S]*Seed from file<\/button>/);
     expect(markup).toMatch(/<button[^>]*title="Create or open a project before validating"[^>]*disabled=""[^>]*>[\s\S]*Validate<\/button>/);
     expect(markup).not.toContain(">DimBuilder<");
     expect(markup).not.toContain("Import a workbook to begin.");
@@ -415,7 +415,7 @@ describe("client component markup", () => {
     const markup = dashboardMarkup(defaultAppConfig);
 
     expect(markup).toContain('<span class="status-badge neutral">No project</span>');
-    expect(markup).toContain("Create a project or seed one from XLSX.");
+    expect(markup).toContain("Create a project or seed from a file.");
     expect(markup).not.toContain("Use the Import button in the top command bar to load an XF metadata workbook.");
   });
 
@@ -530,7 +530,7 @@ describe("client component markup", () => {
       enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes
     }));
 
-    expect(importMarkup).toContain("Seed from XLSX");
+    expect(importMarkup).toContain("Seed from file");
     expect(importMarkup).toContain("Select an optional .xlsx OneStream metadata workbook to seed a project.");
     expect(importMarkup).toContain("Import XML");
     expect(importMarkup).toContain("Import CSV");
@@ -540,7 +540,7 @@ describe("client component markup", () => {
   });
 
   it("keeps XLSX seeding status and success copy generic", () => {
-    expect(importExportModalSource).toContain('"Seeding project from XLSX..."');
+    expect(importExportModalSource).toContain('"Seeding project from file..."');
     expect(importExportModalSource).toContain('"Importing editable OneStream metadata XML..."');
     expect(importExportModalSource).not.toContain("Large UD3 sheets can take a few seconds");
     expect(importExportModalSource).toContain('importMode === "xlsx" ? "Seeded" : "Imported"');

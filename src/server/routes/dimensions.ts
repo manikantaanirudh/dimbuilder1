@@ -25,7 +25,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
 
   router.patch("/dimensions/:dimensionId", async (req, res) => {
     await repos.dimensions.update((req.params as Record<string, string>).dimensionId, req.body);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "dimension.update",
       entityType: "dimension",
@@ -55,7 +55,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       dimensionName
     });
 
-    repos.audit.record({
+    await repos.audit.record({
       projectId,
       action: "dimension.create",
       entityType: "dimension",
@@ -77,7 +77,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     const result = await deleteDimension(repos, dimensionId);
     if (!result) return res.status(404).json({ error: "dimension not found" });
 
-    repos.audit.record({
+    await repos.audit.record({
       projectId,
       action: "dimension.delete",
       entityType: "dimension",
@@ -125,7 +125,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       sourceRowNumber: 0,
       isActive: true
     });
-    repos.audit.record({ projectId: (req.params as Record<string, string>).projectId, action: "member.create", entityType: "member", entityId: member.id, after: member });
+    await repos.audit.record({ projectId: (req.params as Record<string, string>).projectId, action: "member.create", entityType: "member", entityId: member.id, after: member });
     res.status(201).json(member);
   });
 
@@ -149,7 +149,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       }
       await repos.members.update((req.params as Record<string, string>).memberId, { memberKey: finalKey, properties: finalProps });
 
-      repos.audit.record({
+      await repos.audit.record({
         projectId: (req.params as Record<string, string>).projectId,
         action: "member.update",
         entityType: "member",
@@ -168,7 +168,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     const member = await repos.members.getById((req.params as Record<string, string>).memberId);
     if (!member) return res.status(404).json({ error: "Member not found" });
     const result = await deleteMembersWithRelationships(repos, member.dimensionId, [member.id]);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "member.delete",
       entityType: "member",
@@ -189,7 +189,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       return res.status(400).json({ error: "memberIds array is required" });
     }
     const result = await deleteMembersWithRelationships(repos, dimensionId, memberIds);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "member.bulkDelete",
       entityType: "dimension",
@@ -249,13 +249,13 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       rowOrder: (await repos.relationships.countByDimension(dimension.id)) + 1,
       sourceRowNumber: 0
     });
-    repos.audit.record({ projectId: (req.params as Record<string, string>).projectId, action: "relationship.create", entityType: "relationship", entityId: relationship.id, after: relationship });
+    await repos.audit.record({ projectId: (req.params as Record<string, string>).projectId, action: "relationship.create", entityType: "relationship", entityId: relationship.id, after: relationship });
     res.status(201).json(relationship);
   });
 
   router.patch("/relationships/:relationshipId", async (req, res) => {
     await repos.relationships.update((req.params as Record<string, string>).relationshipId, req.body);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.update",
       entityType: "relationship",
@@ -271,7 +271,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       return res.status(404).json({ error: "Relationship not found" });
     }
     const result = await deleteRelationshipsByIds(repos, relationship.dimensionId, [relationship.id]);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.delete",
       entityType: "relationship",
@@ -292,7 +292,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       return res.status(400).json({ error: "relationshipIds array is required" });
     }
     const result = await deleteRelationshipsByIds(repos, dimensionId, relationshipIds);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.bulkDelete",
       entityType: "dimension",
@@ -308,7 +308,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     const mode = parseExportLoadMode(req.body?.mode);
     const baselineId = String(req.body?.baselineId ?? "").trim();
     const dimensionId = String(req.body?.dimensionId ?? "").trim() || undefined;
-    const baseline = baselineId ? repos.baselines.get(project.id, baselineId) : null;
+    const baseline = baselineId ? await repos.baselines.get(project.id, baselineId) : null;
     if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
     const plan = planRelationshipLoadMode(
       await loadProjectState(repos, project.id),
@@ -316,7 +316,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       mode,
       { dimensionId }
     );
-    repos.audit.record({
+    await repos.audit.record({
       projectId: project.id,
       action: "relationshipPlan.run",
       entityType: "project",

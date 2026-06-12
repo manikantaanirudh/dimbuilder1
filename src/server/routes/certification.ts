@@ -18,15 +18,15 @@ export function createCertificationRouter(repos: Repositories, config: AppConfig
   mkdirSync(config.paths.exportsDirectory, { recursive: true });
   const router = Router();
 
-  function loadSnapshot(projectId: string): CertificationSnapshot | null {
-    const project = repos.projects.get(projectId);
+  async function loadSnapshot(projectId: string): Promise<CertificationSnapshot | null> {
+    const project = await repos.projects.get(projectId);
     if (!project) return null;
     return {
       project,
-      dimensions: repos.dimensions.listByProject(project.id),
-      members: repos.members.listByProject(project.id),
-      relationships: repos.relationships.listByProject(project.id),
-      varyingPropertyValues: repos.varyingProperties.listVaryingPropertyValues(project.id)
+      dimensions: await repos.dimensions.listByProject(project.id),
+      members: await repos.members.listByProject(project.id),
+      relationships: await repos.relationships.listByProject(project.id),
+      varyingPropertyValues: await repos.varyingProperties.listVaryingPropertyValues(project.id)
     };
   }
 
@@ -34,7 +34,7 @@ export function createCertificationRouter(repos: Repositories, config: AppConfig
     return join(config.paths.exportsDirectory, `${projectId}.certification.json`);
   }
 
-  router.post("/:projectId/xml/certification", (req, res) => {
+  router.post("/:projectId/xml/certification", async (req, res) => {
     const snapshot = loadSnapshot(req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
 
@@ -54,7 +54,7 @@ export function createCertificationRouter(repos: Repositories, config: AppConfig
     }
 
     writeReport(reportPath(snapshot.project.id), report);
-    repos.audit.record({
+    await repos.audit.record({
       projectId: snapshot.project.id,
       action: "xml.certification",
       entityType: "project",
@@ -64,8 +64,8 @@ export function createCertificationRouter(repos: Repositories, config: AppConfig
     res.json({ report });
   });
 
-  router.get("/:projectId/xml/certification/latest", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/xml/certification/latest", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const path = reportPath(project.id);
     if (!existsSync(path)) return res.status(404).json({ error: "no certification has been run for this project" });

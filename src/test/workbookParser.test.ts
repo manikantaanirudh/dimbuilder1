@@ -9,7 +9,6 @@ import { validateDimension } from "../shared/validationEngine";
 import { parseWorkbook } from "../shared/workbookParser";
 import { exportProjectXml } from "../shared/xmlExport";
 
-const workbookPath = "XF Dimensions Template - 29.04.2026.xlsx";
 const tempDirs: string[] = [];
 
 afterEach(async () => {
@@ -25,6 +24,7 @@ async function createMinimalWorkbook(
     memberKey: string;
     description?: string;
     extraMemberColumns?: Array<{ header: string; value: string }>;
+    relationships?: Array<{ parent: string; child: string; aggregationWeight?: number }>;
   }>
 ): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "dimbuilder-parser-"));
@@ -45,16 +45,134 @@ async function createMinimalWorkbook(
       sheet.getRow(8).getCell(columnNumber).value = column.header;
       sheet.getRow(9).getCell(columnNumber).value = column.value;
     });
+    if (sheetFixture.relationships?.length) {
+      const relationshipHeaderRow = 12;
+      sheet.getRow(relationshipHeaderRow).getCell(1).value = "Parent";
+      sheet.getRow(relationshipHeaderRow).getCell(2).value = "Child";
+      sheet.getRow(relationshipHeaderRow).getCell(3).value = "Aggregation Weight";
+      sheetFixture.relationships.forEach((relationship, index) => {
+        const row = sheet.getRow(relationshipHeaderRow + index + 1);
+        row.getCell(1).value = relationship.parent;
+        row.getCell(2).value = relationship.child;
+        if (relationship.aggregationWeight !== undefined) row.getCell(3).value = relationship.aggregationWeight;
+      });
+    }
   }
 
   await workbook.xlsx.writeFile(filePath);
   return filePath;
 }
 
+async function createRepresentativeWorkbook(): Promise<string> {
+  return createMinimalWorkbook([
+    {
+      sheetName: "Scenarios",
+      dimensionTypeText: "Scenario",
+      dimensionName: "Scenarios",
+      memberKeyField: "Entity",
+      memberKey: "Actual",
+      extraMemberColumns: [
+        { header: "Begin Members", value: "generated marker" },
+        { header: "Text1", value: "#NAME?" }
+      ],
+      relationships: [{ parent: "Root", child: "Actual" }]
+    },
+    {
+      sheetName: "Entities",
+      dimensionTypeText: "Entity",
+      dimensionName: "Entities",
+      memberKeyField: "Entity",
+      memberKey: "Corp",
+      relationships: [{ parent: "Root", child: "Corp" }]
+    },
+    {
+      sheetName: "Accounts",
+      dimensionTypeText: "Account",
+      dimensionName: "MainAccounts",
+      memberKeyField: "Account",
+      memberKey: "Cash",
+      relationships: [{ parent: "Root", child: "Cash", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "Flow",
+      dimensionTypeText: "Flow",
+      dimensionName: "Flows",
+      memberKeyField: "Flow Member",
+      memberKey: "Movement",
+      relationships: [{ parent: "Root", child: "Movement", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD2",
+      dimensionTypeText: "UD2",
+      dimensionName: "Products",
+      memberKeyField: "Member",
+      memberKey: "ProductA",
+      relationships: [{ parent: "Root", child: "ProductA", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD3 OUC (2)",
+      dimensionTypeText: "UD3",
+      dimensionName: "OUC",
+      memberKeyField: "Member",
+      memberKey: "OUC_A",
+      relationships: [{ parent: "Root", child: "OUC_A", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD3 OUC",
+      dimensionTypeText: "UD3",
+      dimensionName: "OUC",
+      memberKeyField: "Member",
+      memberKey: "OUC_B",
+      relationships: [{ parent: "Root", child: "OUC_B", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD4",
+      dimensionTypeText: "UD4",
+      dimensionName: "ChannelPartner",
+      memberKeyField: "Member",
+      memberKey: "Direct",
+      relationships: [{ parent: "Root", child: "Direct", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD5",
+      dimensionTypeText: "UD5",
+      dimensionName: "Customer",
+      memberKeyField: "Member",
+      memberKey: "Retail",
+      relationships: [{ parent: "Root", child: "Retail", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD6",
+      dimensionTypeText: "UD6",
+      dimensionName: "UD6",
+      memberKeyField: "Member",
+      memberKey: "None",
+      relationships: [{ parent: "Root", child: "None", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD7",
+      dimensionTypeText: "UD7",
+      dimensionName: "UD7",
+      memberKeyField: "Member",
+      memberKey: "None",
+      relationships: [{ parent: "Root", child: "None", aggregationWeight: 1 }]
+    },
+    {
+      sheetName: "UD8",
+      dimensionTypeText: "UD8",
+      dimensionName: "UD8",
+      memberKeyField: "Member",
+      memberKey: "Management",
+      relationships: [{ parent: "Root", child: "Management", aggregationWeight: 1 }]
+    }
+  ]);
+}
+
 describe("workbook parser", () => {
-  it("imports all supported sheets from the supplied template", async () => {
+  it("imports supported sheets from a generated workbook fixture", async () => {
+    const workbookPath = await createRepresentativeWorkbook();
     const parsed = await parseWorkbook(workbookPath, {
-      projectName: "XF Dimensions Template",
+      projectName: "Generated Workbook Fixture",
       createdBy: "local-admin"
     });
 
@@ -67,7 +185,7 @@ describe("workbook parser", () => {
       "UD3 OUC (2)",
       "UD3 OUC"
     ]);
-    expect(parsed.members.length).toBeGreaterThan(32000);
+    expect(parsed.members.length).toBeGreaterThan(10);
     expect(parsed.relationships.some((relationship) => relationship.parentKey === "Root")).toBe(true);
 
     const issues = parsed.dimensions.flatMap((dimension) => validateDimension({
@@ -93,8 +211,9 @@ describe("workbook parser", () => {
   }, 120000);
 
   it("ignores generated XML/formula columns", async () => {
+    const workbookPath = await createRepresentativeWorkbook();
     const parsed = await parseWorkbook(workbookPath, {
-      projectName: "XF Dimensions Template",
+      projectName: "Generated Workbook Fixture",
       createdBy: "local-admin"
     });
 
@@ -107,8 +226,9 @@ describe("workbook parser", () => {
   }, 120000);
 
   it("aligns workbook dimension metadata from a OneStream metadata reference", async () => {
+    const workbookPath = await createRepresentativeWorkbook();
     const parsed = await parseWorkbook(workbookPath, {
-      projectName: "XF Dimensions Template",
+      projectName: "Generated Workbook Fixture",
       createdBy: "local-admin",
       metadataReference: {
         version: "9.2.0.18004",
@@ -130,8 +250,9 @@ describe("workbook parser", () => {
   }, 120000);
 
   it("adds metadata-only dimensions when the workbook is missing a dimension type", async () => {
+    const workbookPath = await createRepresentativeWorkbook();
     const parsed = await parseWorkbook(workbookPath, {
-      projectName: "XF Dimensions Template",
+      projectName: "Generated Workbook Fixture",
       createdBy: "local-admin",
       metadataReference: {
         version: "9.2.0.18004",

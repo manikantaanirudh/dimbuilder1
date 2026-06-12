@@ -19,7 +19,7 @@ export async function applyBulkUpdatePreviewItems(
   const membersById = new Map(state.members.map((member) => [member.id, member]));
   const relationshipsById = new Map(state.relationships.map((relationship) => [relationship.id, relationship]));
 
-  return repos.transaction(async () => {
+  return await repos.transaction(async () => {
     for (const item of previewItems) {
       const dimension = dimensionsById.get(item.dimensionId);
       if (!dimension) throw Object.assign(new Error("bulk update dimension target not found"), { status: 409 });
@@ -40,7 +40,7 @@ export async function applyBulkUpdatePreviewItems(
     }
 
     const warningCount = previewItems.reduce((count, item) => count + item.warnings.length, 0);
-    const created = repos.bulkUpdates.createJobWithItems({
+    const created = await repos.bulkUpdates.createJobWithItems({
       projectId,
       targetType: options.request.targetType,
       operation: options.request.operation,
@@ -66,7 +66,7 @@ export async function applyBulkUpdatePreviewItems(
       createdBy: options.createdBy ?? "local-admin"
     });
 
-    repos.audit.record({
+    await repos.audit.record({
       projectId,
       action: options.auditAction,
       entityType: "bulkUpdateJob",

@@ -42,14 +42,14 @@ export interface AutoAdvanceResult {
  * Evaluate auto-advance rules for a given workflow instance.
  * Returns whether the current step should be automatically advanced.
  */
-export function evaluateAutoAdvance(
+export async function evaluateAutoAdvance(
   repos: Repositories,
   instanceId: string
-): AutoAdvanceResult | null {
-  const instance = repos.workflows.instances.get(instanceId);
+): Promise<AutoAdvanceResult | null> {
+  const instance = await repos.workflows.instances.get(instanceId);
   if (!instance || instance.status !== 'in_progress') return null;
 
-  const definition = repos.workflows.definitions.get(instance.definitionId);
+  const definition = await repos.workflows.definitions.get(instance.definitionId);
   if (!definition || !definition.autoAdvanceRules) return null;
 
   const rules = definition.autoAdvanceRules as Record<string, AutoAdvanceRule>;
@@ -60,7 +60,7 @@ export function evaluateAutoAdvance(
   const results: Array<{ condition: AutoAdvanceCondition; passed: boolean; detail: string }> = [];
 
   for (const condition of rule.conditions) {
-    const evaluation = evaluateCondition(repos, instance.projectId, instance, condition);
+    const evaluation = await evaluateCondition(repos, instance.projectId, instance, condition);
     results.push(evaluation);
   }
 
@@ -81,18 +81,18 @@ export function evaluateAutoAdvance(
  * Run auto-advance evaluation on all in-progress workflow instances.
  * Advances steps that meet their auto-advance criteria.
  */
-export function runAutoAdvanceCheck(repos: Repositories): Array<{ instanceId: string; advanced: boolean }> {
+export async function runAutoAdvanceCheck(repos: Repositories): Promise<Array<{ instanceId: string; advanced: boolean }>> {
   const results: Array<{ instanceId: string; advanced: boolean }> = [];
 
   // Get all projects and their active workflow instances
-  const projects = repos.projects.list();
+  const projects = await repos.projects.list();
   for (const project of projects) {
-    const instances = repos.workflows.instances.listByProject(project.id, 'in_progress');
+    const instances = await repos.workflows.instances.listByProject(project.id, 'in_progress');
     for (const instance of instances) {
-      const evaluation = evaluateAutoAdvance(repos, instance.id);
+      const evaluation = await evaluateAutoAdvance(repos, instance.id);
       if (evaluation && evaluation.shouldAdvance) {
         // Auto-approve by recording a system approval
-        repos.workflows.stepActions.record({
+        await repos.workflows.stepActions.record({
           instanceId: instance.id,
           stepIndex: instance.currentStepIndex,
           action: 'approve',
@@ -101,18 +101,18 @@ export function runAutoAdvanceCheck(repos: Repositories): Array<{ instanceId: st
         });
 
         // Check if we can advance
-        const definition = repos.workflows.definitions.get(instance.definitionId);
+        const definition = await repos.workflows.definitions.get(instance.definitionId);
         if (definition) {
           const currentStep = definition.steps[instance.currentStepIndex];
-          const approvalCount = repos.workflows.stepActions.countApprovalsForStep(instance.id, instance.currentStepIndex);
+          const approvalCount = await repos.workflows.stepActions.countApprovalsForStep(instance.id, instance.currentStepIndex);
 
           if (currentStep && approvalCount >= currentStep.minApprovals) {
             const nextStepIndex = instance.currentStepIndex + 1;
             if (nextStepIndex >= definition.steps.length) {
-              repos.workflows.instances.updateStatus(instance.id, 'approved', new Date().toISOString());
-              repos.changeSets.update(instance.projectId, instance.changeSetId, { status: 'approved' });
+              await repos.workflows.instances.updateStatus(instance.id, 'approved', new Date().toISOString());
+              await repos.changeSets.update(instance.projectId, instance.changeSetId, { status: 'approved' });
             } else {
-              repos.workflows.instances.advanceStep(instance.id, nextStepIndex);
+              await repos.workflows.instances.advanceStep(instance.id, nextStepIndex);
             }
             results.push({ instanceId: instance.id, advanced: true });
           } else {
@@ -126,19 +126,19 @@ export function runAutoAdvanceCheck(repos: Repositories): Array<{ instanceId: st
   return results;
 }
 
-function evaluateCondition(
+async function evaluateCondition(
   repos: Repositories,
   projectId: string,
   instance: { createdAt: string },
   condition: AutoAdvanceCondition
-): { condition: AutoAdvanceCondition; passed: boolean; detail: string } {
+): Promise<{ condition: AutoAdvanceCondition; passed: boolean; detail: string }> {
   switch (condition.type) {
     case 'quality_score_above': {
       const threshold = condition.threshold ?? 80;
-      const dimensions = repos.dimensions.listByProject(projectId);
-      const members = repos.members.listByProject(projectId);
-      const rules = repos.qualityRules.listByProject(projectId);
-      const issues = repos.issues.listByProject(projectId);
+      const dimensions = await repos.dimensions.listByProject(projectId);
+      const members = await repos.members.listByProject(projectId);
+      const rules = await repos.qualityRules.listByProject(projectId);
+      const issues = await repos.issues.listByProject(projectId);
 
       if (dimensions.length === 0) {
         return { condition, passed: true, detail: `No dimensions to score (passes by default)` };
@@ -155,10 +155,10 @@ function evaluateCondition(
     }
 
     case 'no_validation_errors': {
-      const dimensions = repos.dimensions.listByProject(projectId);
-      const members = repos.members.listByProject(projectId);
+      const dimensions = await repos.dimensions.listByProject(projectId);
+      const members = await repos.members.listByProject(projectId);
       // Simple check: ensure no orphan members (members with no relationships)
-      const relationships = repos.relationships.listByProject(projectId);
+      const relationships = await repos.relationships.listByProject(projectId);
       const childKeys = new Set(relationships.map(r => r.childKey));
       const parentKeys = new Set(relationships.map(r => r.parentKey));
       const orphans = members.filter(m => !childKeys.has(m.memberKey) && !parentKeys.has(m.memberKey));
@@ -175,7 +175,7 @@ function evaluateCondition(
     }
 
     case 'all_properties_filled': {
-      const members = repos.members.listByProject(projectId);
+      const members = await repos.members.listByProject(projectId);
       const unfilled = members.filter(m => {
         const props = typeof m.properties === 'string' ? JSON.parse(m.properties || '{}') : (m.properties || {});
         return Object.keys(props).length === 0;

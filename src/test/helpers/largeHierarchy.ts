@@ -14,23 +14,23 @@ export interface LargeHierarchyProject {
   dimensionIds: string[];
 }
 
-export function createLargeHierarchyProject(
+export async function createLargeHierarchyProject(
   repos: Repositories,
   config: AppConfig,
   options: { memberCount: number; projectName?: string }
-): LargeHierarchyProject {
+): Promise<LargeHierarchyProject> {
   const project = createProjectFromBlueprints(repos, config, {
     name: options.projectName ?? "Large hierarchy test project",
     description: "",
     createdBy: "test"
   });
-  const dimensions = repos.dimensions.listByProject(project.id);
+  const dimensions = await repos.dimensions.listByProject(project.id);
   if (dimensions.length === 0) {
     throw new Error("createLargeHierarchyProject requires at least one dimension");
   }
 
   const targetCount = options.memberCount;
-  let currentCount = repos.members.countByProject(project.id);
+  let currentCount = await repos.members.countByProject(project.id);
   const batch: DimensionMemberRecord[] = [];
   let sequence = 0;
 
@@ -54,13 +54,13 @@ export function createLargeHierarchyProject(
     sequence += 1;
     currentCount += 1;
     if (batch.length >= 500) {
-      repos.members.bulkInsert(batch);
+      await repos.members.bulkInsert(batch);
       batch.length = 0;
     }
   }
 
   if (batch.length > 0) {
-    repos.members.bulkInsert(batch);
+    await repos.members.bulkInsert(batch);
   }
 
   return { projectId: project.id, dimensionIds: dimensions.map((dimension) => dimension.id) };

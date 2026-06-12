@@ -20,8 +20,8 @@ export function createImpactRouter(repos: Repositories, _config: AppConfig): Rou
   const router = Router();
 
   // Run impact analysis
-  router.post("/projects/:projectId/impact-analysis", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/projects/:projectId/impact-analysis", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const parsed = impactAnalysisSchema.safeParse(req.body);
@@ -34,16 +34,16 @@ export function createImpactRouter(repos: Repositories, _config: AppConfig): Rou
 
     const { type, scope, environmentId, changeSetId } = parsed.data;
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const results = runImpactAnalysis(
       { type, scope, environmentId },
       { dimensions, members, relationships }
     );
 
-    const record = repos.impactAnalyses.create({
+    const record = await repos.impactAnalyses.create({
       projectId: project.id,
       changeSetId,
       analysisType: type,
@@ -59,8 +59,8 @@ export function createImpactRouter(repos: Repositories, _config: AppConfig): Rou
   });
 
   // Run "what if" simulation
-  router.post("/projects/:projectId/what-if", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/projects/:projectId/what-if", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const parsed = impactAnalysisSchema.safeParse({ ...req.body, type: "whatIf", scope: { ...req.body?.scope, action: "whatIf" } });
@@ -73,16 +73,16 @@ export function createImpactRouter(repos: Repositories, _config: AppConfig): Rou
 
     const { scope, environmentId, changeSetId } = parsed.data;
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const results = runImpactAnalysis(
       { type: "whatIf", scope: { ...scope, action: "whatIf" }, environmentId },
       { dimensions, members, relationships }
     );
 
-    const record = repos.impactAnalyses.create({
+    const record = await repos.impactAnalyses.create({
       projectId: project.id,
       changeSetId,
       analysisType: "whatIf",
@@ -98,17 +98,17 @@ export function createImpactRouter(repos: Repositories, _config: AppConfig): Rou
   });
 
   // List past analyses for a project
-  router.get("/projects/:projectId/impact-analyses", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/projects/:projectId/impact-analyses", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    const analyses = repos.impactAnalyses.listByProject(project.id);
+    const analyses = await repos.impactAnalyses.listByProject(project.id);
     res.json(analyses);
   });
 
   // Get specific analysis detail
-  router.get("/impact-analyses/:id", (req, res) => {
-    const analysis = repos.impactAnalyses.findById(req.params.id);
+  router.get("/impact-analyses/:id", async (req, res) => {
+    const analysis = await repos.impactAnalyses.findById(req.params.id);
     if (!analysis) return res.status(404).json({ error: "Impact analysis not found" });
     res.json(analysis);
   });

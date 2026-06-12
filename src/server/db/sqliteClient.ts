@@ -9,7 +9,7 @@ const { DatabaseSync } = require("node:sqlite") as {
   DatabaseSync: new (filename: string) => AppDatabase;
 };
 
-function createClient(db: AppDatabase): DbClient {
+async function createClient(db: AppDatabase): Promise<DbClient> {
   let depth = 0;
 
   const client: DbClient = {

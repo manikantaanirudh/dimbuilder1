@@ -58,9 +58,9 @@ async function buildCsvImportContext(
     }
     context.projectId = project.id;
     const [existingDimensions, existingMembers, existingRelationships] = await Promise.all([
-      repos.dimensions.listByProject(project.id),
-      repos.members.listByProject(project.id),
-      repos.relationships.listByProject(project.id)
+      await repos.dimensions.listByProject(project.id),
+      await repos.members.listByProject(project.id),
+      await repos.relationships.listByProject(project.id)
     ]);
     context.existingDimensions = existingDimensions;
     context.existingMembers = existingMembers;
@@ -242,9 +242,9 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       });
 
       const [dimensions, members, relationships] = await Promise.all([
-        repos.dimensions.listByProject(project.id),
-        repos.members.listByProject(project.id),
-        repos.relationships.listByProject(project.id)
+        await repos.dimensions.listByProject(project.id),
+        await repos.members.listByProject(project.id),
+        await repos.relationships.listByProject(project.id)
       ]);
       const issues = dimensions.flatMap((dimension) =>
         validateDimension({
@@ -255,8 +255,8 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
           severities: config.validation
         })
       );
-      repos.issues.replaceForProject(project.id, issues);
-      repos.audit.record({ projectId: project.id, action: "project.import", entityType: "project", entityId: project.id, after: parsed.importSummary });
+      await repos.issues.replaceForProject(project.id, issues);
+      await repos.audit.record({ projectId: project.id, action: "project.import", entityType: "project", entityId: project.id, after: parsed.importSummary });
 
       res.json({
         project,
@@ -307,9 +307,9 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       });
 
       const [dimensions, members, relationships] = await Promise.all([
-        repos.dimensions.listByProject(project.id),
-        repos.members.listByProject(project.id),
-        repos.relationships.listByProject(project.id)
+        await repos.dimensions.listByProject(project.id),
+        await repos.members.listByProject(project.id),
+        await repos.relationships.listByProject(project.id)
       ]);
       const issues = dimensions.flatMap((dimension) =>
         validateDimension({
@@ -320,8 +320,8 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
           severities: config.validation
         })
       );
-      repos.issues.replaceForProject(project.id, issues);
-      repos.audit.record({ projectId: project.id, action: "project.importXml", entityType: "project", entityId: project.id, after: parsed.importSummary });
+      await repos.issues.replaceForProject(project.id, issues);
+      await repos.audit.record({ projectId: project.id, action: "project.importXml", entityType: "project", entityId: project.id, after: parsed.importSummary });
 
       res.json({
         project,

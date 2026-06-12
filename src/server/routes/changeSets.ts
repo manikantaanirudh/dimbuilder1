@@ -27,7 +27,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
   router.get("/", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    res.json(repos.changeSets.listByProject(project.id));
+    res.json(await repos.changeSets.listByProject(project.id));
   });
 
   router.post("/", async (req, res) => {
@@ -36,15 +36,15 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     const body = req.body ?? {};
     const requestedDiffRunId = String(body.diffRunId ?? "").trim();
     const diffRun = requestedDiffRunId
-      ? repos.diffRuns.get(project.id, requestedDiffRunId)
-      : repos.diffRuns.getLatest(project.id);
+      ? await repos.diffRuns.get(project.id, requestedDiffRunId)
+      : await repos.diffRuns.getLatest(project.id);
     if (!diffRun) return res.status(400).json({ error: "diffRunId is required when no diff run exists" });
     const selectedItemIds = Array.isArray(body.selectedItemIds)
       ? new Set(body.selectedItemIds.map((value: unknown) => String(value)))
       : null;
-    const diffItems = repos.diffRuns.listItems(diffRun.id)
+    const diffItems = (await repos.diffRuns.listItems(diffRun.id))
       .filter((item) => !selectedItemIds || selectedItemIds.has(item.id));
-    const changeSet = repos.changeSets.create({
+    const changeSet = await repos.changeSets.create({
       projectId: project.id,
       baselineId: diffRun.baselineId,
       diffRunId: diffRun.id,
@@ -54,14 +54,14 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       items: diffItems,
       createdBy: "local-admin"
     });
-    repos.audit.record({ projectId: project.id, action: "changeSet.create", entityType: "changeSet", entityId: changeSet.id, after: changeSet });
-    res.status(201).json(repos.changeSets.getDetail(project.id, changeSet.id));
+    await repos.audit.record({ projectId: project.id, action: "changeSet.create", entityType: "changeSet", entityId: changeSet.id, after: changeSet });
+    res.status(201).json(await repos.changeSets.getDetail(project.id, changeSet.id));
   });
 
   router.get("/:changeSetId", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+    const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
     res.json(detail);
   });
@@ -70,35 +70,35 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const status = parseChangeSetStatus(req.body?.status);
-    const updated = repos.changeSets.update(project.id, (req.params as Record<string, string>).changeSetId, {
+    const updated = await repos.changeSets.update(project.id, (req.params as Record<string, string>).changeSetId, {
       name: typeof req.body?.name === "string" ? req.body.name : undefined,
       description: typeof req.body?.description === "string" ? req.body.description : undefined,
       targetEnvironment: typeof req.body?.targetEnvironment === "string" ? req.body.targetEnvironment : undefined,
       status
     });
     if (!updated) return res.status(404).json({ error: "change set not found" });
-    repos.audit.record({ projectId: project.id, action: "changeSet.update", entityType: "changeSet", entityId: updated.id, after: updated });
-    res.json(repos.changeSets.getDetail(project.id, updated.id));
+    await repos.audit.record({ projectId: project.id, action: "changeSet.update", entityType: "changeSet", entityId: updated.id, after: updated });
+    res.json(await repos.changeSets.getDetail(project.id, updated.id));
   });
 
   router.post("/:changeSetId/validate", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+    const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
     const issues = await runProjectValidation(repos, config, project.id);
     const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
     const updated = validationSummary.blockingIssues === 0
-      ? repos.changeSets.update(project.id, detail.changeSet.id, { status: "validated" })
+      ? await repos.changeSets.update(project.id, detail.changeSet.id, { status: "validated" })
       : detail.changeSet;
-    repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
+    await repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
       action: "comment",
       comment: validationSummary.blockingIssues === 0 ? "Validation completed with no blocking issues." : `Validation completed with ${validationSummary.blockingIssues} blocking issue(s).`,
       createdBy: "local-admin"
     });
-    repos.audit.record({ projectId: project.id, action: "changeSet.validate", entityType: "changeSet", entityId: detail.changeSet.id, after: validationSummary });
+    await repos.audit.record({ projectId: project.id, action: "changeSet.validate", entityType: "changeSet", entityId: detail.changeSet.id, after: validationSummary });
     res.json({
-      ...repos.changeSets.getDetail(project.id, detail.changeSet.id),
+      ...(await repos.changeSets.getDetail(project.id, detail.changeSet.id)),
       changeSet: updated ?? detail.changeSet,
       validationSummary,
       issues
@@ -108,7 +108,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
   router.post("/:changeSetId/approve", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+    const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
     const issues = await runProjectValidation(repos, config, project.id);
     const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
@@ -117,42 +117,42 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       return res.status(409).json({ error: "blocking validation issues prevent approval", validationSummary, issues });
     }
     const comment = String(req.body?.comment ?? "");
-    const approval = repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
+    const approval = await repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
       action: "approve",
       comment: bypassValidation ? `[Validation bypass] ${comment}`.trim() : comment,
       createdBy: "local-admin"
     });
-    const updated = repos.changeSets.update(project.id, detail.changeSet.id, { status: "approved" });
-    repos.audit.record({ projectId: project.id, action: "changeSet.approve", entityType: "changeSet", entityId: detail.changeSet.id, after: { approval, validationSummary, bypassValidation } });
-    res.json({ ...repos.changeSets.getDetail(project.id, detail.changeSet.id), changeSet: updated ?? detail.changeSet, validationSummary, issues });
+    const updated = await repos.changeSets.update(project.id, detail.changeSet.id, { status: "approved" });
+    await repos.audit.record({ projectId: project.id, action: "changeSet.approve", entityType: "changeSet", entityId: detail.changeSet.id, after: { approval, validationSummary, bypassValidation } });
+    res.json({ ...(await repos.changeSets.getDetail(project.id, detail.changeSet.id)), changeSet: updated ?? detail.changeSet, validationSummary, issues });
   });
 
   router.post("/:changeSetId/reject", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+    const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
-    const approval = repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
+    const approval = await repos.changeSets.recordApproval(project.id, detail.changeSet.id, {
       action: "reject",
       comment: String(req.body?.comment ?? ""),
       createdBy: "local-admin"
     });
-    const updated = repos.changeSets.update(project.id, detail.changeSet.id, { status: "rejected" });
-    repos.audit.record({ projectId: project.id, action: "changeSet.reject", entityType: "changeSet", entityId: detail.changeSet.id, after: approval });
-    res.json({ ...repos.changeSets.getDetail(project.id, detail.changeSet.id), changeSet: updated ?? detail.changeSet });
+    const updated = await repos.changeSets.update(project.id, detail.changeSet.id, { status: "rejected" });
+    await repos.audit.record({ projectId: project.id, action: "changeSet.reject", entityType: "changeSet", entityId: detail.changeSet.id, after: approval });
+    res.json({ ...(await repos.changeSets.getDetail(project.id, detail.changeSet.id)), changeSet: updated ?? detail.changeSet });
   });
 
   router.post("/:changeSetId/package", async (req, res, next) => {
     try {
       const project = await repos.projects.get((req.params as Record<string, string>).projectId);
       if (!project) return res.status(404).json({ error: "project not found" });
-      const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+      const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
       if (!detail) return res.status(404).json({ error: "change set not found" });
       if (detail.changeSet.status !== "approved" && detail.changeSet.status !== "exported") {
         return res.status(409).json({ error: "change set must be approved before packaging" });
       }
 
-      assertProjectExportWithinMemberLimit(repos, project.id, "change-set-xml", config);
+      await assertProjectExportWithinMemberLimit(repos, project.id, "change-set-xml", config);
 
       const issues = await runProjectValidation(repos, config, project.id);
       const validationSummary = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
@@ -190,17 +190,17 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
       await finished(xmlStream);
       writeFileSync(join(packagePath, "06-rollback-notes.md"), renderRollbackNotesMarkdown(packagedDetail));
       writeFileSync(join(packagePath, "manifest.json"), JSON.stringify(manifest, null, 2));
-      const packageRecord = repos.changeSets.createReleasePackage({
+      const packageRecord = await repos.changeSets.createReleasePackage({
         changeSetId: detail.changeSet.id,
         packageName,
         packagePath,
         manifest,
         createdBy: "local-admin"
       });
-      const updated = repos.changeSets.update(project.id, detail.changeSet.id, { status: "exported" });
-      repos.audit.record({ projectId: project.id, action: "changeSet.package", entityType: "changeSet", entityId: detail.changeSet.id, after: { package: packageRecord, manifest } });
+      const updated = await repos.changeSets.update(project.id, detail.changeSet.id, { status: "exported" });
+      await repos.audit.record({ projectId: project.id, action: "changeSet.package", entityType: "changeSet", entityId: detail.changeSet.id, after: { package: packageRecord, manifest } });
       res.status(201).json({
-        ...repos.changeSets.getDetail(project.id, detail.changeSet.id),
+        ...(await repos.changeSets.getDetail(project.id, detail.changeSet.id)),
         changeSet: updated ?? packagedDetail.changeSet,
         package: packageRecord,
         manifest,
@@ -215,7 +215,7 @@ export function createChangeSetsRouter({ repos, config }: RouterDeps): Router {
   router.get("/:changeSetId/package", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
+    const detail = await repos.changeSets.getDetail(project.id, (req.params as Record<string, string>).changeSetId);
     if (!detail) return res.status(404).json({ error: "change set not found" });
     if (!detail.latestPackage) return res.status(404).json({ error: "release package not found" });
     res.json({ changeSet: detail.changeSet, package: detail.latestPackage, manifest: detail.latestPackage.manifest });

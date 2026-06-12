@@ -30,8 +30,8 @@ function getAIConfig(config: AppConfig): AIConfigSection {
 export function createAIRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
 
-  router.get("/projects/:id/ai/suggestions", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/ai/suggestions", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
@@ -39,20 +39,20 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
 
     const type = req.query.type as AISuggestionType | undefined;
     const status = req.query.status as AISuggestionStatus | undefined;
-    const suggestions = repos.aiSuggestions.listByProject(project.id, { type, status });
+    const suggestions = await repos.aiSuggestions.listByProject(project.id, { type, status });
     res.json(suggestions);
   });
 
-  router.post("/projects/:id/ai/analyze", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/ai/analyze", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
     if (!aiConfig.enabled) return res.status(503).json({ error: "AI features are disabled" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const scope = req.body?.scope;
     const startTime = Date.now();
@@ -62,7 +62,7 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const stored: unknown[] = [];
 
     for (const dup of results.duplicates) {
-      const record = repos.aiSuggestions.create({
+      const record = await repos.aiSuggestions.create({
         projectId: project.id,
         suggestionType: 'duplicate',
         suggestion: dup as unknown as Record<string, unknown>,
@@ -76,7 +76,7 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
         const dimMembers = members.filter(m => m.dimensionId === d.id);
         return dimMembers.some(m => m.memberKey === anomaly.memberKey);
       });
-      const record = repos.aiSuggestions.create({
+      const record = await repos.aiSuggestions.create({
         projectId: project.id,
         dimensionId: dim?.id,
         suggestionType: 'naming',
@@ -88,7 +88,7 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     }
 
     for (const opt of results.hierarchyOptimizations) {
-      const record = repos.aiSuggestions.create({
+      const record = await repos.aiSuggestions.create({
         projectId: project.id,
         suggestionType: 'hierarchy',
         targetMemberKey: opt.parentKey,
@@ -103,7 +103,7 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
         const dimMembers = members.filter(m => m.dimensionId === d.id);
         return dimMembers.some(m => m.memberKey === prop.memberKey);
       });
-      const record = repos.aiSuggestions.create({
+      const record = await repos.aiSuggestions.create({
         projectId: project.id,
         dimensionId: dim?.id,
         suggestionType: 'property',
@@ -121,19 +121,19 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     });
   });
 
-  router.patch("/ai/suggestions/:id", (req, res) => {
+  router.patch("/ai/suggestions/:id", async (req, res) => {
     const schema = z.object({ status: z.enum(['accepted', 'dismissed']) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Invalid status", details: parsed.error.issues });
 
     const userId = req.user?.id ?? "system";
-    const updated = repos.aiSuggestions.updateStatus(req.params.id, parsed.data.status, userId);
+    const updated = await repos.aiSuggestions.updateStatus(req.params.id, parsed.data.status, userId);
     if (!updated) return res.status(404).json({ error: "Suggestion not found" });
     res.json(updated);
   });
 
-  router.post("/projects/:id/ai/suggest-parent", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/ai/suggest-parent", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
@@ -143,9 +143,9 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const suggestions = runParentSuggestion(
       parsed.data.memberKey,
@@ -155,24 +155,24 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     res.json(suggestions);
   });
 
-  router.post("/projects/:id/ai/duplicates", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/ai/duplicates", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
     if (!aiConfig.enabled) return res.status(503).json({ error: "AI features are disabled" });
 
     const threshold = typeof req.body?.threshold === 'number' ? req.body.threshold : undefined;
-    const members = repos.members.listByProject(project.id);
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const duplicates = runDuplicateDetection({ dimensions, members, relationships }, aiConfig, threshold);
     res.json(duplicates);
   });
 
-  router.post("/projects/:id/ai/query", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/ai/query", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
@@ -184,20 +184,20 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
 
     const result = runNaturalLanguageQuery(
       parsed.data.question,
       { dimensions, members, relationships },
-      buildProjectAIContext(repos, config, project.id) ?? undefined
+      (await buildProjectAIContext(repos, config, project.id)) ?? undefined
     );
     res.json(result);
   });
 
-  router.post("/projects/:id/ai/chat", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/ai/chat", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const aiConfig = getAIConfig(config);
@@ -211,13 +211,13 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const timestamp = new Date().toISOString();
     const userMessage = { role: 'user' as const, content: parsed.data.message, timestamp };
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const members = repos.members.listByProject(project.id);
-    const relationships = repos.relationships.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
     const queryResult = runNaturalLanguageQuery(
       parsed.data.message,
       { dimensions, members, relationships },
-      buildProjectAIContext(repos, config, project.id) ?? undefined
+      (await buildProjectAIContext(repos, config, project.id)) ?? undefined
     );
 
     const assistantMessage = {
@@ -228,13 +228,13 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
 
     let conversation;
     if (parsed.data.conversationId) {
-      conversation = repos.aiConversations.get(parsed.data.conversationId);
+      conversation = await repos.aiConversations.get(parsed.data.conversationId);
       if (!conversation) return res.status(404).json({ error: "Conversation not found" });
-      repos.aiConversations.appendMessage(conversation.id, userMessage);
-      conversation = repos.aiConversations.appendMessage(conversation.id, assistantMessage);
+      await repos.aiConversations.appendMessage(conversation.id, userMessage);
+      conversation = await repos.aiConversations.appendMessage(conversation.id, assistantMessage);
     } else {
-      conversation = repos.aiConversations.create({ projectId: project.id, userId, message: userMessage });
-      conversation = repos.aiConversations.appendMessage(conversation!.id, assistantMessage);
+      conversation = await repos.aiConversations.create({ projectId: project.id, userId, message: userMessage });
+      conversation = await repos.aiConversations.appendMessage(conversation!.id, assistantMessage);
     }
 
     res.status(201).json({

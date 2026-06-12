@@ -16,16 +16,16 @@ export function createArtifactRouter(repos: Repositories, config: AppConfig): Ro
   const store = new ArtifactStore(config.paths.exportsDirectory);
   const router = Router();
 
-  function knownMembers(projectId: string): Array<{ dimensionType: string; memberKey: string }> {
-    const dimensionTypeById = new Map(repos.dimensions.listByProject(projectId).map((d) => [d.id, d.dimensionType]));
-    return repos.members.listByProject(projectId).map((m) => ({
+  async function knownMembers(projectId: string): Promise<Array<{ dimensionType: string; memberKey: string }>> {
+    const dimensionTypeById = new Map((await repos.dimensions.listByProject(projectId)).map((d) => [d.id, d.dimensionType]));
+    return (await repos.members.listByProject(projectId)).map((m) => ({
       dimensionType: dimensionTypeById.get(m.dimensionId) ?? "",
       memberKey: m.memberKey
     }));
   }
 
-  router.post("/:projectId/artifacts/upload", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/artifacts/upload", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const body = req.body ?? {};
     const content = typeof body.content === "string" ? body.content : "";
@@ -38,38 +38,38 @@ export function createArtifactRouter(repos: Repositories, config: AppConfig): Ro
       content,
       artifactType: body.artifactType
     });
-    repos.audit.record({ projectId: project.id, action: "artifact.upload", entityType: "project", entityId: project.id, after: { artifactId: artifact.id, name: artifact.name } });
+    await repos.audit.record({ projectId: project.id, action: "artifact.upload", entityType: "project", entityId: project.id, after: { artifactId: artifact.id, name: artifact.name } });
     res.status(201).json({ artifact });
   });
 
-  router.post("/:projectId/artifacts/:artifactId/scan", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/artifacts/:artifactId/scan", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const result = store.scan(project.id, req.params.artifactId, knownMembers(project.id));
+    const result = store.scan(project.id, req.params.artifactId, await knownMembers(project.id));
     if (!result) return res.status(404).json({ error: "artifact not found" });
-    repos.audit.record({ projectId: project.id, action: "artifact.scan", entityType: "project", entityId: project.id, after: { artifactId: req.params.artifactId, references: result.references.length } });
+    await repos.audit.record({ projectId: project.id, action: "artifact.scan", entityType: "project", entityId: project.id, after: { artifactId: req.params.artifactId, references: result.references.length } });
     res.json(result);
   });
 
-  router.get("/:projectId/artifacts", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/artifacts", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json({ artifacts: store.list(project.id) });
   });
 
-  router.get("/:projectId/impact/member/:memberId", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/impact/member/:memberId", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const member = repos.members.getById(req.params.memberId);
+    const member = await repos.members.getById(req.params.memberId);
     if (!member) return res.status(404).json({ error: "member not found" });
-    const dimension = repos.dimensions.get(member.dimensionId);
+    const dimension = await repos.dimensions.get(member.dimensionId);
     if (!dimension || dimension.projectId !== project.id) return res.status(404).json({ error: "member not found" });
     const whereUsed = buildMemberWhereUsed(dimension.dimensionType, member.memberKey, store.scannedArtifacts(project.id));
     res.json({ whereUsed });
   });
 
-  router.post("/:projectId/impact/proposed-change", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/impact/proposed-change", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const body = req.body ?? {};
     const dimensionType = String(body.dimensionType ?? "").trim();

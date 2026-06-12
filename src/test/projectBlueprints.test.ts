@@ -7,27 +7,18 @@ import { defaultAppConfig } from "../shared/appConfigDefaults";
 import { exportProjectXml } from "../shared/xmlExport";
 
 describe("project blueprints", () => {
-  // This block is intentionally unreachable at runtime but still compiled by TypeScript.
-  if (false) {
-    const db = createDatabase(":memory:");
-    const repos = createRepositories(db);
-    // @ts-expect-error repository transactions only support synchronous callbacks
-    repos.transaction(async () => "async result");
-    db.close();
-  }
-
-  it("creates a metadata project from configured dimension blueprints", () => {
+  it("creates a metadata project from configured dimension blueprints", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
 
-      const project = createProjectFromBlueprints(repos, defaultAppConfig, {
+      const project = await createProjectFromBlueprints(repos, defaultAppConfig, {
         name: "Manual Build",
         description: "Built in the app",
         createdBy: "local-admin"
       });
 
-      const dimensions = repos.dimensions.listByProject(project.id);
+      const dimensions = await repos.dimensions.listByProject(project.id);
       const account = dimensions.find((dimension) => dimension.dimensionType === "Account");
 
       expect(project.name).toBe("Manual Build");
@@ -39,26 +30,26 @@ describe("project blueprints", () => {
         allowMultipleParents: true,
         relationshipDefaults: { aggregationWeight: 1 }
       });
-      expect(repos.members.listByDimension(account?.id ?? "").map((member) => member.memberKey)).toEqual(["Root"]);
+      expect((await repos.members.listByDimension(account?.id ?? "")).map((member) => member.memberKey)).toEqual(["Root"]);
     } finally {
       db.close();
     }
   });
 
-  it("exports XML from app-authored project data", () => {
+  it("exports XML from app-authored project data", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
 
-      const project = createProjectFromBlueprints(repos, defaultAppConfig, {
+      const project = await createProjectFromBlueprints(repos, defaultAppConfig, {
         name: "Manual Export",
         description: "",
         createdBy: "local-admin"
       });
-      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      const account = (await repos.dimensions.listByProject(project.id)).find((dimension) => dimension.dimensionType === "Account");
       if (!account) throw new Error("Account dimension was not created");
 
-      repos.members.create({
+      await repos.members.create({
         dimensionId: account.id,
         memberKey: "Revenue",
         description: "Revenue",
@@ -67,7 +58,7 @@ describe("project blueprints", () => {
         sourceRowNumber: 0,
         isActive: true
       });
-      repos.relationships.create({
+      await repos.relationships.create({
         dimensionId: account.id,
         parentKey: "Root",
         childKey: "Revenue",
@@ -82,9 +73,9 @@ describe("project blueprints", () => {
 
       const xml = exportProjectXml({
         project,
-        dimensions: repos.dimensions.listByProject(project.id),
-        members: repos.members.listByProject(project.id),
-        relationships: repos.relationships.listByProject(project.id)
+        dimensions: await repos.dimensions.listByProject(project.id),
+        members: await repos.members.listByProject(project.id),
+        relationships: await repos.relationships.listByProject(project.id)
       });
 
       expect(xml).toContain('type="Account"');
@@ -95,7 +86,7 @@ describe("project blueprints", () => {
     }
   });
 
-  it("creates configured blueprint hierarchy members and relationships for XML export", () => {
+  it("creates configured blueprint hierarchy members and relationships for XML export", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
@@ -125,16 +116,16 @@ describe("project blueprints", () => {
         }
       } as AppConfig;
 
-      const project = createProjectFromBlueprints(repos, config, {
+      const project = await createProjectFromBlueprints(repos, config, {
         name: "Configured Hierarchy",
         description: "",
         createdBy: "local-admin"
       });
-      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      const account = (await repos.dimensions.listByProject(project.id)).find((dimension) => dimension.dimensionType === "Account");
       if (!account) throw new Error("Account dimension was not created");
 
-      const members = repos.members.listByDimension(account.id);
-      const relationships = repos.relationships.listByDimension(account.id);
+      const members = await repos.members.listByDimension(account.id);
+      const relationships = await repos.relationships.listByDimension(account.id);
       const xml = exportProjectXml({
         project,
         dimensions: [account],
@@ -169,7 +160,7 @@ describe("project blueprints", () => {
     }
   });
 
-  it("enriches root members from configured blueprint member entries with the same key", () => {
+  it("enriches root members from configured blueprint member entries with the same key", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
@@ -198,15 +189,15 @@ describe("project blueprints", () => {
         }
       } as AppConfig;
 
-      const project = createProjectFromBlueprints(repos, config, {
+      const project = await createProjectFromBlueprints(repos, config, {
         name: "Enriched Root",
         description: "",
         createdBy: "local-admin"
       });
-      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      const account = (await repos.dimensions.listByProject(project.id)).find((dimension) => dimension.dimensionType === "Account");
       if (!account) throw new Error("Account dimension was not created");
 
-      const members = repos.members.listByDimension(account.id);
+      const members = await repos.members.listByDimension(account.id);
 
       expect(members).toHaveLength(1);
       expect(members[0]).toMatchObject({
@@ -223,7 +214,7 @@ describe("project blueprints", () => {
     }
   });
 
-  it("lets explicit blueprint relationship property fields override generated defaults", () => {
+  it("lets explicit blueprint relationship property fields override generated defaults", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
@@ -253,19 +244,19 @@ describe("project blueprints", () => {
         }
       } as AppConfig;
 
-      const project = createProjectFromBlueprints(repos, config, {
+      const project = await createProjectFromBlueprints(repos, config, {
         name: "Property Override",
         description: "",
         createdBy: "local-admin"
       });
-      const account = repos.dimensions.listByProject(project.id).find((dimension) => dimension.dimensionType === "Account");
+      const account = (await repos.dimensions.listByProject(project.id)).find((dimension) => dimension.dimensionType === "Account");
       if (!account) throw new Error("Account dimension was not created");
 
-      const relationships = repos.relationships.listByDimension(account.id);
+      const relationships = await repos.relationships.listByDimension(account.id);
       const xml = exportProjectXml({
         project,
         dimensions: [account],
-        members: repos.members.listByDimension(account.id),
+        members: await repos.members.listByDimension(account.id),
         relationships
       });
 
@@ -280,18 +271,18 @@ describe("project blueprints", () => {
     }
   });
 
-  it("attributes project creation audit events to the project creator", () => {
+  it("attributes project creation audit events to the project creator", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
       const auditEvents: Parameters<typeof repos.audit.record>[0][] = [];
       const recordAudit = repos.audit.record;
-      repos.audit.record = (input) => {
+      repos.audit.record = async (input) => {
         auditEvents.push(input);
-        recordAudit(input);
+        await recordAudit(input);
       };
 
-      createProjectFromBlueprints(repos, defaultAppConfig, {
+      await createProjectFromBlueprints(repos, defaultAppConfig, {
         name: "Owned Build",
         description: "",
         createdBy: "finance-builder"
@@ -310,25 +301,24 @@ describe("project blueprints", () => {
     }
   });
 
-  it("rejects thenable repository transactions and rolls back pre-return writes", () => {
+  it("rolls back repository transaction writes when a later step fails", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const transaction = repos.transaction as (action: () => unknown) => unknown;
 
-      expect(() =>
-        transaction(() => {
-          repos.projects.create({
+      await expect(
+        repos.transaction(async (tx) => {
+          await tx.projects.create({
             name: "Async Boundary",
             description: "",
             sourceFileName: "",
             createdBy: "local-admin"
           });
-          return Promise.resolve("later");
+          throw new Error("transaction failed");
         })
-      ).toThrow("Repository transactions only support synchronous callbacks.");
+      ).rejects.toThrow("transaction failed");
 
-      expect(repos.projects.list()).toEqual([]);
+      expect(await repos.projects.list()).toEqual([]);
     } finally {
       db.close();
     }
@@ -338,12 +328,12 @@ describe("project blueprints", () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      const transaction = repos.transaction as unknown as (action: () => unknown) => unknown;
+      const transaction = await repos.transaction as unknown as (action: () => unknown) => unknown;
 
       expect(() =>
         transaction(async () => {
           await Promise.resolve();
-          repos.projects.create({
+          await repos.projects.create({
             name: "Post Await Write",
             description: "",
             sourceFileName: "",
@@ -354,13 +344,13 @@ describe("project blueprints", () => {
 
       await Promise.resolve();
 
-      expect(repos.projects.list()).toEqual([]);
+      expect(await repos.projects.list()).toEqual([]);
     } finally {
       db.close();
     }
   });
 
-  it("uses schema fallback values when a configured dimension blueprint is missing", () => {
+  it("uses schema fallback values when a configured dimension blueprint is missing", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
@@ -379,17 +369,17 @@ describe("project blueprints", () => {
         }
       };
 
-      const project = createProjectFromBlueprints(repos, configWithoutAccountAndEntityBlueprints, {
+      const project = await createProjectFromBlueprints(repos, configWithoutAccountAndEntityBlueprints, {
         name: "Fallback Build",
         description: "",
         createdBy: "local-admin"
       });
 
-      const dimensions = repos.dimensions.listByProject(project.id);
+      const dimensions = await repos.dimensions.listByProject(project.id);
       const entity = dimensions.find((dimension) => dimension.dimensionType === "Entity");
       const account = dimensions.find((dimension) => dimension.dimensionType === "Account");
       if (!entity || !account) throw new Error("Fallback dimensions were not created");
-      const members = repos.members.listByDimension(entity.id);
+      const members = await repos.members.listByDimension(entity.id);
 
       expect(dimensions).toHaveLength(2);
       expect(entity).toMatchObject({
@@ -416,53 +406,53 @@ describe("project blueprints", () => {
     }
   });
 
-  it("rolls back the project when blueprint creation fails after project insert", () => {
+  it("rolls back the project when blueprint creation fails after project insert", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
       let createdProjectId = "";
       const createProject = repos.projects.create;
-      repos.projects.create = (input) => {
-        const project = createProject(input);
+      repos.projects.create = async (input) => {
+        const project = await createProject(input);
         createdProjectId = project.id;
         return project;
       };
-      repos.members.create = () => {
+      repos.members.create = async () => {
         throw new Error("member insert failed");
       };
 
-      expect(() =>
+      await expect(
         createProjectFromBlueprints(repos, defaultAppConfig, {
           name: "Partial Build",
           description: "",
           createdBy: "local-admin"
         })
-      ).toThrow("member insert failed");
+      ).rejects.toThrow("member insert failed");
 
-      expect(repos.projects.list()).toEqual([]);
-      expect(repos.projects.get(createdProjectId)).toBeNull();
-      expect(repos.dimensions.listByProject(createdProjectId)).toEqual([]);
-      expect(repos.members.listByProject(createdProjectId)).toEqual([]);
+      expect(await repos.projects.list()).toEqual([]);
+      expect(await repos.projects.get(createdProjectId)).toBeNull();
+      expect(await repos.dimensions.listByProject(createdProjectId)).toEqual([]);
+      expect(await repos.members.listByProject(createdProjectId)).toEqual([]);
     } finally {
       db.close();
     }
   });
 
-  it("preserves the original creation error under transaction rollback", () => {
+  it("preserves the original creation error under transaction rollback", async () => {
     const db = createDatabase(":memory:");
     try {
       const repos = createRepositories(db);
-      repos.audit.record = () => {
+      repos.audit.record = async () => {
         throw new Error("audit insert failed");
       };
 
-      expect(() =>
+      await expect(
         createProjectFromBlueprints(repos, defaultAppConfig, {
           name: "Audit Failure",
           description: "",
           createdBy: "local-admin"
         })
-      ).toThrow("audit insert failed");
+      ).rejects.toThrow("audit insert failed");
     } finally {
       db.close();
     }

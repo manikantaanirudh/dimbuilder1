@@ -92,7 +92,7 @@ describe("grid editing repositories", () => {
       isActive: true
     });
 
-    const created = repos.varyingProperties.upsertVaryingPropertyValue({
+    const created = await repos.varyingProperties.upsertVaryingPropertyValue({
       projectId: project.id,
       dimensionId: dimension.id,
       targetType: "member",
@@ -106,7 +106,7 @@ describe("grid editing repositories", () => {
       source: "manual",
       metadata: { comment: "seed" }
     });
-    const updated = repos.varyingProperties.upsertVaryingPropertyValue({
+    const updated = await repos.varyingProperties.upsertVaryingPropertyValue({
       projectId: project.id,
       dimensionId: dimension.id,
       targetType: "member",
@@ -120,8 +120,8 @@ describe("grid editing repositories", () => {
     });
 
     expect(updated.id).toBe(created.id);
-    expect(repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id)).toHaveLength(1);
-    expect(repos.varyingProperties.listVaryingPropertyValues(project.id, { dimensionId: dimension.id })[0]).toMatchObject({
+    expect(await repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id)).toHaveLength(1);
+    expect((await repos.varyingProperties.listVaryingPropertyValues(project.id, { dimensionId: dimension.id }))[0]).toMatchObject({
       propertyName: "Text1",
       value: "Updated note",
       cubeType: "Finance",
@@ -130,7 +130,7 @@ describe("grid editing repositories", () => {
       isDefault: false
     });
 
-    repos.varyingProperties.replaceVaryingPropertyValuesForTarget(project.id, "member", member.id, [
+    await repos.varyingProperties.replaceVaryingPropertyValuesForTarget(project.id, "member", member.id, [
       {
         projectId: project.id,
         dimensionId: dimension.id,
@@ -145,15 +145,14 @@ describe("grid editing repositories", () => {
       }
     ]);
 
-    expect(repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id).map((row) => row.propertyName)).toEqual(["Text2"]);
-    expect(repos.varyingProperties.getEffectivePropertyValue("Base", repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id), {
+    expect((await repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id)).map((row) => row.propertyName)).toEqual(["Text2"]);
+    expect(repos.varyingProperties.getEffectivePropertyValue("Base", await repos.varyingProperties.listVaryingPropertyValuesForTarget(project.id, "member", member.id), {
       cubeType: "Finance",
       scenarioType: "Actual",
       timeMember: "2026M1"
     })).toBe("Default note");
-
-    repos.varyingProperties.deleteVaryingPropertyValue(project.id, repos.varyingProperties.listVaryingPropertyValues(project.id)[0].id);
-    expect(repos.varyingProperties.listVaryingPropertyValues(project.id)).toEqual([]);
+    await repos.varyingProperties.deleteVaryingPropertyValue(project.id, (await repos.varyingProperties.listVaryingPropertyValues(project.id))[0].id);
+    expect(await repos.varyingProperties.listVaryingPropertyValues(project.id)).toEqual([]);
     db.close();
   });
 
@@ -166,13 +165,13 @@ describe("grid editing repositories", () => {
       sourceFileName: "",
       createdBy: "local-admin"
     });
-    const baseline = repos.baselines.create({
+    const baseline = await repos.baselines.create({
       projectId: project.id,
       name: "Before release",
       sourceType: "snapshot",
       baseline: { dimensions: [], members: [], relationships: [] }
     });
-    const diff = repos.diffRuns.createWithItems({
+    const diff = await repos.diffRuns.createWithItems({
       projectId: project.id,
       baselineId: baseline.id,
       status: "completed",
@@ -204,7 +203,7 @@ describe("grid editing repositories", () => {
       ]
     });
 
-    const changeSet = repos.changeSets.create({
+    const changeSet = await repos.changeSets.create({
       projectId: project.id,
       baselineId: baseline.id,
       diffRunId: diff.run.id,
@@ -213,20 +212,20 @@ describe("grid editing repositories", () => {
       targetEnvironment: "Production",
       items: diff.items
     });
-    const listed = repos.changeSets.listByProject(project.id);
-    const updated = repos.changeSets.update(project.id, changeSet.id, { status: "validated" });
-    repos.changeSets.recordApproval(project.id, changeSet.id, {
+    const listed = await repos.changeSets.listByProject(project.id);
+    const updated = await repos.changeSets.update(project.id, changeSet.id, { status: "validated" });
+    await repos.changeSets.recordApproval(project.id, changeSet.id, {
       action: "approve",
       comment: "Approved after validation.",
       createdBy: "local-admin"
     });
-    const packageRecord = repos.changeSets.createReleasePackage({
+    const packageRecord = await repos.changeSets.createReleasePackage({
       changeSetId: changeSet.id,
       packageName: "revenue-release",
       packagePath: "data/exports/release-packages/revenue-release",
       manifest: { packageName: "revenue-release", files: ["manifest.json"] }
     });
-    const detail = repos.changeSets.getDetail(project.id, changeSet.id);
+    const detail = await repos.changeSets.getDetail(project.id, changeSet.id);
 
     expect(listed).toMatchObject([{ id: changeSet.id, status: "draft", targetEnvironment: "Production" }]);
     expect(updated).toMatchObject({ id: changeSet.id, status: "validated" });
@@ -268,7 +267,7 @@ describe("grid editing repositories", () => {
       isActive: true
     });
 
-    const created = repos.bulkUpdates.createJobWithItems({
+    const created = await repos.bulkUpdates.createJobWithItems({
       projectId: project.id,
       targetType: "member",
       operation: "set",
@@ -289,8 +288,8 @@ describe("grid editing repositories", () => {
       ]
     });
 
-    expect(repos.bulkUpdates.listJobs(project.id)).toMatchObject([{ id: created.job.id, targetType: "member", operation: "set", status: "applied" }]);
-    expect(repos.bulkUpdates.getJobDetail(project.id, created.job.id)?.items).toMatchObject([
+    expect(await repos.bulkUpdates.listJobs(project.id)).toMatchObject([{ id: created.job.id, targetType: "member", operation: "set", status: "applied" }]);
+    expect((await repos.bulkUpdates.getJobDetail(project.id, created.job.id))?.items).toMatchObject([
       { targetId: member.id, targetKey: "Revenue", propertyName: "Text1", oldValue: "Before", newValue: "After", status: "applied" }
     ]);
 
@@ -299,7 +298,7 @@ describe("grid editing repositories", () => {
         memberKey: "Revenue",
         properties: { Account: "Revenue", Text1: "Partial" }
       });
-      repos.bulkUpdates.createJobWithItems({
+      await repos.bulkUpdates.createJobWithItems({
         projectId: project.id,
         targetType: "member",
         operation: "set",
@@ -313,7 +312,7 @@ describe("grid editing repositories", () => {
     })).rejects.toThrow("simulated failure");
 
     expect((await repos.members.listByDimension(dimension.id))[0].properties.Text1).toBe("Before");
-    expect(repos.bulkUpdates.listJobs(project.id)).toHaveLength(1);
+    expect(await repos.bulkUpdates.listJobs(project.id)).toHaveLength(1);
     db.close();
   });
 
@@ -359,7 +358,7 @@ describe("grid editing repositories", () => {
       rowOrder: 1,
       sourceRowNumber: 3
     });
-    const varying = repos.varyingProperties.upsertVaryingPropertyValue({
+    const varying = await repos.varyingProperties.upsertVaryingPropertyValue({
       projectId: project.id,
       dimensionId: dimension.id,
       targetType: "member",
@@ -371,7 +370,7 @@ describe("grid editing repositories", () => {
       timeMember: "2026M1"
     });
 
-    const snapshotId = repos.snapshots.create({
+    const snapshotId = await repos.snapshots.create({
       projectId: project.id,
       name: "Original snapshot",
       description: "Restore point",
@@ -383,8 +382,8 @@ describe("grid editing repositories", () => {
         varyingPropertyValues: [varying]
       }
     });
-    expect(repos.snapshots.listByProject(project.id)).toMatchObject([{ id: snapshotId, name: "Original snapshot" }]);
-    expect(repos.snapshots.get(project.id, snapshotId)).toMatchObject({ id: snapshotId, description: "Restore point" });
+    expect(await repos.snapshots.listByProject(project.id)).toMatchObject([{ id: snapshotId, name: "Original snapshot" }]);
+    expect(await repos.snapshots.get(project.id, snapshotId)).toMatchObject({ id: snapshotId, description: "Restore point" });
 
     await repos.members.update(member.id, {
       memberKey: "RevenueRenamed",
@@ -401,7 +400,7 @@ describe("grid editing repositories", () => {
       isActive: true
     });
 
-    const summary = repos.snapshots.restoreSnapshotIntoProject(project.id, snapshotId);
+    const summary = await repos.snapshots.restoreSnapshotIntoProject(project.id, snapshotId);
 
     expect(summary).toMatchObject({
       mode: "replaceCurrent",
@@ -415,8 +414,8 @@ describe("grid editing repositories", () => {
     expect(summary.safetySnapshotId).toBeTruthy();
     expect((await repos.members.listByDimension(dimension.id)).map((row) => row.memberKey)).toEqual(["Revenue"]);
     expect(await repos.relationships.listByDimension(dimension.id)).toMatchObject([{ parentKey: "Root", childKey: "Revenue" }]);
-    expect(repos.varyingProperties.listVaryingPropertyValues(project.id)).toMatchObject([{ targetId: member.id, value: "Original varying" }]);
-    expect(repos.snapshots.listByProject(project.id)).toHaveLength(2);
+    expect(await repos.varyingProperties.listVaryingPropertyValues(project.id)).toMatchObject([{ targetId: member.id, value: "Original varying" }]);
+    expect(await repos.snapshots.listByProject(project.id)).toHaveLength(2);
     db.close();
   });
 
@@ -462,7 +461,7 @@ describe("grid editing repositories", () => {
       rowOrder: 1,
       sourceRowNumber: 3
     });
-    const varying = repos.varyingProperties.upsertVaryingPropertyValue({
+    const varying = await repos.varyingProperties.upsertVaryingPropertyValue({
       projectId: project.id,
       dimensionId: dimension.id,
       targetType: "member",
@@ -470,7 +469,7 @@ describe("grid editing repositories", () => {
       propertyName: "Text1",
       value: "Original varying"
     });
-    const snapshotId = repos.snapshots.create({
+    const snapshotId = await repos.snapshots.create({
       projectId: project.id,
       name: "Branch source",
       description: "",
@@ -483,11 +482,11 @@ describe("grid editing repositories", () => {
       }
     });
 
-    const result = repos.snapshots.createProjectFromSnapshot(snapshotId, "Branch Project");
+    const result = await repos.snapshots.createProjectFromSnapshot(snapshotId, "Branch Project");
     const branchDimensions = await repos.dimensions.listByProject(result.project.id);
     const branchMembers = await repos.members.listByProject(result.project.id);
     const branchRelationships = await repos.relationships.listByProject(result.project.id);
-    const branchVarying = repos.varyingProperties.listVaryingPropertyValues(result.project.id);
+    const branchVarying = await repos.varyingProperties.listVaryingPropertyValues(result.project.id);
 
     expect(result.project).toMatchObject({ name: "Branch Project", createdBy: "local-admin" });
     expect(result.project.id).not.toBe(project.id);

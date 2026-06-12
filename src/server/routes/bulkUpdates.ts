@@ -47,7 +47,7 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
         }
 
         const warningCount = preview.warnings.length + preview.previewItems.reduce((count, item) => count + item.warnings.length, 0);
-        const created = repos.bulkUpdates.createJobWithItems({
+        const created = await repos.bulkUpdates.createJobWithItems({
           projectId: project.id,
           targetType: preview.targetType,
           operation: preview.operation,
@@ -77,7 +77,7 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
           })),
           createdBy: "local-admin"
         });
-        repos.audit.record({
+        await repos.audit.record({
           projectId: project.id,
           action: "bulkUpdate.apply",
           entityType: "bulkUpdateJob",
@@ -96,13 +96,13 @@ export function createBulkUpdatesRouter({ repos }: RouterDeps): Router {
   router.get("/", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    res.json(repos.bulkUpdates.listJobs(project.id));
+    res.json(await repos.bulkUpdates.listJobs(project.id));
   });
 
   router.get("/:jobId", async (req, res) => {
     const project = await repos.projects.get((req.params as Record<string, string>).projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
-    const detail = repos.bulkUpdates.getJobDetail(project.id, (req.params as Record<string, string>).jobId);
+    const detail = await repos.bulkUpdates.getJobDetail(project.id, (req.params as Record<string, string>).jobId);
     if (!detail) return res.status(404).json({ error: "bulk update job not found" });
     res.json(detail);
   });

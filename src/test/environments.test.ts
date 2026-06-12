@@ -219,7 +219,7 @@ describe("environments & deployments", () => {
       const project = await projectRes.json() as { id: string };
 
       // Import some data via workbook or manual — create dimension directly via repos
-      const dim = repos.dimensions.create({
+      const dim = await repos.dimensions.create({
         projectId: project.id,
         sheetName: "Account",
         dimensionType: "Account",
@@ -232,7 +232,7 @@ describe("environments & deployments", () => {
         metadata: {}
       });
 
-      repos.members.create({
+      await repos.members.create({
         dimensionId: dim.id, memberKey: "Revenue", description: "Revenue", properties: {}, rowOrder: 0, sourceRowNumber: 1, isActive: true
       });
 

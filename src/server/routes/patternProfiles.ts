@@ -37,8 +37,8 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
     writeFileSync(join(profilesDir(projectId), "index.json"), JSON.stringify(profiles, null, 2));
   }
 
-  function buildProfilerDimensions(projectId: string): ProfilerDimension[] {
-    const dimensions = repos.dimensions.listByProject(projectId);
+  async function buildProfilerDimensions(projectId: string): Promise<ProfilerDimension[]> {
+    const dimensions = await repos.dimensions.listByProject(projectId);
     const membersByDimension = new Map<string, ProfilerDimension>();
     for (const dimension of dimensions) {
       membersByDimension.set(dimension.id, { dimensionType: dimension.dimensionType, members: [] });
@@ -50,8 +50,8 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
     return [...membersByDimension.values()];
   }
 
-  router.post("/:projectId/pattern-profiles", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/pattern-profiles", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const profile = buildPatternProfile(project.id, project.name, buildProfilerDimensions(project.id), {
       minimumConfidence: config.patternProfiler?.minimumConfidence,
@@ -60,18 +60,18 @@ export function createPatternProfileRouter(repos: Repositories, config: AppConfi
     const profiles = readProfiles(project.id);
     profiles.push(profile);
     writeProfiles(project.id, profiles);
-    repos.audit.record({ projectId: project.id, action: "patternProfile.create", entityType: "project", entityId: project.id, after: { profileId: profile.id, rules: profile.rules.length } });
+    await repos.audit.record({ projectId: project.id, action: "patternProfile.create", entityType: "project", entityId: project.id, after: { profileId: profile.id, rules: profile.rules.length } });
     res.status(201).json({ profile });
   });
 
-  router.get("/:projectId/pattern-profiles", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/pattern-profiles", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json({ profiles: readProfiles(project.id) });
   });
 
-  router.post("/:projectId/pattern-profiles/:profileId/evaluate", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/pattern-profiles/:profileId/evaluate", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const profile = readProfiles(project.id).find((p) => p.id === req.params.profileId);
     if (!profile) return res.status(404).json({ error: "profile not found" });

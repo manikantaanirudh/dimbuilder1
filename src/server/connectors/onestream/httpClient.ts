@@ -6,7 +6,7 @@ import type { OneStreamApiClient } from "./types";
  * This is a structural skeleton — actual API endpoints are subject to
  * the target OneStream environment's version and configuration.
  */
-export function createHttpClient(env: Environment): OneStreamApiClient {
+export async function createHttpClient(env: Environment): Promise<OneStreamApiClient> {
   async function getAccessToken(): Promise<string> {
     const tokenUrl = `${env.baseUrl}/connect/token`;
     const response = await fetch(tokenUrl, {

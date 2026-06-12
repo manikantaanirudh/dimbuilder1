@@ -20,12 +20,12 @@ export function createRiskHeatmapRouter(repos: Repositories, config: AppConfig):
   const router = Router();
   const artifactStore = new ArtifactStore(config.paths.exportsDirectory);
 
-  router.get("/:projectId/risk-heatmap", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/risk-heatmap", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
-    const dimensions = repos.dimensions.listByProject(project.id);
-    const issues = repos.issues.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const issues = await repos.issues.listByProject(project.id);
 
     const readiness = computeReadinessScore({
       issues,
@@ -37,7 +37,7 @@ export function createRiskHeatmapRouter(repos: Repositories, config: AppConfig):
     });
 
     // Varying property conflicts grouped by dimension.
-    const varyingValues = repos.varyingProperties.listVaryingPropertyValues(project.id);
+    const varyingValues = await repos.varyingProperties.listVaryingPropertyValues(project.id);
     const duplicates = findDuplicateVaryingPropertyValues(varyingValues);
     const varyingConflictsByDimensionId: Record<string, number> = {};
     for (const dup of duplicates) {

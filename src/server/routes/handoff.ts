@@ -26,13 +26,13 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
         readiness: ReturnType<typeof computeReadinessScore>;
         dimensionNames: Record<string, string>;
       } {
-    const project = repos.projects.get(projectId);
+    const project = await repos.projects.get(projectId);
     if (!project) return { error: "project not found", status: 404 };
-    const detail = repos.changeSets.getDetail(projectId, changeSetId);
+    const detail = await repos.changeSets.getDetail(projectId, changeSetId);
     if (!detail) return { error: "change set not found", status: 404 };
-    const issues = repos.issues.listByProject(projectId);
+    const issues = await repos.issues.listByProject(projectId);
     const validation = summarizeValidationIssues(issues, config.validation.exportBlockedBySeverities);
-    const dimensions = repos.dimensions.listByProject(projectId);
+    const dimensions = await repos.dimensions.listByProject(projectId);
     const dimensionNames: Record<string, string> = {};
     for (const d of dimensions) dimensionNames[d.dimensionType] = d.dimensionName;
     const readiness = computeReadinessScore({
@@ -54,14 +54,14 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
     return dir;
   }
 
-  router.post("/:projectId/change-sets/:changeSetId/handoff/acm", (req, res) => {
+  router.post("/:projectId/change-sets/:changeSetId/handoff/acm", async (req, res) => {
     if (config.integrations?.acm?.enabled === false) {
       return res.status(403).json({ error: "ACM handoff is disabled in configuration" });
     }
     const ctx = loadContext(req.params.projectId, req.params.changeSetId);
     if ("error" in ctx) return res.status(ctx.status).json({ error: ctx.error });
 
-    const waivers = repos.validationWaivers.listByProject(ctx.project.id);
+    const waivers = await repos.validationWaivers.listByProject(ctx.project.id);
     const waivedIssueIds = new Set(waivers.map((w) => w.issueId));
     const waivedIssues = ctx.issues.filter((i) => waivedIssueIds.has(i.id));
 
@@ -74,15 +74,15 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
       validationProfileId: config.validation.defaultProfileId ?? "consultant-review",
       waivedIssues,
       dimensionNames: ctx.dimensionNames,
-      impact: repos.impactAnalyses.listByProject(ctx.project.id),
+      impact: await repos.impactAnalyses.listByProject(ctx.project.id),
       config: config.integrations?.acm
     });
     const packagePath = writePackage("acm", ctx.project.id, ctx.detail.changeSet.id, result);
-    repos.audit.record({ projectId: ctx.project.id, action: "handoff.acm", entityType: "changeSet", entityId: ctx.detail.changeSet.id, after: { files: result.fileNames.length } });
+    await repos.audit.record({ projectId: ctx.project.id, action: "handoff.acm", entityType: "changeSet", entityId: ctx.detail.changeSet.id, after: { files: result.fileNames.length } });
     res.status(201).json({ packagePath, files: result.fileNames, warnings: result.warnings });
   });
 
-  router.post("/:projectId/change-sets/:changeSetId/handoff/epmware", (req, res) => {
+  router.post("/:projectId/change-sets/:changeSetId/handoff/epmware", async (req, res) => {
     if (config.integrations?.epmware?.enabled === false) {
       return res.status(403).json({ error: "EPMware handoff is disabled in configuration" });
     }
@@ -98,7 +98,7 @@ export function createHandoffRouter(repos: Repositories, config: AppConfig): Rou
       config: config.integrations?.epmware
     });
     const packagePath = writePackage("epmware", ctx.project.id, ctx.detail.changeSet.id, result);
-    repos.audit.record({ projectId: ctx.project.id, action: "handoff.epmware", entityType: "changeSet", entityId: ctx.detail.changeSet.id, after: { files: result.fileNames.length } });
+    await repos.audit.record({ projectId: ctx.project.id, action: "handoff.epmware", entityType: "changeSet", entityId: ctx.detail.changeSet.id, after: { files: result.fileNames.length } });
     res.status(201).json({ packagePath, files: result.fileNames, warnings: result.warnings });
   });
 

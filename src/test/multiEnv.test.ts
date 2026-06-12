@@ -273,9 +273,9 @@ describe("multi-environment management", () => {
   // --- Sync Status ---
 
   describe("sync status", () => {
-    it("computeLocalHash returns consistent hash for same data", () => {
-      const project = repos.projects.create({ name: "Hash Test", description: "", sourceFileName: "", createdBy: "admin" });
-      const dim = repos.dimensions.create({
+    it("computeLocalHash returns consistent hash for same data", async () => {
+      const project = await repos.projects.create({ name: "Hash Test", description: "", sourceFileName: "", createdBy: "admin" });
+      const dim = await repos.dimensions.create({
         projectId: project.id,
         sheetName: "Accounts",
         dimensionType: "Account",
@@ -287,28 +287,28 @@ describe("multi-environment management", () => {
         sortOrder: 1,
         metadata: {}
       });
-      repos.members.bulkInsert([{
+      await repos.members.bulkInsert([{
         id: "m1", dimensionId: dim.id, memberKey: "Revenue",
         description: "Revenue account", properties: { Account: "Revenue" },
         rowOrder: 1, sourceRowNumber: 1, isActive: true,
         createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z"
       }]);
 
-      const hash1 = computeLocalHash(repos, project.id, "Account");
-      const hash2 = computeLocalHash(repos, project.id, "Account");
+      const hash1 = await computeLocalHash(repos, project.id, "Account");
+      const hash2 = await computeLocalHash(repos, project.id, "Account");
       expect(hash1).toBe(hash2);
       expect(hash1.length).toBe(64); // SHA-256 hex
     });
 
-    it("computeLocalHash returns empty string for unknown dimension type", () => {
-      const project = repos.projects.create({ name: "Hash Test", description: "", sourceFileName: "", createdBy: "admin" });
-      const hash = computeLocalHash(repos, project.id, "NonExistent");
+    it("computeLocalHash returns empty string for unknown dimension type", async () => {
+      const project = await repos.projects.create({ name: "Hash Test", description: "", sourceFileName: "", createdBy: "admin" });
+      const hash = await computeLocalHash(repos, project.id, "NonExistent");
       expect(hash).toBe("");
     });
 
-    it("refreshSyncStatus computes statuses for all environments", () => {
-      const project = repos.projects.create({ name: "Sync Test", description: "", sourceFileName: "", createdBy: "admin" });
-      const dim = repos.dimensions.create({
+    it("refreshSyncStatus computes statuses for all environments", async () => {
+      const project = await repos.projects.create({ name: "Sync Test", description: "", sourceFileName: "", createdBy: "admin" });
+      const dim = await repos.dimensions.create({
         projectId: project.id,
         sheetName: "Entities",
         dimensionType: "Entity",
@@ -320,23 +320,23 @@ describe("multi-environment management", () => {
         sortOrder: 1,
         metadata: {}
       });
-      repos.members.bulkInsert([{
+      await repos.members.bulkInsert([{
         id: "m-sync-1", dimensionId: dim.id, memberKey: "Corp",
         description: "Corporate", properties: { Entity: "Corp" },
         rowOrder: 1, sourceRowNumber: 1, isActive: true,
         createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z"
       }]);
-      repos.environments.create({ name: "Dev", type: "mock", baseUrl: "", clientId: "", clientSecret: "", createdBy: "admin" });
+      await repos.environments.create({ name: "Dev", type: "mock", baseUrl: "", clientId: "", clientSecret: "", createdBy: "admin" });
 
-      const statuses = refreshSyncStatus(repos, project.id);
+      const statuses = await refreshSyncStatus(repos, project.id);
       expect(statuses.length).toBe(1);
       expect(statuses[0].syncStatus).toBe("local_ahead");
       expect(statuses[0].dimensionType).toBe("Entity");
     });
 
-    it("getSyncStatusSummary aggregates by environment", () => {
-      const project = repos.projects.create({ name: "Summary Test", description: "", sourceFileName: "", createdBy: "admin" });
-      const dim = repos.dimensions.create({
+    it("getSyncStatusSummary aggregates by environment", async () => {
+      const project = await repos.projects.create({ name: "Summary Test", description: "", sourceFileName: "", createdBy: "admin" });
+      const dim = await repos.dimensions.create({
         projectId: project.id,
         sheetName: "Accounts",
         dimensionType: "Account",
@@ -348,16 +348,16 @@ describe("multi-environment management", () => {
         sortOrder: 1,
         metadata: {}
       });
-      repos.members.bulkInsert([{
+      await repos.members.bulkInsert([{
         id: "m-sum-1", dimensionId: dim.id, memberKey: "A1",
         description: "", properties: {},
         rowOrder: 1, sourceRowNumber: 1, isActive: true,
         createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z"
       }]);
-      repos.environments.create({ name: "Staging", type: "mock", baseUrl: "", clientId: "", clientSecret: "", createdBy: "admin" });
-      refreshSyncStatus(repos, project.id);
+      await repos.environments.create({ name: "Staging", type: "mock", baseUrl: "", clientId: "", clientSecret: "", createdBy: "admin" });
+      await refreshSyncStatus(repos, project.id);
 
-      const summaries = getSyncStatusSummary(repos, project.id);
+      const summaries = await getSyncStatusSummary(repos, project.id);
       expect(summaries.length).toBe(1);
       expect(summaries[0].environmentName).toBe("Staging");
       expect(summaries[0].localAhead).toBe(1);

@@ -29,18 +29,18 @@ export class ExportGuardError extends Error {
   }
 }
 
-export function assertProjectCanExport(
+export async function assertProjectCanExport(
   projectId: string,
   config: AppConfig,
   repos: Repositories,
   options: ExportGuardOptions
-): void {
+): Promise<void> {
   const blockedSeverities = uniqueSeverities(config.validation.exportBlockedBySeverities);
-  const issues = repos.issues.listValidationIssuesForProject(projectId);
+  const issues = await repos.issues.listValidationIssuesForProject(projectId);
   const issueCounts = countIssuesBySeverity(issues);
   const bypassAllowed = config.export.allowValidationBypass === true;
 
-  const hasValidationRun = repos.issues.hasValidationRun(projectId) || issues.length > 0;
+  const hasValidationRun = await repos.issues.hasValidationRun(projectId) || issues.length > 0;
   if (config.export.requireValidationBeforeExport === true && !hasValidationRun) {
     throw new ExportGuardError({
       error: "Validation must run before export",
@@ -52,7 +52,7 @@ export function assertProjectCanExport(
     });
   }
 
-  const hasBlockingIssues = repos.issues.hasBlockingValidationIssues(projectId, blockedSeverities);
+  const hasBlockingIssues = await repos.issues.hasBlockingValidationIssues(projectId, blockedSeverities);
   if (!hasBlockingIssues) return;
 
   if (bypassAllowed && options.bypassRequested) {
@@ -66,7 +66,7 @@ export function assertProjectCanExport(
         bypassAllowed
       });
     }
-    repos.audit.record({
+    await repos.audit.record({
       projectId,
       action: "export.validationBypass",
       entityType: "project",
@@ -90,20 +90,20 @@ export function assertProjectCanExport(
   });
 }
 
-export function assertDimensionCanExport(
+export async function assertDimensionCanExport(
   projectId: string,
   dimensionId: string,
   config: AppConfig,
   repos: Repositories,
   options: ExportGuardOptions
-): void {
+): Promise<void> {
   const blockedSeverities = uniqueSeverities(config.validation.exportBlockedBySeverities);
-  const allIssues = repos.issues.listValidationIssuesForProject(projectId);
+  const allIssues = await repos.issues.listValidationIssuesForProject(projectId);
   const dimensionIssues = allIssues.filter((issue) => issue.dimensionId === dimensionId);
   const issueCounts = countIssuesBySeverity(dimensionIssues);
   const bypassAllowed = config.export.allowValidationBypass === true;
 
-  const hasValidationRun = repos.issues.hasValidationRun(projectId) || allIssues.length > 0;
+  const hasValidationRun = await repos.issues.hasValidationRun(projectId) || allIssues.length > 0;
   if (config.export.requireValidationBeforeExport === true && !hasValidationRun) {
     throw new ExportGuardError({
       error: "Validation must run before export",
@@ -129,7 +129,7 @@ export function assertDimensionCanExport(
         bypassAllowed
       });
     }
-    repos.audit.record({
+    await repos.audit.record({
       projectId,
       action: "export.validationBypass",
       entityType: "dimension",

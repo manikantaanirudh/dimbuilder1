@@ -107,7 +107,7 @@ export async function applyMetadataCsvCommitPlan(
     }
 
     const auditAction = plan.mode === "newProject" ? "project.importCsv" : "project.importCsvAppend";
-    repos.audit.record({
+    await repos.audit.record({
       projectId: projectId!,
       action: auditAction,
       entityType: "project",

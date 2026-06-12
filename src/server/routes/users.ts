@@ -34,8 +34,8 @@ export function createUserRouter(repos: Repositories): Router {
   const router = Router();
 
   // GET / — List all users
-  router.get("/", (_req, res) => {
-    const users = repos.users.listUsers();
+  router.get("/", async (_req, res) => {
+    const users = await repos.users.listUsers();
     return res.json(users.map(sanitizeUser));
   });
 
@@ -53,7 +53,7 @@ export function createUserRouter(repos: Repositories): Router {
       const { email, displayName, password, role } = parsed.data;
 
       // Check if email already exists
-      const existing = repos.users.findUserByEmail(email);
+      const existing = await repos.users.findUserByEmail(email);
       if (existing) {
         return res.status(409).json({ error: "A user with this email already exists" });
       }
@@ -61,7 +61,7 @@ export function createUserRouter(repos: Repositories): Router {
       const passwordHash = password ? await hashPassword(password) : undefined;
       const id = nanoid();
 
-      repos.users.createUser({
+      await repos.users.createUser({
         id,
         email,
         displayName,
@@ -70,7 +70,7 @@ export function createUserRouter(repos: Repositories): Router {
         role
       });
 
-      const created = repos.users.findUserById(id);
+      const created = await repos.users.findUserById(id);
       if (!created) {
         return res.status(500).json({ error: "Failed to create user" });
       }
@@ -82,7 +82,7 @@ export function createUserRouter(repos: Repositories): Router {
   });
 
   // PATCH /:id — Update user
-  router.patch("/:id", (req, res) => {
+  router.patch("/:id", async (req, res) => {
     try {
       const parsed = updateUserSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -106,18 +106,18 @@ export function createUserRouter(repos: Repositories): Router {
         return res.status(400).json({ error: "Cannot remove your own admin role" });
       }
 
-      const user = repos.users.findUserById(id);
+      const user = await repos.users.findUserById(id);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      repos.users.updateUser(id, {
+      await repos.users.updateUser(id, {
         displayName,
         role,
         isActive: isActive !== undefined ? (isActive ? 1 : 0) : undefined
       });
 
-      const updated = repos.users.findUserById(id);
+      const updated = await repos.users.findUserById(id);
       if (!updated) {
         return res.status(500).json({ error: "Failed to update user" });
       }
@@ -129,7 +129,7 @@ export function createUserRouter(repos: Repositories): Router {
   });
 
   // DELETE /:id — Deactivate user (soft delete)
-  router.delete("/:id", (req, res) => {
+  router.delete("/:id", async (req, res) => {
     try {
       const { id } = req.params;
       const currentUserId = req.user?.id;
@@ -139,13 +139,13 @@ export function createUserRouter(repos: Repositories): Router {
         return res.status(400).json({ error: "Cannot deactivate your own account" });
       }
 
-      const user = repos.users.findUserById(id);
+      const user = await repos.users.findUserById(id);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      repos.users.updateUser(id, { isActive: 0 });
-      repos.sessions.deleteSessionsByUserId(id);
+      await repos.users.updateUser(id, { isActive: 0 });
+      await repos.sessions.deleteSessionsByUserId(id);
 
       return res.status(204).send();
     } catch (error) {

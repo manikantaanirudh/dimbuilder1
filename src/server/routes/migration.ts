@@ -53,8 +53,8 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
     return parseSource(session.sourceType, content);
   }
 
-  router.post("/:projectId/migration/sessions", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/migration/sessions", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const body = req.body ?? {};
     const sourceType = body.sourceType as MigrationSourceType;
@@ -82,20 +82,20 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
     mkdirSync(dir(project.id), { recursive: true });
     writeFileSync(contentPath(project.id, session.id), content);
     writeSession(session);
-    repos.audit.record({ projectId: project.id, action: "migration.session.create", entityType: "project", entityId: project.id, after: { sessionId: session.id, sourceType } });
+    await repos.audit.record({ projectId: project.id, action: "migration.session.create", entityType: "project", entityId: project.id, after: { sessionId: session.id, sourceType } });
     res.status(201).json({ session });
   });
 
-  router.get("/:projectId/migration/sessions/:sessionId", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/migration/sessions/:sessionId", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const session = readSession(project.id, req.params.sessionId);
     if (!session) return res.status(404).json({ error: "session not found" });
     res.json({ session });
   });
 
-  router.post("/:projectId/migration/sessions/:sessionId/mappings", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/migration/sessions/:sessionId/mappings", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const session = readSession(project.id, req.params.sessionId);
     if (!session) return res.status(404).json({ error: "session not found" });
@@ -112,8 +112,8 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
     res.json({ session });
   });
 
-  router.post("/:projectId/migration/sessions/:sessionId/preview", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/migration/sessions/:sessionId/preview", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const session = readSession(project.id, req.params.sessionId);
     if (!session) return res.status(404).json({ error: "session not found" });
@@ -124,8 +124,8 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
     res.json({ preview, unresolvedDecisions: session.decisions.filter((d) => !d.resolved).length });
   });
 
-  router.post("/:projectId/migration/sessions/:sessionId/commit", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.post("/:projectId/migration/sessions/:sessionId/commit", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const session = readSession(project.id, req.params.sessionId);
     if (!session) return res.status(404).json({ error: "session not found" });
@@ -142,10 +142,10 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
 
     for (const sourceDimension of parsed.dimensions) {
       const mapped = applyMappingsToDimension(sourceDimension, session.mappings);
-      const existing = repos.dimensions.listByProject(project.id).find(
+      const existing = (await repos.dimensions.listByProject(project.id)).find(
         (d) => d.dimensionName.toLowerCase() === mapped.dimensionName.toLowerCase()
       );
-      const dimension = existing ?? repos.dimensions.create({
+      const dimension = existing ?? await repos.dimensions.create({
         projectId: project.id,
         sheetName: "",
         dimensionType: (mapped.dimensionType || "UD1") as DimensionType,
@@ -154,12 +154,12 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
         accessGroup: "",
         maintenanceGroup: "",
         inheritedDimension: "",
-        sortOrder: repos.dimensions.listByProject(project.id).length + 1,
+        sortOrder: (await repos.dimensions.listByProject(project.id)).length + 1,
         metadata: {}
       });
       if (!existing) createdDimensions += 1;
 
-      const existingKeys = new Set(repos.members.listByDimension(dimension.id, { offset: 0, limit: 100000 }).map((m) => m.memberKey.toLowerCase()));
+      const existingKeys = new Set((await repos.members.listByDimension(dimension.id, { offset: 0, limit: 100000 })).map((m) => m.memberKey.toLowerCase()));
       const newMembers: DimensionMemberRecord[] = [];
       mapped.members.forEach((member, index) => {
         if (existingKeys.has(member.memberKey.toLowerCase())) return;
@@ -199,16 +199,16 @@ export function createMigrationRouter(repos: Repositories, config: AppConfig): R
 
     session.status = "committed";
     writeSession(session);
-    repos.audit.record({ projectId: project.id, action: "migration.session.commit", entityType: "project", entityId: project.id, after: { sessionId: session.id, createdMembers, createdRelationships, createdDimensions } });
+    await repos.audit.record({ projectId: project.id, action: "migration.session.commit", entityType: "project", entityId: project.id, after: { sessionId: session.id, createdMembers, createdRelationships, createdDimensions } });
     res.status(201).json({ committed: { dimensions: createdDimensions, members: createdMembers, relationships: createdRelationships } });
   });
 
-  router.get("/:projectId/migration/sessions/:sessionId/issue-pack", (req, res) => {
-    const project = repos.projects.get(req.params.projectId);
+  router.get("/:projectId/migration/sessions/:sessionId/issue-pack", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const session = readSession(project.id, req.params.sessionId);
     if (!session) return res.status(404).json({ error: "session not found" });
-    const validationIssueCount = repos.issues.listByProject(project.id).length;
+    const validationIssueCount = (await repos.issues.listByProject(project.id)).length;
     const pack = buildIssuePack(session, validationIssueCount);
     if (req.query.format === "markdown") {
       res.type("text/markdown").send(renderIssuePackMarkdown(pack));

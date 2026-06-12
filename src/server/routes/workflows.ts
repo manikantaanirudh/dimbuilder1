@@ -53,13 +53,11 @@ const actionSchema = z.object({
 export function createWorkflowRouter(repos: Repositories, _config: AppConfig): Router {
   const router = Router();
 
-  // --- Definitions ---
-
-  router.get("/definitions", (_req, res) => {
-    res.json(repos.workflows.definitions.list());
+  router.get("/definitions", async (_req, res) => {
+    res.json(await repos.workflows.definitions.list());
   });
 
-  router.post("/definitions", requireRole("admin"), (req, res) => {
+  router.post("/definitions", requireRole("admin"), async (req, res) => {
     const parsed = createDefinitionSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -68,7 +66,7 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
       });
     }
     const { name, description, dimensionTypes, steps, autoAdvanceRules } = parsed.data;
-    const definition = repos.workflows.definitions.create({
+    const definition = await repos.workflows.definitions.create({
       name,
       description,
       dimensionTypes,
@@ -79,7 +77,7 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
     res.status(201).json(definition);
   });
 
-  router.patch("/definitions/:id", requireRole("admin"), (req, res) => {
+  router.patch("/definitions/:id", requireRole("admin"), async (req, res) => {
     const parsed = updateDefinitionSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -87,14 +85,12 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const updated = repos.workflows.definitions.update(req.params.id, parsed.data);
+    const updated = await repos.workflows.definitions.update(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ error: "Workflow definition not found" });
     res.json(updated);
   });
 
-  // --- Submit ---
-
-  router.post("/submit", (req, res) => {
+  router.post("/submit", async (req, res) => {
     const parsed = submitWorkflowSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -104,33 +100,30 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
     }
     const { changeSetId, definitionId } = parsed.data;
 
-    // Need to find the projectId from the change set — look through all projects
-    const changeSet = findChangeSetAcrossProjects(repos, changeSetId);
+    const changeSet = await findChangeSetAcrossProjects(repos, changeSetId);
     if (!changeSet) return res.status(404).json({ error: "Change set not found" });
 
-    const result = submitWorkflow(repos, changeSetId, changeSet.projectId, req.user?.id ?? "system", definitionId);
+    const result = await submitWorkflow(repos, changeSetId, changeSet.projectId, req.user?.id ?? "system", definitionId);
     if (isWorkflowEngineError(result)) {
       return res.status(result.status).json({ error: result.message, code: result.code });
     }
     res.status(201).json(result);
   });
 
-  // --- Instances ---
-
-  router.get("/instances", (req, res) => {
+  router.get("/instances", async (req, res) => {
     const projectId = String(req.query.projectId ?? "");
     const status = String(req.query.status ?? "");
     if (!projectId) return res.status(400).json({ error: "projectId query parameter required" });
-    res.json(repos.workflows.instances.listByProject(projectId, status || undefined));
+    res.json(await repos.workflows.instances.listByProject(projectId, status || undefined));
   });
 
-  router.get("/instances/:id", (req, res) => {
-    const detail = getInstanceDetail(repos, req.params.id);
+  router.get("/instances/:id", async (req, res) => {
+    const detail = await getInstanceDetail(repos, req.params.id);
     if (!detail) return res.status(404).json({ error: "Workflow instance not found" });
     res.json(detail);
   });
 
-  router.post("/instances/:id/approve", (req, res) => {
+  router.post("/instances/:id/approve", async (req, res) => {
     const parsed = actionSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -138,7 +131,7 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const result = approveStep(
+    const result = await approveStep(
       repos,
       req.params.id,
       req.user?.id ?? "system",
@@ -151,7 +144,7 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
     res.json(result);
   });
 
-  router.post("/instances/:id/reject", (req, res) => {
+  router.post("/instances/:id/reject", async (req, res) => {
     const parsed = actionSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -159,7 +152,7 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const result = rejectWorkflow(
+    const result = await rejectWorkflow(
       repos,
       req.params.id,
       req.user?.id ?? "system",
@@ -172,8 +165,8 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
     res.json(result);
   });
 
-  router.post("/instances/:id/cancel", (req, res) => {
-    const result = cancelWorkflow(
+  router.post("/instances/:id/cancel", async (req, res) => {
+    const result = await cancelWorkflow(
       repos,
       req.params.id,
       req.user?.id ?? "system",
@@ -185,48 +178,40 @@ export function createWorkflowRouter(repos: Repositories, _config: AppConfig): R
     res.json(result);
   });
 
-  // --- My Pending ---
-
-  router.get("/my-pending", (req, res) => {
+  router.get("/my-pending", async (req, res) => {
     const userId = req.user?.id ?? "system";
     const userRole = req.user?.role ?? "viewer";
-    res.json(repos.workflows.instances.listPendingForUser(userId, userRole));
+    res.json(await repos.workflows.instances.listPendingForUser(userId, userRole));
   });
 
-  // --- Notifications ---
-
-  router.get("/notifications", (req, res) => {
+  router.get("/notifications", async (req, res) => {
     const userId = req.user?.id ?? "system";
-    res.json(repos.workflows.notifications.listByRecipient(userId));
+    res.json(await repos.workflows.notifications.listByRecipient(userId));
   });
 
-  router.patch("/notifications/:id/read", (req, res) => {
-    repos.workflows.notifications.markRead(req.params.id);
+  router.patch("/notifications/:id/read", async (req, res) => {
+    await repos.workflows.notifications.markRead(req.params.id);
     res.json({ ok: true });
   });
 
-  // --- Auto-Advance ---
-
-  // POST /workflows/instances/:id/auto-advance/evaluate — evaluate auto-advance for a specific instance
-  router.post("/instances/:id/auto-advance/evaluate", (req, res) => {
-    const result = evaluateAutoAdvance(repos, req.params.id);
+  router.post("/instances/:id/auto-advance/evaluate", async (req, res) => {
+    const result = await evaluateAutoAdvance(repos, req.params.id);
     if (!result) return res.status(404).json({ error: "Instance not found or has no auto-advance rules" });
     res.json(result);
   });
 
-  // POST /workflows/auto-advance/run — run auto-advance check across all active workflows
-  router.post("/auto-advance/run", requireRole("admin"), (req, res) => {
-    const results = runAutoAdvanceCheck(repos);
+  router.post("/auto-advance/run", requireRole("admin"), async (_req, res) => {
+    const results = await runAutoAdvanceCheck(repos);
     res.json({ evaluated: results.length, advanced: results.filter(r => r.advanced).length, results });
   });
 
   return router;
 }
 
-function findChangeSetAcrossProjects(repos: Repositories, changeSetId: string): { projectId: string; changeSetId: string } | null {
-  const projects = repos.projects.list();
+async function findChangeSetAcrossProjects(repos: Repositories, changeSetId: string): Promise<{ projectId: string; changeSetId: string } | null> {
+  const projects = await repos.projects.list();
   for (const project of projects) {
-    const cs = repos.changeSets.get(project.id, changeSetId);
+    const cs = await repos.changeSets.get(project.id, changeSetId);
     if (cs) return { projectId: project.id, changeSetId: cs.id };
   }
   return null;

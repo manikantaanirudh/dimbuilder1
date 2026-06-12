@@ -55,11 +55,11 @@ export function createHierarchyRouter({ repos }: RouterDeps): Router {
     res.type("text/csv").send(exportOrphanMembersCsv(state.dimension, state.members, state.relationships));
   });
 
-  router.post("/dimensions/:dimensionId/blueprint", (req, res) => {
-    const dimension = repos.dimensions.get((req.params as Record<string, string>).dimensionId);
+  router.post("/dimensions/:dimensionId/blueprint", async (req, res) => {
+    const dimension = await repos.dimensions.get((req.params as Record<string, string>).dimensionId);
     if (!dimension || dimension.projectId !== (req.params as Record<string, string>).projectId) return res.status(404).json({ error: "dimension not found" });
-    const members = repos.members.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 });
-    const relationships = repos.relationships.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 });
+    const members = await repos.members.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 });
+    const relationships = await repos.relationships.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 });
     const blueprint = blueprintFromProjectDimension(dimension, members, relationships);
     res.json({
       dimensionType: dimension.dimensionType,
@@ -71,12 +71,12 @@ export function createHierarchyRouter({ repos }: RouterDeps): Router {
   return router;
 }
 
-function loadDimensionHierarchyState(repos: Repositories, projectId: string, dimensionId: string) {
-  const dimension = repos.dimensions.get(dimensionId);
+async function loadDimensionHierarchyState(repos: Repositories, projectId: string, dimensionId: string) {
+  const dimension = await repos.dimensions.get(dimensionId);
   if (!dimension || dimension.projectId !== projectId) return null;
   return {
     dimension,
-    members: repos.members.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 }),
-    relationships: repos.relationships.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 })
+    members: await repos.members.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 }),
+    relationships: await repos.relationships.listByDimension(dimension.id, { offset: 0, limit: 1_000_000 })
   };
 }

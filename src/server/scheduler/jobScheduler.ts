@@ -29,7 +29,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
   let timer: ReturnType<typeof setInterval> | null = null;
   let running = false;
 
-  function runDueJobs(): number {
+  async function runDueJobs(): Promise<number> {
     const now = new Date();
     let executedCount = 0;
 
@@ -46,7 +46,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
 
       if (shouldRunAt(fields, now)) {
         // Check if already executed this minute
-        const executions = repos.jobExecutions.listByJob(job.id);
+        const executions = await repos.jobExecutions.listByJob(job.id);
         const lastExecution = executions.length > 0 ? executions[0] : null;
         if (lastExecution) {
           const lastRunDate = new Date(lastExecution.startedAt);
@@ -59,7 +59,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
           }
         }
 
-        executeJob(job);
+        await executeJob(job);
         executedCount++;
       }
     }
@@ -67,9 +67,9 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
     return executedCount;
   }
 
-  function getAllCronJobs() {
+  async function getAllCronJobs() {
     // Get all projects, then all jobs for each
-    const projects = repos.projects.list();
+    const projects = await repos.projects.list();
     const allJobs: Array<{
       id: string;
       projectId: string;
@@ -81,7 +81,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
     }> = [];
 
     for (const project of projects) {
-      const jobs = repos.scheduledJobs.listByProject(project.id);
+      const jobs = await repos.scheduledJobs.listByProject(project.id);
       for (const job of jobs) {
         if (job.triggerType === 'cron' && job.status === 'active') {
           allJobs.push(job);
@@ -91,7 +91,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
     return allJobs;
   }
 
-  function executeJob(job: { id: string; projectId: string; actionType: string; actionConfig: unknown }) {
+  async function executeJob(job: { id: string; projectId: string; actionType: string; actionConfig: unknown }) {
     let resultMsg = '';
     let errorMessage: string | undefined;
     let status: 'succeeded' | 'failed' = 'succeeded';
@@ -99,23 +99,23 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
     try {
       switch (job.actionType) {
         case 'validate_project': {
-          const members = repos.members.listByProject(job.projectId);
+          const members = await repos.members.listByProject(job.projectId);
           resultMsg = `Validated ${members.length} members`;
           break;
         }
         case 'generate_report': {
-          const dimensions = repos.dimensions.listByProject(job.projectId);
+          const dimensions = await repos.dimensions.listByProject(job.projectId);
           resultMsg = `Report generated for ${dimensions.length} dimensions`;
           break;
         }
         case 'sync_push': {
-          const pending = repos.syncQueue.listPending(job.projectId);
-          for (const entry of pending) repos.syncQueue.markSynced(entry.id);
+          const pending = await repos.syncQueue.listPending(job.projectId);
+          for (const entry of pending) await repos.syncQueue.markSynced(entry.id);
           resultMsg = `Synced ${pending.length} pending changes`;
           break;
         }
         case 'quality_check': {
-          const dims = repos.dimensions.listByProject(job.projectId);
+          const dims = await repos.dimensions.listByProject(job.projectId);
           resultMsg = `Quality check ran on ${dims.length} dimensions`;
           break;
         }
@@ -130,7 +130,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
       resultMsg = `Error: ${errorMessage}`;
     }
 
-    repos.jobExecutions.create({
+    await repos.jobExecutions.create({
       jobId: job.id,
       status,
       result: { message: resultMsg },
@@ -142,7 +142,7 @@ export function createJobScheduler(repos: Repositories, _config: AppConfig, opti
     start() {
       if (running) return;
       running = true;
-      timer = setInterval(() => runDueJobs(), pollInterval);
+      timer = setInterval(() => { void runDueJobs(); }, pollInterval);
     },
     stop() {
       if (timer) {

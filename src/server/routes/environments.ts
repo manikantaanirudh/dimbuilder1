@@ -85,12 +85,12 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
   const router = Router();
 
   // List environments (credentials redacted)
-  router.get("/", (_req, res) => {
-    res.json(repos.environments.list());
+  router.get("/", async (_req, res) => {
+    res.json(await repos.environments.list());
   });
 
   // Create environment
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const parsed = createEnvironmentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -98,7 +98,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const env = repos.environments.create({
+    const env = await repos.environments.create({
       ...parsed.data,
       createdBy: req.user?.id ?? "system"
     });
@@ -106,7 +106,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
   });
 
   // Update environment
-  router.patch("/:id", (req, res) => {
+  router.patch("/:id", async (req, res) => {
     const parsed = updateEnvironmentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -114,22 +114,22 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const updated = repos.environments.update(req.params.id, parsed.data);
+    const updated = await repos.environments.update(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ error: "Environment not found" });
     res.json(updated);
   });
 
   // Delete environment
-  router.delete("/:id", (req, res) => {
-    const existing = repos.environments.getSafe(req.params.id);
+  router.delete("/:id", async (req, res) => {
+    const existing = await repos.environments.getSafe(req.params.id);
     if (!existing) return res.status(404).json({ error: "Environment not found" });
-    repos.environments.delete(req.params.id);
+    await repos.environments.delete(req.params.id);
     res.json({ ok: true });
   });
 
   // Test connection
   router.post("/:id/test-connection", async (req, res) => {
-    const env = repos.environments.getById(req.params.id);
+    const env = await repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
     try {
       const client = createOneStreamClient(env);
@@ -142,7 +142,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
   // Pull dimensions from environment
   router.post("/:id/pull", async (req, res) => {
-    const env = repos.environments.getById(req.params.id);
+    const env = await repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
     try {
       const client = createOneStreamClient(env);
@@ -156,7 +156,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
   // Deploy to environment
   router.post("/:id/deploy", async (req, res) => {
     try {
-    const env = repos.environments.getById(req.params.id);
+    const env = await repos.environments.getById(req.params.id);
     if (!env) return res.status(404).json({ error: "Environment not found" });
 
     const parsed = deploySchema.safeParse(req.body);
@@ -168,11 +168,11 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     }
 
     const { projectId, changeSetId, dimensionIds, comment } = parsed.data;
-    const project = repos.projects.get(projectId);
+    const project = await repos.projects.get(projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     // Build snapshot and export XML
-    const dimensions = repos.dimensions.listByProject(projectId);
+    const dimensions = await repos.dimensions.listByProject(projectId);
     const filteredDimensions = dimensionIds?.length
       ? dimensions.filter(d => dimensionIds.includes(d.id))
       : dimensions;
@@ -183,15 +183,15 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
     if (dimensionIds?.length) {
       for (const dimensionId of dimensionIds) {
-        assertDimensionExportWithinMemberLimit(repos, dimensionId, "environment-xml", config);
+        await assertDimensionExportWithinMemberLimit(repos, dimensionId, "environment-xml", config);
       }
     } else {
-      assertProjectExportWithinMemberLimit(repos, projectId, "environment-xml", config);
+      await assertProjectExportWithinMemberLimit(repos, projectId, "environment-xml", config);
     }
 
-    const members = repos.members.listByProject(projectId);
-    const relationships = repos.relationships.listByProject(projectId);
-    const varyingPropertyValues = repos.varyingProperties.listVaryingPropertyValues(projectId);
+    const members = await repos.members.listByProject(projectId);
+    const relationships = await repos.relationships.listByProject(projectId);
+    const varyingPropertyValues = await repos.varyingProperties.listVaryingPropertyValues(projectId);
 
     const xml = exportProjectXml(
       { project, dimensions: filteredDimensions, members, relationships, varyingPropertyValues },
@@ -210,7 +210,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
       const client = createOneStreamClient(env);
       const result = await client.pushXml(xml, dimensionTypes);
 
-      const deployment = repos.deployments.create({
+      const deployment = await repos.deployments.create({
         environmentId: env.id,
         projectId,
         changeSetId,
@@ -223,7 +223,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
       res.status(201).json(deployment);
     } catch (err) {
-      const deployment = repos.deployments.create({
+      const deployment = await repos.deployments.create({
         environmentId: env.id,
         projectId,
         changeSetId,
@@ -247,26 +247,26 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
   });
 
   // List deployments
-  router.get("/deployments", (req, res) => {
+  router.get("/deployments", async (req, res) => {
     const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
     const environmentId = typeof req.query.environmentId === "string" ? req.query.environmentId : undefined;
-    res.json(repos.deployments.list({ projectId, environmentId }));
+    res.json(await repos.deployments.list({ projectId, environmentId }));
   });
 
   // Get deployment detail
-  router.get("/deployments/:id", (req, res) => {
-    const deployment = repos.deployments.getById(req.params.id);
+  router.get("/deployments/:id", async (req, res) => {
+    const deployment = await repos.deployments.getById(req.params.id);
     if (!deployment) return res.status(404).json({ error: "Deployment not found" });
     res.json(deployment);
   });
 
   // --- Promotion Pipelines ---
 
-  router.get("/pipelines", (_req, res) => {
-    res.json(repos.promotionPipelines.list());
+  router.get("/pipelines", async (_req, res) => {
+    res.json(await repos.promotionPipelines.list());
   });
 
-  router.post("/pipelines", (req, res) => {
+  router.post("/pipelines", async (req, res) => {
     const parsed = createPipelineSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -274,14 +274,14 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const pipeline = repos.promotionPipelines.create({
+    const pipeline = await repos.promotionPipelines.create({
       ...parsed.data,
       createdBy: req.user?.id ?? "system"
     });
     res.status(201).json(pipeline);
   });
 
-  router.patch("/pipelines/:id", (req, res) => {
+  router.patch("/pipelines/:id", async (req, res) => {
     const parsed = updatePipelineSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -289,20 +289,20 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const updated = repos.promotionPipelines.update(req.params.id, parsed.data);
+    const updated = await repos.promotionPipelines.update(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ error: "Pipeline not found" });
     res.json(updated);
   });
 
-  router.delete("/pipelines/:id", (req, res) => {
-    const existing = repos.promotionPipelines.getById(req.params.id);
+  router.delete("/pipelines/:id", async (req, res) => {
+    const existing = await repos.promotionPipelines.getById(req.params.id);
     if (!existing) return res.status(404).json({ error: "Pipeline not found" });
-    repos.promotionPipelines.delete(req.params.id);
+    await repos.promotionPipelines.delete(req.params.id);
     res.json({ ok: true });
   });
 
-  router.post("/pipelines/:id/promote", (req, res) => {
-    const pipeline = repos.promotionPipelines.getById(req.params.id);
+  router.post("/pipelines/:id/promote", async (req, res) => {
+    const pipeline = await repos.promotionPipelines.getById(req.params.id);
     if (!pipeline) return res.status(404).json({ error: "Pipeline not found" });
 
     const parsed = promoteSchema.safeParse(req.body);
@@ -321,7 +321,7 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
     const fromStage = pipeline.stages[fromStageIndex];
     const toStage = pipeline.stages[toStageIndex];
 
-    const record = repos.promotionHistory.create({
+    const record = await repos.promotionHistory.create({
       pipelineId: pipeline.id,
       projectId,
       fromEnvironmentId: fromStage.environmentId,
@@ -335,30 +335,30 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
 
   // --- Sync Status ---
 
-  router.get("/projects/:id/sync-status", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/sync-status", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json(getSyncStatusSummary(repos, req.params.id));
+    res.json(await getSyncStatusSummary(repos, req.params.id));
   });
 
-  router.post("/sync-status/refresh", (req, res) => {
+  router.post("/sync-status/refresh", async (req, res) => {
     const { projectId, environmentId } = req.body as { projectId?: string; environmentId?: string };
     if (!projectId) return res.status(400).json({ error: "projectId is required" });
-    const project = repos.projects.get(projectId);
+    const project = await repos.projects.get(projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    const statuses = refreshSyncStatus(repos, projectId, environmentId);
+    const statuses = await refreshSyncStatus(repos, projectId, environmentId);
     res.json(statuses);
   });
 
   // --- Environment Overrides ---
 
-  router.get("/env-overrides", (req, res) => {
+  router.get("/env-overrides", async (req, res) => {
     const environmentId = typeof req.query.environmentId === "string" ? req.query.environmentId : undefined;
     const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
-    res.json(repos.environmentOverrides.list({ environmentId, projectId }));
+    res.json(await repos.environmentOverrides.list({ environmentId, projectId }));
   });
 
-  router.post("/env-overrides", (req, res) => {
+  router.post("/env-overrides", async (req, res) => {
     const parsed = createOverrideSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -366,14 +366,14 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const override = repos.environmentOverrides.create({
+    const override = await repos.environmentOverrides.create({
       ...parsed.data,
       createdBy: req.user?.id ?? "system"
     });
     res.status(201).json(override);
   });
 
-  router.patch("/env-overrides/:id", (req, res) => {
+  router.patch("/env-overrides/:id", async (req, res) => {
     const parsed = updateOverrideSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -381,15 +381,15 @@ export function createEnvironmentRouter(repos: Repositories, config: AppConfig):
         details: parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }))
       });
     }
-    const updated = repos.environmentOverrides.update(req.params.id, parsed.data);
+    const updated = await repos.environmentOverrides.update(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ error: "Override not found" });
     res.json(updated);
   });
 
-  router.delete("/env-overrides/:id", (req, res) => {
-    const existing = repos.environmentOverrides.getById(req.params.id);
+  router.delete("/env-overrides/:id", async (req, res) => {
+    const existing = await repos.environmentOverrides.getById(req.params.id);
     if (!existing) return res.status(404).json({ error: "Override not found" });
-    repos.environmentOverrides.delete(req.params.id);
+    await repos.environmentOverrides.delete(req.params.id);
     res.json({ ok: true });
   });
 

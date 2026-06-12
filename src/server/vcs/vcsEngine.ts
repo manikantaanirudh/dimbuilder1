@@ -2,13 +2,13 @@ import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecor
 import type { VcsDiff, VcsDiffEntry, VcsMergeResult, VcsMergeConflict, ProjectSnapshot } from "../../shared/vcsTypes";
 import type { Repositories } from "../db/repositories";
 
-export function serializeProject(repos: Repositories, projectId: string): ProjectSnapshot {
-  const project = repos.projects.get(projectId);
+export async function serializeProject(repos: Repositories, projectId: string): Promise<ProjectSnapshot> {
+  const project = await repos.projects.get(projectId);
   if (!project) throw new Error("Project not found");
 
-  const dimensions = repos.dimensions.listByProject(projectId);
-  const allMembers = repos.members.listByProject(projectId);
-  const allRelationships = repos.relationships.listByProject(projectId);
+  const dimensions = await repos.dimensions.listByProject(projectId);
+  const allMembers = await repos.members.listByProject(projectId);
+  const allRelationships = await repos.relationships.listByProject(projectId);
 
   return {
     project: { name: project.name, description: project.description },

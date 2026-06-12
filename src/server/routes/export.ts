@@ -34,23 +34,23 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
       if (!project) return res.status(404).json({ error: "project not found" });
 
       if (dimensionId) {
-        assertDimensionExportWithinMemberLimit(repos, dimensionId, "xml", config);
+        await assertDimensionExportWithinMemberLimit(repos, dimensionId, "xml", config);
       } else {
-        assertProjectExportWithinMemberLimit(repos, projectId, "xml", config);
+        await assertProjectExportWithinMemberLimit(repos, projectId, "xml", config);
       }
 
       const snapshot = await readSnapshot(repos, projectId, dimensionId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
       if (!previewOnly) {
         if (dimensionId) {
-          if (!guardDimensionExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, dimensionId, "xml")) return;
+          if (!await guardDimensionExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, dimensionId, "xml")) return;
         } else {
-          if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
+          if (!await guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xml")) return;
         }
       }
       const mode = parseExportLoadMode(req.query.mode);
       const baselineId = optionalQuery(req.query.baselineId);
-      const baseline = baselineId ? repos.baselines.get(snapshot.project.id, baselineId) : null;
+      const baseline = baselineId ? await repos.baselines.get(snapshot.project.id, baselineId) : null;
       if (baselineId && !baseline) return res.status(404).json({ error: "baseline not found" });
       const relationshipPlan = mode === "full"
         ? undefined
@@ -64,9 +64,9 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
         loadMode: mode,
         relationshipPlan,
         dimensionId,
-        propertyDefaults: repos.propertyDefaults.getEffectiveDefaultsForExport(snapshot.project.id)
+        propertyDefaults: await repos.propertyDefaults.getEffectiveDefaultsForExport(snapshot.project.id)
       };
-      repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
+      await repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
       res.type("application/xml");
       for (const chunk of iterateProjectXmlChunks(snapshot, xmlOptions)) {
         res.write(chunk);
@@ -83,7 +83,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     if (!config.export.json.enabled) return disabledFormat(res, "JSON");
     const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "json")) return;
+    if (!await guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "json")) return;
     res.type("application/json").send(exportJsonBackup({ ...snapshot, importSummary: emptyImportSummary() }));
   });
 
@@ -91,7 +91,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
     const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "members.csv")) return;
+    if (!await guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "members.csv")) return;
     res.type("text/csv").send(exportMembersCsv(snapshot.members));
   });
 
@@ -99,7 +99,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
     if (!config.export.csv.enabled) return disabledFormat(res, "CSV");
     const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "relationships.csv")) return;
+    if (!await guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "relationships.csv")) return;
     res.type("text/csv").send(exportRelationshipsCsv(snapshot.relationships));
   });
 
@@ -108,7 +108,7 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
       if (!config.export.xlsx.enabled) return disabledFormat(res, "XLSX");
       const snapshot = await readSnapshot(repos, req.params.projectId);
       if (!snapshot) return res.status(404).json({ error: "project not found" });
-      if (!guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xlsx")) return;
+      if (!await guardExportRequest(req.query as Record<string, unknown>, res, repos, config, snapshot.project.id, "xlsx")) return;
       const filePath = join(config.paths.exportsDirectory, `${snapshot.project.id}.xlsx`);
       await exportWorkbook(filePath, snapshot.dimensions, snapshot.members, snapshot.relationships, { creator: config.export.xlsx.creator });
       const buffer = readFileSync(filePath);
@@ -124,8 +124,8 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
   router.post("/:projectId/snapshot", async (req, res) => {
     const snapshot = await readSnapshot(repos, req.params.projectId);
     if (!snapshot) return res.status(404).json({ error: "project not found" });
-    if (!guardExportRequest(req.body as Record<string, unknown>, res, repos, config, snapshot.project.id, "snapshot")) return;
-    const id = repos.snapshots.create({
+    if (!await guardExportRequest(req.body as Record<string, unknown>, res, repos, config, snapshot.project.id, "snapshot")) return;
+    const id = await repos.snapshots.create({
       projectId: snapshot.project.id,
       name: req.body.name || `Snapshot ${new Date().toISOString()}`,
       description: req.body.description || "",
@@ -146,21 +146,21 @@ async function readSnapshot(repos: Repositories, projectId: string, dimensionId?
   const project = await repos.projects.get(projectId);
   if (!project) return null;
   if (dimensionId) {
-    const dimensions = repos.dimensions.listByProject(project.id).filter((dimension) => dimension.id === dimensionId);
+    const dimensions = (await repos.dimensions.listByProject(project.id)).filter((dimension) => dimension.id === dimensionId);
     return {
       project,
       dimensions,
-      members: dimensions.length ? repos.members.listAllByDimension(dimensionId) : [],
-      relationships: dimensions.length ? repos.relationships.listAllByDimension(dimensionId) : [],
-      varyingPropertyValues: repos.varyingProperties.listVaryingPropertyValues(project.id)
+      members: dimensions.length ? await repos.members.listAllByDimension(dimensionId) : [],
+      relationships: dimensions.length ? await repos.relationships.listAllByDimension(dimensionId) : [],
+      varyingPropertyValues: await repos.varyingProperties.listVaryingPropertyValues(project.id)
     };
   }
   return {
     project,
-    dimensions: repos.dimensions.listByProject(project.id),
-    members: repos.members.listByProject(project.id),
-    relationships: repos.relationships.listByProject(project.id),
-    varyingPropertyValues: repos.varyingProperties.listVaryingPropertyValues(project.id)
+    dimensions: await repos.dimensions.listByProject(project.id),
+    members: await repos.members.listByProject(project.id),
+    relationships: await repos.relationships.listByProject(project.id),
+    varyingPropertyValues: await repos.varyingProperties.listVaryingPropertyValues(project.id)
   };
 }
 
@@ -174,16 +174,16 @@ function isTruthyFlag(value: unknown): boolean {
   return value === true || value === "true" || value === "1" || value === "yes";
 }
 
-function guardExportRequest(
+async function guardExportRequest(
   source: Record<string, unknown>,
   res: import("express").Response,
   repos: Repositories,
   config: AppConfig,
   projectId: string,
   exportType: string
-): boolean {
+): Promise<boolean> {
   try {
-    assertProjectCanExport(projectId, config, repos, parseExportGuardOptions(source, exportType));
+    await assertProjectCanExport(projectId, config, repos, parseExportGuardOptions(source, exportType));
     return true;
   } catch (error) {
     if (sendExportLimitError(res, error)) return false;
@@ -192,7 +192,7 @@ function guardExportRequest(
   }
 }
 
-function guardDimensionExportRequest(
+async function guardDimensionExportRequest(
   source: Record<string, unknown>,
   res: import("express").Response,
   repos: Repositories,
@@ -200,9 +200,9 @@ function guardDimensionExportRequest(
   projectId: string,
   dimensionId: string,
   exportType: string
-): boolean {
+): Promise<boolean> {
   try {
-    assertDimensionCanExport(projectId, dimensionId, config, repos, parseExportGuardOptions(source, exportType));
+    await assertDimensionCanExport(projectId, dimensionId, config, repos, parseExportGuardOptions(source, exportType));
     return true;
   } catch (error) {
     if (sendExportLimitError(res, error)) return false;

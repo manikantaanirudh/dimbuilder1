@@ -282,7 +282,7 @@ describe("AI Hierarchy Optimization", () => {
     expect(flattenSuggestion).toBeDefined();
   });
 
-  it("does not suggest flatten for chains of 2", () => {
+  it("does not suggest flatten for chains of 2", async () => {
     const members = [member("A"), member("B"), member("C")];
     const rels = [rel("A", "B"), rel("B", "C")];
     // Chain is A → B → C, length 3 (3 nodes) but only 1 intermediate

@@ -17,33 +17,33 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
 
   // ============ Feature 21: Multi-Tenant ============
 
-  router.post("/tenants", (req, res) => {
+  router.post("/tenants", async (req, res) => {
     const schema = z.object({ name: z.string().min(1), slug: z.string().min(1), config: z.record(z.unknown()).optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const tenant = repos.tenants.create({ name: parsed.data.name, slug: parsed.data.slug, config: parsed.data.config });
+    const tenant = await repos.tenants.create({ name: parsed.data.name, slug: parsed.data.slug, config: parsed.data.config });
     res.status(201).json(tenant);
   });
 
-  router.get("/tenants", (_req, res) => { res.json(repos.tenants.list()); });
+  router.get("/tenants", async (_req, res) => { res.json(await repos.tenants.list()); });
 
-  router.get("/tenants/:slug/usage", (req, res) => {
-    const tenant = repos.tenants.getBySlug(req.params.slug);
+  router.get("/tenants/:slug/usage", async (req, res) => {
+    const tenant = await repos.tenants.getBySlug(req.params.slug);
     if (!tenant) return res.status(404).json({ error: "Tenant not found" });
     res.json({ tenantId: tenant.id, userCount: 0, projectCount: 0, storageBytes: 0, apiCallsThisMonth: 0, capturedAt: new Date().toISOString() });
   });
 
   // ============ Feature 22: Real-Time Collaboration ============
 
-  router.get("/projects/:id/presence", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/presence", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
     res.json(presence.getProjectPresence(project.id));
   });
 
-  router.post("/projects/:id/presence/heartbeat", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/presence/heartbeat", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const schema = z.object({
@@ -66,16 +66,16 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     res.json({ ok: true, activeUsers: presence.getProjectPresence(project.id).length });
   });
 
-  router.post("/projects/:id/presence/leave", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/presence/leave", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     presence.leave(req.user?.id ?? "anonymous", project.id);
     res.json({ ok: true });
   });
 
-  router.post("/projects/:id/comments", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.post("/projects/:id/comments", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const schema = z.object({
@@ -88,7 +88,7 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const comment = repos.comments.create({
+    const comment = await repos.comments.create({
       projectId: project.id,
       dimensionId: parsed.data.dimensionId,
       memberKey: parsed.data.memberKey,
@@ -101,21 +101,21 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     res.status(201).json(comment);
   });
 
-  router.get("/projects/:id/comments", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/comments", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json(repos.comments.listByProject(project.id));
+    res.json(await repos.comments.listByProject(project.id));
   });
 
   // ============ Feature 23: Audit & Compliance ============
 
-  router.get("/projects/:id/audit-log", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/audit-log", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-    res.json(repos.auditLog.listByProject(project.id));
+    res.json(await repos.auditLog.listByProject(project.id));
   });
 
-  router.post("/audit-log", (req, res) => {
+  router.post("/audit-log", async (req, res) => {
     const schema = z.object({
       projectId: z.string().optional(),
       action: z.string().min(1),
@@ -126,7 +126,7 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const entry = repos.auditLog.create({
+    const entry = await repos.auditLog.create({
       projectId: parsed.data.projectId,
       userId: req.user?.id ?? "system",
       action: parsed.data.action,
@@ -137,19 +137,19 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
     res.status(201).json(entry);
   });
 
-  router.post("/retention-policies", (req, res) => {
+  router.post("/retention-policies", async (req, res) => {
     const schema = z.object({ entityType: z.string().min(1), retentionDays: z.number().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const policy = repos.retentionPolicies.create({ entityType: parsed.data.entityType, retentionDays: parsed.data.retentionDays });
+    const policy = await repos.retentionPolicies.create({ entityType: parsed.data.entityType, retentionDays: parsed.data.retentionDays });
     res.status(201).json(policy);
   });
 
-  router.get("/retention-policies", (_req, res) => { res.json(repos.retentionPolicies.list()); });
+  router.get("/retention-policies", async (_req, res) => { res.json(await repos.retentionPolicies.list()); });
 
-  router.get("/compliance/report", (req, res) => {
-    const policies = repos.retentionPolicies.list();
+  router.get("/compliance/report", async (req, res) => {
+    const policies = await repos.retentionPolicies.list();
     res.json({
       tenantId: 'default',
       generatedAt: new Date().toISOString(),
@@ -172,13 +172,13 @@ export function createTier4Router(repos: Repositories, _config: AppConfig): Rout
 
   router.get("/background-jobs", (_req, res) => { res.json([]); });
 
-  router.get("/projects/:id/members/paginated", (req, res) => {
-    const project = repos.projects.get(req.params.id);
+  router.get("/projects/:id/members/paginated", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
     const offset = parseInt(req.query.offset as string) || 0;
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
-    const allMembers = repos.members.listByProject(project.id);
+    const allMembers = await repos.members.listByProject(project.id);
     const page = allMembers.slice(offset, offset + limit);
 
     res.json({
