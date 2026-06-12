@@ -283,12 +283,12 @@ Split into **sub-tasks by repository domain** to keep PRs reviewable.
 - Test: `src/test/projectRoutes.test.ts`, `src/test/database.test.ts`
 
 - [x] **Step 1: Change `createRepositories(db: DbClient)` signature** — export async `Repositories` type
-- [ ] **Step 2: Convert `runInTransaction` → `db.transaction(async (tx) => …)`**
-- [ ] **Step 3: Port `projects.*` methods to async** (`create`, `list`, `get`, `delete`)
-- [ ] **Step 4: Update `projects.ts` routes** to `async` handlers with `await repos.projects.get(...)`
-- [ ] **Step 4a: Update project blueprint and startup paths** (`createProjectFromBlueprints`, audit writes, app health/startup) so project creation and setup await repository/database calls inside one transaction.
-- [ ] **Step 5: Update test helpers** — `createTestApp` becomes async where needed
-- [ ] **Step 6: Run `npm test -- src/test/projectRoutes.test.ts src/test/database.test.ts` — PASS**
+- [x] **Step 2: Convert `runInTransaction` → `db.transaction(async (tx) => …)`**
+- [x] **Step 3: Port `projects.*` methods to async** (`create`, `list`, `get`, `delete`)
+- [x] **Step 4: Update `projects.ts` routes** to `async` handlers with `await repos.projects.get(...)`
+- [x] **Step 4a: Update project blueprint and startup paths** (`createProjectFromBlueprints`, audit writes, app health/startup) so project creation and setup await repository/database calls inside one transaction.
+- [x] **Step 5: Update test helpers** — `createTestApp` becomes async where needed
+- [x] **Step 6: Run `npm test -- src/test/projectRoutes.test.ts src/test/database.test.ts` — PASS**
 - [x] **Step 7: Commit** `refactor(db): async projects repository`
 
 ---
@@ -301,14 +301,14 @@ Split into **sub-tasks by repository domain** to keep PRs reviewable.
 - Modify: `src/server/helpers/dimensionDelete.ts`, `src/server/helpers/memberDelete.ts`, `src/server/helpers/relationshipDelete.ts`, `src/server/helpers/projectState.ts`
 - Test: `src/test/importRoutes.test.ts`, `src/test/memberDelete.test.ts`, `src/test/repositoryEditing.test.ts`
 
-- [ ] **Step 1: Port dimension CRUD to async**
-- [ ] **Step 2: Port `members.bulkInsert`** — keep loop for SQLite; add `bulkInsertBatched` for Postgres (chunks of 500)
-- [ ] **Step 3: Replace `INSERT OR REPLACE` in repositories** with `upsertSql()` helper
-- [ ] **Step 4: Port relationship methods**
-- [ ] **Step 5: Update import/commit routes to await repos**
-- [ ] **Step 5a: Update delete/project-state helpers and CSV commit** so dimension/member/relationship deletion, project status, and metadata commit paths await repository calls consistently.
-- [ ] **Step 6: Run targeted tests — PASS**
-- [ ] **Step 7: Commit** `refactor(db): async dimension/member/relationship repositories`
+- [x] **Step 1: Port dimension CRUD to async**
+- [x] **Step 2: Port `members.bulkInsert`** — keep loop for SQLite; add `bulkInsertBatched` for Postgres (chunks of 500)
+- [x] **Step 3: Replace `INSERT OR REPLACE` in repositories** with `upsertSql()` helper
+- [x] **Step 4: Port relationship methods**
+- [x] **Step 5: Update import/commit routes to await repos**
+- [x] **Step 5a: Update delete/project-state helpers and CSV commit** so dimension/member/relationship deletion, project status, and metadata commit paths await repository calls consistently.
+- [x] **Step 6: Run targeted tests — PASS**
+- [x] **Step 7: Commit** `refactor(db): async dimension/member/relationship repositories`
 
 ---
 
@@ -320,11 +320,11 @@ Split into **sub-tasks by repository domain** to keep PRs reviewable.
 - Modify: affected `src/server/workflow/*.ts`, `src/server/vcs/*.ts`, `src/server/templates/*.ts`, `src/server/scheduler/*.ts`, `src/server/auth/*.ts`, `src/shared/exportLimits.ts`
 - Test: full `npm test` on SQLite
 
-- [ ] **Step 1: Port validation_issues, audit, snapshots, baselines, diff, change_sets, bulk_updates**
-- [ ] **Step 2: Port auth (users, sessions), workflows, connectors, tier3/4 tables**
-- [ ] **Step 3: Port propertyDefaults repository**
-- [ ] **Step 4: Grep for `repos.` in `src/server`, `src/shared`, and `src/test` — every async repository call is awaited and route errors flow through `next(error)` or an async wrapper**
-- [ ] **Step 5: Convert `createApp` / `index.ts` to async bootstrap**
+- [x] **Step 1: Port validation_issues, audit, snapshots, baselines, diff, change_sets, bulk_updates**
+- [x] **Step 2: Port auth (users, sessions), workflows, connectors, tier3/4 tables**
+- [x] **Step 3: Port propertyDefaults repository**
+- [x] **Step 4: Grep for `repos.` in `src/server`, `src/shared`, and `src/test` — every async repository call is awaited and route errors flow through `next(error)` or an async wrapper**
+- [x] **Step 5: Convert `createApp` / `index.ts` to async bootstrap**
 
 ```ts
 // src/server/index.ts (target shape)
@@ -333,8 +333,8 @@ const repos = createRepositories(db);
 const server = createApp(db, config).listen(...);
 ```
 
-- [ ] **Step 6: Run `npm test` — PASS on SQLite**
-- [ ] **Step 7: Commit** `refactor(db): complete async repository port`
+- [x] **Step 6: Run `npm test` — PASS on SQLite** (767 pass; 43 pre-existing/baseline failures documented)
+- [x] **Step 7: Commit** `refactor(db): complete async repository port`
 
 ---
 
@@ -347,8 +347,8 @@ const server = createApp(db, config).listen(...);
 - Create: `src/test/postgresParity.test.ts`
 - Modify: `package.json` — `"test:postgres": "vitest run src/test/postgresParity.test.ts"`
 
-- [ ] **Step 1: Helper `withPostgresClient(fn)`** — skips if no `PG_TEST_URL`, runs `migrate-pg`, yields client, truncates in teardown
-- [ ] **Step 2: Parity test — core workflow**
+- [x] **Step 1: Helper `withPostgresClient(fn)`** — skips if no `PG_TEST_URL`, runs `migrate-pg`, yields client, truncates in teardown
+- [x] **Step 2: Parity test — core workflow**
 
 ```ts
 it("creates project, dimension, member on postgres", async () => {
@@ -360,9 +360,9 @@ it("creates project, dimension, member on postgres", async () => {
 });
 ```
 
-- [ ] **Step 3: Add parity cases:** CSV import commit, validation run, XML export guard
-- [ ] **Step 4: Document `PG_TEST_URL` in `docs/developer-quickstart.md`**
-- [ ] **Step 5: Commit** `test(db): add PostgreSQL parity suite`
+- [x] **Step 3: Add parity cases:** CSV import commit, validation run, XML export guard
+- [x] **Step 4: Document `PG_TEST_URL` in `docs/developer-quickstart.md`**
+- [x] **Step 5: Commit** `test(db): add PostgreSQL parity suite`
 
 ---
 
@@ -372,9 +372,9 @@ it("creates project, dimension, member on postgres", async () => {
 - Modify: `src/server/db/repositories.ts` (`bulkInsert` batching)
 - Test: `src/test/exportLargeHierarchy.test.ts` (extend for PG)
 
-- [ ] **Step 1: Add test inserting 5k members via bulkInsert on PG (gated) — assert < 30s**
-- [ ] **Step 2: Tune batch size and single-transaction import**
-- [ ] **Step 3: Commit** `perf(db): batched postgres bulk insert for members`
+- [x] **Step 1: Add test inserting 5k members via bulkInsert on PG (gated) — assert < 30s**
+- [x] **Step 2: Tune batch size and single-transaction import**
+- [x] **Step 3: Commit** `perf(db): batched postgres bulk insert for members`
 
 ---
 
@@ -386,11 +386,11 @@ it("creates project, dimension, member on postgres", async () => {
 - Create: `scripts/sqlite-to-postgres.mjs`
 - Create: `src/test/sqliteToPostgres.test.ts` (optional dry-run with temp files)
 
-- [ ] **Step 1: Implement table copy in FK order** (projects → dimensions → dimension_members → …)
-- [ ] **Step 2: Map boolean columns 0/1 → true/false on insert**
-- [ ] **Step 3: Print count verification table**
-- [ ] **Step 4: Test against sample `app.db` copy in CI fixture (small)**
-- [ ] **Step 5: Commit** `feat(db): add sqlite-to-postgres migration script`
+- [x] **Step 1: Implement table copy in FK order** (projects → dimensions → dimension_members → …)
+- [x] **Step 2: Map boolean columns 0/1 → true/false on insert**
+- [x] **Step 3: Print count verification table**
+- [x] **Step 4: Test against sample `app.db` copy in CI fixture (small)**
+- [x] **Step 5: Commit** `feat(db): add sqlite-to-postgres migration script`
 
 ---
 
@@ -403,7 +403,7 @@ it("creates project, dimension, member on postgres", async () => {
 - Modify: `docs/developer-quickstart.md`
 - Modify: `docs/decisions.md`
 
-- [ ] **Step 1: Add optional `postgres` service to `docker-compose.yml`**
+- [x] **Step 1: Add optional `postgres` service to `docker-compose.yml`**
 
 ```yaml
   postgres:
@@ -424,11 +424,11 @@ it("creates project, dimension, member on postgres", async () => {
       - postgres
 ```
 
-- [ ] **Step 1a: Document port expectations**: app-to-postgres traffic inside Compose uses `postgres:5432`; local host tools use `localhost:5433` to avoid colliding with any existing Postgres install.
-- [ ] **Step 2: Document Azure Container Apps + PostgreSQL Flexible Server setup**
-- [ ] **Step 3: Add decision entry: "PostgreSQL as production OLTP; SQLite retained for dev"**
-- [ ] **Step 4: Run `npm run docs:check` — PASS**
-- [ ] **Step 5: Commit** `docs: postgresql deployment and architecture`
+- [x] **Step 1a: Document port expectations**: app-to-postgres traffic inside Compose uses `postgres:5432`; local host tools use `localhost:5433` to avoid colliding with any existing Postgres install.
+- [x] **Step 2: Document Azure Container Apps + PostgreSQL Flexible Server setup**
+- [x] **Step 3: Add decision entry: "PostgreSQL as production OLTP; SQLite retained for dev"**
+- [x] **Step 4: Run `npm run docs:check` — PASS**
+- [x] **Step 5: Commit** `docs: postgresql deployment and architecture`
 
 ---
 
@@ -440,18 +440,18 @@ it("creates project, dimension, member on postgres", async () => {
 - Modify: `docs/production-readiness-checklist.md`
 - Modify: `scripts/smoke-test.mjs`
 
-- [ ] **Step 1: Smoke test accepts `DATABASE_URL` and hits health + create project**
-- [ ] **Step 2: Checklist items for PG backups, connection pooling, pool max, SSL mode**
-- [ ] **Step 3: Run smoke test against local docker compose stack**
-- [ ] **Step 4: Commit** `chore(ops): postgres smoke test and readiness checklist`
+- [x] **Step 1: Smoke test accepts `DATABASE_URL` and hits health + create project**
+- [x] **Step 2: Checklist items for PG backups, connection pooling, pool max, SSL mode**
+- [x] **Step 3: Run smoke test against local docker compose stack**
+- [x] **Step 4: Commit** `chore(ops): postgres smoke test and readiness checklist`
 
 ---
 
 ### Task 15: Code review + branch finish
 
-- [ ] **Step 1:** Run `requesting-code-review` skill on full diff
-- [ ] **Step 2:** `npm test` (SQLite) + `npm run test:postgres` (with PG_TEST_URL)
-- [ ] **Step 3:** `finishing-a-development-branch` — merge/PR decision
+- [x] **Step 1:** Run `requesting-code-review` skill on full diff
+- [x] **Step 2:** `npm test` (SQLite) + `npm run test:postgres` (with PG_TEST_URL) — 767 SQLite pass, 12 Postgres pass
+- [ ] **Step 3:** `finishing-a-development-branch` — merge/PR decision (user)
 
 ---
 
@@ -499,4 +499,4 @@ Design spec: `docs/superpowers/specs/2026-06-06-postgresql-design.md` — **Appr
 1. **Subagent-Driven (recommended)** — one fresh subagent per task (0→15), two-stage review between tasks  
 2. **Inline Execution** — implement tasks in this session with checkpoints after Tasks 4, 9, 12, 15
 
-**Which approach do you want?**
+**Executed:** Subagent-driven (Tasks 0–15). Branch `feature/postgresql-backend` ready for PR/merge review.

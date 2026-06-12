@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["src/test/setup.ts"],
     include: ["src/test/**/*.test.ts"],
-    // Postgres integration tests use a shared DB; run via `npm run test:postgres` only.
+    // Postgres integration tests share one DB; run via `npm run test:postgres`.
     exclude: [
       "src/test/postgresParity.test.ts",
       "src/test/postgresBulkInsert.test.ts",
