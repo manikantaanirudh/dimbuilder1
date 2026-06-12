@@ -25,9 +25,9 @@ export async function withPostgresClient<T>(fn: (client: DbClient) => Promise<T>
       await bootstrapPostgresSchema(client);
       schemaBootstrapped = true;
     }
+    await truncateProjectData(client);
     return await fn(client);
   } finally {
-    await truncateProjectData(client);
     await client.close();
   }
 }
