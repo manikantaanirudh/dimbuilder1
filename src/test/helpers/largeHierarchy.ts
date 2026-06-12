@@ -19,7 +19,7 @@ export async function createLargeHierarchyProject(
   config: AppConfig,
   options: { memberCount: number; projectName?: string }
 ): Promise<LargeHierarchyProject> {
-  const project = createProjectFromBlueprints(repos, config, {
+  const project = await createProjectFromBlueprints(repos, config, {
     name: options.projectName ?? "Large hierarchy test project",
     description: "",
     createdBy: "test"

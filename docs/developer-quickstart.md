@@ -70,17 +70,6 @@ npm.cmd run test:coverage
 
 Coverage uses `@vitest/coverage-v8` with thresholds of 60% lines and 50% branches. Configuration is in `vitest.config.ts`.
 
-### PostgreSQL Tests
-
-Optional parity and performance tests run against a live Postgres instance when `PG_TEST_URL` is set. Start Postgres locally (for example via Docker on port 5433), then run:
-
-```powershell
-$env:PG_TEST_URL="postgresql://postgres:postgres@127.0.0.1:5433/dimbuilder"
-npm.cmd run test:postgres
-```
-
-Without `PG_TEST_URL`, the Postgres-gated tests are skipped and the rest of the suite still runs.
-
 ## Build
 
 ```powershell
@@ -105,10 +94,9 @@ Run this after source changes. If a source change affects behavior, APIs, config
 | `server` | Run server only in watch mode |
 | `build` | TypeScript compile + Vite production build |
 | `test` | Run Vitest once |
-| `test:postgres` | Run Postgres parity and schema tests (requires `PG_TEST_URL`) |
+| `test:postgres` | Run PostgreSQL parity and schema tests (requires `PG_TEST_URL`) |
 | `test:watch` | Run Vitest in watch mode |
 | `test:coverage` | Run Vitest with V8 coverage |
-| `test:postgres` | Run PostgreSQL parity suite (requires `PG_TEST_URL`) |
 | `docs:check` | Validate documentation freshness |
 | `preview` | Vite production preview server |
 | `benchmark` | Run autoresearch benchmark |
