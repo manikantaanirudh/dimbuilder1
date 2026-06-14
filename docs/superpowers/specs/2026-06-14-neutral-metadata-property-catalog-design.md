@@ -88,8 +88,10 @@ hand-typing of ~290 property descriptors. For each dimension type it:
   - `int` if all non-empty values are integers
   - `enum` if a small set (≤ 15) of short token-like values (no spaces, not pure freeform)
   - `text` otherwise
-- Picks a **representative `value`**: the most frequent non-empty distinct value; `""`
-  if the property is always empty.
+- Picks a **representative `value`**: for `enum`/`bool`/`int` the most frequent
+  non-empty distinct value; for `text` the value is **forced to `""`** (free-text and
+  formula values are real business content and must not leak into the neutral catalog).
+  `""` if the property is always empty.
 - Records the **`valid`** domain (the distinct non-empty values) for `enum`/`bool`.
 - Records the type's **member-attribute names** (union across members).
 
