@@ -105,3 +105,37 @@ def test_extract_schema_handles_time_attr_before_value():
     schema = extract_schema(SAMPLE_XML)
     props = {p["name"]: p for p in schema["Scenario"]["properties"]}
     assert props["InputFrequency"]["value"] == "Monthly"
+
+
+TEXT_VALUE_XML = """<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.2.0.18004">
+  <metadataRoot>
+    <dimensions>
+      <dimension type="Account" name="A" accessGroup="Everyone">
+        <members>
+          <member name="M1" description="d">
+            <properties>
+              <property name="Formula" value="A#CYRE = A#Net_Income" />
+              <property name="AccountType" value="Revenue" />
+            </properties>
+          </member>
+          <member name="M2" description="d">
+            <properties>
+              <property name="Formula" value="U1#COO" />
+              <property name="AccountType" value="Expense" />
+            </properties>
+          </member>
+        </members>
+      </dimension>
+    </dimensions>
+  </metadataRoot>
+</OneStreamXF>
+"""
+
+
+def test_text_property_value_is_blanked():
+    schema = extract_schema(TEXT_VALUE_XML)
+    props = {p["name"]: p for p in schema["Account"]["properties"]}
+    assert props["Formula"]["datatype"] == "text"
+    assert props["Formula"]["value"] == ""        # business content not leaked
+    assert props["AccountType"]["value"] == "Revenue"  # safe enum value kept

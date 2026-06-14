@@ -361,12 +361,12 @@
       {
         "name": "Formula",
         "datatype": "text",
-        "value": "Dim account As String = api.Pov.account.Name&#xD;&#xA;Dim accountId As Integer = api.Pov.account.MemberId&#xD;&#xA;Dim accountAllowInput As String = api.account.AllowInput(accountId).ToString&#xD;&#xA;&#xD;&#xA;Return accountAllowInput"
+        "value": ""
       },
       {
         "name": "FormulaForCalcDrillDown",
         "datatype": "text",
-        "value": "Dim result As New DrillDownFormulaResult&#xD;&#xA;&#xD;&#xA;result.SourceDataCells.Add(&quot;A#&quot; &amp; api.Pov.Account.Name &amp; &quot;:U8#None&quot;)&#xD;&#xA;&#xD;&#xA;Return result"
+        "value": ""
       },
       {
         "name": "Text1",
@@ -1441,12 +1441,12 @@
       {
         "name": "Formula",
         "datatype": "text",
-        "value": "Dim currMonth As Member = api.Pov.Time&#xD;&#xA;Dim povEntityCur As String = api.entity.GetLocalCurrency(api.Pov.Entity.MemberId).Name&#xD;&#xA;Dim currMonthNum As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA;Dim CurYear As Integer = TimeDimHelper.GetSubComponentsFromName(api.Pov.Time.Name).Year&#xD;&#xA;Dim WFNoInputPeriods As Integer = api.Scenario.GetWorkflowNumNoInputTimePeriods(api.Pov.Scenario.MemberId)&#xD;&#xA;Dim WfTimeYear As Integer = Left(api.Scenario.GetWorkflowTime(api.pov.Scenario.MemberId),4)&#xD;&#xA;If(currMonthNum &gt; wfNoInputPeriods And curYear = WfTimeYear) Or curYear &gt; WfTimeYear Then&#xD;&#xA;&#x9;If Not povEntityCur.XFEqualsIgnoreCase(&quot;USD&quot;) Then&#xD;&#xA;&#x9;&#x9;&#xD;&#xA;&#x9;&#x9;api.Data.Calculate(&quot;F#CTA_BegBal_Prior_MTD:U7#Calc:V#YTD = -1 * F#BegBal_MTD:U7#Top:V#YTD:T#[&quot; + currMonth.Name + &quot;]&quot;,&quot;A#Root.Base.Where(Text6 = '' and ((AccountType = 'LIABILITY') or (AccountType = 'ASSET')) AND Text4 DoesNotContain 'NO_FLOW_CTA')&quot;)&#xD;&#xA;&#xD;&#xA;&#x9;End If&#xD;&#xA;End If"
+        "value": ""
       },
       {
         "name": "FormulaForCalcDrillDown",
         "datatype": "text",
-        "value": "Dim viewid As Integer = api.Pov.View.MemberId&#xD;&#xA;Dim result As New DrillDownFormulaResult&#xD;&#xA;If Not ViewMember.IsAnnotationTypeViewId(viewid) Then&#xD;&#xA;&#x9;&#x9;Dim ViewName As String = api.Pov.View.Name.Replace(&quot;Periodic&quot;,&quot;MTD&quot;).Replace(&quot;SV&quot;,&quot;YTD&quot;).Replace(&quot;Trailing12MonthTotal&quot;,&quot;MTD&quot;)&#xD;&#xA;&#x9;&#x9;result.SourceDataCells.Add(&quot;F#BegBal_&quot; &amp; ViewName)&#xD;&#xA;&#x9;&#x9;Return result&#xD;&#xA;End If&#xD;&#xA;Return Nothing"
+        "value": ""
       },
       {
         "name": "Text1",
@@ -2024,7 +2024,7 @@
       {
         "name": "Formula",
         "datatype": "text",
-        "value": "Dim curMonth As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA; &#xD;&#xA;Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U7#Top&quot;&#xD;&#xA;'Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U1#Top:U2#Top:U3#Top:U4#Top:U5#Top:U6#Top&quot;&#xD;&#xA;'Dim ReadDim As String = &quot;:V#YTD:F#None:O#Import:I#None:U1#Top:U2#Top:U3#Top:U4#Top:U5#Top:U6#Top:U7#Top:U8#None&quot;&#xD;&#xA;'Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U1#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None&quot;&#xD;&#xA;'Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U1#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None&quot;&#xD;&#xA;&#xD;&#xA;Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U7#Calc&quot;&#xD;&#xA;Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U7#Calc&quot;&#xD;&#xA;Dim ScenarioName As String = api.Pov.Scenario.Name&#xD;&#xA;&#xD;&#xA;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#CYRE&quot;,&quot;F#EndBal&quot;,&quot;U7#Calc&quot;,,,,,,,,,)&#xD;&#xA;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#CYRE&quot;,&quot;F#RF_Additions&quot;,&quot;:U7#Calc&quot;,,,,,,,,,)&#xD;&#xA;api.Data.Calculate(&quot;A#CYRE&quot; &amp; WriteDim &amp; &quot; = &quot; &amp; &quot;A#Net_Income&quot; &amp; ReadDim)&#xD;&#xA;api.Data.Calculate(&quot;A#CYRE&quot; &amp; WriteDimFLOW &amp; &quot; = &quot; &amp; &quot;A#Net_Income&quot; &amp; ReadDim)&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;'Dim curMonth As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA; &#xD;&#xA;'Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U1#BusinessPCode:U3#None:U4#None:U7#TotalDataTypes&quot;&#xD;&#xA;'Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U1#COO:U3#None:U4#None:U7#System_Calc&quot;&#xD;&#xA;'Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U1#COO:U3#None:U4#None:U7#System_Calc&quot;&#xD;&#xA;''Dim ReadeDimCalc As String = &quot;:I#Top:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalcBegBal As String = &quot;:I#Top:F#BegBal_MTD:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA; &#xD;&#xA;''Dim ReadDim1 As String = &quot;:I#Top:F#PL_Load:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim WriteDim1 As String = &quot;:I#None:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim WriteDim1FLOW As String = &quot;:I#None:F#RF_Additions:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalc1 As String = &quot;:I#Top:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalcBegBal1 As String = &quot;:I#Top:F#BegBal_MTD:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;&#xD;&#xA; &#xD;&#xA;'Dim ScenarioName As String = api.Pov.Scenario.Name&#xD;&#xA; &#xD;&#xA;&#xD;&#xA; &#xD;&#xA; &#xD;&#xA;&#xD;&#xA; &#xD;&#xA;'&#x9;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#C02865&quot;,&quot;F#EndBal&quot;,,,,,,,,,,)&#xD;&#xA;'&#x9;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#C02865&quot;,&quot;F#RF_Additions&quot;,,,,,,,,,,)&#xD;&#xA; &#xD;&#xA;'&#x9;api.Data.Calculate(&quot;A#C02865&quot; &amp; WriteDim &amp; &quot; = &quot; &amp; &quot;A#T09599&quot; &amp; ReadDim)' &amp; &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc)&#xD;&#xA;'&#x9;api.Data.Calculate(&quot;A#C02865&quot; &amp; WriteDimFLOW &amp; &quot; = &quot; &amp; &quot;A#T09599&quot; &amp; ReadDim) '&amp; &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc)&#xD;&#xA; &#xD;&#xA;&#x9;&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim1 &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim1)' &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc1 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc1)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim1FLOW &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim1 )'&quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc1 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc1)&#xD;&#xA;''&#x9;brapi.ErrorLog.LogMessage(si,&quot;Check 4&quot;)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim2 &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim2)' &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc2 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc2)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim2FLOW &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim2)'&quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc2 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc2)"
+        "value": ""
       },
       {
         "name": "FormulaForCalcDrillDown",

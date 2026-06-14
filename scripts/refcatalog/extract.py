@@ -74,10 +74,11 @@ def extract_schema(xml):
             counter = bucket["values"][name]
             distinct = [v for v in counter if v != ""]
             datatype = infer_datatype(distinct)
+            value = pick_representative(counter) if datatype != "text" else ""
             entry = {
                 "name": name,
                 "datatype": datatype,
-                "value": pick_representative(counter),
+                "value": value,
             }
             if datatype in ("bool", "enum"):
                 entry["valid"] = sorted(set(distinct))
