@@ -1,0 +1,2066 @@
+{
+  "Scenario": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "readDataGroup",
+      "readWriteDataGroup"
+    ],
+    "properties": [
+      {
+        "name": "ScenarioType",
+        "datatype": "enum",
+        "value": "Budget",
+        "valid": [
+          "Actual",
+          "Budget"
+        ]
+      },
+      {
+        "name": "InputFrequency",
+        "datatype": "enum",
+        "value": "Monthly",
+        "valid": [
+          "Monthly"
+        ]
+      },
+      {
+        "name": "UseInputFreqDataInLowerFreqs",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "DefaultView",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic",
+          "YTD"
+        ]
+      },
+      {
+        "name": "CalculateFromGridsGroup",
+        "datatype": "enum",
+        "value": "Everyone",
+        "valid": [
+          "Everyone"
+        ]
+      },
+      {
+        "name": "ManageDataGroup",
+        "datatype": "enum",
+        "value": "Nobody",
+        "valid": [
+          "Administrators",
+          "Nobody"
+        ]
+      },
+      {
+        "name": "ForceConsolidateTranslateCalculateGroup",
+        "datatype": "enum",
+        "value": "Everyone",
+        "valid": [
+          "Everyone"
+        ]
+      },
+      {
+        "name": "RetainNextPeriodDataUsingDefaultView",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "InputViewForAdj",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic",
+          "YTD"
+        ]
+      },
+      {
+        "name": "UseInputViewForAdjInCalcs",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "NoDataZeroViewForAdj",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic",
+          "YTD"
+        ]
+      },
+      {
+        "name": "NoDataZeroViewForNonAdj",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic",
+          "YTD"
+        ]
+      },
+      {
+        "name": "ConsolidationView",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic",
+          "YTD"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "ClearCalculatedDataDuringCalc",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "UseTwoPassElimination",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AllowInputInConsAggregated",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "UseInWorkflow",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "WorkflowTrackingFrequency",
+        "datatype": "enum",
+        "value": "AllTimePeriods",
+        "valid": [
+          "AllTimePeriods",
+          "Yearly"
+        ]
+      },
+      {
+        "name": "WorkflowTime",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowStartTime",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowEndTime",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowNumNoInputTimePeriods",
+        "datatype": "int",
+        "value": "0"
+      },
+      {
+        "name": "UseCubeFxSettings",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "FxRateTypeForRevenueExpense",
+        "datatype": "enum",
+        "value": "AverageRate",
+        "valid": [
+          "AverageRate"
+        ]
+      },
+      {
+        "name": "FxRuleTypeForRevenueExpense",
+        "datatype": "enum",
+        "value": "Periodic",
+        "valid": [
+          "Periodic"
+        ]
+      },
+      {
+        "name": "FxRateTypeForAssetLiability",
+        "datatype": "enum",
+        "value": "ClosingRate",
+        "valid": [
+          "ClosingRate"
+        ]
+      },
+      {
+        "name": "FxRuleTypeForAssetLiability",
+        "datatype": "enum",
+        "value": "Direct",
+        "valid": [
+          "Direct"
+        ]
+      },
+      {
+        "name": "FxRatesConstantYear",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "DataBindingType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD8": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "enum",
+        "value": "DynamicCalc",
+        "valid": [
+          "DynamicCalc"
+        ]
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": "Dim account As String = api.Pov.account.Name&#xD;&#xA;Dim accountId As Integer = api.Pov.account.MemberId&#xD;&#xA;Dim accountAllowInput As String = api.account.AllowInput(accountId).ToString&#xD;&#xA;&#xD;&#xA;Return accountAllowInput"
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": "Dim result As New DrillDownFormulaResult&#xD;&#xA;&#xD;&#xA;result.SourceDataCells.Add(&quot;A#&quot; &amp; api.Pov.Account.Name &amp; &quot;:U8#None&quot;)&#xD;&#xA;&#xD;&#xA;Return result"
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD7": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD6": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD5": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD4": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD3": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD2": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "UD1": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "conditional",
+        "valid": [
+          "conditional"
+        ]
+      },
+      {
+        "name": "AlternateCurrencyForDisplay",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "IsAttributeMember",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "AttributeMemberSourceMember",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberExpressionType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberRelatedDimType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberPropType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberComparisonText2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AttributeMemberOperatorType2",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "UD2Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD3Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD4Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD5Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD6Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD7Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD8Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD2Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD3Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD4Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD5Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD6Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD7Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD8Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "Flow": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "FormulaType",
+        "datatype": "enum",
+        "value": "FormulaPass6",
+        "valid": [
+          "DynamicCalc",
+          "FormulaPass1",
+          "FormulaPass3",
+          "FormulaPass4",
+          "FormulaPass5",
+          "FormulaPass6",
+          "FormulaPass7",
+          "FormulaPass8"
+        ]
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "true",
+        "valid": [
+          "conditional",
+          "true"
+        ]
+      },
+      {
+        "name": "SwitchSign",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "SwitchType",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "FlowProcessingType",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AlternateInputCurrency",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "SourceMemberForAltInputCurrency",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": "Dim currMonth As Member = api.Pov.Time&#xD;&#xA;Dim povEntityCur As String = api.entity.GetLocalCurrency(api.Pov.Entity.MemberId).Name&#xD;&#xA;Dim currMonthNum As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA;Dim CurYear As Integer = TimeDimHelper.GetSubComponentsFromName(api.Pov.Time.Name).Year&#xD;&#xA;Dim WFNoInputPeriods As Integer = api.Scenario.GetWorkflowNumNoInputTimePeriods(api.Pov.Scenario.MemberId)&#xD;&#xA;Dim WfTimeYear As Integer = Left(api.Scenario.GetWorkflowTime(api.pov.Scenario.MemberId),4)&#xD;&#xA;If(currMonthNum &gt; wfNoInputPeriods And curYear = WfTimeYear) Or curYear &gt; WfTimeYear Then&#xD;&#xA;&#x9;If Not povEntityCur.XFEqualsIgnoreCase(&quot;USD&quot;) Then&#xD;&#xA;&#x9;&#x9;&#xD;&#xA;&#x9;&#x9;api.Data.Calculate(&quot;F#CTA_BegBal_Prior_MTD:U7#Calc:V#YTD = -1 * F#BegBal_MTD:U7#Top:V#YTD:T#[&quot; + currMonth.Name + &quot;]&quot;,&quot;A#Root.Base.Where(Text6 = '' and ((AccountType = 'LIABILITY') or (AccountType = 'ASSET')) AND Text4 DoesNotContain 'NO_FLOW_CTA')&quot;)&#xD;&#xA;&#xD;&#xA;&#x9;End If&#xD;&#xA;End If"
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": "Dim viewid As Integer = api.Pov.View.MemberId&#xD;&#xA;Dim result As New DrillDownFormulaResult&#xD;&#xA;If Not ViewMember.IsAnnotationTypeViewId(viewid) Then&#xD;&#xA;&#x9;&#x9;Dim ViewName As String = api.Pov.View.Name.Replace(&quot;Periodic&quot;,&quot;MTD&quot;).Replace(&quot;SV&quot;,&quot;YTD&quot;).Replace(&quot;Trailing12MonthTotal&quot;,&quot;MTD&quot;)&#xD;&#xA;&#x9;&#x9;result.SourceDataCells.Add(&quot;F#BegBal_&quot; &amp; ViewName)&#xD;&#xA;&#x9;&#x9;Return result&#xD;&#xA;End If&#xD;&#xA;Return Nothing"
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "Entity": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup",
+      "readDataGroup",
+      "readDataGroup2",
+      "readWriteDataGroup",
+      "readWriteDataGroup2",
+      "useCubeDataAccessSecurity",
+      "dataCellAccessCategories",
+      "conditionalInputCategories",
+      "dataMgmtAccessCategories"
+    ],
+    "properties": [
+      {
+        "name": "Currency",
+        "datatype": "enum",
+        "value": "USD",
+        "valid": [
+          "CAD",
+          "CNY",
+          "EUR",
+          "GBP",
+          "MXN",
+          "USD"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "IsIC",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "FlowConstraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "ICConstraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "ICMemberFilter",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "UD1Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD2Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD3Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD4Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD5Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD6Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD7Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD8Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD1Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD2Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD3Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD4Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD5Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD6Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD7Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "UD8Default",
+        "datatype": "enum",
+        "value": "None",
+        "valid": [
+          "None"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "AllowAdjustments",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "AllowAdjustmentsFromChildren",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "SiblingConsolidationPass",
+        "datatype": "enum",
+        "value": "Unknown",
+        "valid": [
+          "Unknown"
+        ]
+      },
+      {
+        "name": "SiblingRepeatCalcPass",
+        "datatype": "enum",
+        "value": "Unknown",
+        "valid": [
+          "Unknown"
+        ]
+      },
+      {
+        "name": "AutoTranslationCurrencies",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      }
+    ]
+  },
+  "Account": {
+    "memberAttrs": [
+      "alias",
+      "description",
+      "displayMemberGroup"
+    ],
+    "properties": [
+      {
+        "name": "AccountType",
+        "datatype": "enum",
+        "value": "Expense",
+        "valid": [
+          "Asset",
+          "Balance",
+          "DynamicCalc",
+          "Expense",
+          "Group",
+          "Liability",
+          "NonFinancial",
+          "Revenue"
+        ]
+      },
+      {
+        "name": "FormulaType",
+        "datatype": "enum",
+        "value": "DynamicCalc",
+        "valid": [
+          "DynamicCalc",
+          "FormulaPass10",
+          "FormulaPass11",
+          "FormulaPass16"
+        ]
+      },
+      {
+        "name": "AllowInput",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "IsConsolidated",
+        "datatype": "enum",
+        "value": "true",
+        "valid": [
+          "conditional",
+          "true"
+        ]
+      },
+      {
+        "name": "IsIC",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false",
+          "true"
+        ]
+      },
+      {
+        "name": "UseAltInputCurrencyInFlow",
+        "datatype": "bool",
+        "value": "false",
+        "valid": [
+          "false"
+        ]
+      },
+      {
+        "name": "PlugAccount",
+        "datatype": "enum",
+        "value": "IC_Plug_Legacy",
+        "valid": [
+          "IC_Plug_Active",
+          "IC_Plug_BC",
+          "IC_Plug_Horizons_Mexico",
+          "IC_Plug_Legacy",
+          "IC_Plug_Mariak",
+          "IC_Plug_Mecho",
+          "IC_Plug_Other",
+          "IC_Plug_Shenzhen",
+          "IC_Plug_SunSetter"
+        ]
+      },
+      {
+        "name": "InputViewForAdj",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "NoDataZeroViewForAdj",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "NoDataZeroViewForNonAdj",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "UsedOnEntityDim",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "UsedOnConsDim",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableFlowAggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableOriginAggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableICAggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD1Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD2Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD3Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD4Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD5Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD6Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD7Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "EnableUD8Aggregation",
+        "datatype": "bool",
+        "value": "true",
+        "valid": [
+          "true"
+        ]
+      },
+      {
+        "name": "FlowConstraint",
+        "datatype": "enum",
+        "value": "PL",
+        "valid": [
+          "BS",
+          "PL",
+          "root"
+        ]
+      },
+      {
+        "name": "ICConstraint",
+        "datatype": "enum",
+        "value": "Top",
+        "valid": [
+          "Top",
+          "root"
+        ]
+      },
+      {
+        "name": "ICMemberFilter",
+        "datatype": "enum",
+        "value": "Root",
+        "valid": [
+          "Root"
+        ]
+      },
+      {
+        "name": "UD1Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "S2000",
+          "S5000",
+          "S6000",
+          "S7030",
+          "S9000",
+          "S9010",
+          "S9020",
+          "S9030",
+          "S9040",
+          "root"
+        ]
+      },
+      {
+        "name": "UD2Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD3Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD4Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD5Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD6Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD7Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "UD8Constraint",
+        "datatype": "enum",
+        "value": "root",
+        "valid": [
+          "root"
+        ]
+      },
+      {
+        "name": "WorkflowChannel",
+        "datatype": "enum",
+        "value": "NoDataLock",
+        "valid": [
+          "NoDataLock",
+          "Standard"
+        ]
+      },
+      {
+        "name": "InUse",
+        "datatype": "bool",
+        "value": "True",
+        "valid": [
+          "True"
+        ]
+      },
+      {
+        "name": "Formula",
+        "datatype": "text",
+        "value": "Dim curMonth As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA; &#xD;&#xA;Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U7#Top&quot;&#xD;&#xA;'Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U1#Top:U2#Top:U3#Top:U4#Top:U5#Top:U6#Top&quot;&#xD;&#xA;'Dim ReadDim As String = &quot;:V#YTD:F#None:O#Import:I#None:U1#Top:U2#Top:U3#Top:U4#Top:U5#Top:U6#Top:U7#Top:U8#None&quot;&#xD;&#xA;'Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U1#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None&quot;&#xD;&#xA;'Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U1#None:U2#None:U3#None:U4#None:U5#None:U6#None:U7#None&quot;&#xD;&#xA;&#xD;&#xA;Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U7#Calc&quot;&#xD;&#xA;Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U7#Calc&quot;&#xD;&#xA;Dim ScenarioName As String = api.Pov.Scenario.Name&#xD;&#xA;&#xD;&#xA;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#CYRE&quot;,&quot;F#EndBal&quot;,&quot;U7#Calc&quot;,,,,,,,,,)&#xD;&#xA;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#CYRE&quot;,&quot;F#RF_Additions&quot;,&quot;:U7#Calc&quot;,,,,,,,,,)&#xD;&#xA;api.Data.Calculate(&quot;A#CYRE&quot; &amp; WriteDim &amp; &quot; = &quot; &amp; &quot;A#Net_Income&quot; &amp; ReadDim)&#xD;&#xA;api.Data.Calculate(&quot;A#CYRE&quot; &amp; WriteDimFLOW &amp; &quot; = &quot; &amp; &quot;A#Net_Income&quot; &amp; ReadDim)&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;'Dim curMonth As Integer = api.Time.GetPeriodNumFromId(api.Pov.Time.MemberId)&#xD;&#xA; &#xD;&#xA;'Dim ReadDim As String = &quot;:F#PL_Load:V#YTD:U1#BusinessPCode:U3#None:U4#None:U7#TotalDataTypes&quot;&#xD;&#xA;'Dim WriteDim As String = &quot;:F#EndBal:V#YTD:U1#COO:U3#None:U4#None:U7#System_Calc&quot;&#xD;&#xA;'Dim WriteDimFLOW As String = &quot;:F#RF_Additions:V#YTD:U1#COO:U3#None:U4#None:U7#System_Calc&quot;&#xD;&#xA;''Dim ReadeDimCalc As String = &quot;:I#Top:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalcBegBal As String = &quot;:I#Top:F#BegBal_MTD:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA; &#xD;&#xA;''Dim ReadDim1 As String = &quot;:I#Top:F#PL_Load:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim WriteDim1 As String = &quot;:I#None:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim WriteDim1FLOW As String = &quot;:I#None:F#RF_Additions:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalc1 As String = &quot;:I#Top:F#EndBal:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;''Dim ReadeDimCalcBegBal1 As String = &quot;:I#Top:F#BegBal_MTD:V#YTD:U2#JPS:U3#None:U4#None:U7#Historical&quot;&#xD;&#xA;&#xD;&#xA; &#xD;&#xA;'Dim ScenarioName As String = api.Pov.Scenario.Name&#xD;&#xA; &#xD;&#xA;&#xD;&#xA; &#xD;&#xA; &#xD;&#xA;&#xD;&#xA; &#xD;&#xA;'&#x9;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#C02865&quot;,&quot;F#EndBal&quot;,,,,,,,,,,)&#xD;&#xA;'&#x9;api.Data.ClearCalculatedData(True,True,True,True,&quot;A#C02865&quot;,&quot;F#RF_Additions&quot;,,,,,,,,,,)&#xD;&#xA; &#xD;&#xA;'&#x9;api.Data.Calculate(&quot;A#C02865&quot; &amp; WriteDim &amp; &quot; = &quot; &amp; &quot;A#T09599&quot; &amp; ReadDim)' &amp; &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc)&#xD;&#xA;'&#x9;api.Data.Calculate(&quot;A#C02865&quot; &amp; WriteDimFLOW &amp; &quot; = &quot; &amp; &quot;A#T09599&quot; &amp; ReadDim) '&amp; &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc)&#xD;&#xA; &#xD;&#xA;&#x9;&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim1 &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim1)' &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc1 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc1)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim1FLOW &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim1 )'&quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc1 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc1)&#xD;&#xA;''&#x9;brapi.ErrorLog.LogMessage(si,&quot;Check 4&quot;)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim2 &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim2)' &quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc2 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc2)&#xD;&#xA;''&#x9;api.Data.Calculate(&quot;A#A02865&quot; &amp; WriteDim2FLOW &amp; &quot; = &quot; &amp; &quot;A#A09599&quot; &amp; ReadDim2)'&quot; - &quot;&amp; &quot;A#A02894&quot; &amp; ReadeDimCalc2 &amp; &quot; - &quot;&amp; &quot;A#A02898&quot; &amp; ReadeDimCalc2)"
+      },
+      {
+        "name": "FormulaForCalcDrillDown",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "AdjustmentType",
+        "datatype": "enum",
+        "value": "Journals",
+        "valid": [
+          "Journals"
+        ]
+      },
+      {
+        "name": "Text1",
+        "datatype": "text",
+        "value": ""
+      },
+      {
+        "name": "Text4",
+        "datatype": "enum",
+        "value": "NO_BEGBAL",
+        "valid": [
+          "NO_BEGBAL"
+        ]
+      },
+      {
+        "name": "Text5",
+        "datatype": "enum",
+        "value": "HIS",
+        "valid": [
+          "HIS",
+          "NoFlowCTA"
+        ]
+      }
+    ]
+  }
+}
