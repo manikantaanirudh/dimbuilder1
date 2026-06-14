@@ -1,3 +1,5 @@
+import xml.dom.minidom as minidom
+
 NAME_PREFIX = {
     "Account": "ACC",
     "Entity": "ENT",
@@ -109,8 +111,6 @@ def build_catalog(schema, system_dims):
     return "\n".join(parts) + "\n"
 
 
-import xml.dom.minidom as minidom
-
 CSV_FIELDS = [
     "dim_type",
     "property_name",
@@ -160,9 +160,9 @@ def system_dim_rows(system_dims):
     return rows
 
 
-def validate_catalog(xml, schema):
+def validate_catalog(catalog_xml, schema):
     """Assert well-formedness and that every schema property appears in the XML."""
-    doc = minidom.parseString(xml)
+    doc = minidom.parseString(catalog_xml)
     by_type = {}
     for dim in doc.getElementsByTagName("dimension"):
         dtype = dim.getAttribute("type")

@@ -1,9 +1,14 @@
 import xml.dom.minidom as minidom
 
+import pytest
+
 from refcatalog.generate import (
     build_catalog,
     build_dimension,
     build_member,
+    schema_to_rows,
+    system_dim_rows,
+    validate_catalog,
 )
 from refcatalog.system_dims import SYSTEM_DIMS
 
@@ -70,15 +75,6 @@ def test_build_catalog_is_well_formed_and_has_system_dims():
     assert "Consolidation" in types
     assert "Time" in types
     assert doc.documentElement.getAttribute("version") == "9.2.0.18004"
-
-
-import pytest
-
-from refcatalog.generate import (
-    schema_to_rows,
-    system_dim_rows,
-    validate_catalog,
-)
 
 
 def test_schema_to_rows_property_and_attr_rows():
