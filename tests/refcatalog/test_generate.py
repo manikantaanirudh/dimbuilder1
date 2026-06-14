@@ -70,3 +70,46 @@ def test_build_catalog_is_well_formed_and_has_system_dims():
     assert "Consolidation" in types
     assert "Time" in types
     assert doc.documentElement.getAttribute("version") == "9.2.0.18004"
+
+
+import pytest
+
+from refcatalog.generate import (
+    schema_to_rows,
+    system_dim_rows,
+    validate_catalog,
+)
+
+
+def test_schema_to_rows_property_and_attr_rows():
+    rows = schema_to_rows(SCHEMA)
+    acct_attr = [r for r in rows if r["dim_type"] == "Account"
+                 and r["applies_to_member_attr"] == "true"]
+    acct_prop = [r for r in rows if r["dim_type"] == "Account"
+                 and r["applies_to_member_attr"] == "false"]
+    assert len(acct_attr) == 3  # alias, description, displayMemberGroup
+    assert len(acct_prop) == 3  # AccountType, IsIC, Formula
+    at = next(r for r in acct_prop if r["property_name"] == "AccountType")
+    assert at["datatype"] == "enum"
+    assert at["representative_value"] == "Revenue"
+    assert at["valid_values"] == "Expense|Revenue"
+    formula = next(r for r in acct_prop if r["property_name"] == "Formula")
+    assert formula["valid_values"] == ""
+
+
+def test_system_dim_rows_are_member_attrs():
+    rows = system_dim_rows(SYSTEM_DIMS)
+    assert all(r["applies_to_member_attr"] == "true" for r in rows)
+    assert {r["dim_type"] for r in rows} == {"Consolidation", "View", "Time"}
+
+
+def test_validate_catalog_passes_for_complete_xml():
+    xml = build_catalog(SCHEMA, SYSTEM_DIMS)
+    validate_catalog(xml, SCHEMA)  # should not raise
+
+
+def test_validate_catalog_raises_on_missing_property():
+    xml = build_catalog(SCHEMA, SYSTEM_DIMS)
+    broken = xml.replace('<property name="IsIC" value="false" />', "")
+    with pytest.raises(ValueError, match="IsIC"):
+        validate_catalog(broken, SCHEMA)
