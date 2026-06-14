@@ -1,0 +1,835 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OneStreamXF version="9.2.0.18004">
+    <metadataRoot>
+        <dimensions>
+            <dimension type="Scenario" name="REF_Scenario" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootScenarioDim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="SC_TOTAL" alias="" description="SC_TOTAL" readDataGroup="Everyone" readWriteDataGroup="Everyone">
+                        <properties>
+                            <property name="ScenarioType" value="Budget" />
+                            <property name="InputFrequency" value="Monthly" />
+                            <property name="UseInputFreqDataInLowerFreqs" value="false" />
+                            <property name="DefaultView" value="Periodic" />
+                            <property name="CalculateFromGridsGroup" value="Everyone" />
+                            <property name="ManageDataGroup" value="Nobody" />
+                            <property name="ForceConsolidateTranslateCalculateGroup" value="Everyone" />
+                            <property name="RetainNextPeriodDataUsingDefaultView" value="true" />
+                            <property name="InputViewForAdj" value="Periodic" />
+                            <property name="UseInputViewForAdjInCalcs" value="false" />
+                            <property name="NoDataZeroViewForAdj" value="Periodic" />
+                            <property name="NoDataZeroViewForNonAdj" value="Periodic" />
+                            <property name="ConsolidationView" value="Periodic" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="ClearCalculatedDataDuringCalc" value="true" />
+                            <property name="UseTwoPassElimination" value="false" />
+                            <property name="AllowInputInConsAggregated" value="false" />
+                            <property name="UseInWorkflow" value="true" />
+                            <property name="WorkflowTrackingFrequency" value="AllTimePeriods" />
+                            <property name="WorkflowTime" value="" />
+                            <property name="WorkflowStartTime" value="" />
+                            <property name="WorkflowEndTime" value="" />
+                            <property name="WorkflowNumNoInputTimePeriods" value="0" />
+                            <property name="UseCubeFxSettings" value="true" />
+                            <property name="FxRateTypeForRevenueExpense" value="AverageRate" />
+                            <property name="FxRuleTypeForRevenueExpense" value="Periodic" />
+                            <property name="FxRateTypeForAssetLiability" value="ClosingRate" />
+                            <property name="FxRuleTypeForAssetLiability" value="Direct" />
+                            <property name="FxRatesConstantYear" value="" />
+                            <property name="DataBindingType" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="SC_001" alias="" description="SC_001" readDataGroup="Everyone" readWriteDataGroup="Everyone">
+                        <properties>
+                            <property name="ScenarioType" value="Budget" />
+                            <property name="InputFrequency" value="Monthly" />
+                            <property name="UseInputFreqDataInLowerFreqs" value="false" />
+                            <property name="DefaultView" value="Periodic" />
+                            <property name="CalculateFromGridsGroup" value="Everyone" />
+                            <property name="ManageDataGroup" value="Nobody" />
+                            <property name="ForceConsolidateTranslateCalculateGroup" value="Everyone" />
+                            <property name="RetainNextPeriodDataUsingDefaultView" value="true" />
+                            <property name="InputViewForAdj" value="Periodic" />
+                            <property name="UseInputViewForAdjInCalcs" value="false" />
+                            <property name="NoDataZeroViewForAdj" value="Periodic" />
+                            <property name="NoDataZeroViewForNonAdj" value="Periodic" />
+                            <property name="ConsolidationView" value="Periodic" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="ClearCalculatedDataDuringCalc" value="true" />
+                            <property name="UseTwoPassElimination" value="false" />
+                            <property name="AllowInputInConsAggregated" value="false" />
+                            <property name="UseInWorkflow" value="true" />
+                            <property name="WorkflowTrackingFrequency" value="AllTimePeriods" />
+                            <property name="WorkflowTime" value="" />
+                            <property name="WorkflowStartTime" value="" />
+                            <property name="WorkflowEndTime" value="" />
+                            <property name="WorkflowNumNoInputTimePeriods" value="0" />
+                            <property name="UseCubeFxSettings" value="true" />
+                            <property name="FxRateTypeForRevenueExpense" value="AverageRate" />
+                            <property name="FxRuleTypeForRevenueExpense" value="Periodic" />
+                            <property name="FxRateTypeForAssetLiability" value="ClosingRate" />
+                            <property name="FxRuleTypeForAssetLiability" value="Direct" />
+                            <property name="FxRatesConstantYear" value="" />
+                            <property name="DataBindingType" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="SC_TOTAL" />
+                    <relationship parent="SC_TOTAL" child="SC_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD8" name="REF_UD8" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD8Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD8_TOTAL" alias="" description="UD8_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="DynamicCalc" />
+                            <property name="AllowInput" value="false" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD8_001" alias="" description="UD8_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="DynamicCalc" />
+                            <property name="AllowInput" value="false" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD8_TOTAL" />
+                    <relationship parent="UD8_TOTAL" child="UD8_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD7" name="REF_UD7" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD7Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD7_TOTAL" alias="" description="UD7_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD7_001" alias="" description="UD7_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD7_TOTAL" />
+                    <relationship parent="UD7_TOTAL" child="UD7_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD6" name="REF_UD6" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD6Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD6_TOTAL" alias="" description="UD6_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD6_001" alias="" description="UD6_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD6_TOTAL" />
+                    <relationship parent="UD6_TOTAL" child="UD6_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD5" name="REF_UD5" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD5Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD5_TOTAL" alias="" description="UD5_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD5_001" alias="" description="UD5_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD5_TOTAL" />
+                    <relationship parent="UD5_TOTAL" child="UD5_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD4" name="REF_UD4" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD4Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD4_TOTAL" alias="" description="UD4_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD4_001" alias="" description="UD4_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD4_TOTAL" />
+                    <relationship parent="UD4_TOTAL" child="UD4_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD3" name="REF_UD3" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD3Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD3_TOTAL" alias="" description="UD3_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD3_001" alias="" description="UD3_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD3_TOTAL" />
+                    <relationship parent="UD3_TOTAL" child="UD3_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD2" name="REF_UD2" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD2Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD2_TOTAL" alias="" description="UD2_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD2_001" alias="" description="UD2_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD2_TOTAL" />
+                    <relationship parent="UD2_TOTAL" child="UD2_001" />
+                </relationships>
+            </dimension>
+            <dimension type="UD1" name="REF_UD1" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootUD1Dim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="UD1_TOTAL" alias="" description="UD1_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="UD2Default" value="None" />
+                            <property name="UD3Default" value="None" />
+                            <property name="UD4Default" value="None" />
+                            <property name="UD5Default" value="None" />
+                            <property name="UD6Default" value="None" />
+                            <property name="UD7Default" value="None" />
+                            <property name="UD8Default" value="None" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="UD1_001" alias="" description="UD1_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="conditional" />
+                            <property name="AlternateCurrencyForDisplay" value="" />
+                            <property name="IsAttributeMember" value="false" />
+                            <property name="AttributeMemberSourceMember" value="" />
+                            <property name="AttributeMemberExpressionType" value="" />
+                            <property name="AttributeMemberRelatedDimType1" value="" />
+                            <property name="AttributeMemberPropType1" value="" />
+                            <property name="AttributeMemberComparisonText1" value="" />
+                            <property name="AttributeMemberOperatorType1" value="" />
+                            <property name="AttributeMemberRelatedDimType2" value="" />
+                            <property name="AttributeMemberPropType2" value="" />
+                            <property name="AttributeMemberComparisonText2" value="" />
+                            <property name="AttributeMemberOperatorType2" value="" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="UD2Default" value="None" />
+                            <property name="UD3Default" value="None" />
+                            <property name="UD4Default" value="None" />
+                            <property name="UD5Default" value="None" />
+                            <property name="UD6Default" value="None" />
+                            <property name="UD7Default" value="None" />
+                            <property name="UD8Default" value="None" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="UD1_TOTAL" />
+                    <relationship parent="UD1_TOTAL" child="UD1_001" />
+                </relationships>
+            </dimension>
+            <dimension type="Flow" name="REF_Flow" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootFlowDim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="FLW_TOTAL" alias="" description="FLW_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="FormulaPass6" />
+                            <property name="AllowInput" value="false" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="SwitchSign" value="false" />
+                            <property name="SwitchType" value="false" />
+                            <property name="FlowProcessingType" value="" />
+                            <property name="AlternateInputCurrency" value="" />
+                            <property name="SourceMemberForAltInputCurrency" value="" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="FLW_001" alias="" description="FLW_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="FormulaType" value="FormulaPass6" />
+                            <property name="AllowInput" value="false" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="SwitchSign" value="false" />
+                            <property name="SwitchType" value="false" />
+                            <property name="FlowProcessingType" value="" />
+                            <property name="AlternateInputCurrency" value="" />
+                            <property name="SourceMemberForAltInputCurrency" value="" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="FLW_TOTAL" />
+                    <relationship parent="FLW_TOTAL" child="FLW_001" />
+                </relationships>
+            </dimension>
+            <dimension type="Entity" name="REF_Entity" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="ENT_TOTAL" alias="" description="ENT_TOTAL" displayMemberGroup="Everyone" readDataGroup="Everyone" readDataGroup2="Nobody" readWriteDataGroup="Everyone" readWriteDataGroup2="Nobody" useCubeDataAccessSecurity="" dataCellAccessCategories="" conditionalInputCategories="" dataMgmtAccessCategories="">
+                        <properties>
+                            <property name="Currency" value="USD" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="IsIC" value="true" />
+                            <property name="FlowConstraint" value="root" />
+                            <property name="ICConstraint" value="root" />
+                            <property name="ICMemberFilter" value="" />
+                            <property name="UD1Constraint" value="root" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="UD1Default" value="None" />
+                            <property name="UD2Default" value="None" />
+                            <property name="UD3Default" value="None" />
+                            <property name="UD4Default" value="None" />
+                            <property name="UD5Default" value="None" />
+                            <property name="UD6Default" value="None" />
+                            <property name="UD7Default" value="None" />
+                            <property name="UD8Default" value="None" />
+                            <property name="InUse" value="True" />
+                            <property name="AllowAdjustments" value="True" />
+                            <property name="AllowAdjustmentsFromChildren" value="True" />
+                            <property name="SiblingConsolidationPass" value="Unknown" />
+                            <property name="SiblingRepeatCalcPass" value="Unknown" />
+                            <property name="AutoTranslationCurrencies" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                    <member name="ENT_001" alias="" description="ENT_001" displayMemberGroup="Everyone" readDataGroup="Everyone" readDataGroup2="Nobody" readWriteDataGroup="Everyone" readWriteDataGroup2="Nobody" useCubeDataAccessSecurity="" dataCellAccessCategories="" conditionalInputCategories="" dataMgmtAccessCategories="">
+                        <properties>
+                            <property name="Currency" value="USD" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="IsIC" value="true" />
+                            <property name="FlowConstraint" value="root" />
+                            <property name="ICConstraint" value="root" />
+                            <property name="ICMemberFilter" value="" />
+                            <property name="UD1Constraint" value="root" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="UD1Default" value="None" />
+                            <property name="UD2Default" value="None" />
+                            <property name="UD3Default" value="None" />
+                            <property name="UD4Default" value="None" />
+                            <property name="UD5Default" value="None" />
+                            <property name="UD6Default" value="None" />
+                            <property name="UD7Default" value="None" />
+                            <property name="UD8Default" value="None" />
+                            <property name="InUse" value="True" />
+                            <property name="AllowAdjustments" value="True" />
+                            <property name="AllowAdjustmentsFromChildren" value="True" />
+                            <property name="SiblingConsolidationPass" value="Unknown" />
+                            <property name="SiblingRepeatCalcPass" value="Unknown" />
+                            <property name="AutoTranslationCurrencies" value="" />
+                            <property name="Text1" value="" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="ENT_TOTAL" />
+                    <relationship parent="ENT_TOTAL" child="ENT_001" />
+                </relationships>
+            </dimension>
+            <dimension type="Account" name="REF_Account" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="RootAccountDim" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="ACC_TOTAL" alias="" description="ACC_TOTAL" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="AccountType" value="Expense" />
+                            <property name="FormulaType" value="DynamicCalc" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="IsIC" value="false" />
+                            <property name="UseAltInputCurrencyInFlow" value="false" />
+                            <property name="PlugAccount" value="IC_Plug_Legacy" />
+                            <property name="InputViewForAdj" value="" />
+                            <property name="NoDataZeroViewForAdj" value="" />
+                            <property name="NoDataZeroViewForNonAdj" value="" />
+                            <property name="UsedOnEntityDim" value="true" />
+                            <property name="UsedOnConsDim" value="true" />
+                            <property name="EnableFlowAggregation" value="true" />
+                            <property name="EnableOriginAggregation" value="true" />
+                            <property name="EnableICAggregation" value="true" />
+                            <property name="EnableUD1Aggregation" value="true" />
+                            <property name="EnableUD2Aggregation" value="true" />
+                            <property name="EnableUD3Aggregation" value="true" />
+                            <property name="EnableUD4Aggregation" value="true" />
+                            <property name="EnableUD5Aggregation" value="true" />
+                            <property name="EnableUD6Aggregation" value="true" />
+                            <property name="EnableUD7Aggregation" value="true" />
+                            <property name="EnableUD8Aggregation" value="true" />
+                            <property name="FlowConstraint" value="PL" />
+                            <property name="ICConstraint" value="Top" />
+                            <property name="ICMemberFilter" value="Root" />
+                            <property name="UD1Constraint" value="root" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="AdjustmentType" value="Journals" />
+                            <property name="Text1" value="" />
+                            <property name="Text4" value="NO_BEGBAL" />
+                            <property name="Text5" value="HIS" />
+                        </properties>
+                    </member>
+                    <member name="ACC_001" alias="" description="ACC_001" displayMemberGroup="Everyone">
+                        <properties>
+                            <property name="AccountType" value="Expense" />
+                            <property name="FormulaType" value="DynamicCalc" />
+                            <property name="AllowInput" value="true" />
+                            <property name="IsConsolidated" value="true" />
+                            <property name="IsIC" value="false" />
+                            <property name="UseAltInputCurrencyInFlow" value="false" />
+                            <property name="PlugAccount" value="IC_Plug_Legacy" />
+                            <property name="InputViewForAdj" value="" />
+                            <property name="NoDataZeroViewForAdj" value="" />
+                            <property name="NoDataZeroViewForNonAdj" value="" />
+                            <property name="UsedOnEntityDim" value="true" />
+                            <property name="UsedOnConsDim" value="true" />
+                            <property name="EnableFlowAggregation" value="true" />
+                            <property name="EnableOriginAggregation" value="true" />
+                            <property name="EnableICAggregation" value="true" />
+                            <property name="EnableUD1Aggregation" value="true" />
+                            <property name="EnableUD2Aggregation" value="true" />
+                            <property name="EnableUD3Aggregation" value="true" />
+                            <property name="EnableUD4Aggregation" value="true" />
+                            <property name="EnableUD5Aggregation" value="true" />
+                            <property name="EnableUD6Aggregation" value="true" />
+                            <property name="EnableUD7Aggregation" value="true" />
+                            <property name="EnableUD8Aggregation" value="true" />
+                            <property name="FlowConstraint" value="PL" />
+                            <property name="ICConstraint" value="Top" />
+                            <property name="ICMemberFilter" value="Root" />
+                            <property name="UD1Constraint" value="root" />
+                            <property name="UD2Constraint" value="root" />
+                            <property name="UD3Constraint" value="root" />
+                            <property name="UD4Constraint" value="root" />
+                            <property name="UD5Constraint" value="root" />
+                            <property name="UD6Constraint" value="root" />
+                            <property name="UD7Constraint" value="root" />
+                            <property name="UD8Constraint" value="root" />
+                            <property name="WorkflowChannel" value="NoDataLock" />
+                            <property name="InUse" value="True" />
+                            <property name="Formula" value="" />
+                            <property name="FormulaForCalcDrillDown" value="" />
+                            <property name="AdjustmentType" value="Journals" />
+                            <property name="Text1" value="" />
+                            <property name="Text4" value="NO_BEGBAL" />
+                            <property name="Text5" value="HIS" />
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="ACC_TOTAL" />
+                    <relationship parent="ACC_TOTAL" child="ACC_001" />
+                </relationships>
+            </dimension>
+            <dimension type="Consolidation" name="REF_Consolidation" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="Local" alias="" description="Local">
+                        <properties>
+                        </properties>
+                    </member>
+                    <member name="Translated" alias="" description="Translated">
+                        <properties>
+                        </properties>
+                    </member>
+                    <member name="Contribution" alias="" description="Contribution">
+                        <properties>
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="Local" />
+                    <relationship parent="root" child="Translated" />
+                    <relationship parent="root" child="Contribution" />
+                </relationships>
+            </dimension>
+            <dimension type="View" name="REF_View" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="Periodic" alias="" description="Periodic">
+                        <properties>
+                        </properties>
+                    </member>
+                    <member name="YTD" alias="" description="YTD">
+                        <properties>
+                        </properties>
+                    </member>
+                    <member name="QTD" alias="" description="QTD">
+                        <properties>
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="Periodic" />
+                    <relationship parent="root" child="YTD" />
+                    <relationship parent="root" child="QTD" />
+                </relationships>
+            </dimension>
+            <dimension type="Time" name="REF_Time" accessGroup="Everyone" maintenanceGroup="Everyone" description="" inheritedDim="" dimMemberSourceType="Standard" dimMemberSourcePath="" dimMemberSourceNVPairs="">
+                <members>
+                    <member name="2024" alias="" description="2024">
+                        <properties>
+                        </properties>
+                    </member>
+                    <member name="2024M1" alias="" description="2024M1">
+                        <properties>
+                        </properties>
+                    </member>
+                </members>
+                <relationships>
+                    <relationship parent="root" child="2024" />
+                    <relationship parent="root" child="2024M1" />
+                </relationships>
+            </dimension>
+        </dimensions>
+    </metadataRoot>
+</OneStreamXF>
