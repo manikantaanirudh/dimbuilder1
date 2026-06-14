@@ -68,12 +68,36 @@ properties:
 
 ## Architecture (Approach C)
 
-Single source of truth → generator → two artifacts.
+Two phases. **Extract** the schema from SWF.xml once (committed), then **generate**
+the two neutral artifacts from that schema (no SWF dependency at generate time).
 
-### 1. Source of truth — `metadata/REF_CATALOG.schema.json`
+```
+SWF.xml ──(extract-swf-schema.py)──> REF_CATALOG.schema.json (source of truth)
+REF_CATALOG.schema.json ──(gen-ref-catalog.py)──┬──> REF_CATALOG.xml
+                                                └──> REF_CATALOG.schema.csv (+ .json mirror)
+```
 
-Authoritative definition. Per dimension type, an ordered list of property descriptors
-plus the type's member-attribute list:
+### 1. Extractor — `scripts/extract-swf-schema.py`
+
+Reads `metadata/SWF.xml` and derives the schema by inspecting real data — no
+hand-typing of ~290 property descriptors. For each dimension type it:
+- Collects the **union of property names** across all members of that type (ordered).
+- Collects the **set of distinct values** each property takes across all members.
+- **Infers `datatype`** from those values:
+  - `bool` if distinct non-empty values ⊆ {`true`,`false`}
+  - `int` if all non-empty values are integers
+  - `enum` if a small set (≤ 15) of short token-like values (no spaces, not pure freeform)
+  - `text` otherwise
+- Picks a **representative `value`**: the most frequent non-empty distinct value; `""`
+  if the property is always empty.
+- Records the **`valid`** domain (the distinct non-empty values) for `enum`/`bool`.
+- Records the type's **member-attribute names** (union across members).
+
+Writes `metadata/REF_CATALOG.schema.json`.
+
+### Source of truth — `metadata/REF_CATALOG.schema.json`
+
+Per dimension type, an ordered property list plus member attrs:
 
 ```json
 {
@@ -81,27 +105,28 @@ plus the type's member-attribute list:
     "memberAttrs": ["alias", "description", "displayMemberGroup"],
     "properties": [
       {"name": "AccountType", "datatype": "enum", "value": "Revenue",
-       "valid": ["Revenue","Expense","Asset","Liability","Balance","Flow","DynamicCalc","GroupLabel"]},
-      {"name": "IsIC", "datatype": "bool", "value": "false"},
-      {"name": "Formula", "datatype": "formula", "value": ""}
+       "valid": ["Revenue","Expense","Asset","Liability","..."]},
+      {"name": "IsIC", "datatype": "bool", "value": "false", "valid": ["true","false"]},
+      {"name": "Formula", "datatype": "text", "value": ""}
     ]
   },
-  "Entity": { ... },
-  "...": "..."
+  "Entity": { "...": "..." }
 }
 ```
 
 Field meanings:
 - `name` — exact OneStream property name.
-- `datatype` — one of `bool | enum | int | text | group | formula | currency`.
+- `datatype` — one of `bool | enum | int | text`.
 - `value` — one representative valid value (used in the XML).
-- `valid` — (enum only) full valid-value domain, reference for master tables.
+- `valid` — distinct-value domain for `enum`/`bool` (reference for master tables); omitted otherwise.
+
+Note: `value` is harvested from real SWF data but member *names* in the output are
+neutral placeholders, so no SWF business content leaks into the catalog.
 
 ### 2. Generator — `scripts/gen-ref-catalog.py`
 
-Reads the schema JSON and emits both artifacts. Pure standard-library Python
-(`xml`/string building + `csv`/`json`), no new dependencies. Matches existing
-`scripts/` convention.
+Reads `REF_CATALOG.schema.json` and emits both artifacts. Pure standard-library Python
+(string building + `csv`/`json`/`xml.dom.minidom`), no new dependencies.
 
 ### 3. Artifact A — `metadata/REF_CATALOG.xml`
 
@@ -128,13 +153,6 @@ dim_type, property_name, datatype, representative_value, valid_values, applies_t
 - One row per (dim_type, property).
 - Member-level attributes also emitted as rows with `applies_to_member_attr = true`.
 
-## Data Flow
-
-```
-REF_CATALOG.schema.json  ──(gen-ref-catalog.py)──┬──> REF_CATALOG.xml
-                                                  └──> REF_CATALOG.schema.csv (+ .json)
-```
-
 ## Validation
 
 After generation the script self-verifies:
@@ -148,7 +166,8 @@ a passing state.
 
 ## Deliverables
 
-- `metadata/REF_CATALOG.schema.json` — source of truth
+- `scripts/extract-swf-schema.py` — extracts schema from SWF.xml
+- `metadata/REF_CATALOG.schema.json` — source of truth (generated, committed)
 - `scripts/gen-ref-catalog.py` — generator + validator
 - `metadata/REF_CATALOG.xml` — importable neutral catalog
 - `metadata/REF_CATALOG.schema.csv` — master-table seed rows
