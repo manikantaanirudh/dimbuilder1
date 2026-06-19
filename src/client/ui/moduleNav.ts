@@ -1,4 +1,4 @@
-import type { ModulesConfig } from "../../shared/appConfigTypes";
+import type { ModulesConfig } from "@shared/appConfigTypes";
 
 export interface NavItem {
   value: string;
