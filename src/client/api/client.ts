@@ -60,6 +60,8 @@ export {
   getAccessToken,
   setTokens
 } from "./core";
+export * from "./connectors";
+export * from "./environments";
 export * from "./reports";
 export * from "./workflows";
 
@@ -504,140 +506,6 @@ export function fetchValidationConfig(projectId: string) {
 
 export function saveValidationConfig(projectId: string, overrides: Array<{ ruleCode: string; severity: string }>) {
   return apiPost<{ overrides: Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> }>(`/projects/${projectId}/validation-config`, { overrides });
-}
-
-// --- Environment & Deployment API Functions ---
-
-import type {
-  ConnectionTestResult,
-  DeploymentRecord,
-  DeployRequest,
-  EnvironmentSafe,
-  CreateEnvironmentInput,
-  UpdateEnvironmentInput,
-  PullResult
-} from "../../shared/environmentTypes";
-
-export function fetchEnvironments() {
-  return apiGet<EnvironmentSafe[]>("/environments");
-}
-
-export function createEnvironment(body: CreateEnvironmentInput) {
-  return apiPost<EnvironmentSafe>("/environments", body);
-}
-
-export function updateEnvironment(id: string, body: UpdateEnvironmentInput) {
-  return apiPatchJson<EnvironmentSafe>(`/environments/${id}`, body);
-}
-
-export function deleteEnvironment(id: string) {
-  return apiDelete(`/environments/${id}`);
-}
-
-export function testEnvironmentConnection(id: string) {
-  return apiPost<ConnectionTestResult>(`/environments/${id}/test-connection`, {});
-}
-
-export function pullFromEnvironment(id: string) {
-  return apiPost<PullResult>(`/environments/${id}/pull`, {});
-}
-
-export function deployToEnvironment(id: string, body: DeployRequest) {
-  return apiPost<DeploymentRecord>(`/environments/${id}/deploy`, body);
-}
-
-export function fetchDeployments(params: { projectId?: string; environmentId?: string } = {}) {
-  const query = new URLSearchParams();
-  if (params.projectId) query.set("projectId", params.projectId);
-  if (params.environmentId) query.set("environmentId", params.environmentId);
-  const qs = query.toString();
-  return apiGet<Omit<DeploymentRecord, "xmlPayload" | "dimensionResults">[]>(`/environments/deployments${qs ? `?${qs}` : ""}`);
-}
-
-export function fetchDeployment(id: string) {
-  return apiGet<DeploymentRecord>(`/environments/deployments/${id}`);
-}
-
-// --- Connector API Functions ---
-
-import type {
-  ConnectorDefinition,
-  ConnectorCreateRequest,
-  MappingRule,
-  MappingRuleCreateRequest,
-  SyncJob,
-  SyncRun,
-  MemberSourceRecord,
-  SyncPreviewResult
-} from "../../shared/connectorTypes";
-
-export function fetchConnectors() {
-  return apiGet<ConnectorDefinition[]>("/connectors");
-}
-
-export function createConnector(body: ConnectorCreateRequest) {
-  return apiPost<ConnectorDefinition>("/connectors", body);
-}
-
-export function updateConnector(id: string, body: Partial<ConnectorCreateRequest & { isActive: boolean }>) {
-  return apiPatchJson<ConnectorDefinition>(`/connectors/${id}`, body);
-}
-
-export function deleteConnector(id: string) {
-  return apiDelete(`/connectors/${id}`);
-}
-
-export function testConnectorConnection(id: string) {
-  return apiPost<{ success: boolean; message: string }>(`/connectors/${id}/test`, {});
-}
-
-export function previewConnectorExtraction(id: string, mappingRuleId: string) {
-  return apiPost<SyncPreviewResult>(`/connectors/${id}/preview`, { mappingRuleId });
-}
-
-export function fetchMappingRules(connectorId: string) {
-  return apiGet<MappingRule[]>(`/connectors/${connectorId}/mappings`);
-}
-
-export function createMappingRule(connectorId: string, body: Omit<MappingRuleCreateRequest, "connectorId">) {
-  return apiPost<MappingRule>(`/connectors/${connectorId}/mappings`, body);
-}
-
-export function updateMappingRule(id: string, body: Partial<MappingRuleCreateRequest & { isActive: boolean }>) {
-  return apiPatchJson<MappingRule>(`/mappings/${id}`, body);
-}
-
-export function deleteMappingRule(id: string) {
-  return apiDelete(`/mappings/${id}`);
-}
-
-export function fetchSyncJobs(params: { connectorId?: string; projectId?: string } = {}) {
-  const query = new URLSearchParams();
-  if (params.connectorId) query.set("connectorId", params.connectorId);
-  if (params.projectId) query.set("projectId", params.projectId);
-  const qs = query.toString();
-  return apiGet<SyncJob[]>(`/sync-jobs${qs ? `?${qs}` : ""}`);
-}
-
-export function createSyncJob(body: { connectorId: string; mappingRuleId: string; projectId: string; scheduleCron?: string; autoApprove?: boolean }) {
-  return apiPost<SyncJob>("/sync-jobs", body);
-}
-
-export function triggerSyncRun(jobId: string) {
-  return apiPost<SyncRun>(`/sync-jobs/${jobId}/run`, {});
-}
-
-export function fetchSyncRuns(jobId: string) {
-  return apiGet<SyncRun[]>(`/sync-jobs/${jobId}/runs`);
-}
-
-export function fetchSyncRun(id: string) {
-  return apiGet<SyncRun>(`/sync-runs/${id}`);
-}
-
-export function fetchSourceRegistry(projectId: string, dimensionType?: string) {
-  const query = dimensionType ? `?dimensionType=${encodeURIComponent(dimensionType)}` : "";
-  return apiGet<MemberSourceRecord[]>(`/projects/${projectId}/source-registry${query}`);
 }
 
 // --- Impact Analysis API ---
