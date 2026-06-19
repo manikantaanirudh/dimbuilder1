@@ -1,6 +1,7 @@
 import { Activity, Download, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchHealthReport, fetchCoverageReport, getAccessToken } from "../api/client";
+import { getAccessToken } from "../api/client";
+import { fetchHealthReport, fetchCoverageReport } from "../api/reports";
 import { ActionButton, FactItem, FactStrip, Panel, StatusBadge } from "./ui";
 import { SkeletonReportDashboard } from "./Skeleton";
 import { ScoreRing } from "./ScoreRing";

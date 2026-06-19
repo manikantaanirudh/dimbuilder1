@@ -60,6 +60,7 @@ export {
   getAccessToken,
   setTokens
 } from "./core";
+export * from "./reports";
 
 // --- Auth API Functions ---
 
@@ -770,24 +771,6 @@ export function updateEnvOverride(id: string, body: { overrideValue?: string; re
 
 export function deleteEnvOverride(id: string) {
   return apiDelete(`/environments/env-overrides/${id}`);
-}
-
-// --- Reporting & Analytics (Feature 10) ---
-
-export function fetchHealthReport(projectId: string) {
-  return apiPost<{ overallScore: number; trend: string; snapshots: Array<{ dimensionType: string; qualityScore: number; completenessScore: number; namingScore: number; memberCount: number; orphanCount: number; validationErrorCount: number; validationWarningCount: number }> }>("/reports/generate/health", { projectId });
-}
-
-export function fetchVelocityReport(projectId: string) {
-  return apiPost<{ totalChanges: number; periods: Array<{ periodStart: string; membersAdded: number; membersModified: number; membersDeleted: number; totalChanges: number }> }>("/reports/generate/velocity", { projectId });
-}
-
-export function fetchCoverageReport(projectId: string) {
-  return apiPost<{ overallCoverage: number; dimensions: Array<{ dimensionType: string; memberCount: number; propertyCoverage: number; descriptionCoverage: number; lastModified: string; isStale: boolean }> }>("/reports/generate/coverage", { projectId });
-}
-
-export function exportReport(projectId: string, reportType: string, format: 'html' | 'csv' | 'json') {
-  return apiPost<Blob>(`/reports/export/${reportType}`, { projectId, format });
 }
 
 // --- AI Intelligence (Feature 7) ---
