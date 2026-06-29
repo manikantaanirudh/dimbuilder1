@@ -99,6 +99,31 @@ describe("module-gated API routes", () => {
     expect(entries.some((entry) => entry.action === "project.rename")).toBe(true);
   });
 
+  it("keeps project assistant routes available when chatAssistant is disabled", async () => {
+    const createRes = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Assistant Route Project" })
+    });
+    expect(createRes.status).toBe(201);
+    const project = await createRes.json() as { id: string };
+
+    const suggestionsRes = await fetch(`${baseUrl}/api/projects/${project.id}/assistant/suggestions`);
+    expect(suggestionsRes.status).toBe(200);
+    const suggestions = await suggestionsRes.json() as { suggestions: string[] };
+    expect(Array.isArray(suggestions.suggestions)).toBe(true);
+    expect(suggestions.suggestions.length).toBeGreaterThan(0);
+
+    const queryRes = await fetch(`${baseUrl}/api/projects/${project.id}/ai/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question: "Summarize my project" })
+    });
+    expect(queryRes.status).toBe(200);
+    const answer = await queryRes.json() as { answer: string };
+    expect(answer.answer).toContain("Assistant Route Project");
+  });
+
   it("keeps reporting routes available when platformExtras is disabled", async () => {
     const res = await fetch(`${baseUrl}/api/reports/definitions`);
     expect(res.status).toBe(200);

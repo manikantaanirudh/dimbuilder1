@@ -1,8 +1,12 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
+import { buildProjectAIContext } from "../ai/projectContext";
+import { runNaturalLanguageQuery } from "../ai/aiEngine";
 import { createProjectFromBlueprints } from "../projectBlueprints";
 import { scoreProjectQuality } from "../tier3/tier3Engine";
+import { createAssistantRouter } from "./assistant";
 import { createBaselinesRouter } from "./baselines";
 import { createBulkUpdatesRouter } from "./bulkUpdates";
 import { createChangeSetsRouter } from "./changeSets";
@@ -104,6 +108,28 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(await repos.audit.listByProject(project.id));
   });
+
+  router.post("/:projectId/ai/query", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+
+    const schema = z.object({ question: z.string().min(1) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "question is required" });
+
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
+    const context = await buildProjectAIContext(repos, config, project.id) ?? undefined;
+
+    res.json(runNaturalLanguageQuery(
+      parsed.data.question,
+      { dimensions, members, relationships },
+      context
+    ));
+  });
+
+  router.use(createAssistantRouter(repos, config));
 
   router.use("/:projectId/snapshots", createSnapshotsRouter(deps));
   router.use("/:projectId/varying-properties", createVaryingPropertiesRouter(deps));

@@ -1150,6 +1150,13 @@ export function queryProjectAssistant(projectId: string, question: string) {
   return apiPost<{ question: string; answer: AssistantAnswer }>(`/projects/${projectId}/assistant/query`, { question });
 }
 
+export function queryNaturalLanguage(projectId: string, question: string) {
+  return apiPost<{ answer: string; matchedMembers: string[]; query: string; confidence: number }>(
+    `/projects/${projectId}/ai/query`,
+    { question }
+  );
+}
+
 export function createMigrationSession(
   projectId: string,
   body: { sourceType: string; fileName: string; content: string }

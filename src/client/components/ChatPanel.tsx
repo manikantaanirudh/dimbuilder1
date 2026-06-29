@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Search, MessageSquare } from "lucide-react";
+import { queryNaturalLanguage } from "../api/client";
 
 interface ChatMessage {
   id: string;
@@ -40,12 +41,7 @@ export function ChatPanel({ projectId, onNavigateMember }: {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/projects/${projectId}/ai/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: text })
-      });
-      const data = await res.json();
+      const data = await queryNaturalLanguage(projectId, text);
       const assistantMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -54,11 +50,11 @@ export function ChatPanel({ projectId, onNavigateMember }: {
         timestamp: new Date().toISOString()
       };
       setMessages(prev => [...prev, assistantMsg]);
-    } catch {
+    } catch (err) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Failed to process query. Please try again.",
+        content: err instanceof Error ? err.message : "Failed to process query. Please try again.",
         timestamp: new Date().toISOString()
       }]);
     } finally {
@@ -81,7 +77,7 @@ export function ChatPanel({ projectId, onNavigateMember }: {
             <p>I can summarize the project, report validation issues and export readiness, find members, show hierarchies, and check properties across all dimensions.</p>
             <div className="chat-suggestions">
               {QUICK_QUERIES.map(q => (
-                <button key={q} className="chip" onClick={() => handleSend(q)}>{q}</button>
+                <button key={q} className="chip" onClick={() => void handleSend(q)}>{q}</button>
               ))}
             </div>
           </div>
@@ -121,11 +117,11 @@ export function ChatPanel({ projectId, onNavigateMember }: {
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
           placeholder="Ask about members, dimensions, properties..."
           disabled={loading || !projectId}
         />
-        <button onClick={() => handleSend()} disabled={loading || !input.trim()} aria-label="Send message">
+        <button onClick={() => void handleSend()} disabled={loading || !input.trim()} aria-label="Send message">
           <Send size={16} />
         </button>
       </div>
