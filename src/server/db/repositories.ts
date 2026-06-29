@@ -1022,6 +1022,38 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           JSON.stringify(input.before ?? {}),
           JSON.stringify(input.after ?? {}),
           now()]);
+      },
+      async listByProject(projectId: string, limit = 100): Promise<Array<{
+        id: string;
+        userId: string;
+        action: string;
+        entityType: string;
+        entityId: string;
+        changes: Record<string, unknown>;
+        timestamp: string;
+      }>> {
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT id, user_id, action, entity_type, entity_id, before_json, after_json, created_at
+          FROM audit_logs
+          WHERE project_id = ?
+          ORDER BY created_at DESC
+          LIMIT ?
+        `, [projectId, limit]);
+
+        return rows.map((row) => {
+          const before = parseJson(String(row.before_json ?? "{}"), {}) as Record<string, unknown>;
+          const after = parseJson(String(row.after_json ?? "{}"), {}) as Record<string, unknown>;
+          const changes = Object.keys(after).length > 0 ? after : before;
+          return {
+            id: String(row.id),
+            userId: String(row.user_id),
+            action: String(row.action),
+            entityType: String(row.entity_type),
+            entityId: String(row.entity_id),
+            changes,
+            timestamp: String(row.created_at)
+          };
+        });
       }
     },
     snapshots: {

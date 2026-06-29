@@ -76,6 +76,29 @@ describe("module-gated API routes", () => {
     expect(Array.isArray(rules)).toBe(true);
   });
 
+  it("keeps audit log routes available when multiTenancy is disabled", async () => {
+    const createRes = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Audit Route Project" })
+    });
+    expect(createRes.status).toBe(201);
+    const project = await createRes.json() as { id: string };
+
+    const renameRes = await fetch(`${baseUrl}/api/projects/${project.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Audit Route Project Renamed" })
+    });
+    expect(renameRes.status).toBe(200);
+
+    const auditRes = await fetch(`${baseUrl}/api/projects/${project.id}/audit-log`);
+    expect(auditRes.status).toBe(200);
+    const entries = await auditRes.json() as Array<{ action: string; userId: string }>;
+    expect(Array.isArray(entries)).toBe(true);
+    expect(entries.some((entry) => entry.action === "project.rename")).toBe(true);
+  });
+
   it("keeps reporting routes available when platformExtras is disabled", async () => {
     const res = await fetch(`${baseUrl}/api/reports/definitions`);
     expect(res.status).toBe(200);

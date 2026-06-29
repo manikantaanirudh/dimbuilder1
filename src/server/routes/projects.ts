@@ -99,6 +99,12 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     res.json(await repos.qualityRules.listByProject(project.id));
   });
 
+  router.get("/:projectId/audit-log", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    res.json(await repos.audit.listByProject(project.id));
+  });
+
   router.use("/:projectId/snapshots", createSnapshotsRouter(deps));
   router.use("/:projectId/varying-properties", createVaryingPropertiesRouter(deps));
   router.use("/:projectId/bulk-updates", createBulkUpdatesRouter(deps));
