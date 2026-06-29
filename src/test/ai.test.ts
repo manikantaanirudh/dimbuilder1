@@ -49,6 +49,22 @@ const entityDimension: DimensionRecord = {
   updatedAt: testTimestamp
 };
 
+const scenarioDimension: DimensionRecord = {
+  id: "dim-ai-scenario",
+  projectId: "project-ai-test",
+  sheetName: "Scenarios",
+  dimensionType: "Scenario",
+  dimensionName: "REF_Scenario",
+  description: "",
+  accessGroup: "Everyone",
+  maintenanceGroup: "Everyone",
+  inheritedDimension: "",
+  sortOrder: 3,
+  metadata: {},
+  createdAt: testTimestamp,
+  updatedAt: testTimestamp
+};
+
 function member(key: string, dimId = accountDimension.id, props: Record<string, unknown> = {}): DimensionMemberRecord {
   return {
     id: `m-${key}`,
@@ -437,6 +453,73 @@ describe("AI Natural Language Query", () => {
     });
     expect(result.intent).toBe("coverage");
     expect(result.answer).toContain("88%");
+  });
+
+  it("lists scenario members from conversational phrasing", () => {
+    const scenarioMembers = [
+      member("Actual", scenarioDimension.id),
+      member("Budget", scenarioDimension.id),
+      member("Forecast", scenarioDimension.id)
+    ];
+    const result = parseAndExecuteQuery({
+      question: "can you tell me all the scenario members available in scenario dimension",
+      dimensions: [accountDimension, scenarioDimension],
+      members: [...members, ...scenarioMembers],
+      relationships
+    });
+    expect(result.intent).toBe("list_members");
+    expect(result.matchedMembers).toEqual(expect.arrayContaining(["Actual", "Budget", "Forecast"]));
+    expect(result.confidence).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it("'List all members in Scenario' returns sorted scenario members", () => {
+    const scenarioMembers = [
+      member("Forecast", scenarioDimension.id),
+      member("Actual", scenarioDimension.id)
+    ];
+    const result = parseAndExecuteQuery({
+      question: "List all members in Scenario",
+      dimensions: [scenarioDimension],
+      members: scenarioMembers,
+      relationships: []
+    });
+    expect(result.intent).toBe("list_members");
+    expect(result.matchedMembers).toEqual(["Actual", "Forecast"]);
+  });
+
+  it("'What dimensions exist in this project?' lists dimensions", () => {
+    const result = parseAndExecuteQuery({
+      question: "What dimensions exist in this project?",
+      dimensions: [accountDimension, scenarioDimension],
+      members,
+      relationships
+    });
+    expect(result.intent).toBe("list_dimensions");
+    expect(result.answer).toContain("Account");
+    expect(result.answer).toContain("Scenario");
+  });
+
+  it("'Tell me about member Revenue' returns member details", () => {
+    const result = parseAndExecuteQuery({
+      question: "Tell me about member Revenue",
+      dimensions,
+      members,
+      relationships
+    });
+    expect(result.intent).toBe("member_details");
+    expect(result.answer).toContain("Revenue");
+    expect(result.matchedMembers).toContain("Revenue");
+  });
+
+  it("'How many relationships in Account?' counts relationships", () => {
+    const result = parseAndExecuteQuery({
+      question: "How many relationships in Account?",
+      dimensions,
+      members,
+      relationships
+    });
+    expect(result.intent).toBe("relationship_count");
+    expect(result.answer).toContain("5 relationship");
   });
 });
 

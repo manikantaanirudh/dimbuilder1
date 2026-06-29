@@ -3,6 +3,8 @@ import type { NLQueryResult } from "../../../shared/aiTypes";
 import type { ProjectAIContext } from "../projectContext";
 import { buildHierarchyAnalytics } from "../../../shared/hierarchyAnalytics";
 import { generateResponse } from "./responseGenerator";
+import { normalizeQuery, matchesAny } from "./queryNormalizer";
+import { scoreIntentFromKeywords } from "./intentScoring";
 import {
   buildUnknownQueryResult,
   extractDimensionToken,
@@ -26,6 +28,8 @@ interface ParsedIntent {
     | 'check_exists' | 'summary' | 'issues' | 'export_ready'
     | 'leaf_count' | 'list_leaves' | 'hierarchy_depth' | 'hierarchy_summary'
     | 'shared_members' | 'empty_dimensions' | 'dimension_issues' | 'coverage'
+    | 'list_members' | 'list_dimensions' | 'member_details'
+    | 'relationship_count' | 'inactive_members' | 'root_members'
     | 'unknown';
   params: Record<string, string>;
 }
@@ -39,7 +43,9 @@ export function parseAndExecuteQuery(input: NLQueryInput): NLQueryResult {
 
 function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedIntent {
   const q = question.trim();
-  const dimensionToken = extractDimensionToken(q, dimensions) ?? "";
+  const nq = normalizeQuery(q);
+  const n = nq.normalized;
+  const dimensionToken = extractDimensionToken(q, dimensions) ?? extractDimensionToken(n, dimensions) ?? "";
 
   if (/\bexport\b/i.test(q) && /(ready|can i|able to|block|blocking|blocked|allowed|safe to)/i.test(q)) {
     return { type: 'export_ready', params: {} };
@@ -59,6 +65,11 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
 
   if (/(empty|blank)\s+dimensions?|dimensions?\s+(with\s+)?no\s+members?|which\s+dimensions?\s+(are\s+)?empty/i.test(q)) {
     return { type: 'empty_dimensions', params: {} };
+  }
+
+  if (matchesAny(q, [/\b(?:list|show|get|what|which)\s+(?:all\s+)?(?:the\s+)?dimensions?\b/i, /\bwhat\s+dimensions?\s+exist/i, /\bdimension\s+list\b/i]) ||
+      matchesAny(n, [/\b(?:list|show|get|what|which)\s+dimensions?\b/i, /\bdimensions?\s+in\s+(?:the\s+)?project\b/i])) {
+    return { type: 'list_dimensions', params: {} };
   }
 
   if (/which\s+dimension\s+has\s+(?:the\s+)?most\s+issues?/i.test(q)) {
@@ -88,6 +99,27 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
 
   if (/(?:show|list|how\s+many)\s+shared\s+members?|members?\s+with\s+multiple\s+parents?/i.test(q)) {
     return { type: 'shared_members', params: { dimension: dimensionToken } };
+  }
+
+  if (/how\s+many\s+relationships?/i.test(q) || /\brelationship\s+count\b/i.test(q)) {
+    return { type: 'relationship_count', params: { dimension: dimensionToken } };
+  }
+
+  if (/\b(inactive|disabled|deactivated)\s+members?\b/i.test(q)) {
+    return { type: 'inactive_members', params: { dimension: dimensionToken } };
+  }
+
+  if (/\b(root|top[\s-]?level)\s+members?\b/i.test(q)) {
+    return { type: 'root_members', params: { dimension: dimensionToken } };
+  }
+
+  if (wantsMemberList(q, n, dimensionToken)) {
+    return { type: 'list_members', params: { dimension: dimensionToken } };
+  }
+
+  const memberDetailsMatch = q.match(/(?:tell me about|details for|describe|info on|information about)\s+(?:the\s+)?(?:member\s+)?['"]?([^'"?]+?)['"]?\s*\??$/i);
+  if (memberDetailsMatch) {
+    return { type: 'member_details', params: { memberKey: memberDetailsMatch[1].trim() } };
   }
 
   const missingMatch = q.match(/which\s+(\w+)\s+(?:are|is)\s+missing\s+['"]?(\w+)['"]?/i);
@@ -136,7 +168,27 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
     return { type: 'find', params: { pattern: pattern || raw } };
   }
 
+  const scored = scoreIntentFromKeywords(nq, dimensions, q);
+  if (scored) {
+    return { type: scored.intent, params: scored.params };
+  }
+
   return { type: 'unknown', params: { raw: question } };
+}
+
+function wantsMemberList(raw: string, normalized: string, dimensionToken: string): boolean {
+  if (!dimensionToken) return false;
+  const exclusion = /leaf|leaves|shared|orphan|relationship|children|descendants|under|below|how many|without|missing|property/i;
+  if (exclusion.test(raw) || exclusion.test(normalized)) return false;
+  if (!/\bmembers?\b/i.test(raw) && !/\bmembers?\b/i.test(normalized)) return false;
+
+  return (
+    /\b(list|show|get|display|enumerate|all|every|available|what|which)\b/i.test(normalized) ||
+    /\bmembers?\s+(?:in|for|from|of)\b/i.test(normalized) ||
+    /\b(?:in|for|from|of)\s+[\w\s-]+\s+members?\b/i.test(normalized) ||
+    new RegExp(`\\b${dimensionToken}\\b[\\s\\S]*\\bmembers?\\b`, "i").test(normalized) ||
+    new RegExp(`\\bmembers?\\b[\\s\\S]*\\b${dimensionToken}\\b`, "i").test(normalized)
+  );
 }
 
 function executeIntent(
@@ -321,6 +373,118 @@ function executeIntent(
     case 'shared_members':
       return executeHierarchyIntent(intent, question, dimensions, members, relationships);
 
+    case 'list_members': {
+      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
+      if (!dim) {
+        return {
+          intent: 'list_members',
+          answer: intent.params.dimension
+            ? `Could not find a dimension matching "${intent.params.dimension}".`
+            : "Please specify a dimension, for example: List all members in Scenario.",
+          matchedMembers: [],
+          confidence: 0.5,
+          followUps: ["List all members in Account", "What dimensions exist in this project?"]
+        };
+      }
+      const filtered = members
+        .filter((member) => member.dimensionId === dim.id)
+        .sort((left, right) => left.memberKey.localeCompare(right.memberKey));
+      const matchedKeys = filtered.map((member) => member.memberKey);
+      return {
+        intent: 'list_members',
+        answer: generateResponse({
+          matchedMembers: matchedKeys,
+          intent: 'list_members',
+          params: { dimension: dim.dimensionType }
+        }),
+        matchedMembers: matchedKeys,
+        confidence: 1.0,
+        evidence: [`${dim.dimensionType} (${dim.dimensionName})`, `${matchedKeys.length} members`],
+        followUps: [
+          `How many members in ${dim.dimensionType}?`,
+          `Show leaf members in ${dim.dimensionType}`,
+          `What is the max hierarchy depth in ${dim.dimensionType}?`
+        ]
+      };
+    }
+
+    case 'list_dimensions': {
+      const rows = context?.dimensions ?? dimensions.map((dimension) => ({
+        dimensionType: dimension.dimensionType,
+        dimensionName: dimension.dimensionName,
+        memberCount: members.filter((member) => member.dimensionId === dimension.id).length
+      }));
+      const lines = rows.map((row) => `${row.dimensionType} (${row.dimensionName}): ${row.memberCount} member(s)`);
+      return {
+        intent: 'list_dimensions',
+        answer: rows.length === 0
+          ? "No dimensions exist in this project yet."
+          : `This project has ${rows.length} dimension(s):\n  ${lines.join("\n  ")}`,
+        matchedMembers: [],
+        confidence: 1.0,
+        evidence: rows.slice(0, 5).map((row) => row.dimensionType),
+        followUps: rows.slice(0, 3).map((row) => `List all members in ${row.dimensionType}`)
+      };
+    }
+
+    case 'member_details':
+      return executeMemberDetails(intent.params.memberKey, dimensions, members, relationships);
+
+    case 'relationship_count': {
+      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
+      const scoped = membersForDimension(dim, members, relationships);
+      const label = dim ? `${dim.dimensionType} (${dim.dimensionName})` : "the project";
+      return {
+        intent: 'relationship_count',
+        answer: `${label} has ${scoped.relationships.length} relationship(s) across ${scoped.members.length} member(s).`,
+        matchedMembers: [],
+        confidence: 1.0,
+        evidence: [`${scoped.relationships.length} relationships`],
+        followUps: dim
+          ? [`Hierarchy health for ${dim.dimensionType}`, `List all members in ${dim.dimensionType}`]
+          : ["Summarize my project"]
+      };
+    }
+
+    case 'inactive_members': {
+      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
+      const scoped = membersForDimension(dim, members, relationships);
+      const inactive = scoped.members.filter((member) => member.isActive === false);
+      const matchedKeys = inactive.map((member) => member.memberKey);
+      const label = dim ? `${dim.dimensionType} (${dim.dimensionName})` : "the project";
+      return {
+        intent: 'inactive_members',
+        answer: matchedKeys.length === 0
+          ? `No inactive members in ${label}.`
+          : `${matchedKeys.length} inactive member(s) in ${label}: ${formatMemberList(matchedKeys)}`,
+        matchedMembers: matchedKeys,
+        confidence: 1.0
+      };
+    }
+
+    case 'root_members': {
+      const dim = resolveDimensionToken(intent.params.dimension, dimensions) ?? dimensions[0];
+      if (!dim) {
+        return { intent: 'root_members', answer: "No dimensions exist in this project yet.", matchedMembers: [], confidence: 0.8 };
+      }
+      const scoped = membersForDimension(dim, members, relationships);
+      const childKeys = new Set(scoped.relationships.map((relationship) => relationship.childKey));
+      const rootKeys = scoped.members
+        .filter((member) => !childKeys.has(member.memberKey))
+        .map((member) => member.memberKey)
+        .sort((left, right) => left.localeCompare(right));
+      const label = `${dim.dimensionType} (${dim.dimensionName})`;
+      return {
+        intent: 'root_members',
+        answer: rootKeys.length === 0
+          ? `No root members found in ${label}.`
+          : `${rootKeys.length} root member(s) in ${label}: ${formatMemberList(rootKeys)}`,
+        matchedMembers: rootKeys,
+        confidence: 1.0,
+        followUps: [`Show members under ${rootKeys[0] ?? dim.dimensionType}`, `List all members in ${dim.dimensionType}`]
+      };
+    }
+
     case 'find': {
       const pattern = intent.params.pattern.toLowerCase();
       const matched = members.filter(m =>
@@ -435,38 +599,8 @@ function executeIntent(
       };
     }
 
-    case 'check_exists': {
-      const searchKey = intent.params.memberKey.toLowerCase();
-      const found = members.filter(m => m.memberKey.toLowerCase() === searchKey);
-      if (found.length === 0) {
-        const partial = members.filter(m => m.memberKey.toLowerCase().includes(searchKey));
-        if (partial.length > 0) {
-          return {
-            intent: 'check_exists',
-            answer: `No exact match for "${intent.params.memberKey}", but found ${partial.length} similar member(s): ${partial.slice(0, 5).map(m => m.memberKey).join(', ')}${partial.length > 5 ? '...' : ''}`,
-            matchedMembers: partial.slice(0, 10).map(m => m.memberKey),
-            confidence: 0.6
-          };
-        }
-        return {
-          intent: 'check_exists',
-          answer: `No member called "${intent.params.memberKey}" exists in this project.`,
-          matchedMembers: [],
-          confidence: 1.0
-        };
-      }
-      const member = found[0];
-      const dim = dimensions.find(d => d.id === member.dimensionId);
-      const parentRels = relationships.filter(r => r.childKey === member.memberKey);
-      const parents = parentRels.map(r => r.parentKey).join(', ') || 'None (root)';
-      const propCount = Object.keys(member.properties).length;
-      return {
-        intent: 'check_exists',
-        answer: `Yes! Member "${member.memberKey}" exists.\n• Dimension: ${dim?.dimensionType ?? 'Unknown'} (${dim?.dimensionName ?? ''})\n• Description: ${member.description || '(none)'}\n• Parent(s): ${parents}\n• Properties: ${propCount} defined\n• Active: ${member.isActive ? 'Yes' : 'No'}`,
-        matchedMembers: found.map(m => m.memberKey),
-        confidence: 1.0
-      };
-    }
+    case 'check_exists':
+      return executeMemberDetails(intent.params.memberKey, dimensions, members, relationships, 'check_exists');
 
     default: {
       const raw = intent.params.raw || question;
@@ -571,6 +705,50 @@ function executeHierarchyIntent(
     default:
       return buildUnknownQueryResult(question);
   }
+}
+
+function executeMemberDetails(
+  memberKey: string,
+  dimensions: DimensionRecord[],
+  members: DimensionMemberRecord[],
+  relationships: DimensionRelationshipRecord[],
+  intent: 'member_details' | 'check_exists' = 'member_details'
+): QueryExecutionResult {
+  const searchKey = memberKey.toLowerCase();
+  const found = members.filter((member) => member.memberKey.toLowerCase() === searchKey);
+  if (found.length === 0) {
+    const partial = members.filter((member) => member.memberKey.toLowerCase().includes(searchKey));
+    if (partial.length > 0) {
+      return {
+        intent,
+        answer: `No exact match for "${memberKey}", but found ${partial.length} similar member(s): ${partial.slice(0, 5).map((member) => member.memberKey).join(", ")}${partial.length > 5 ? "..." : ""}`,
+        matchedMembers: partial.slice(0, 10).map((member) => member.memberKey),
+        confidence: 0.6
+      };
+    }
+    return {
+      intent,
+      answer: `No member called "${memberKey}" exists in this project.`,
+      matchedMembers: [],
+      confidence: 1.0
+    };
+  }
+
+  const member = found[0];
+  const dim = dimensions.find((dimension) => dimension.id === member.dimensionId);
+  const parentRels = relationships.filter((relationship) => relationship.childKey === member.memberKey);
+  const childRels = relationships.filter((relationship) => relationship.parentKey === member.memberKey);
+  const parents = parentRels.map((relationship) => relationship.parentKey).join(", ") || "None (root)";
+  const children = childRels.map((relationship) => relationship.childKey).join(", ") || "None";
+  const propCount = Object.keys(member.properties).length;
+  return {
+    intent,
+    answer: `${intent === 'check_exists' ? 'Yes! ' : ''}Member "${member.memberKey}"\n• Dimension: ${dim?.dimensionType ?? "Unknown"} (${dim?.dimensionName ?? ""})\n• Description: ${member.description || "(none)"}\n• Parent(s): ${parents}\n• Children: ${children}\n• Properties: ${propCount} defined\n• Active: ${member.isActive ? "Yes" : "No"}`,
+    matchedMembers: found.map((member) => member.memberKey),
+    confidence: 1.0,
+    evidence: [dim?.dimensionType ?? "Unknown", member.isActive ? "Active" : "Inactive"],
+    followUps: parents !== "None (root)" ? [`Show members under ${member.memberKey}`] : [`List all members in ${dim?.dimensionType ?? "Account"}`]
+  };
 }
 
 function unavailableContext(intent: string): QueryExecutionResult {

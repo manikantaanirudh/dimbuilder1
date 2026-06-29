@@ -26,14 +26,30 @@ export function resolveDimensionToken(
 }
 
 export function extractDimensionToken(question: string, dimensions: DimensionRecord[]): string | undefined {
+  const haystack = question.toLowerCase();
+  const matches: Array<{ type: string; score: number }> = [];
+
   for (const dimension of dimensions) {
-    const typePattern = new RegExp(`\\b${escapeRegex(dimension.dimensionType)}\\b`, "i");
-    const namePattern = new RegExp(`\\b${escapeRegex(dimension.dimensionName)}\\b`, "i");
-    if (typePattern.test(question) || namePattern.test(question)) {
-      return dimension.dimensionType;
+    const type = dimension.dimensionType;
+    const name = dimension.dimensionName;
+    const typeLower = type.toLowerCase();
+    const nameLower = name.toLowerCase();
+    const strippedName = nameLower.replace(/^ref[_-]?/i, "");
+
+    if (new RegExp(`\\b${escapeRegex(type)}\\b`, "i").test(question)) {
+      matches.push({ type, score: 100 + type.length });
+    } else if (new RegExp(`\\b${escapeRegex(name)}\\b`, "i").test(question)) {
+      matches.push({ type, score: 90 + name.length });
+    } else if (strippedName && haystack.includes(strippedName)) {
+      matches.push({ type, score: 70 + strippedName.length });
+    } else if (haystack.includes(typeLower)) {
+      matches.push({ type, score: 50 + typeLower.length });
     }
   }
-  return undefined;
+
+  if (matches.length === 0) return undefined;
+  matches.sort((a, b) => b.score - a.score);
+  return matches[0].type;
 }
 
 export function membersForDimension(

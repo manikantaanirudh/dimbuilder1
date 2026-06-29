@@ -38,6 +38,18 @@ export function generateResponse(input: ResponseInput): string {
       if (count === 0) return `No orphan members found — all members are connected in the hierarchy.`;
       return `Found ${count} orphan member${count === 1 ? '' : 's'} (not in any hierarchy): ${memberList}`;
 
+    case 'list_members': {
+      const dimLabel = params.dimension ? `${params.dimension} ` : '';
+      if (count === 0) return `No members found in the ${dimLabel}dimension.`;
+      return `${count} member${count === 1 ? '' : 's'} in ${params.dimension || 'the project'}: ${memberList}`;
+    }
+
+    case 'list_dimensions':
+      return params.dimensionList ?? `Found ${count} dimension(s).`;
+
+    case 'member_details':
+      return params.details ?? `Member details unavailable.`;
+
     default:
       if (count === 0) return `No results found.`;
       return `Found ${count} result${count === 1 ? '' : 's'}: ${memberList}`;
