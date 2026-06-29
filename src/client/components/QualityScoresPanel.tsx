@@ -46,7 +46,7 @@ export function QualityScoresPanel({ projectId }: { projectId: string }) {
       try {
         const [scores, gatesData] = await Promise.all([
           fetchQualityScores(projectId),
-          fetchQualityGates(projectId)
+          fetchQualityGates(projectId).catch(() => [] as QualityGate[])
         ]);
         if (!cancelled) {
           setOverallScore(scores.overallScore);

@@ -58,12 +58,22 @@ describe("module-gated API routes", () => {
     expect(createRes.status).toBe(201);
     const project = await createRes.json() as { id: string };
 
-    const res = await fetch(`${baseUrl}/api/projects/${project.id}/quality/scores`);
-    expect(res.status).toBe(200);
-    const body = await res.json() as { overallScore: number; metadataScore: number; validationScore: number };
-    expect(body.overallScore).toBeGreaterThanOrEqual(0);
-    expect(body.metadataScore).toBeGreaterThanOrEqual(0);
-    expect(body.validationScore).toBeGreaterThanOrEqual(0);
+    const scoresRes = await fetch(`${baseUrl}/api/projects/${project.id}/quality/scores`);
+    expect(scoresRes.status).toBe(200);
+    const scores = await scoresRes.json() as { overallScore: number; metadataScore: number; validationScore: number };
+    expect(scores.overallScore).toBeGreaterThanOrEqual(0);
+    expect(scores.metadataScore).toBeGreaterThanOrEqual(0);
+    expect(scores.validationScore).toBeGreaterThanOrEqual(0);
+
+    const gatesRes = await fetch(`${baseUrl}/api/projects/${project.id}/quality/gates`);
+    expect(gatesRes.status).toBe(200);
+    const gates = await gatesRes.json() as unknown[];
+    expect(Array.isArray(gates)).toBe(true);
+
+    const rulesRes = await fetch(`${baseUrl}/api/projects/${project.id}/quality/rules`);
+    expect(rulesRes.status).toBe(200);
+    const rules = await rulesRes.json() as unknown[];
+    expect(Array.isArray(rules)).toBe(true);
   });
 
   it("keeps reporting routes available when platformExtras is disabled", async () => {

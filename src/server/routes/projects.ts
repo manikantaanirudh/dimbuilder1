@@ -87,6 +87,18 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     });
   });
 
+  router.get("/:projectId/quality/gates", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    res.json(await repos.qualityGates.listByProject(project.id));
+  });
+
+  router.get("/:projectId/quality/rules", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    res.json(await repos.qualityRules.listByProject(project.id));
+  });
+
   router.use("/:projectId/snapshots", createSnapshotsRouter(deps));
   router.use("/:projectId/varying-properties", createVaryingPropertiesRouter(deps));
   router.use("/:projectId/bulk-updates", createBulkUpdatesRouter(deps));
