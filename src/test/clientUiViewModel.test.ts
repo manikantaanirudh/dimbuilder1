@@ -12,13 +12,17 @@ import {
   buildDimensionFacts,
   buildDimensionNavItems,
   buildIssueSummary,
+  computeProjectHealthFallback,
   filterDimensionNavItems,
   formatCount,
+  formatProjectHealthTitle,
   getEnabledExportFormats,
   getExportAvailability,
   getReadinessLabel,
   getWorkspaceTabs,
-  resolveActiveDimensionId
+  resolveActiveDimensionId,
+  scoreValidationHealth,
+  sortDimensionsForOverview
 } from "../client/ui/viewModel";
 import { sampleScenarioDimension, testTimestamp } from "./fixtures";
 
@@ -286,5 +290,41 @@ describe("client UI view model", () => {
     expect(formatCount(999)).toBe("999");
     expect(formatCount(1200)).toBe("1.2k");
     expect(formatCount(65055)).toBe("65.1k");
+  });
+
+  it("prioritizes dimensions with more issues in overview sorting", () => {
+    const entityDimension = { ...sampleScenarioDimension, id: "dim-entity", dimensionType: "Entity" as const, dimensionName: "Entity" };
+    const accountDimension = { ...sampleScenarioDimension, id: "dim-account", dimensionType: "Account" as const, dimensionName: "Account" };
+    const issueMap = new Map([
+      [entityDimension.id, buildIssueSummary([issue({ dimensionId: entityDimension.id, severity: "warning" })], defaultAppConfig.validation.exportBlockedBySeverities, entityDimension.id)],
+      [accountDimension.id, buildIssueSummary([issue({ dimensionId: accountDimension.id, severity: "error" }), issue({ dimensionId: accountDimension.id, severity: "error", id: "issue-2" })], defaultAppConfig.validation.exportBlockedBySeverities, accountDimension.id)],
+      [sampleScenarioDimension.id, buildIssueSummary([], defaultAppConfig.validation.exportBlockedBySeverities, sampleScenarioDimension.id)]
+    ]);
+
+    const sorted = sortDimensionsForOverview(
+      [sampleScenarioDimension, entityDimension, accountDimension],
+      issueMap,
+      true
+    );
+
+    expect(sorted.map((dimension) => dimension.id)).toEqual([
+      accountDimension.id,
+      entityDimension.id,
+      sampleScenarioDimension.id
+    ]);
+  });
+
+  it("computes validation health and project health fallback", () => {
+    expect(scoreValidationHealth([])).toBe(100);
+    expect(scoreValidationHealth([
+      issue({ severity: "error" }),
+      issue({ severity: "warning", id: "issue-2" })
+    ])).toBe(89);
+    expect(computeProjectHealthFallback(69, [
+      issue({ severity: "error" }),
+      issue({ severity: "warning", id: "issue-2" })
+    ])).toBe(82);
+    expect(formatProjectHealthTitle({ metadataScore: 80, validationScore: 70, coverage: 69, fallback: true }))
+      .toBe("Metadata 80% · Validation 70% · Coverage 69% (estimated)");
   });
 });

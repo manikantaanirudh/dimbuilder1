@@ -222,6 +222,12 @@ export interface VaryingPropertyValueFilters {
   propertyName?: string;
 }
 
+export interface DimensionOverviewStats {
+  dimensionId: string;
+  memberCount: number;
+  relationshipCount: number;
+}
+
 export interface DashboardSummary {
   totalDimensions: number;
   totalMembers: number;
@@ -229,6 +235,7 @@ export interface DashboardSummary {
   validationErrors: number;
   validationWarnings: number;
   recentDimensions: DimensionRecord[];
+  dimensionStats: DimensionOverviewStats[];
 }
 
 export interface ProjectMetadataState {

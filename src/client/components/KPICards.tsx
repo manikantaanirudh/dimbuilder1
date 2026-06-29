@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, AlertTriangle, Users, Layers, GitFork } from "lucide-react";
 import { fetchQualityScores, fetchCoverageReport } from "../api/client";
 import { ScoreRing } from "./ScoreRing";
 import type { DashboardSummary, Severity, ValidationIssue } from "../../shared/types";
-import { buildIssueSummary } from "../ui/viewModel";
+import {
+  buildIssueSummary,
+  computeProjectHealthFallback,
+  formatProjectHealthTitle,
+  scoreValidationHealth
+} from "../ui/viewModel";
 
 export function KPICards({ projectId, summary, issues, blockedSeverities, dimensionCount }: {
   projectId: string;
@@ -13,39 +18,99 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
   dimensionCount: number;
 }) {
   const [qualityScore, setQualityScore] = useState<number | null>(null);
+  const [metadataScore, setMetadataScore] = useState<number | null>(null);
+  const [validationScore, setValidationScore] = useState<number | null>(null);
   const [coverage, setCoverage] = useState<number | null>(null);
+  const [qualityLoaded, setQualityLoaded] = useState(false);
+  const [coverageLoaded, setCoverageLoaded] = useState(false);
   const issueSummary = buildIssueSummary(issues, blockedSeverities);
 
   useEffect(() => {
     let cancelled = false;
+    setQualityLoaded(false);
+    setCoverageLoaded(false);
+    setQualityScore(null);
+    setMetadataScore(null);
+    setValidationScore(null);
+    setCoverage(null);
+
     async function load() {
-      try {
-        const [q, c] = await Promise.all([
-          fetchQualityScores(projectId).catch(() => null),
-          fetchCoverageReport(projectId).catch(() => null)
-        ]);
-        if (!cancelled) {
-          setQualityScore(q?.overallScore ?? null);
-          setCoverage(c?.overallCoverage ?? null);
-        }
-      } catch { /* ignore */ }
+      const [qualityResult, coverageResult] = await Promise.allSettled([
+        fetchQualityScores(projectId),
+        fetchCoverageReport(projectId)
+      ]);
+
+      if (cancelled) return;
+
+      if (qualityResult.status === "fulfilled") {
+        setQualityScore(qualityResult.value.overallScore);
+        setMetadataScore(qualityResult.value.metadataScore ?? null);
+        setValidationScore(qualityResult.value.validationScore ?? scoreValidationHealth(issues));
+      }
+      setQualityLoaded(true);
+
+      if (coverageResult.status === "fulfilled") {
+        setCoverage(coverageResult.value.overallCoverage ?? null);
+      }
+      setCoverageLoaded(true);
     }
+
     void load();
     return () => { cancelled = true; };
-  }, [projectId, issueSummary.total]);
+  }, [projectId, issueSummary.total, issues]);
+
+  const healthPresentation = useMemo(() => {
+    const fallbackValidation = validationScore ?? scoreValidationHealth(issues);
+    const fallbackScore = computeProjectHealthFallback(coverage, issues);
+    const usingFallback = qualityScore === null && fallbackScore !== null;
+
+    if (qualityScore !== null) {
+      return {
+        score: qualityScore,
+        title: formatProjectHealthTitle({
+          metadataScore: metadataScore ?? undefined,
+          validationScore: fallbackValidation,
+          coverage
+        }),
+        fallback: false
+      };
+    }
+
+    if (fallbackScore !== null && (qualityLoaded || coverageLoaded)) {
+      return {
+        score: fallbackScore,
+        title: formatProjectHealthTitle({
+          metadataScore: coverage,
+          validationScore: fallbackValidation,
+          coverage,
+          fallback: true
+        }),
+        fallback: true
+      };
+    }
+
+    return null;
+  }, [qualityScore, metadataScore, validationScore, coverage, issues, qualityLoaded, coverageLoaded]);
+
+  const metricsLoaded = qualityLoaded && coverageLoaded;
 
   return (
     <div className="kpi-section">
       <div className="kpi-featured">
-        {qualityScore !== null ? (
+        {healthPresentation ? (
           <ScoreRing
-            score={qualityScore}
+            score={healthPresentation.score}
             size={88}
-            label="Quality"
-            title="Metadata completeness and naming, adjusted for validation issues"
+            label="Health"
+            title={healthPresentation.title}
           />
+        ) : metricsLoaded ? (
+          <div className="kpi-featured-unavailable" aria-label="Project health unavailable">
+            <span>—</span>
+            <small>Health</small>
+          </div>
         ) : (
-          <div className="kpi-featured-skeleton" aria-label="Loading quality score" />
+          <div className="kpi-featured-skeleton" aria-label="Loading project health" />
         )}
       </div>
 

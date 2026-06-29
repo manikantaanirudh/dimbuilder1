@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 import { createProjectFromBlueprints } from "../projectBlueprints";
+import { scoreProjectQuality } from "../tier3/tier3Engine";
 import { createBaselinesRouter } from "./baselines";
 import { createBulkUpdatesRouter } from "./bulkUpdates";
 import { createChangeSetsRouter } from "./changeSets";
@@ -65,6 +66,25 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     res.json(await repos.projects.summary(project.id));
+  });
+
+  router.get("/:projectId/quality/scores", async (req, res) => {
+    const project = await repos.projects.get(req.params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const members = await repos.members.listByProject(project.id);
+    const rules = await repos.qualityRules.listByProject(project.id);
+    const issues = await repos.issues.listByProject(project.id);
+    const report = scoreProjectQuality(dimensions, members, rules, issues);
+
+    res.json({
+      overallScore: report.overallScore,
+      metadataScore: report.metadataScore,
+      validationScore: report.validationScore,
+      issueCount: issues.length,
+      dimensions: report.dimensions
+    });
   });
 
   router.use("/:projectId/snapshots", createSnapshotsRouter(deps));

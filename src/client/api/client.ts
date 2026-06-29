@@ -967,7 +967,13 @@ export function fetchHierarchyOptimizations(projectId: string) {
 // --- Quality Scoring (Feature 16) ---
 
 export function fetchQualityScores(projectId: string) {
-  return apiGet<{ overallScore: number; dimensions: Array<{ dimensionType: string; overallScore: number; completeness: number; naming: number; structure: number }> }>(`/projects/${projectId}/quality/scores`);
+  return apiGet<{
+    overallScore: number;
+    metadataScore?: number;
+    validationScore?: number;
+    issueCount?: number;
+    dimensions: Array<{ dimensionType: string; overallScore: number; completeness: number; naming: number; structure: number }>;
+  }>(`/projects/${projectId}/quality/scores`);
 }
 
 export function fetchQualityGates(projectId: string) {

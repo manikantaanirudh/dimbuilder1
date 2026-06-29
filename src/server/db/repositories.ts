@@ -276,7 +276,7 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
       async summary(projectId: string): Promise<DashboardSummary> {
         const dimensions = await this.getDimensions(projectId);
         const activeMembers = booleanValue(client.dialect, true);
-        const [dimensionCount, memberCount, relationshipCount, errorCount, warningCount] = await Promise.all([
+        const [dimensionCount, memberCount, relationshipCount, errorCount, warningCount, memberStats, relationshipStats] = await Promise.all([
           client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM dimensions WHERE project_id = ?", [projectId]),
           client.queryOne<{ count: number | string }>(`
             SELECT COUNT(*) AS count FROM dimension_members m
@@ -289,15 +289,38 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
             WHERE d.project_id = ?
           `, [projectId]),
           client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'error'", [projectId]),
-          client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'warning'", [projectId])
+          client.queryOne<{ count: number | string }>("SELECT COUNT(*) AS count FROM validation_issues WHERE project_id = ? AND severity = 'warning'", [projectId]),
+          client.query<{ dimension_id: string; member_count: number | string }>(`
+            SELECT d.id AS dimension_id, COUNT(m.id) AS member_count
+            FROM dimensions d
+            LEFT JOIN dimension_members m ON m.dimension_id = d.id AND m.is_active = ?
+            WHERE d.project_id = ?
+            GROUP BY d.id
+          `, [activeMembers, projectId]),
+          client.query<{ dimension_id: string; relationship_count: number | string }>(`
+            SELECT d.id AS dimension_id, COUNT(r.id) AS relationship_count
+            FROM dimensions d
+            LEFT JOIN dimension_relationships r ON r.dimension_id = d.id
+            WHERE d.project_id = ?
+            GROUP BY d.id
+          `, [projectId])
         ]);
+        const relationshipCountByDimension = new Map(
+          relationshipStats.map((row) => [row.dimension_id, Number(row.relationship_count ?? 0)])
+        );
+        const dimensionStats = memberStats.map((row) => ({
+          dimensionId: row.dimension_id,
+          memberCount: Number(row.member_count ?? 0),
+          relationshipCount: relationshipCountByDimension.get(row.dimension_id) ?? 0
+        }));
         return {
           totalDimensions: Number(dimensionCount?.count ?? 0),
           totalMembers: Number(memberCount?.count ?? 0),
           totalRelationships: Number(relationshipCount?.count ?? 0),
           validationErrors: Number(errorCount?.count ?? 0),
           validationWarnings: Number(warningCount?.count ?? 0),
-          recentDimensions: dimensions.slice(0, 5)
+          recentDimensions: dimensions.slice(0, 5),
+          dimensionStats
         };
       },
       async getDimensions(projectId: string): Promise<DimensionRecord[]> {
@@ -405,6 +428,16 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           WHERE d.project_id = ? AND m.is_active = ?
           ORDER BY d.sort_order, m.row_order
         `, [projectId, activeMembers]);
+        return rows.map(mapMember);
+      },
+      async findByProjectMemberKey(projectId: string, memberKey: string): Promise<DimensionMemberRecord[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT m.* FROM dimension_members m
+          JOIN dimensions d ON d.id = m.dimension_id
+          WHERE d.project_id = ? AND m.is_active = ? AND LOWER(TRIM(m.member_key)) = LOWER(TRIM(?))
+          ORDER BY d.sort_order, m.row_order
+        `, [projectId, activeMembers, memberKey]);
         return rows.map(mapMember);
       },
       async countByProject(projectId: string): Promise<number> {

@@ -185,3 +185,62 @@ export function formatCount(value: number): string {
   const rounded = Math.round((value / 1000) * 10) / 10;
   return `${rounded.toFixed(Number.isInteger(rounded) ? 0 : 1)}k`;
 }
+
+export function sortDimensionsForOverview(
+  dimensions: DimensionRecord[],
+  issueSummaryByDimensionId: Map<string, IssueSummary>,
+  prioritizeIssues: boolean
+): DimensionRecord[] {
+  const sorted = [...dimensions];
+  if (!prioritizeIssues) return sortDimensionsByType(sorted);
+
+  return sorted.sort((left, right) => {
+    const issueDelta = (issueSummaryByDimensionId.get(right.id)?.total ?? 0) - (issueSummaryByDimensionId.get(left.id)?.total ?? 0);
+    if (issueDelta !== 0) return issueDelta;
+    const [first] = sortDimensionsByType([left, right]);
+    return first.id === left.id ? -1 : 1;
+  });
+}
+
+const VALIDATION_HEALTH_PENALTY = { error: 8, warning: 3, info: 1 } as const;
+
+export function scoreValidationHealth(issues: ValidationIssue[]): number {
+  if (issues.length === 0) return 100;
+  let penalty = 0;
+  for (const issue of issues) {
+    if (issue.severity === "off") continue;
+    penalty += VALIDATION_HEALTH_PENALTY[issue.severity] ?? 0;
+  }
+  return Math.max(0, Math.min(100, Math.round(100 - Math.min(90, penalty))));
+}
+
+export function blendProjectHealthScores(metadataScore: number, validationScore: number): number {
+  if (metadataScore >= 100 && validationScore >= 100) return 100;
+  return Math.round(metadataScore * 0.35 + validationScore * 0.65);
+}
+
+export function computeProjectHealthFallback(coverage: number | null, issues: ValidationIssue[]): number | null {
+  const validationScore = scoreValidationHealth(issues);
+  if (coverage === null) return validationScore;
+  return blendProjectHealthScores(coverage, validationScore);
+}
+
+export function formatProjectHealthTitle({
+  metadataScore,
+  validationScore,
+  coverage,
+  fallback
+}: {
+  metadataScore?: number | null;
+  validationScore?: number | null;
+  coverage?: number | null;
+  fallback?: boolean;
+}): string {
+  const parts = [
+    metadataScore != null ? `Metadata ${metadataScore}%` : null,
+    validationScore != null ? `Validation ${validationScore}%` : null,
+    coverage != null ? `Coverage ${coverage}%` : null
+  ].filter(Boolean);
+  const detail = parts.length ? parts.join(" · ") : "Project health";
+  return fallback ? `${detail} (estimated)` : detail;
+}

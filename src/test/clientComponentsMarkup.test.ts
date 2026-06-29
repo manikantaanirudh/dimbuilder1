@@ -38,7 +38,8 @@ const summaryWithValidationCounts: DashboardSummary = {
   totalRelationships: 4500,
   validationErrors: 2,
   validationWarnings: 3,
-  recentDimensions: []
+  recentDimensions: [],
+  dimensionStats: []
 };
 
 function render(element: Parameters<typeof renderToStaticMarkup>[0]) {
@@ -135,6 +136,23 @@ describe("client component markup", () => {
     expect(markup).toContain("Preview YAML");
     expect(markup).toContain("Generate from current dimension");
     expect(markup).toContain("does not write config automatically");
+  });
+
+  it("renders per-dimension overview metrics in the dashboard list", () => {
+    const summary: DashboardSummary = {
+      ...summaryWithValidationCounts,
+      dimensionStats: [{
+        dimensionId: sampleScenarioDimension.id,
+        memberCount: 12,
+        relationshipCount: 8
+      }]
+    };
+    const markup = dashboardMarkup(defaultAppConfig, summary, sampleProject, [sampleScenarioDimension]);
+
+    expect(markup).toContain("dimension-list-header");
+    expect(markup).toContain("dimension-stats");
+    expect(markup).toContain(">12<");
+    expect(markup).toContain(">8<");
   });
 
   it("keeps dashboard readiness aligned with configured blocking severities", () => {

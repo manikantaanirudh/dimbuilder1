@@ -3,8 +3,8 @@ import { ArrowRight, Database, Search } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
 import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
-import { apiPatchJson } from "../api/client";
-import { buildIssueSummary } from "../ui/viewModel";
+import { apiPatchJson, fetchCoverageReport } from "../api/client";
+import { buildIssueSummary, formatCount, sortDimensionsForOverview } from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
 import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
@@ -42,8 +42,26 @@ export function Dashboard({
   const [renameError, setRenameError] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [dimSearch, setDimSearch] = useState("");
+  const [coverageByType, setCoverageByType] = useState<Map<string, number>>(new Map());
   const [disclosureOpen, setDisclosureOpen] = useState(() => localStorage.getItem(DISCLOSURE_KEY) === "open");
   const dimSearchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!project) {
+      setCoverageByType(new Map());
+      return;
+    }
+    let cancelled = false;
+    void fetchCoverageReport(project.id)
+      .then((report) => {
+        if (cancelled) return;
+        setCoverageByType(new Map(report.dimensions.map((entry) => [entry.dimensionType, entry.propertyCoverage])));
+      })
+      .catch(() => {
+        if (!cancelled) setCoverageByType(new Map());
+      });
+    return () => { cancelled = true; };
+  }, [project?.id, issueSummary.total]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -66,15 +84,25 @@ export function Dashboard({
     return map;
   }, [dimensions, issues, appConfig.validation.exportBlockedBySeverities]);
 
+  const dimensionStatsMap = useMemo(() => {
+    const map = new Map<string, { memberCount: number; relationshipCount: number }>();
+    for (const stat of summary?.dimensionStats ?? []) {
+      map.set(stat.dimensionId, { memberCount: stat.memberCount, relationshipCount: stat.relationshipCount });
+    }
+    return map;
+  }, [summary?.dimensionStats]);
+
   const filteredDimensions = useMemo(() => {
-    if (!dimSearch.trim()) return dimensions;
-    const query = dimSearch.toLowerCase();
-    return dimensions.filter((dim) => {
-      const label = getDimensionDisplayLabel(dim, dimensionDisplayConfig).toLowerCase();
-      const subtitle = getDimensionDisplaySubtitle(dim, dimensionDisplayConfig).toLowerCase();
-      return label.includes(query) || subtitle.includes(query);
-    });
-  }, [dimensions, dimSearch, dimensionDisplayConfig]);
+    const query = dimSearch.trim().toLowerCase();
+    const scoped = !query
+      ? dimensions
+      : dimensions.filter((dim) => {
+          const label = getDimensionDisplayLabel(dim, dimensionDisplayConfig).toLowerCase();
+          const subtitle = getDimensionDisplaySubtitle(dim, dimensionDisplayConfig).toLowerCase();
+          return label.includes(query) || subtitle.includes(query);
+        });
+    return sortDimensionsForOverview(scoped, dimensionIssueMap, issueSummary.total > 0);
+  }, [dimensions, dimSearch, dimensionDisplayConfig, dimensionIssueMap, issueSummary.total]);
 
   async function handleRename() {
     if (!project || !editName.trim() || editName.trim() === project.name) {
@@ -184,13 +212,37 @@ export function Dashboard({
 
           {filteredDimensions.length ? (
             <div className="dimension-list">
+              <div className="dimension-list-header" aria-hidden="true">
+                <span>Dimension</span>
+                <span className="dimension-stats">
+                  <span className="dimension-stat">Members</span>
+                  <span className="dimension-stat">Rels</span>
+                  <span className="dimension-stat">Coverage</span>
+                </span>
+                <span>Status</span>
+                <span />
+              </div>
               {filteredDimensions.map((dimension) => {
                 const dimensionIssues = dimensionIssueMap.get(dimension.id) ?? { errors: 0, warnings: 0, infos: 0, total: 0, blocksExport: false };
+                const stats = dimensionStatsMap.get(dimension.id) ?? { memberCount: 0, relationshipCount: 0 };
+                const coverage = coverageByType.get(dimension.dimensionType);
+                const statsLabel = [
+                  `${formatCount(stats.memberCount)} members`,
+                  `${formatCount(stats.relationshipCount)} relationships`,
+                  coverage !== undefined ? `${coverage}% coverage` : null
+                ].filter(Boolean).join(", ");
                 return (
                   <button className="dimension-row" key={dimension.id} onClick={() => onOpenDimension(dimension.id)}>
                     <span>
                       <b>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</b>
                       <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
+                    </span>
+                    <span className="dimension-stats" aria-label={statsLabel}>
+                      <span className="dimension-stat" title="Members">{formatCount(stats.memberCount)}</span>
+                      <span className="dimension-stat" title="Relationships">{formatCount(stats.relationshipCount)}</span>
+                      <span className="dimension-stat" title="Property coverage">
+                        {coverage !== undefined ? `${coverage}%` : "—"}
+                      </span>
                     </span>
                     <StatusBadge tone={dimensionIssues.errors ? "danger" : dimensionIssues.warnings ? "warning" : "success"}>
                       {dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}

@@ -1213,14 +1213,34 @@ svg {
   gap: var(--space-sm);
 }
 
+.dimension-list-header,
 .dimension-row {
   width: 100%;
   min-width: 0;
-  min-height: 54px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 18px;
+  grid-template-columns: minmax(0, 1fr) 148px auto 18px;
   align-items: center;
   gap: 12px;
+}
+
+.dimension-list-header {
+  padding: 0 12px 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dimension-list-header .dimension-stats {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dimension-row {
+  min-height: 54px;
   padding: 10px 12px;
   color: var(--text);
   background: var(--surface);
@@ -1259,6 +1279,21 @@ svg {
 .dimension-stats {
   color: var(--muted);
   font-size: 12px;
+}
+
+.dimension-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dimension-stat {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace {
@@ -3219,8 +3254,16 @@ svg {
     flex-direction: column;
   }
 
+  .dimension-list-header {
+    display: none;
+  }
+
   .dimension-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dimension-row .dimension-stats {
+    display: none;
   }
 
   .dimension-row > svg {
@@ -3489,6 +3532,9 @@ svg {
 .kpi-section { display: flex; align-items: center; gap: var(--space-lg); padding: var(--space-md) 0; }
 .kpi-featured { flex: 0 0 auto; }
 .kpi-featured-skeleton { width: 88px; height: 88px; border-radius: 50%; background: var(--surface-muted); animation: kpi-pulse 1.5s ease-in-out infinite; }
+.kpi-featured-unavailable { width: 88px; height: 88px; border-radius: 50%; border: 1px dashed var(--border-strong); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); }
+.kpi-featured-unavailable span { font-size: 24px; font-weight: 700; line-height: 1; }
+.kpi-featured-unavailable small { margin-top: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .kpi-metrics { display: flex; gap: var(--space-xl); flex-wrap: wrap; }
 .kpi-metric { display: flex; align-items: center; gap: var(--space-sm); }
 .kpi-metric-icon { color: var(--muted); flex: 0 0 auto; }

@@ -49,9 +49,26 @@ describe("module-gated API routes", () => {
     expect(res.status).toBe(404);
   });
 
-  it("does not mount reporting routes when platformExtras is disabled", async () => {
+  it("keeps quality score routes available when tier3 modules are disabled", async () => {
+    const createRes = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Quality Route Project" })
+    });
+    expect(createRes.status).toBe(201);
+    const project = await createRes.json() as { id: string };
+
+    const res = await fetch(`${baseUrl}/api/projects/${project.id}/quality/scores`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { overallScore: number; metadataScore: number; validationScore: number };
+    expect(body.overallScore).toBeGreaterThanOrEqual(0);
+    expect(body.metadataScore).toBeGreaterThanOrEqual(0);
+    expect(body.validationScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it("keeps reporting routes available when platformExtras is disabled", async () => {
     const res = await fetch(`${baseUrl}/api/reports/definitions`);
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
   });
 });
 
