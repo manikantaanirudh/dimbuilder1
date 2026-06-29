@@ -368,6 +368,75 @@ describe("AI Natural Language Query", () => {
   it("returns low-confidence result for unparseable questions", () => {
     const result = parseAndExecuteQuery({ question: "What is the meaning of life?", dimensions, members, relationships });
     expect(result.confidence).toBeLessThanOrEqual(0.3);
+    expect(result.intent).toBe("unknown");
+    expect(result.followUps?.length).toBeGreaterThan(0);
+  });
+
+  it("'How many leaf members in Account?' returns leaf count", () => {
+    const result = parseAndExecuteQuery({ question: "How many leaf members in Account?", dimensions, members, relationships });
+    expect(result.intent).toBe("leaf_count");
+    expect(result.answer).toContain("3 leaf member");
+    expect(result.matchedMembers).toContain("Revenue_Domestic");
+    expect(result.confidence).toBe(1.0);
+  });
+
+  it("'What is the max hierarchy depth in Account?' reports depth stats", () => {
+    const result = parseAndExecuteQuery({ question: "What is the max hierarchy depth in Account?", dimensions, members, relationships });
+    expect(result.intent).toBe("hierarchy_depth");
+    expect(result.answer.toLowerCase()).toContain("depth");
+    expect(result.evidence?.length).toBeGreaterThan(0);
+  });
+
+  it("'Which dimensions are empty?' uses project context", () => {
+    const result = parseAndExecuteQuery({
+      question: "Which dimensions are empty?",
+      dimensions,
+      members,
+      relationships,
+      context: {
+        projectName: "Demo",
+        dimensionCount: 2,
+        memberCount: 5,
+        relationshipCount: 4,
+        dimensions: [
+          { dimensionType: "Account", dimensionName: "Account", memberCount: 5 },
+          { dimensionType: "Entity", dimensionName: "Entity", memberCount: 0 }
+        ],
+        validation: { totalIssues: 0, blockingIssues: 0, errors: 0, warnings: 0, infos: 0 },
+        topIssues: [],
+        exportReady: true,
+        issuesByDimension: [],
+        coverage: { overallPercent: 80, dimensions: [] }
+      }
+    });
+    expect(result.intent).toBe("empty_dimensions");
+    expect(result.answer).toContain("Entity");
+  });
+
+  it("'What is the metadata coverage?' reports coverage from context", () => {
+    const result = parseAndExecuteQuery({
+      question: "What is the metadata coverage?",
+      dimensions,
+      members,
+      relationships,
+      context: {
+        projectName: "Demo",
+        dimensionCount: 1,
+        memberCount: 5,
+        relationshipCount: 4,
+        dimensions: [{ dimensionType: "Account", dimensionName: "Account", memberCount: 5 }],
+        validation: { totalIssues: 0, blockingIssues: 0, errors: 0, warnings: 0, infos: 0 },
+        topIssues: [],
+        exportReady: true,
+        issuesByDimension: [],
+        coverage: {
+          overallPercent: 88,
+          dimensions: [{ dimensionType: "Account", dimensionName: "Account", propertyCoverage: 85, descriptionCoverage: 91, isStale: false }]
+        }
+      }
+    });
+    expect(result.intent).toBe("coverage");
+    expect(result.answer).toContain("88%");
   });
 });
 
@@ -384,14 +453,20 @@ describe("AI Natural Language Query with project context", () => {
     dimensions: [{ dimensionType: "Account", dimensionName: "Account", memberCount: 2 }],
     validation: { totalIssues: 0, blockingIssues: 0, errors: 0, warnings: 0, infos: 0 },
     topIssues: [],
-    exportReady: true
+    exportReady: true,
+    issuesByDimension: [],
+    coverage: {
+      overallPercent: 92,
+      dimensions: [{ dimensionType: "Account", dimensionName: "Account", propertyCoverage: 90, descriptionCoverage: 94, isStale: false }]
+    }
   };
 
   const blockedContext = {
     ...cleanContext,
     validation: { totalIssues: 3, blockingIssues: 2, errors: 2, warnings: 1, infos: 0 },
     topIssues: [{ code: "MEMBER_KEY_REQUIRED", count: 2, message: "Member key is required." }],
-    exportReady: false
+    exportReady: false,
+    issuesByDimension: [{ dimensionType: "Account", dimensionName: "Account", totalCount: 3, errors: 2, warnings: 1 }]
   };
 
   it("'Summarize my project' uses context counts and health", () => {

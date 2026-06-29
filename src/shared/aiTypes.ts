@@ -71,6 +71,10 @@ export interface NLQueryResult {
   matchedMembers: string[];
   query: string;
   confidence: number;
+  intent?: string;
+  intentLabel?: string;
+  evidence?: string[];
+  followUps?: string[];
 }
 
 export interface ChatResponse {

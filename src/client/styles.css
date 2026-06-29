@@ -3583,6 +3583,22 @@ svg {
 .chat-input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .chat-typing span { animation: none; opacity: 0.5; } }
 
+/* Project queries panel */
+.query-panel .chat-header { align-items: flex-start; }
+.query-header-subtitle { margin: 0.15rem 0 0; font-size: 12px; color: var(--muted); font-weight: 400; }
+.query-welcome p { max-width: 36rem; margin-left: auto; margin-right: auto; }
+.query-user-text { margin: 0; font-size: 14px; line-height: 1.5; }
+.query-answer-card { display: flex; flex-direction: column; gap: 0.5rem; }
+.query-intent-badge { align-self: flex-start; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 2px 8px; border-radius: 999px; }
+.query-answer-body { display: flex; flex-direction: column; gap: 0.25rem; }
+.query-answer-line, .query-answer-detail { margin: 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.query-answer-detail { color: var(--muted); padding-left: 0.25rem; }
+.query-evidence, .query-followups, .query-members { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.25rem; }
+.query-evidence-label, .query-followups-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.query-evidence-chips, .query-followups-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip-muted { background: var(--surface-muted); color: var(--muted); border: 1px solid var(--border); }
+.query-confidence-hint { margin: 0.25rem 0 0; font-size: 12px; color: var(--warning); }
+
 /* Clickable Summary Cards */
 .clickable-card { cursor: pointer; transition: transform var(--transition-fast), box-shadow var(--transition-fast), outline-color var(--transition-fast); outline: 2px solid transparent; }
 .clickable-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }

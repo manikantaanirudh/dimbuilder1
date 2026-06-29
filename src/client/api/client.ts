@@ -1151,7 +1151,7 @@ export function queryProjectAssistant(projectId: string, question: string) {
 }
 
 export function queryNaturalLanguage(projectId: string, question: string) {
-  return apiPost<{ answer: string; matchedMembers: string[]; query: string; confidence: number }>(
+  return apiPost<import("../../shared/aiTypes").NLQueryResult>(
     `/projects/${projectId}/ai/query`,
     { question }
   );
