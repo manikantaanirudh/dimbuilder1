@@ -1218,9 +1218,14 @@ svg {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 148px auto 18px;
+  grid-template-columns: minmax(200px, max-content) 172px auto 20px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.dimension-list-header > span:first-child,
+.dimension-row > span:first-child {
+  max-width: min(520px, 48vw);
 }
 
 .dimension-list-header {
@@ -1283,10 +1288,21 @@ svg {
 
 .dimension-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(44px, 1fr));
+  gap: 10px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  justify-self: start;
+}
+
+.dimension-row > .status-badge,
+.dimension-list-header > span:nth-child(3) {
+  justify-self: start;
+}
+
+.dimension-row > svg {
+  justify-self: end;
+  color: var(--muted);
 }
 
 .dimension-stat {

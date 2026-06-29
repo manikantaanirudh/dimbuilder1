@@ -215,9 +215,9 @@ export function Dashboard({
               <div className="dimension-list-header" aria-hidden="true">
                 <span>Dimension</span>
                 <span className="dimension-stats">
-                  <span className="dimension-stat">Members</span>
-                  <span className="dimension-stat">Rels</span>
-                  <span className="dimension-stat">Coverage</span>
+                  <span className="dimension-stat">Mem</span>
+                  <span className="dimension-stat">Rel</span>
+                  <span className="dimension-stat">Cov</span>
                 </span>
                 <span>Status</span>
                 <span />
