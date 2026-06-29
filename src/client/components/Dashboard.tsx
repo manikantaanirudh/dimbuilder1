@@ -211,16 +211,14 @@ export function Dashboard({
           )}
 
           {filteredDimensions.length ? (
-            <div className="dimension-list">
-              <div className="dimension-list-header" aria-hidden="true">
-                <span>Dimension</span>
-                <span className="dimension-stats">
-                  <span className="dimension-stat">Mem</span>
-                  <span className="dimension-stat">Rel</span>
-                  <span className="dimension-stat">Cov</span>
-                </span>
-                <span>Status</span>
-                <span />
+            <div className="dimension-list" role="table" aria-label="Project dimensions">
+              <div className="dimension-list-header" role="row" aria-hidden="true">
+                <span role="columnheader">Dimension</span>
+                <span className="dimension-metric-head" role="columnheader">Mem</span>
+                <span className="dimension-metric-head" role="columnheader">Rel</span>
+                <span className="dimension-metric-head" role="columnheader">Cov</span>
+                <span role="columnheader">Status</span>
+                <span role="columnheader" aria-hidden="true" />
               </div>
               {filteredDimensions.map((dimension) => {
                 const dimensionIssues = dimensionIssueMap.get(dimension.id) ?? { errors: 0, warnings: 0, infos: 0, total: 0, blocksExport: false };
@@ -232,22 +230,30 @@ export function Dashboard({
                   coverage !== undefined ? `${coverage}% coverage` : null
                 ].filter(Boolean).join(", ");
                 return (
-                  <button className="dimension-row" key={dimension.id} onClick={() => onOpenDimension(dimension.id)}>
-                    <span>
+                  <button
+                    className="dimension-row"
+                    key={dimension.id}
+                    role="row"
+                    aria-label={`${getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}. ${statsLabel}. ${dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}.`}
+                    onClick={() => onOpenDimension(dimension.id)}
+                  >
+                    <span className="dimension-label" role="cell">
                       <b>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</b>
                       <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
                     </span>
-                    <span className="dimension-stats" aria-label={statsLabel}>
-                      <span className="dimension-stat" title="Members">{formatCount(stats.memberCount)}</span>
-                      <span className="dimension-stat" title="Relationships">{formatCount(stats.relationshipCount)}</span>
-                      <span className="dimension-stat" title="Property coverage">
-                        {coverage !== undefined ? `${coverage}%` : "—"}
-                      </span>
+                    <span className="dimension-metric" role="cell" title="Members">{formatCount(stats.memberCount)}</span>
+                    <span className="dimension-metric" role="cell" title="Relationships">{formatCount(stats.relationshipCount)}</span>
+                    <span className="dimension-metric" role="cell" title="Property coverage">
+                      {coverage !== undefined ? `${coverage}%` : "—"}
                     </span>
-                    <StatusBadge tone={dimensionIssues.errors ? "danger" : dimensionIssues.warnings ? "warning" : "success"}>
-                      {dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}
-                    </StatusBadge>
-                    <ArrowRight size={16} />
+                    <span className="dimension-status" role="cell">
+                      <StatusBadge tone={dimensionIssues.errors ? "danger" : dimensionIssues.warnings ? "warning" : "success"}>
+                        {dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}
+                      </StatusBadge>
+                    </span>
+                    <span className="dimension-row-action" role="cell" aria-hidden="true">
+                      <ArrowRight size={16} />
+                    </span>
                   </button>
                 );
               })}

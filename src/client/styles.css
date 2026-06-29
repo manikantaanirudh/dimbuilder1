@@ -1209,27 +1209,33 @@ svg {
 }
 
 .dimension-list {
+  --dimension-metric-col: 76px;
+  --dimension-status-col: 120px;
+  --dimension-action-col: 28px;
   display: grid;
-  gap: var(--space-sm);
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--dimension-metric-col)
+    var(--dimension-metric-col)
+    var(--dimension-metric-col)
+    minmax(var(--dimension-status-col), max-content)
+    var(--dimension-action-col);
+  column-gap: 20px;
+  row-gap: 8px;
+  align-items: center;
 }
 
 .dimension-list-header,
 .dimension-row {
-  width: 100%;
-  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(200px, max-content) 172px auto 20px minmax(0, 1fr);
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 16px;
-}
-
-.dimension-list-header > span:first-child,
-.dimension-row > span:first-child {
-  max-width: min(520px, 48vw);
+  min-width: 0;
 }
 
 .dimension-list-header {
-  padding: 0 12px 2px;
+  padding: 0 12px 4px;
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
@@ -1237,11 +1243,10 @@ svg {
   text-transform: uppercase;
 }
 
-.dimension-list-header .dimension-stats {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.dimension-metric-head,
+.dimension-metric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .dimension-row {
@@ -1260,7 +1265,7 @@ svg {
   border-color: var(--border-strong);
 }
 
-.dimension-row > span,
+.dimension-label,
 .dimension-meta {
   min-width: 0;
   display: grid;
@@ -1280,36 +1285,26 @@ svg {
   font-size: 14px;
 }
 
-.dimension-row small,
-.dimension-stats {
+.dimension-row small {
   color: var(--muted);
   font-size: 12px;
 }
 
-.dimension-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(44px, 1fr));
-  gap: 10px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+.dimension-metric {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dimension-status {
   justify-self: start;
 }
 
-.dimension-row > .status-badge,
-.dimension-list-header > span:nth-child(3) {
-  justify-self: start;
-}
-
-.dimension-row > svg {
-  justify-self: end;
+.dimension-row-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   color: var(--muted);
-}
-
-.dimension-stat {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .workspace {
@@ -3270,19 +3265,20 @@ svg {
     flex-direction: column;
   }
 
+  .dimension-list {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, max-content) var(--dimension-action-col);
+  }
+
   .dimension-list-header {
     display: none;
   }
 
-  .dimension-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .dimension-row .dimension-stats {
+  .dimension-metric-head,
+  .dimension-row .dimension-metric {
     display: none;
   }
 
-  .dimension-row > svg {
+  .dimension-row-action {
     display: none;
   }
 

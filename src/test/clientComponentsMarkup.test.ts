@@ -150,7 +150,7 @@ describe("client component markup", () => {
     const markup = dashboardMarkup(defaultAppConfig, summary, sampleProject, [sampleScenarioDimension]);
 
     expect(markup).toContain("dimension-list-header");
-    expect(markup).toContain("dimension-stats");
+    expect(markup).toContain("dimension-metric");
     expect(markup).toContain(">12<");
     expect(markup).toContain(">8<");
   });
