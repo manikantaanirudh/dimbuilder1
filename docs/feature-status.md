@@ -9,7 +9,7 @@ Feature availability is controlled by `config/dimbuilder.yaml` (`modules`, `ai`,
 | **core** | Projects, dimensions, import/export, validation, diff, change sets, release packages, ACM handoff, XD X-Ray, POV simulator, artifact impact | On (always mounted) |
 | **advanced** | Workflows, snapshots, readiness score, XML round-trip check, audit log | On (`features.*`) |
 | **experimental** | Mock environment handoff tracking, ERP connectors, migration cockpit, tier3 Excel add-in | Off (`modules.environmentManagement`, `modules.platformExtras`) |
-| **platform** | Multi-tenancy, API keys, webhooks, offline sync, scheduler, VCS, reporting stubs | Off (`modules.*`) |
+| **platform** | Multi-tenancy, API keys, webhooks, offline sync, scheduler, VCS | Off (`modules.*`) |
 | **disabled** | Direct OneStream write-back, stub compliance metrics | Off + hidden |
 
 ## Module flags (`config.modules`)
@@ -22,7 +22,7 @@ Feature availability is controlled by `config/dimbuilder.yaml` (`modules`, `ai`,
 | `apiPlatform` | Tier3 API keys, webhooks, Excel add-in API | `false` |
 | `multiTenancy` | Tier4 tenant APIs | `false` |
 | `scheduler` | In-process scheduled jobs (if started) | `false` |
-| `platformExtras` | Reporting, VCS, extensibility, templates, migration cockpit routes | `false` |
+| `platformExtras` | VCS, extensibility, templates, migration cockpit routes | `false` |
 
 ## AI (`config.ai`)
 

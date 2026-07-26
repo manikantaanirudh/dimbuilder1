@@ -334,7 +334,6 @@ Impacted files:
 - `src/client/api/client.ts`
 - `src/client/components/BulkUpdatePanel.tsx`
 - `src/client/components/DimensionWorkspace.tsx`
-'
 
 ## 2026-07-26: Preserve A Client API Compatibility Barrel During Domain Refactor
 
@@ -353,4 +352,3 @@ Impacted files:
 - `tsconfig.json`
 - `vite.config.ts`
 - `vitest.config.ts`
-'

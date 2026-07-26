@@ -89,10 +89,11 @@ export function registerApiRoutes(
     app.use("/api", createAIRouter(repos, config));
   }
 
+  app.use("/api/reports", createReportingRouter(repos, config));
+
   if (modules.platformExtras) {
     app.use("/api", createCrossDimensionRouter(repos, config));
     app.use("/api/templates", createTemplateRouter(repos, config));
-    app.use("/api/reports", createReportingRouter(repos, config));
     app.use("/api", createVcsRouter(repos, config));
     app.use("/api", createExtensibilityRouter(repos, config));
   }

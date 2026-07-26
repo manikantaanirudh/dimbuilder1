@@ -76,12 +76,11 @@ Coverage uses `@vitest/coverage-v8` with thresholds of 60% lines and 50% branche
 npm.cmd run build
 ```
 
-'The build command runs TypeScript and then Vite.
+The build command runs TypeScript and then Vite.
 
 ### Source Aliases
 
 Client, server, and shared imports may use the configured aliases `@client/*`, `@server/*`, and `@shared/*`. Vite, Vitest, and TypeScript share these mappings.
-'
 
 ## Documentation Check
 

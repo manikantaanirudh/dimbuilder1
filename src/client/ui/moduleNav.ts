@@ -62,7 +62,6 @@ export function showSecondaryNavItem(
 ): boolean {
   const resolved = resolvedModules(modules);
   const chatOn = resolved.chatAssistant && (options.aiEnabled ?? false);
-  if (value === "__reporting__") return resolved.platformExtras;
   if (value === "__quality__") return resolved.platformExtras;
   if (value === "__project_assistant__") return chatOn;
   return true;
