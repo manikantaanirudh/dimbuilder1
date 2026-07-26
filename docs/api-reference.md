@@ -1,6 +1,6 @@
 # API Reference
 
-The Express app mounts API routes under `/api`. Client helper functions live in `src/client/api/client.ts`.
+The Express app mounts API routes under `/api`. `src/client/api/client.ts` remains the compatibility barrel for client helper imports, while implementations are grouped by domain under `src/client/api/`. Existing imports through the barrel remain supported.
 
 ## Cross-Cutting Concerns
 

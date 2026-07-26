@@ -334,3 +334,23 @@ Impacted files:
 - `src/client/api/client.ts`
 - `src/client/components/BulkUpdatePanel.tsx`
 - `src/client/components/DimensionWorkspace.tsx`
+'
+
+## 2026-07-26: Preserve A Client API Compatibility Barrel During Domain Refactor
+
+Decision:
+
+Organize browser API implementations into domain modules while retaining `src/client/api/client.ts` as a compatibility barrel.
+
+Rationale:
+
+The overview branch contains newer query, assistant, quality, audit, and dimension-metrics behavior. Keeping the existing import surface avoids a broad consumer migration while allowing new code to depend on focused modules. No HTTP routes or response contracts change.
+
+Impacted files:
+
+- `src/client/api/client.ts`
+- `src/client/api/*.ts`
+- `tsconfig.json`
+- `vite.config.ts`
+- `vitest.config.ts`
+'

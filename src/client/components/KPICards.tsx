@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, AlertTriangle, Users, Layers, GitFork } from "lucide-react";
-import { fetchQualityScores, fetchCoverageReport } from "../api/client";
+import { fetchQualityScores } from "../api/client";
+import { fetchCoverageReport } from "../api/reports";
 import { ScoreRing } from "./ScoreRing";
 import type { DashboardSummary, Severity, ValidationIssue } from "../../shared/types";
 import {

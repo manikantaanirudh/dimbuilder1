@@ -1,5 +1,9 @@
 # Implementation Map
 
+## Client API Organization
+
+src/client/api/client.ts is the compatibility barrel. New client API implementations are grouped by domain in src/client/api/; existing feature code may continue importing through the barrel.
+
 This map links behavior to source files.
 
 ## App Startup

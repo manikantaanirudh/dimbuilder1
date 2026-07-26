@@ -31,7 +31,7 @@ The client lives under `src/client`.
 - `components/AppShell.tsx` owns the top command bar, project context, sidebar navigation, modal orchestration, and active workspace routing.
 - `components/DimensionWorkspace.tsx` hosts members, relationships, hierarchy, metadata, varying properties, bulk updates, compare, change sets, issues, and XML preview tabs.
 - `components/EditableGrid.tsx` handles editable members and relationships.
-- `api/client.ts` is the single browser API client.
+- `api/client.ts` remains the compatibility barrel for browser API helpers; domain implementations are organized in `api/core.ts`, `auth.ts`, `reports.ts`, `workflows.ts`, and the other domain modules.
 - `state/useProjectStore.ts` loads projects, dimensions, summaries, and issues.
 - `ui/viewModel.ts` keeps UI derivation logic testable outside React.
 
