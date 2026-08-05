@@ -1,17 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
-import { TrendingUp, AlertTriangle, Users, Layers, GitFork } from "lucide-react";
+import {
+  TrendingUp,
+  AlertTriangle,
+  Users,
+  Layers,
+  GitFork,
+} from "lucide-react";
 import { fetchQualityScores } from "../api/client";
 import { fetchCoverageReport } from "../api/reports";
 import { ScoreRing } from "./ScoreRing";
-import type { DashboardSummary, Severity, ValidationIssue } from "../../shared/types";
+import type {
+  DashboardSummary,
+  Severity,
+  ValidationIssue,
+} from "../../shared/types";
 import {
   buildIssueSummary,
   computeProjectHealthFallback,
   formatProjectHealthTitle,
-  scoreValidationHealth
+  scoreValidationHealth,
 } from "../ui/viewModel";
 
-export function KPICards({ projectId, summary, issues, blockedSeverities, dimensionCount }: {
+export function KPICards({
+  projectId,
+  summary,
+  issues,
+  blockedSeverities,
+  dimensionCount,
+}: {
   projectId: string;
   summary: DashboardSummary | null;
   issues: ValidationIssue[];
@@ -38,7 +54,7 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
     async function load() {
       const [qualityResult, coverageResult] = await Promise.allSettled([
         fetchQualityScores(projectId),
-        fetchCoverageReport(projectId)
+        fetchCoverageReport(projectId),
       ]);
 
       if (cancelled) return;
@@ -46,7 +62,9 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
       if (qualityResult.status === "fulfilled") {
         setQualityScore(qualityResult.value.overallScore);
         setMetadataScore(qualityResult.value.metadataScore ?? null);
-        setValidationScore(qualityResult.value.validationScore ?? scoreValidationHealth(issues));
+        setValidationScore(
+          qualityResult.value.validationScore ?? scoreValidationHealth(issues),
+        );
       }
       setQualityLoaded(true);
 
@@ -57,7 +75,9 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
     }
 
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, issueSummary.total, issues]);
 
   const healthPresentation = useMemo(() => {
@@ -71,9 +91,9 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
         title: formatProjectHealthTitle({
           metadataScore: metadataScore ?? undefined,
           validationScore: fallbackValidation,
-          coverage
+          coverage,
         }),
-        fallback: false
+        fallback: false,
       };
     }
 
@@ -84,14 +104,22 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
           metadataScore: coverage,
           validationScore: fallbackValidation,
           coverage,
-          fallback: true
+          fallback: true,
         }),
-        fallback: true
+        fallback: true,
       };
     }
 
     return null;
-  }, [qualityScore, metadataScore, validationScore, coverage, issues, qualityLoaded, coverageLoaded]);
+  }, [
+    qualityScore,
+    metadataScore,
+    validationScore,
+    coverage,
+    issues,
+    qualityLoaded,
+    coverageLoaded,
+  ]);
 
   const metricsLoaded = qualityLoaded && coverageLoaded;
 
@@ -106,37 +134,69 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
             title={healthPresentation.title}
           />
         ) : metricsLoaded ? (
-          <div className="kpi-featured-unavailable" aria-label="Project health unavailable">
+          <div
+            className="kpi-featured-unavailable"
+            aria-label="Project health unavailable"
+          >
             <span>—</span>
             <small>Health</small>
           </div>
         ) : (
-          <div className="kpi-featured-skeleton" aria-label="Loading project health" />
+          <div
+            className="kpi-featured-skeleton"
+            aria-label="Loading project health"
+          />
         )}
       </div>
 
       <div className="kpi-metrics">
         <div className="kpi-metric">
           <Layers size={16} className="kpi-metric-icon" />
-          <span className="kpi-metric-value">{summary?.totalDimensions ?? dimensionCount}</span>
-          <span className="kpi-metric-label" title="Number of configured dimension types in this project">Dimensions</span>
+          <span className="kpi-metric-value">
+            {summary?.totalDimensions ?? dimensionCount}
+          </span>
+          <span
+            className="kpi-metric-label"
+            title="Number of configured dimension types in this project"
+          >
+            Dimensions
+          </span>
         </div>
         <div className="kpi-metric">
           <Users size={16} className="kpi-metric-icon" />
           <span className="kpi-metric-value">{summary?.totalMembers ?? 0}</span>
-          <span className="kpi-metric-label" title="Total member records across all dimensions">Members</span>
+          <span
+            className="kpi-metric-label"
+            title="Total member records across all dimensions"
+          >
+            Members
+          </span>
         </div>
         <div className="kpi-metric">
           <GitFork size={16} className="kpi-metric-icon" />
-          <span className="kpi-metric-value">{summary?.totalRelationships ?? 0}</span>
-          <span className="kpi-metric-label" title="Parent-child relationships between members">Relationships</span>
+          <span className="kpi-metric-value">
+            {summary?.totalRelationships ?? 0}
+          </span>
+          <span
+            className="kpi-metric-label"
+            title="Parent-child relationships between members"
+          >
+            Relationships
+          </span>
         </div>
         <div className="kpi-metric">
           <AlertTriangle size={16} className="kpi-metric-icon" />
-          <span className={`kpi-metric-value ${issueSummary.total > 0 ? "kpi-danger" : "kpi-success"}`}>
+          <span
+            className={`kpi-metric-value ${issueSummary.total > 0 ? "kpi-danger" : "kpi-success"}`}
+          >
             {issueSummary.total}
           </span>
-          <span className="kpi-metric-label" title="Validation errors and warnings that need attention">Issues</span>
+          <span
+            className="kpi-metric-label"
+            title="Validation errors that need attention"
+          >
+            Errors
+          </span>
         </div>
         <div className="kpi-metric">
           <TrendingUp size={16} className="kpi-metric-icon" />
@@ -145,7 +205,12 @@ export function KPICards({ projectId, summary, issues, blockedSeverities, dimens
           ) : (
             <span className="kpi-metric-value kpi-skeleton">&nbsp;</span>
           )}
-          <span className="kpi-metric-label" title="Percentage of required member properties that are filled">Coverage</span>
+          <span
+            className="kpi-metric-label"
+            title="Percentage of required member properties that are filled"
+          >
+            Coverage
+          </span>
         </div>
       </div>
     </div>

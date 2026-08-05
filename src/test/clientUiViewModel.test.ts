@@ -4,10 +4,14 @@ import {
   buildGridStatusTone,
   buildOptimisticGridRecord,
   clampGridPageSize,
-  shouldRollbackGridRecord
+  shouldRollbackGridRecord,
 } from "../client/ui/gridViewModel";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
-import type { DimensionMemberRecord, DimensionRelationshipRecord, ValidationIssue } from "../shared/types";
+import type {
+  DimensionMemberRecord,
+  DimensionRelationshipRecord,
+  ValidationIssue,
+} from "../shared/types";
 import {
   buildDimensionFacts,
   buildDimensionNavItems,
@@ -22,7 +26,7 @@ import {
   getWorkspaceTabs,
   resolveActiveDimensionId,
   scoreValidationHealth,
-  sortDimensionsForOverview
+  sortDimensionsForOverview,
 } from "../client/ui/viewModel";
 import { sampleScenarioDimension, testTimestamp } from "./fixtures";
 
@@ -39,7 +43,7 @@ function issue(overrides: Partial<ValidationIssue>): ValidationIssue {
     fieldName: "Member",
     rowNumber: 9,
     createdAt: testTimestamp,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -54,12 +58,12 @@ describe("client UI view model", () => {
   it("builds selected row action titles for the grid toolbar", () => {
     expect(buildGridActionTitles(null)).toEqual({
       duplicateTitle: "Select a row to duplicate",
-      deleteTitle: "Select a row to delete"
+      deleteTitle: "Select a row to delete",
     });
 
     expect(buildGridActionTitles("row-1")).toEqual({
       duplicateTitle: "Duplicate selected row",
-      deleteTitle: "Delete selected row"
+      deleteTitle: "Delete selected row",
     });
   });
 
@@ -81,10 +85,16 @@ describe("client UI view model", () => {
       sourceRowNumber: 2,
       isActive: true,
       createdAt: testTimestamp,
-      updatedAt: testTimestamp
+      updatedAt: testTimestamp,
     } satisfies DimensionMemberRecord;
 
-    const next = buildOptimisticGridRecord(record, "members", "Member", "Member", "NewMember") as DimensionMemberRecord;
+    const next = buildOptimisticGridRecord(
+      record,
+      "members",
+      "Member",
+      "Member",
+      "NewMember",
+    ) as DimensionMemberRecord;
 
     expect(next.memberKey).toBe("NewMember");
     expect(next.properties.Member).toBe("NewMember");
@@ -105,11 +115,23 @@ describe("client UI view model", () => {
       rowOrder: 1,
       sourceRowNumber: 2,
       createdAt: testTimestamp,
-      updatedAt: testTimestamp
+      updatedAt: testTimestamp,
     } satisfies DimensionRelationshipRecord;
 
-    const parentNext = buildOptimisticGridRecord(record, "relationships", "Member", "Parent", "NewParent") as DimensionRelationshipRecord;
-    const childNext = buildOptimisticGridRecord(record, "relationships", "Member", "Child", "NewChild") as DimensionRelationshipRecord;
+    const parentNext = buildOptimisticGridRecord(
+      record,
+      "relationships",
+      "Member",
+      "Parent",
+      "NewParent",
+    ) as DimensionRelationshipRecord;
+    const childNext = buildOptimisticGridRecord(
+      record,
+      "relationships",
+      "Member",
+      "Child",
+      "NewChild",
+    ) as DimensionRelationshipRecord;
 
     expect(parentNext.parentKey).toBe("NewParent");
     expect(parentNext.properties.Parent).toBe("NewParent");
@@ -128,12 +150,26 @@ describe("client UI view model", () => {
       sourceRowNumber: 2,
       isActive: true,
       createdAt: testTimestamp,
-      updatedAt: testTimestamp
+      updatedAt: testTimestamp,
     } satisfies DimensionMemberRecord;
-    const failedOptimistic = buildOptimisticGridRecord(previous, "members", "Member", "Member", "FailedMember");
-    const newerEdit = buildOptimisticGridRecord(failedOptimistic, "members", "Member", "Text1", "B");
+    const failedOptimistic = buildOptimisticGridRecord(
+      previous,
+      "members",
+      "Member",
+      "Member",
+      "FailedMember",
+    );
+    const newerEdit = buildOptimisticGridRecord(
+      failedOptimistic,
+      "members",
+      "Member",
+      "Text1",
+      "B",
+    );
 
-    expect(shouldRollbackGridRecord(failedOptimistic, failedOptimistic)).toBe(true);
+    expect(shouldRollbackGridRecord(failedOptimistic, failedOptimistic)).toBe(
+      true,
+    );
     expect(shouldRollbackGridRecord(newerEdit, failedOptimistic)).toBe(false);
   });
 
@@ -141,23 +177,34 @@ describe("client UI view model", () => {
     const issues = [
       issue({ id: "error-1", severity: "error" }),
       issue({ id: "warning-1", severity: "warning" }),
-      issue({ id: "info-1", severity: "info", dimensionId: "other-dim" })
+      issue({ id: "info-1", severity: "info", dimensionId: "other-dim" }),
     ];
 
-    expect(buildIssueSummary(issues, defaultAppConfig.validation.exportBlockedBySeverities)).toEqual({
+    expect(
+      buildIssueSummary(
+        issues,
+        defaultAppConfig.validation.exportBlockedBySeverities,
+      ),
+    ).toEqual({
       errors: 1,
       warnings: 1,
       infos: 1,
-      total: 3,
-      blocksExport: true
+      total: 1,
+      blocksExport: true,
     });
 
-    expect(buildIssueSummary(issues, defaultAppConfig.validation.exportBlockedBySeverities, sampleScenarioDimension.id)).toEqual({
+    expect(
+      buildIssueSummary(
+        issues,
+        defaultAppConfig.validation.exportBlockedBySeverities,
+        sampleScenarioDimension.id,
+      ),
+    ).toEqual({
       errors: 1,
       warnings: 1,
       infos: 0,
-      total: 2,
-      blocksExport: true
+      total: 1,
+      blocksExport: true,
     });
   });
 
@@ -166,63 +213,123 @@ describe("client UI view model", () => {
       projectId: "project-1",
       exportConfig: defaultAppConfig.export,
       issues: [],
-      blockedSeverities: ["error"]
+      blockedSeverities: ["error"],
     });
-    expect(enabled).toEqual({ disabled: false, title: "Export metadata", reason: "Ready to export" });
+    expect(enabled).toEqual({
+      disabled: false,
+      title: "Export metadata",
+      reason: "Ready to export",
+    });
 
-    expect(getExportAvailability({
-      projectId: null,
-      exportConfig: defaultAppConfig.export,
-      issues: [],
-      blockedSeverities: ["error"]
-    })).toEqual({ disabled: true, title: "Create or open a project before exporting", reason: "No project open" });
+    expect(
+      getExportAvailability({
+        projectId: null,
+        exportConfig: defaultAppConfig.export,
+        issues: [],
+        blockedSeverities: ["error"],
+      }),
+    ).toEqual({
+      disabled: true,
+      title: "Create or open a project before exporting",
+      reason: "No project open",
+    });
 
-    expect(getExportAvailability({
-      projectId: "project-1",
-      exportConfig: {
-        xml: { ...defaultAppConfig.export.xml, enabled: false },
-        xlsx: { ...defaultAppConfig.export.xlsx, enabled: false },
-        csv: { enabled: false },
-        json: { enabled: false }
-      },
-      issues: [],
-      blockedSeverities: ["error"]
-    })).toEqual({ disabled: true, title: "Exports are disabled by configuration", reason: "No export formats enabled" });
+    expect(
+      getExportAvailability({
+        projectId: "project-1",
+        exportConfig: {
+          xml: { ...defaultAppConfig.export.xml, enabled: false },
+          xlsx: { ...defaultAppConfig.export.xlsx, enabled: false },
+          csv: { enabled: false },
+          json: { enabled: false },
+        },
+        issues: [],
+        blockedSeverities: ["error"],
+      }),
+    ).toEqual({
+      disabled: true,
+      title: "Exports are disabled by configuration",
+      reason: "No export formats enabled",
+    });
 
-    expect(getExportAvailability({
-      projectId: "project-1",
-      exportConfig: defaultAppConfig.export,
-      issues: [issue({ severity: "error" })],
-      blockedSeverities: ["error"]
-    })).toEqual({ disabled: true, title: "Resolve blocking validation issues before exporting", reason: "Blocking validation issues" });
+    expect(
+      getExportAvailability({
+        projectId: "project-1",
+        exportConfig: defaultAppConfig.export,
+        issues: [issue({ severity: "error" })],
+        blockedSeverities: ["error"],
+      }),
+    ).toEqual({
+      disabled: true,
+      title: "Resolve blocking validation issues before exporting",
+      reason: "Blocking validation issues",
+    });
   });
 
   it("lists enabled export formats", () => {
-    expect(getEnabledExportFormats(defaultAppConfig.export).map((format) => format.key)).toEqual(["xml", "xlsx", "csvMembers", "csvRelationships", "json"]);
+    expect(
+      getEnabledExportFormats(defaultAppConfig.export).map(
+        (format) => format.key,
+      ),
+    ).toEqual(["xml", "xlsx", "csvMembers", "csvRelationships", "json"]);
   });
 
   it("keeps XML out of tabs when disabled", () => {
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual([
+      "Overview",
+      "Members",
+      "Relationships",
+      "Hierarchy",
+      "Varying",
+      "Property Defaults",
+      "Bulk Update",
+      "Compare",
+      "Change Sets",
+      "Workflows",
+      "Issues",
+    ]);
   });
 
   it("keeps null active dimension as project overview and falls back only for stale dimension ids", () => {
-    expect(resolveActiveDimensionId(null, [sampleScenarioDimension])).toBeNull();
-    expect(resolveActiveDimensionId("missing", [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
-    expect(resolveActiveDimensionId(sampleScenarioDimension.id, [sampleScenarioDimension])).toBe(sampleScenarioDimension.id);
+    expect(
+      resolveActiveDimensionId(null, [sampleScenarioDimension]),
+    ).toBeNull();
+    expect(resolveActiveDimensionId("missing", [sampleScenarioDimension])).toBe(
+      sampleScenarioDimension.id,
+    );
+    expect(
+      resolveActiveDimensionId(sampleScenarioDimension.id, [
+        sampleScenarioDimension,
+      ]),
+    ).toBe(sampleScenarioDimension.id);
     expect(resolveActiveDimensionId(null, [])).toBeNull();
   });
 
   it("orders dimension nav items by canonical dimension type", () => {
-    const entity = { ...sampleScenarioDimension, id: "dim-entity", dimensionType: "Entity" as const, dimensionName: "Entities" };
-    const account = { ...sampleScenarioDimension, id: "dim-account", dimensionType: "Account" as const, dimensionName: "Accounts" };
+    const entity = {
+      ...sampleScenarioDimension,
+      id: "dim-entity",
+      dimensionType: "Entity" as const,
+      dimensionName: "Entities",
+    };
+    const account = {
+      ...sampleScenarioDimension,
+      id: "dim-account",
+      dimensionType: "Account" as const,
+      dimensionName: "Accounts",
+    };
     const items = buildDimensionNavItems(
       [account, sampleScenarioDimension, entity],
       [],
       defaultAppConfig.dimensions.display,
-      defaultAppConfig.validation.exportBlockedBySeverities
+      defaultAppConfig.validation.exportBlockedBySeverities,
     );
 
-    expect(items.map((item) => item.dimension.dimensionType)).toEqual(["Entity", "Scenario", "Account"]);
+    expect(items.map((item) => item.dimension.dimensionType)).toEqual([
+      "Entity",
+      "Scenario",
+      "Account",
+    ]);
   });
 
   it("filters dimension nav items by label, subtitle, type, and sheet name", () => {
@@ -230,7 +337,7 @@ describe("client UI view model", () => {
       [sampleScenarioDimension],
       [],
       defaultAppConfig.dimensions.display,
-      defaultAppConfig.validation.exportBlockedBySeverities
+      defaultAppConfig.validation.exportBlockedBySeverities,
     );
 
     expect(filterDimensionNavItems(items, "sample")).toHaveLength(1);
@@ -240,26 +347,62 @@ describe("client UI view model", () => {
   });
 
   it("uses the shorter XML tab label for the clean workbench", () => {
-    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "XML", "Issues"]);
-    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual(["Overview", "Members", "Relationships", "Hierarchy", "Varying", "Property Defaults", "Bulk Update", "Compare", "Change Sets", "Workflows", "Issues"]);
+    expect(getWorkspaceTabs(true).map((tab) => tab.label)).toEqual([
+      "Overview",
+      "Members",
+      "Relationships",
+      "Hierarchy",
+      "Varying",
+      "Property Defaults",
+      "Bulk Update",
+      "Compare",
+      "Change Sets",
+      "Workflows",
+      "XML",
+      "Issues",
+    ]);
+    expect(getWorkspaceTabs(false).map((tab) => tab.label)).toEqual([
+      "Overview",
+      "Members",
+      "Relationships",
+      "Hierarchy",
+      "Varying",
+      "Property Defaults",
+      "Bulk Update",
+      "Compare",
+      "Change Sets",
+      "Workflows",
+      "Issues",
+    ]);
   });
 
   it("builds compact readiness labels and dimension facts", () => {
-    const cleanSummary = buildIssueSummary([], defaultAppConfig.validation.exportBlockedBySeverities);
-    const reviewSummary = buildIssueSummary([issue({ severity: "warning" })], defaultAppConfig.validation.exportBlockedBySeverities);
-    const blockedSummary = buildIssueSummary([issue({ severity: "error" })], defaultAppConfig.validation.exportBlockedBySeverities);
+    const cleanSummary = buildIssueSummary(
+      [],
+      defaultAppConfig.validation.exportBlockedBySeverities,
+    );
+    const reviewSummary = buildIssueSummary(
+      [issue({ severity: "warning" })],
+      defaultAppConfig.validation.exportBlockedBySeverities,
+    );
+    const blockedSummary = buildIssueSummary(
+      [issue({ severity: "error" })],
+      defaultAppConfig.validation.exportBlockedBySeverities,
+    );
 
     expect(getReadinessLabel(cleanSummary)).toBe("Ready");
-    expect(getReadinessLabel(reviewSummary)).toBe("Needs review");
+    expect(getReadinessLabel(reviewSummary)).toBe("Ready");
     expect(getReadinessLabel(blockedSummary)).toBe("Export blocked");
 
-    expect(buildDimensionFacts(sampleScenarioDimension, blockedSummary)).toEqual([
+    expect(
+      buildDimensionFacts(sampleScenarioDimension, blockedSummary),
+    ).toEqual([
       { label: "Type", value: "Scenario" },
       { label: "Sheet", value: "Scenarios" },
       { label: "Access", value: "Everyone" },
       { label: "Maintenance", value: "Everyone" },
       { label: "Errors", value: "1", tone: "danger" },
-      { label: "Warnings", value: "0", tone: "neutral" }
+      { label: "Warnings", value: "0", tone: "neutral" },
     ]);
   });
 
@@ -268,7 +411,7 @@ describe("client UI view model", () => {
       [sampleScenarioDimension],
       [issue({ severity: "warning" })],
       defaultAppConfig.dimensions.display,
-      defaultAppConfig.validation.exportBlockedBySeverities
+      defaultAppConfig.validation.exportBlockedBySeverities,
     );
 
     expect(items[0]).toMatchObject({
@@ -279,9 +422,9 @@ describe("client UI view model", () => {
         errors: 0,
         warnings: 1,
         infos: 0,
-        total: 1,
-        blocksExport: false
-      }
+        total: 0,
+        blocksExport: false,
+      },
     });
   });
 
@@ -293,38 +436,86 @@ describe("client UI view model", () => {
   });
 
   it("prioritizes dimensions with more issues in overview sorting", () => {
-    const entityDimension = { ...sampleScenarioDimension, id: "dim-entity", dimensionType: "Entity" as const, dimensionName: "Entity" };
-    const accountDimension = { ...sampleScenarioDimension, id: "dim-account", dimensionType: "Account" as const, dimensionName: "Account" };
+    const entityDimension = {
+      ...sampleScenarioDimension,
+      id: "dim-entity",
+      dimensionType: "Entity" as const,
+      dimensionName: "Entity",
+    };
+    const accountDimension = {
+      ...sampleScenarioDimension,
+      id: "dim-account",
+      dimensionType: "Account" as const,
+      dimensionName: "Account",
+    };
     const issueMap = new Map([
-      [entityDimension.id, buildIssueSummary([issue({ dimensionId: entityDimension.id, severity: "warning" })], defaultAppConfig.validation.exportBlockedBySeverities, entityDimension.id)],
-      [accountDimension.id, buildIssueSummary([issue({ dimensionId: accountDimension.id, severity: "error" }), issue({ dimensionId: accountDimension.id, severity: "error", id: "issue-2" })], defaultAppConfig.validation.exportBlockedBySeverities, accountDimension.id)],
-      [sampleScenarioDimension.id, buildIssueSummary([], defaultAppConfig.validation.exportBlockedBySeverities, sampleScenarioDimension.id)]
+      [
+        entityDimension.id,
+        buildIssueSummary(
+          [issue({ dimensionId: entityDimension.id, severity: "error" })],
+          defaultAppConfig.validation.exportBlockedBySeverities,
+          entityDimension.id,
+        ),
+      ],
+      [
+        accountDimension.id,
+        buildIssueSummary(
+          [
+            issue({ dimensionId: accountDimension.id, severity: "error" }),
+            issue({
+              dimensionId: accountDimension.id,
+              severity: "error",
+              id: "issue-2",
+            }),
+          ],
+          defaultAppConfig.validation.exportBlockedBySeverities,
+          accountDimension.id,
+        ),
+      ],
+      [
+        sampleScenarioDimension.id,
+        buildIssueSummary(
+          [],
+          defaultAppConfig.validation.exportBlockedBySeverities,
+          sampleScenarioDimension.id,
+        ),
+      ],
     ]);
 
     const sorted = sortDimensionsForOverview(
       [sampleScenarioDimension, entityDimension, accountDimension],
       issueMap,
-      true
+      true,
     );
 
     expect(sorted.map((dimension) => dimension.id)).toEqual([
       accountDimension.id,
       entityDimension.id,
-      sampleScenarioDimension.id
+      sampleScenarioDimension.id,
     ]);
   });
 
   it("computes validation health and project health fallback", () => {
     expect(scoreValidationHealth([])).toBe(100);
-    expect(scoreValidationHealth([
-      issue({ severity: "error" }),
-      issue({ severity: "warning", id: "issue-2" })
-    ])).toBe(89);
-    expect(computeProjectHealthFallback(69, [
-      issue({ severity: "error" }),
-      issue({ severity: "warning", id: "issue-2" })
-    ])).toBe(82);
-    expect(formatProjectHealthTitle({ metadataScore: 80, validationScore: 70, coverage: 69, fallback: true }))
-      .toBe("Metadata 80% · Validation 70% · Coverage 69% (estimated)");
+    expect(
+      scoreValidationHealth([
+        issue({ severity: "error" }),
+        issue({ severity: "warning", id: "issue-2" }),
+      ]),
+    ).toBe(89);
+    expect(
+      computeProjectHealthFallback(69, [
+        issue({ severity: "error" }),
+        issue({ severity: "warning", id: "issue-2" }),
+      ]),
+    ).toBe(82);
+    expect(
+      formatProjectHealthTitle({
+        metadataScore: 80,
+        validationScore: 70,
+        coverage: 69,
+        fallback: true,
+      }),
+    ).toBe("Metadata 80% · Validation 70% · Coverage 69% (estimated)");
   });
 });

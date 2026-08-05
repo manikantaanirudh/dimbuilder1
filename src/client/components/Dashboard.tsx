@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Database, Search } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
-import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
-import type { DashboardSummary, DimensionRecord, ProjectRecord, ValidationIssue } from "../../shared/types";
+import {
+  getDimensionDisplayLabel,
+  getDimensionDisplaySubtitle,
+} from "../../shared/dimensionDisplay";
+import type {
+  DashboardSummary,
+  DimensionRecord,
+  ProjectRecord,
+  ValidationIssue,
+} from "../../shared/types";
 import { apiPatchJson, fetchCoverageReport } from "../api/client";
-import { buildIssueSummary, formatCount, sortDimensionsForOverview } from "../ui/viewModel";
+import {
+  buildIssueSummary,
+  formatCount,
+  sortDimensionsForOverview,
+} from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
 import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
@@ -19,7 +31,7 @@ export function Dashboard({
   issues,
   onOpenDimension,
   onProjectChanged,
-  appConfig
+  appConfig,
 }: {
   dimensions: DimensionRecord[];
   summary: DashboardSummary | null;
@@ -30,20 +42,43 @@ export function Dashboard({
   appConfig: ClientAppConfig;
 }) {
   const dimensionDisplayConfig = appConfig.dimensions.display;
-  const issueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
+  const issueSummary = buildIssueSummary(
+    issues,
+    appConfig.validation.exportBlockedBySeverities,
+  );
   const summaryErrors = summary?.validationErrors ?? issueSummary.errors;
   const summaryWarnings = summary?.validationWarnings ?? issueSummary.warnings;
   const blocksExport = issueSummary.blocksExport;
-  const needsReview = blocksExport || summaryErrors > 0 || summaryWarnings > 0 || issueSummary.total > 0;
-  const statusTone = !project ? "neutral" : blocksExport ? "danger" : needsReview ? "warning" : "success";
-  const statusLabel = !project ? "No project" : blocksExport ? "Export blocked" : needsReview ? "Needs review" : "Ready";
+  const needsReview =
+    blocksExport ||
+    summaryErrors > 0 ||
+    summaryWarnings > 0 ||
+    issueSummary.total > 0;
+  const statusTone = !project
+    ? "neutral"
+    : blocksExport
+      ? "danger"
+      : needsReview
+        ? "warning"
+        : "success";
+  const statusLabel = !project
+    ? "No project"
+    : blocksExport
+      ? "Export blocked"
+      : needsReview
+        ? "Needs review"
+        : "Ready";
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(project?.name ?? "");
   const [renameError, setRenameError] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [dimSearch, setDimSearch] = useState("");
-  const [coverageByType, setCoverageByType] = useState<Map<string, number>>(new Map());
-  const [disclosureOpen, setDisclosureOpen] = useState(() => localStorage.getItem(DISCLOSURE_KEY) === "open");
+  const [coverageByType, setCoverageByType] = useState<Map<string, number>>(
+    new Map(),
+  );
+  const [disclosureOpen, setDisclosureOpen] = useState(
+    () => localStorage.getItem(DISCLOSURE_KEY) === "open",
+  );
   const dimSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -55,12 +90,21 @@ export function Dashboard({
     void fetchCoverageReport(project.id)
       .then((report) => {
         if (cancelled) return;
-        setCoverageByType(new Map(report.dimensions.map((entry) => [entry.dimensionType, entry.propertyCoverage])));
+        setCoverageByType(
+          new Map(
+            report.dimensions.map((entry) => [
+              entry.dimensionType,
+              entry.propertyCoverage,
+            ]),
+          ),
+        );
       })
       .catch(() => {
         if (!cancelled) setCoverageByType(new Map());
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [project?.id, issueSummary.total]);
 
   useEffect(() => {
@@ -79,15 +123,28 @@ export function Dashboard({
   const dimensionIssueMap = useMemo(() => {
     const map = new Map<string, ReturnType<typeof buildIssueSummary>>();
     for (const dim of dimensions) {
-      map.set(dim.id, buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities, dim.id));
+      map.set(
+        dim.id,
+        buildIssueSummary(
+          issues,
+          appConfig.validation.exportBlockedBySeverities,
+          dim.id,
+        ),
+      );
     }
     return map;
   }, [dimensions, issues, appConfig.validation.exportBlockedBySeverities]);
 
   const dimensionStatsMap = useMemo(() => {
-    const map = new Map<string, { memberCount: number; relationshipCount: number }>();
+    const map = new Map<
+      string,
+      { memberCount: number; relationshipCount: number }
+    >();
     for (const stat of summary?.dimensionStats ?? []) {
-      map.set(stat.dimensionId, { memberCount: stat.memberCount, relationshipCount: stat.relationshipCount });
+      map.set(stat.dimensionId, {
+        memberCount: stat.memberCount,
+        relationshipCount: stat.relationshipCount,
+      });
     }
     return map;
   }, [summary?.dimensionStats]);
@@ -97,12 +154,28 @@ export function Dashboard({
     const scoped = !query
       ? dimensions
       : dimensions.filter((dim) => {
-          const label = getDimensionDisplayLabel(dim, dimensionDisplayConfig).toLowerCase();
-          const subtitle = getDimensionDisplaySubtitle(dim, dimensionDisplayConfig).toLowerCase();
+          const label = getDimensionDisplayLabel(
+            dim,
+            dimensionDisplayConfig,
+          ).toLowerCase();
+          const subtitle = getDimensionDisplaySubtitle(
+            dim,
+            dimensionDisplayConfig,
+          ).toLowerCase();
           return label.includes(query) || subtitle.includes(query);
         });
-    return sortDimensionsForOverview(scoped, dimensionIssueMap, issueSummary.total > 0);
-  }, [dimensions, dimSearch, dimensionDisplayConfig, dimensionIssueMap, issueSummary.total]);
+    return sortDimensionsForOverview(
+      scoped,
+      dimensionIssueMap,
+      issueSummary.total > 0,
+    );
+  }, [
+    dimensions,
+    dimSearch,
+    dimensionDisplayConfig,
+    dimensionIssueMap,
+    issueSummary.total,
+  ]);
 
   async function handleRename() {
     if (!project || !editName.trim() || editName.trim() === project.name) {
@@ -112,10 +185,14 @@ export function Dashboard({
     setRenameError("");
     setRenaming(true);
     try {
-      await apiPatchJson<ProjectRecord>(`/projects/${project.id}`, { name: editName.trim() });
+      await apiPatchJson<ProjectRecord>(`/projects/${project.id}`, {
+        name: editName.trim(),
+      });
       onProjectChanged?.(project.id);
     } catch (caught) {
-      setRenameError(caught instanceof Error ? caught.message : "Rename failed");
+      setRenameError(
+        caught instanceof Error ? caught.message : "Rename failed",
+      );
     }
     setRenaming(false);
     setEditing(false);
@@ -137,8 +214,17 @@ export function Dashboard({
                 tabIndex={0}
                 role="button"
                 aria-label={`Rename project: ${project.name}`}
-                onClick={() => { setEditName(project.name); setEditing(true); }}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setEditName(project.name); setEditing(true); } }}
+                onClick={() => {
+                  setEditName(project.name);
+                  setEditing(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setEditName(project.name);
+                    setEditing(true);
+                  }
+                }}
               >
                 {project.name}
               </h1>
@@ -160,14 +246,22 @@ export function Dashboard({
             )}
             <p>
               {project
-                ? project.sourceFileName || project.description || "Created manually."
+                ? project.sourceFileName ||
+                  project.description ||
+                  "Created manually."
                 : "Create a project or seed from a file."}
             </p>
             {renameError && (
               <p className="rename-error" role="alert">
-                {renameError}
-                {" "}
-                <button className="rename-retry" onClick={() => { setEditName(editName); setEditing(true); setRenameError(""); }}>
+                {renameError}{" "}
+                <button
+                  className="rename-retry"
+                  onClick={() => {
+                    setEditName(editName);
+                    setEditing(true);
+                    setRenameError("");
+                  }}
+                >
                   Try again
                 </button>
               </p>
@@ -211,47 +305,112 @@ export function Dashboard({
           )}
 
           {filteredDimensions.length ? (
-            <div className="dimension-list" role="table" aria-label="Project dimensions">
-              <div className="dimension-list-header" role="row" aria-hidden="true">
+            <div
+              className="dimension-list"
+              role="table"
+              aria-label="Project dimensions"
+            >
+              <div
+                className="dimension-list-header"
+                role="row"
+                aria-hidden="true"
+              >
                 <span role="columnheader">Dimension</span>
-                <span className="dimension-metric-head" role="columnheader">Mem</span>
-                <span className="dimension-metric-head" role="columnheader">Rel</span>
-                <span className="dimension-metric-head" role="columnheader">Cov</span>
+                <span className="dimension-metric-head" role="columnheader">
+                  Mem
+                </span>
+                <span className="dimension-metric-head" role="columnheader">
+                  Rel
+                </span>
+                <span className="dimension-metric-head" role="columnheader">
+                  Cov
+                </span>
                 <span role="columnheader">Status</span>
                 <span role="columnheader" aria-hidden="true" />
               </div>
               {filteredDimensions.map((dimension) => {
-                const dimensionIssues = dimensionIssueMap.get(dimension.id) ?? { errors: 0, warnings: 0, infos: 0, total: 0, blocksExport: false };
-                const stats = dimensionStatsMap.get(dimension.id) ?? { memberCount: 0, relationshipCount: 0 };
+                const dimensionIssues = dimensionIssueMap.get(dimension.id) ?? {
+                  errors: 0,
+                  warnings: 0,
+                  infos: 0,
+                  total: 0,
+                  blocksExport: false,
+                };
+                const stats = dimensionStatsMap.get(dimension.id) ?? {
+                  memberCount: 0,
+                  relationshipCount: 0,
+                };
                 const coverage = coverageByType.get(dimension.dimensionType);
                 const statsLabel = [
                   `${formatCount(stats.memberCount)} members`,
                   `${formatCount(stats.relationshipCount)} relationships`,
-                  coverage !== undefined ? `${coverage}% coverage` : null
-                ].filter(Boolean).join(", ");
+                  coverage !== undefined ? `${coverage}% coverage` : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
                 return (
                   <button
                     className="dimension-row"
                     key={dimension.id}
                     role="row"
-                    aria-label={`${getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}. ${statsLabel}. ${dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}.`}
+                    aria-label={`${getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}. ${statsLabel}. ${dimensionIssues.total ? `${dimensionIssues.total} errors` : "Clean"}.`}
                     onClick={() => onOpenDimension(dimension.id)}
                   >
                     <span className="dimension-label" role="cell">
-                      <b>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</b>
-                      <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
+                      <b>
+                        {getDimensionDisplayLabel(
+                          dimension,
+                          dimensionDisplayConfig,
+                        )}
+                      </b>
+                      <small>
+                        {getDimensionDisplaySubtitle(
+                          dimension,
+                          dimensionDisplayConfig,
+                        )}
+                      </small>
                     </span>
-                    <span className="dimension-metric" role="cell" title="Members">{formatCount(stats.memberCount)}</span>
-                    <span className="dimension-metric" role="cell" title="Relationships">{formatCount(stats.relationshipCount)}</span>
-                    <span className="dimension-metric" role="cell" title="Property coverage">
+                    <span
+                      className="dimension-metric"
+                      role="cell"
+                      title="Members"
+                    >
+                      {formatCount(stats.memberCount)}
+                    </span>
+                    <span
+                      className="dimension-metric"
+                      role="cell"
+                      title="Relationships"
+                    >
+                      {formatCount(stats.relationshipCount)}
+                    </span>
+                    <span
+                      className="dimension-metric"
+                      role="cell"
+                      title="Property coverage"
+                    >
                       {coverage !== undefined ? `${coverage}%` : "—"}
                     </span>
                     <span className="dimension-status" role="cell">
-                      <StatusBadge tone={dimensionIssues.errors ? "danger" : dimensionIssues.warnings ? "warning" : "success"}>
-                        {dimensionIssues.total ? `${dimensionIssues.total} issues` : "Clean"}
+                      <StatusBadge
+                        tone={
+                          dimensionIssues.errors
+                            ? "danger"
+                            : dimensionIssues.warnings
+                              ? "warning"
+                              : "success"
+                        }
+                      >
+                        {dimensionIssues.total
+                          ? `${dimensionIssues.total} errors`
+                          : "Clean"}
                       </StatusBadge>
                     </span>
-                    <span className="dimension-row-action" role="cell" aria-hidden="true">
+                    <span
+                      className="dimension-row-action"
+                      role="cell"
+                      aria-hidden="true"
+                    >
                       <ArrowRight size={16} />
                     </span>
                   </button>
@@ -263,7 +422,9 @@ export function Dashboard({
               No dimensions match "{dimSearch}".
             </EmptyState>
           ) : (
-            <EmptyState title={project ? "No dimensions available" : "No project open"}>
+            <EmptyState
+              title={project ? "No dimensions available" : "No project open"}
+            >
               {project
                 ? "This project has no configured dimensions to inspect."
                 : "Create a project or seed from a file."}
@@ -285,12 +446,25 @@ export function Dashboard({
               Snapshots and Blueprints
             </summary>
             <div className="overview-secondary-content">
-              <SnapshotManager project={project} onProjectChanged={onProjectChanged} />
-              <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />
+              <SnapshotManager
+                project={project}
+                onProjectChanged={onProjectChanged}
+              />
+              <BlueprintStudio
+                appConfig={appConfig}
+                dimensions={dimensions}
+                project={project}
+              />
             </div>
           </details>
         )}
-        {!project && <BlueprintStudio appConfig={appConfig} dimensions={dimensions} project={project} />}
+        {!project && (
+          <BlueprintStudio
+            appConfig={appConfig}
+            dimensions={dimensions}
+            project={project}
+          />
+        )}
       </div>
     </section>
   );

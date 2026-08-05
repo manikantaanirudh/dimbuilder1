@@ -3,33 +3,43 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { AppShell } from "../client/components/AppShell";
-import { AuthContext, type AuthContextValue } from "../client/auth/AuthProvider";
+import {
+  AuthContext,
+  type AuthContextValue,
+} from "../client/auth/AuthProvider";
 import { Dashboard } from "../client/components/Dashboard";
 import { DimensionWorkspace } from "../client/components/DimensionWorkspace";
 import { EditableGrid } from "../client/components/EditableGrid";
 import { HierarchyTree } from "../client/components/HierarchyTree";
 import { ChangeSetsPanel } from "../client/components/ChangeSetsPanel";
 import { BulkUpdatePanel } from "../client/components/BulkUpdatePanel";
-import { ExportModal, ImportModal } from "../client/components/ImportExportModals";
+import {
+  ExportModal,
+  ImportModal,
+} from "../client/components/ImportExportModals";
 import { IssuePanel } from "../client/components/IssuePanel";
 import { MetadataEditor } from "../client/components/MetadataEditor";
 import { VaryingPropertiesPanel } from "../client/components/VaryingPropertiesPanel";
 import { XmlPreview } from "../client/components/XmlPreview";
 import { defaultAppConfig } from "../shared/appConfigDefaults";
 import type { ClientAppConfig } from "../shared/appConfigTypes";
-import type { DashboardSummary, DimensionRecord, ProjectRecord } from "../shared/types";
+import type {
+  DashboardSummary,
+  DimensionRecord,
+  ProjectRecord,
+} from "../shared/types";
 import { sampleProject, sampleScenarioDimension } from "./fixtures";
 
 const readyExportAvailability = {
   disabled: false,
   title: "Export metadata",
-  reason: "Ready to export"
+  reason: "Ready to export",
 };
 
 const blockedExportAvailability = {
   disabled: true,
   title: "Resolve blocking validation issues before exporting",
-  reason: "Blocking validation issues"
+  reason: "Blocking validation issues",
 };
 
 const summaryWithValidationCounts: DashboardSummary = {
@@ -39,7 +49,7 @@ const summaryWithValidationCounts: DashboardSummary = {
   validationErrors: 2,
   validationWarnings: 3,
   recentDimensions: [],
-  dimensionStats: []
+  dimensionStats: [],
 };
 
 function render(element: Parameters<typeof renderToStaticMarkup>[0]) {
@@ -53,33 +63,40 @@ const disabledAuthContext: AuthContextValue = {
   authEnabled: false,
   authStatus: null,
   login: async () => {},
-  logout: async () => {}
+  logout: async () => {},
 };
 
 function renderAppShell(props: Parameters<typeof AppShell>[0]) {
   return render(
-    createElement(AuthContext.Provider, { value: disabledAuthContext },
-      createElement(AppShell, props)
-    )
+    createElement(
+      AuthContext.Provider,
+      { value: disabledAuthContext },
+      createElement(AppShell, props),
+    ),
   );
 }
 
-const importExportModalSource = readFileSync(new URL("../client/components/ImportExportModals.tsx", import.meta.url), "utf8");
+const importExportModalSource = readFileSync(
+  new URL("../client/components/ImportExportModals.tsx", import.meta.url),
+  "utf8",
+);
 
 function dashboardMarkup(
   appConfig: ClientAppConfig,
   summary: DashboardSummary | null = null,
   project: ProjectRecord | null = null,
-  dimensions: DimensionRecord[] = []
+  dimensions: DimensionRecord[] = [],
 ) {
-  return render(createElement(Dashboard, {
-    dimensions,
-    summary,
-    project,
-    issues: [],
-    onOpenDimension: () => undefined,
-    appConfig
-  }));
+  return render(
+    createElement(Dashboard, {
+      dimensions,
+      summary,
+      project,
+      issues: [],
+      onOpenDimension: () => undefined,
+      appConfig,
+    }),
+  );
 }
 
 describe("client component markup", () => {
@@ -103,7 +120,11 @@ describe("client component markup", () => {
   });
 
   it("renders compact dashboard facts from the provided summary", () => {
-    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject);
+    const markup = dashboardMarkup(
+      defaultAppConfig,
+      summaryWithValidationCounts,
+      sampleProject,
+    );
 
     expect(markup).toContain("overview-page");
     expect(markup).toContain("overview-page-icon");
@@ -118,7 +139,11 @@ describe("client component markup", () => {
   });
 
   it("renders a dashboard snapshot manager for restore and branching", () => {
-    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject);
+    const markup = dashboardMarkup(
+      defaultAppConfig,
+      summaryWithValidationCounts,
+      sampleProject,
+    );
 
     expect(markup).toContain("snapshot-manager");
     expect(markup).toContain("Snapshots");
@@ -128,7 +153,12 @@ describe("client component markup", () => {
   });
 
   it("renders Blueprint Studio as a safe authoring aid on the dashboard", () => {
-    const markup = dashboardMarkup(defaultAppConfig, summaryWithValidationCounts, sampleProject, [sampleScenarioDimension]);
+    const markup = dashboardMarkup(
+      defaultAppConfig,
+      summaryWithValidationCounts,
+      sampleProject,
+      [sampleScenarioDimension],
+    );
 
     expect(markup).toContain("blueprint-studio");
     expect(markup).toContain("Blueprint Studio");
@@ -141,13 +171,17 @@ describe("client component markup", () => {
   it("renders per-dimension overview metrics in the dashboard list", () => {
     const summary: DashboardSummary = {
       ...summaryWithValidationCounts,
-      dimensionStats: [{
-        dimensionId: sampleScenarioDimension.id,
-        memberCount: 12,
-        relationshipCount: 8
-      }]
+      dimensionStats: [
+        {
+          dimensionId: sampleScenarioDimension.id,
+          memberCount: 12,
+          relationshipCount: 8,
+        },
+      ],
     };
-    const markup = dashboardMarkup(defaultAppConfig, summary, sampleProject, [sampleScenarioDimension]);
+    const markup = dashboardMarkup(defaultAppConfig, summary, sampleProject, [
+      sampleScenarioDimension,
+    ]);
 
     expect(markup).toContain("dimension-list-header");
     expect(markup).toContain("dimension-metric");
@@ -160,17 +194,23 @@ describe("client component markup", () => {
       ...defaultAppConfig,
       validation: {
         ...defaultAppConfig.validation,
-        exportBlockedBySeverities: ["warning" as const]
-      }
+        exportBlockedBySeverities: ["warning" as const],
+      },
     };
     const summaryWithNonBlockingErrors: DashboardSummary = {
       ...summaryWithValidationCounts,
       validationErrors: 2,
-      validationWarnings: 0
+      validationWarnings: 0,
     };
-    const markup = dashboardMarkup(config, summaryWithNonBlockingErrors, sampleProject);
+    const markup = dashboardMarkup(
+      config,
+      summaryWithNonBlockingErrors,
+      sampleProject,
+    );
 
-    expect(markup).toContain('<span class="status-badge warning">Needs review</span>');
+    expect(markup).toContain(
+      '<span class="status-badge warning">Needs review</span>',
+    );
     expect(markup).not.toContain("Export blocked");
   });
 
@@ -180,7 +220,9 @@ describe("client component markup", () => {
     expect(markup).toContain(">SR Onestream Dim Builder<");
     expect(markup).toMatch(/<button[^>]*>[\s\S]*New Project<\/button>/);
     expect(markup).toMatch(/<button[^>]*>[\s\S]*Seed from file<\/button>/);
-    expect(markup).toMatch(/<button[^>]*title="Create or open a project before validating"[^>]*disabled=""[^>]*>[\s\S]*Validate<\/button>/);
+    expect(markup).toMatch(
+      /<button[^>]*title="Create or open a project before validating"[^>]*disabled=""[^>]*>[\s\S]*Validate<\/button>/,
+    );
     expect(markup).not.toContain(">DimBuilder<");
     expect(markup).not.toContain("Import a workbook to begin.");
   });
@@ -200,20 +242,24 @@ describe("client component markup", () => {
 
     expect(markup).toContain("sidebar-heading");
     expect(markup).toContain("Search dimensions");
-    expect(markup).not.toContain("OneStream XF Dimension Builder</span></div><div class=\"nav-project\"");
+    expect(markup).not.toContain(
+      'OneStream XF Dimension Builder</span></div><div class="nav-project"',
+    );
   });
 
   it("renders clean workbench workspace facts and the short XML tab label", () => {
-    const markup = render(createElement(DimensionWorkspace, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension,
-      issues: [],
-      onRefresh: () => undefined,
-      onDimensionDeleted: () => undefined,
-      onDimensionRecreated: () => undefined,
-      appConfig: defaultAppConfig,
-      exportAvailability: readyExportAvailability
-    }));
+    const markup = render(
+      createElement(DimensionWorkspace, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+        issues: [],
+        onRefresh: () => undefined,
+        onDimensionDeleted: () => undefined,
+        onDimensionRecreated: () => undefined,
+        appConfig: defaultAppConfig,
+        exportAvailability: readyExportAvailability,
+      }),
+    );
 
     expect(markup).toContain("workspace-page");
     expect(markup).toContain("workspace-page-icon");
@@ -231,24 +277,26 @@ describe("client component markup", () => {
     expect(markup).toContain(">Change Sets</button>");
     expect(markup).toContain(">XML</button>");
     expect(markup).not.toContain("XML Preview</button>");
-    expect(markup).not.toContain("section-kicker\">Scenario dimension");
+    expect(markup).not.toContain('section-kicker">Scenario dimension');
   });
 
   it("uses a single-column workspace grid on the Issues tab", () => {
     const issuesTabConfig: ClientAppConfig = {
       ...defaultAppConfig,
-      ui: { ...defaultAppConfig.ui, defaultWorkspaceTab: "Issues" }
+      ui: { ...defaultAppConfig.ui, defaultWorkspaceTab: "Issues" },
     };
-    const markup = render(createElement(DimensionWorkspace, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension,
-      issues: [],
-      onRefresh: () => undefined,
-      onDimensionDeleted: () => undefined,
-      onDimensionRecreated: () => undefined,
-      appConfig: issuesTabConfig,
-      exportAvailability: readyExportAvailability
-    }));
+    const markup = render(
+      createElement(DimensionWorkspace, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+        issues: [],
+        onRefresh: () => undefined,
+        onDimensionDeleted: () => undefined,
+        onDimensionRecreated: () => undefined,
+        appConfig: issuesTabConfig,
+        exportAvailability: readyExportAvailability,
+      }),
+    );
 
     expect(markup).toContain("workspace-grid--single");
     expect(markup).toContain('aria-current="page">Issues</button>');
@@ -257,11 +305,13 @@ describe("client component markup", () => {
   });
 
   it("renders the validation rail as a compact details surface", () => {
-    const markup = render(createElement(IssuePanel, {
-      dimension: sampleScenarioDimension,
-      issues: [],
-      appConfig: defaultAppConfig
-    }));
+    const markup = render(
+      createElement(IssuePanel, {
+        dimension: sampleScenarioDimension,
+        issues: [],
+        appConfig: defaultAppConfig,
+      }),
+    );
 
     expect(markup).toContain("details-rail");
     expect(markup).toContain("details-rail-page");
@@ -276,41 +326,45 @@ describe("client component markup", () => {
   });
 
   it("renders expanded validation issue filters", () => {
-    const markup = render(createElement(IssuePanel, {
-      dimension: sampleScenarioDimension,
-      issues: [
-        {
-          id: "issue-1",
-          projectId: sampleProject.id,
-          dimensionId: sampleScenarioDimension.id,
-          entityType: "member",
-          entityId: "member-1",
-          severity: "warning",
-          code: "UNKNOWN_PROPERTY",
-          message: "Legacy property is not in the dictionary.",
-          fieldName: "Legacy Property",
-          rowNumber: 12,
-          createdAt: "2026-05-16T00:00:00.000Z"
-        }
-      ],
-      appConfig: defaultAppConfig,
-      expanded: true
-    }));
+    const markup = render(
+      createElement(IssuePanel, {
+        dimension: sampleScenarioDimension,
+        issues: [
+          {
+            id: "issue-1",
+            projectId: sampleProject.id,
+            dimensionId: sampleScenarioDimension.id,
+            entityType: "member",
+            entityId: "member-1",
+            severity: "error",
+            code: "INVALID_NUMBER",
+            message: "Legacy property is not in the dictionary.",
+            fieldName: "Legacy Property",
+            rowNumber: 12,
+            createdAt: "2026-05-16T00:00:00.000Z",
+          },
+        ],
+        appConfig: defaultAppConfig,
+        expanded: true,
+      }),
+    );
 
     expect(markup).toContain("Filter by severity");
     expect(markup).toContain("Filter issue code");
-    expect(markup).toContain("UNKNOWN_PROPERTY");
+    expect(markup).toContain("INVALID_NUMBER");
     expect(markup).toContain('class="issue-summary"');
     expect(markup).not.toContain("rail-issue-summary");
-    expect(markup).toContain("<b>1</b> warnings");
+    expect(markup).toContain("<b>1</b> errors");
   });
 
   it("renders metadata editing as a Notion-style property list", () => {
-    const markup = render(createElement(MetadataEditor, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension,
-      onSaved: () => undefined
-    }));
+    const markup = render(
+      createElement(MetadataEditor, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+        onSaved: () => undefined,
+      }),
+    );
 
     expect(markup).toContain("metadata-document");
     expect(markup).toContain("metadata-property-grid");
@@ -323,10 +377,17 @@ describe("client component markup", () => {
   });
 
   it("renders a compact varying property editor surface", () => {
-    const markup = render(createElement(VaryingPropertiesPanel, {
-      projectId: sampleProject.id,
-      dimension: { ...sampleScenarioDimension, dimensionType: "Account", dimensionName: "Accounts", sheetName: "Accounts" }
-    }));
+    const markup = render(
+      createElement(VaryingPropertiesPanel, {
+        projectId: sampleProject.id,
+        dimension: {
+          ...sampleScenarioDimension,
+          dimensionType: "Account",
+          dimensionName: "Accounts",
+          sheetName: "Accounts",
+        },
+      }),
+    );
 
     expect(markup).toContain("varying-properties-panel");
     expect(markup).toContain("Target");
@@ -338,10 +399,12 @@ describe("client component markup", () => {
   });
 
   it("renders a compact change set lifecycle panel", () => {
-    const markup = render(createElement(ChangeSetsPanel, {
-      projectId: sampleProject.id,
-      hasBlockingIssues: false
-    }));
+    const markup = render(
+      createElement(ChangeSetsPanel, {
+        projectId: sampleProject.id,
+        hasBlockingIssues: false,
+      }),
+    );
 
     expect(markup).toContain("change-sets-panel");
     expect(markup).toContain("Change Sets");
@@ -353,11 +416,18 @@ describe("client component markup", () => {
   });
 
   it("renders a safe bulk update wizard surface", () => {
-    const markup = render(createElement(BulkUpdatePanel, {
-      projectId: sampleProject.id,
-      dimension: { ...sampleScenarioDimension, dimensionType: "Account", dimensionName: "Accounts", sheetName: "Accounts" },
-      onApplied: () => undefined
-    }));
+    const markup = render(
+      createElement(BulkUpdatePanel, {
+        projectId: sampleProject.id,
+        dimension: {
+          ...sampleScenarioDimension,
+          dimensionType: "Account",
+          dimensionName: "Accounts",
+          sheetName: "Accounts",
+        },
+        onApplied: () => undefined,
+      }),
+    );
 
     expect(markup).toContain("bulk-update-panel");
     expect(markup).toContain("Bulk Update");
@@ -370,12 +440,14 @@ describe("client component markup", () => {
   });
 
   it("renders grid actions as compact icon workbench controls", () => {
-    const markup = render(createElement(EditableGrid, {
-      projectId: sampleProject.id,
-      kind: "members",
-      dimension: sampleScenarioDimension,
-      pageSize: 50
-    }));
+    const markup = render(
+      createElement(EditableGrid, {
+        projectId: sampleProject.id,
+        kind: "members",
+        dimension: sampleScenarioDimension,
+        pageSize: 50,
+      }),
+    );
 
     expect(markup).toContain("grid-toolbar-title");
     expect(markup).toContain("grid-toolbar-tools");
@@ -393,21 +465,32 @@ describe("client component markup", () => {
   });
 
   it("surfaces property dictionary help on grid column headers", () => {
-    const markup = render(createElement(EditableGrid, {
-      projectId: sampleProject.id,
-      kind: "members",
-      dimension: { ...sampleScenarioDimension, dimensionType: "Account", dimensionName: "Accounts", sheetName: "Accounts" },
-      pageSize: 50
-    }));
+    const markup = render(
+      createElement(EditableGrid, {
+        projectId: sampleProject.id,
+        kind: "members",
+        dimension: {
+          ...sampleScenarioDimension,
+          dimensionType: "Account",
+          dimensionName: "Accounts",
+          sheetName: "Accounts",
+        },
+        pageSize: 50,
+      }),
+    );
 
-    expect(markup).toContain('title="Account Type: Categorizes the account for OneStream consolidation and reporting behavior."');
+    expect(markup).toContain(
+      'title="Account Type: Categorizes the account for OneStream consolidation and reporting behavior."',
+    );
   });
 
   it("renders hierarchy as a compact searchable tree workbench", () => {
-    const markup = render(createElement(HierarchyTree, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension
-    }));
+    const markup = render(
+      createElement(HierarchyTree, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+      }),
+    );
 
     expect(markup).toContain("hierarchy-document");
     expect(markup).toContain("hierarchy-toolbar");
@@ -421,10 +504,12 @@ describe("client component markup", () => {
   });
 
   it("renders hierarchy analytics export controls beside the tree", () => {
-    const markup = render(createElement(HierarchyTree, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension
-    }));
+    const markup = render(
+      createElement(HierarchyTree, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+      }),
+    );
 
     expect(markup).toContain("hierarchy-analytics-panel");
     expect(markup).toContain("Max depth");
@@ -438,29 +523,37 @@ describe("client component markup", () => {
   it("renders generic no-project dashboard guidance", () => {
     const markup = dashboardMarkup(defaultAppConfig);
 
-    expect(markup).toContain('<span class="status-badge neutral">No project</span>');
+    expect(markup).toContain(
+      '<span class="status-badge neutral">No project</span>',
+    );
     expect(markup).toContain("Create a project or seed from a file.");
-    expect(markup).not.toContain("Use the Import button in the top command bar to load an XF metadata workbook.");
+    expect(markup).not.toContain(
+      "Use the Import button in the top command bar to load an XF metadata workbook.",
+    );
   });
 
   it("does not expose an XML preview download href when export is blocked", () => {
-    const markup = render(createElement(XmlPreview, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension,
-      exportAvailability: blockedExportAvailability
-    }));
+    const markup = render(
+      createElement(XmlPreview, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+        exportAvailability: blockedExportAvailability,
+      }),
+    );
 
-    expect(markup).toContain("aria-disabled=\"true\"");
-    expect(markup).toContain("tabindex=\"-1\"");
+    expect(markup).toContain('aria-disabled="true"');
+    expect(markup).toContain('tabindex="-1"');
     expect(markup).not.toContain(`href="/api/export/${sampleProject.id}/xml"`);
   });
 
   it("renders XML preview as a compact code workbench", () => {
-    const markup = render(createElement(XmlPreview, {
-      projectId: sampleProject.id,
-      dimension: sampleScenarioDimension,
-      exportAvailability: readyExportAvailability
-    }));
+    const markup = render(
+      createElement(XmlPreview, {
+        projectId: sampleProject.id,
+        dimension: sampleScenarioDimension,
+        exportAvailability: readyExportAvailability,
+      }),
+    );
 
     expect(markup).toContain("xml-document");
     expect(markup).toContain("xml-toolbar-title");
@@ -474,38 +567,44 @@ describe("client component markup", () => {
   });
 
   it("labels import and export modals as dialogs", () => {
-    const importMarkup = render(createElement(ImportModal, {
-      open: true,
-      onClose: () => undefined,
-      onImported: () => undefined,
-      projects: [],
-      selectedProjectId: null,
-      enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes
-    }));
-    const exportMarkup = render(createElement(ExportModal, {
-      open: true,
-      onClose: () => undefined,
-      projectId: sampleProject.id,
-      appConfig: defaultAppConfig,
-      exportAvailability: readyExportAvailability
-    }));
+    const importMarkup = render(
+      createElement(ImportModal, {
+        open: true,
+        onClose: () => undefined,
+        onImported: () => undefined,
+        projects: [],
+        selectedProjectId: null,
+        enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes,
+      }),
+    );
+    const exportMarkup = render(
+      createElement(ExportModal, {
+        open: true,
+        onClose: () => undefined,
+        projectId: sampleProject.id,
+        appConfig: defaultAppConfig,
+        exportAvailability: readyExportAvailability,
+      }),
+    );
 
-    expect(importMarkup).toContain("role=\"dialog\"");
-    expect(importMarkup).toContain("aria-modal=\"true\"");
-    expect(importMarkup).toContain("aria-labelledby=\"import-modal-title\"");
-    expect(exportMarkup).toContain("role=\"dialog\"");
-    expect(exportMarkup).toContain("aria-modal=\"true\"");
-    expect(exportMarkup).toContain("aria-labelledby=\"export-modal-title\"");
+    expect(importMarkup).toContain('role="dialog"');
+    expect(importMarkup).toContain('aria-modal="true"');
+    expect(importMarkup).toContain('aria-labelledby="import-modal-title"');
+    expect(exportMarkup).toContain('role="dialog"');
+    expect(exportMarkup).toContain('aria-modal="true"');
+    expect(exportMarkup).toContain('aria-labelledby="export-modal-title"');
   });
 
   it("renders relationship export load modes and pre-export impact summary affordance", () => {
-    const exportMarkup = render(createElement(ExportModal, {
-      open: true,
-      onClose: () => undefined,
-      projectId: sampleProject.id,
-      appConfig: defaultAppConfig,
-      exportAvailability: readyExportAvailability
-    }));
+    const exportMarkup = render(
+      createElement(ExportModal, {
+        open: true,
+        onClose: () => undefined,
+        projectId: sampleProject.id,
+        appConfig: defaultAppConfig,
+        exportAvailability: readyExportAvailability,
+      }),
+    );
 
     expect(exportMarkup).toContain("Relationship load mode");
     expect(exportMarkup).toContain("Full XML");
@@ -518,55 +617,71 @@ describe("client component markup", () => {
   });
 
   it("shows export validation bypass controls only when enabled by config", () => {
-    const defaultMarkup = render(createElement(ExportModal, {
-      open: true,
-      onClose: () => undefined,
-      projectId: sampleProject.id,
-      appConfig: defaultAppConfig,
-      exportAvailability: blockedExportAvailability
-    }));
-    const bypassMarkup = render(createElement(ExportModal, {
-      open: true,
-      onClose: () => undefined,
-      projectId: sampleProject.id,
-      appConfig: {
-        ...defaultAppConfig,
-        export: {
-          ...defaultAppConfig.export,
-          allowValidationBypass: true,
-          validationBypassRequiresReason: true
-        }
-      },
-      exportAvailability: blockedExportAvailability
-    }));
+    const defaultMarkup = render(
+      createElement(ExportModal, {
+        open: true,
+        onClose: () => undefined,
+        projectId: sampleProject.id,
+        appConfig: defaultAppConfig,
+        exportAvailability: blockedExportAvailability,
+      }),
+    );
+    const bypassMarkup = render(
+      createElement(ExportModal, {
+        open: true,
+        onClose: () => undefined,
+        projectId: sampleProject.id,
+        appConfig: {
+          ...defaultAppConfig,
+          export: {
+            ...defaultAppConfig.export,
+            allowValidationBypass: true,
+            validationBypassRequiresReason: true,
+          },
+        },
+        exportAvailability: blockedExportAvailability,
+      }),
+    );
 
     expect(defaultMarkup).not.toContain("Bypass validation block");
     expect(bypassMarkup).toContain("Bypass validation block");
   });
 
   it("labels the XLSX workflow as optional seeding", () => {
-    const importMarkup = render(createElement(ImportModal, {
-      open: true,
-      onClose: () => undefined,
-      onImported: () => undefined,
-      projects: [],
-      selectedProjectId: null,
-      enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes
-    }));
+    const importMarkup = render(
+      createElement(ImportModal, {
+        open: true,
+        onClose: () => undefined,
+        onImported: () => undefined,
+        projects: [],
+        selectedProjectId: null,
+        enabledDimensionTypes: defaultAppConfig.dimensions.enabledTypes,
+      }),
+    );
 
     expect(importMarkup).toContain("Seed from file");
-    expect(importMarkup).toContain("Select an optional .xlsx OneStream metadata workbook to seed a project.");
+    expect(importMarkup).toContain(
+      "Select an optional .xlsx OneStream metadata workbook to seed a project.",
+    );
     expect(importMarkup).toContain("Import XML");
     expect(importMarkup).toContain("Import CSV");
     expect(importMarkup).toContain("simple parent-child CSV");
-    expect(importMarkup).not.toContain("Select an optional `.xlsx` OneStream metadata workbook to seed a project.");
+    expect(importMarkup).not.toContain(
+      "Select an optional `.xlsx` OneStream metadata workbook to seed a project.",
+    );
     expect(importMarkup).not.toContain("Import workbook");
   });
 
   it("keeps XLSX seeding status and success copy generic", () => {
     expect(importExportModalSource).toContain('"Seeding project from file..."');
-    expect(importExportModalSource).toContain('"Importing editable OneStream metadata XML..."');
-    expect(importExportModalSource).not.toContain("Large UD3 sheets can take a few seconds");
-    expect(importExportModalSource).toContain('importMode === "xlsx" ? "Seeded" : "Imported"');
+    expect(importExportModalSource).toContain(
+      '"Importing editable OneStream metadata XML..."',
+    );
+    expect(importExportModalSource).not.toContain(
+      "Large UD3 sheets can take a few seconds",
+    );
+    expect(importExportModalSource).toContain(
+      'importMode === "xlsx" ? "Seeded" : "Imported"',
+    );
   });
 });

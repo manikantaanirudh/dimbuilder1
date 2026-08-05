@@ -1,7 +1,17 @@
-import type { ClientAppConfig, ExportConfig } from "../../shared/appConfigTypes";
-import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
+import type {
+  ClientAppConfig,
+  ExportConfig,
+} from "../../shared/appConfigTypes";
+import {
+  getDimensionDisplayLabel,
+  getDimensionDisplaySubtitle,
+} from "../../shared/dimensionDisplay";
 import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
-import type { DimensionRecord, Severity, ValidationIssue } from "../../shared/types";
+import type {
+  DimensionRecord,
+  Severity,
+  ValidationIssue,
+} from "../../shared/types";
 
 export interface IssueSummary {
   errors: number;
@@ -26,7 +36,19 @@ export interface ExportFormatLink {
 type FactTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export interface WorkspaceTabItem {
-  label: "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Property Defaults" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
+  label:
+    | "Overview"
+    | "Members"
+    | "Relationships"
+    | "Hierarchy"
+    | "Varying"
+    | "Property Defaults"
+    | "Bulk Update"
+    | "Compare"
+    | "Change Sets"
+    | "Workflows"
+    | "XML"
+    | "Issues";
 }
 
 export interface DimensionNavItem {
@@ -43,34 +65,63 @@ export interface DimensionFact {
   tone?: FactTone;
 }
 
+export function getValidationErrors(
+  issues: ValidationIssue[],
+): ValidationIssue[] {
+  return issues.filter((issue) => issue.severity === "error");
+}
+
 export function buildIssueSummary(
   issues: ValidationIssue[],
   blockedSeverities: Severity[],
-  dimensionId?: string
+  dimensionId?: string,
 ): IssueSummary {
-  const scopedIssues = dimensionId ? issues.filter((issue) => issue.dimensionId === dimensionId) : issues;
-  const errors = scopedIssues.filter((issue) => issue.severity === "error").length;
-  const warnings = scopedIssues.filter((issue) => issue.severity === "warning").length;
-  const infos = scopedIssues.filter((issue) => issue.severity === "info").length;
+  const scopedIssues = dimensionId
+    ? issues.filter((issue) => issue.dimensionId === dimensionId)
+    : issues;
+  const errors = scopedIssues.filter(
+    (issue) => issue.severity === "error",
+  ).length;
+  const warnings = scopedIssues.filter(
+    (issue) => issue.severity === "warning",
+  ).length;
+  const infos = scopedIssues.filter(
+    (issue) => issue.severity === "info",
+  ).length;
 
   return {
     errors,
     warnings,
     infos,
-    total: scopedIssues.length,
-    blocksExport: scopedIssues.some((issue) => blockedSeverities.includes(issue.severity))
+    total: errors,
+    blocksExport: scopedIssues.some((issue) =>
+      blockedSeverities.includes(issue.severity),
+    ),
   };
 }
 
-export function getEnabledExportFormats(exportConfig: ExportConfig): ExportFormatLink[] {
+export function getEnabledExportFormats(
+  exportConfig: ExportConfig,
+): ExportFormatLink[] {
   const formats: ExportFormatLink[] = [];
-  if (exportConfig.xml.enabled) formats.push({ key: "xml", label: "OneStream XML", hrefSuffix: "xml" });
-  if (exportConfig.xlsx.enabled) formats.push({ key: "xlsx", label: "Workbook XLSX", hrefSuffix: "xlsx" });
+  if (exportConfig.xml.enabled)
+    formats.push({ key: "xml", label: "OneStream XML", hrefSuffix: "xml" });
+  if (exportConfig.xlsx.enabled)
+    formats.push({ key: "xlsx", label: "Workbook XLSX", hrefSuffix: "xlsx" });
   if (exportConfig.csv.enabled) {
-    formats.push({ key: "csvMembers", label: "Members CSV", hrefSuffix: "members.csv" });
-    formats.push({ key: "csvRelationships", label: "Relationships CSV", hrefSuffix: "relationships.csv" });
+    formats.push({
+      key: "csvMembers",
+      label: "Members CSV",
+      hrefSuffix: "members.csv",
+    });
+    formats.push({
+      key: "csvRelationships",
+      label: "Relationships CSV",
+      hrefSuffix: "relationships.csv",
+    });
   }
-  if (exportConfig.json.enabled) formats.push({ key: "json", label: "JSON Backup", hrefSuffix: "json" });
+  if (exportConfig.json.enabled)
+    formats.push({ key: "json", label: "JSON Backup", hrefSuffix: "json" });
   return formats;
 }
 
@@ -78,7 +129,7 @@ export function getExportAvailability({
   projectId,
   exportConfig,
   issues,
-  blockedSeverities
+  blockedSeverities,
 }: {
   projectId: string | null;
   exportConfig: ExportConfig;
@@ -86,21 +137,39 @@ export function getExportAvailability({
   blockedSeverities: Severity[];
 }): ExportAvailability {
   if (!projectId) {
-    return { disabled: true, title: "Create or open a project before exporting", reason: "No project open" };
+    return {
+      disabled: true,
+      title: "Create or open a project before exporting",
+      reason: "No project open",
+    };
   }
 
   if (getEnabledExportFormats(exportConfig).length === 0) {
-    return { disabled: true, title: "Exports are disabled by configuration", reason: "No export formats enabled" };
+    return {
+      disabled: true,
+      title: "Exports are disabled by configuration",
+      reason: "No export formats enabled",
+    };
   }
 
   if (issues.some((issue) => blockedSeverities.includes(issue.severity))) {
-    return { disabled: true, title: "Resolve blocking validation issues before exporting", reason: "Blocking validation issues" };
+    return {
+      disabled: true,
+      title: "Resolve blocking validation issues before exporting",
+      reason: "Blocking validation issues",
+    };
   }
 
-  return { disabled: false, title: "Export metadata", reason: "Ready to export" };
+  return {
+    disabled: false,
+    title: "Export metadata",
+    reason: "Ready to export",
+  };
 }
 
-export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[] {
+export function getWorkspaceTabs(
+  xmlPreviewEnabled: boolean,
+): WorkspaceTabItem[] {
   const tabs: WorkspaceTabItem[] = [
     { label: "Overview" },
     { label: "Members" },
@@ -111,14 +180,17 @@ export function getWorkspaceTabs(xmlPreviewEnabled: boolean): WorkspaceTabItem[]
     { label: "Bulk Update" },
     { label: "Compare" },
     { label: "Change Sets" },
-    { label: "Workflows" }
+    { label: "Workflows" },
   ];
   if (xmlPreviewEnabled) tabs.push({ label: "XML" });
   tabs.push({ label: "Issues" });
   return tabs;
 }
 
-export function resolveActiveDimensionId(activeDimensionId: string | null, dimensions: DimensionRecord[]): string | null {
+export function resolveActiveDimensionId(
+  activeDimensionId: string | null,
+  dimensions: DimensionRecord[],
+): string | null {
   if (activeDimensionId === null) return null;
   if (dimensions.some((dimension) => dimension.id === activeDimensionId)) {
     return activeDimensionId;
@@ -126,7 +198,10 @@ export function resolveActiveDimensionId(activeDimensionId: string | null, dimen
   return dimensions[0]?.id ?? null;
 }
 
-export function filterDimensionNavItems(items: DimensionNavItem[], query: string): DimensionNavItem[] {
+export function filterDimensionNavItems(
+  items: DimensionNavItem[],
+  query: string,
+): DimensionNavItem[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return items;
   return items.filter((item) => {
@@ -136,30 +211,46 @@ export function filterDimensionNavItems(items: DimensionNavItem[], query: string
       item.subtitle,
       dimension.dimensionType,
       dimension.dimensionName,
-      dimension.sheetName
+      dimension.sheetName,
     ].some((value) => value.toLowerCase().includes(needle));
   });
 }
 
-export function getReadinessLabel(summary: IssueSummary): "Ready" | "Needs review" | "Export blocked" {
+export function getReadinessLabel(
+  summary: IssueSummary,
+): "Ready" | "Needs review" | "Export blocked" {
   if (summary.blocksExport) return "Export blocked";
   if (summary.total > 0) return "Needs review";
   return "Ready";
 }
 
-export function buildDimensionFacts(dimension: DimensionRecord, issueSummary: IssueSummary): DimensionFact[] {
+export function buildDimensionFacts(
+  dimension: DimensionRecord,
+  issueSummary: IssueSummary,
+): DimensionFact[] {
   const facts: DimensionFact[] = [
     { label: "Type", value: dimension.dimensionType },
-    { label: "Sheet", value: dimension.sheetName }
+    { label: "Sheet", value: dimension.sheetName },
   ];
 
-  if (dimension.accessGroup) facts.push({ label: "Access", value: dimension.accessGroup });
-  if (dimension.maintenanceGroup) facts.push({ label: "Maintenance", value: dimension.maintenanceGroup });
-  if (dimension.inheritedDimension) facts.push({ label: "Inherits", value: dimension.inheritedDimension });
+  if (dimension.accessGroup)
+    facts.push({ label: "Access", value: dimension.accessGroup });
+  if (dimension.maintenanceGroup)
+    facts.push({ label: "Maintenance", value: dimension.maintenanceGroup });
+  if (dimension.inheritedDimension)
+    facts.push({ label: "Inherits", value: dimension.inheritedDimension });
 
   facts.push(
-    { label: "Errors", value: String(issueSummary.errors), tone: issueSummary.errors > 0 ? "danger" : "neutral" },
-    { label: "Warnings", value: String(issueSummary.warnings), tone: issueSummary.warnings > 0 ? "warning" : "neutral" }
+    {
+      label: "Errors",
+      value: String(issueSummary.errors),
+      tone: issueSummary.errors > 0 ? "danger" : "neutral",
+    },
+    {
+      label: "Warnings",
+      value: String(issueSummary.warnings),
+      tone: issueSummary.warnings > 0 ? "warning" : "neutral",
+    },
   );
 
   return facts;
@@ -169,14 +260,14 @@ export function buildDimensionNavItems(
   dimensions: DimensionRecord[],
   issues: ValidationIssue[],
   displayConfig: ClientAppConfig["dimensions"]["display"],
-  blockedSeverities: Severity[]
+  blockedSeverities: Severity[],
 ): DimensionNavItem[] {
   return sortDimensionsByType(dimensions).map((dimension) => ({
     id: dimension.id,
     label: getDimensionDisplayLabel(dimension, displayConfig),
     subtitle: getDimensionDisplaySubtitle(dimension, displayConfig),
     dimension,
-    issueSummary: buildIssueSummary(issues, blockedSeverities, dimension.id)
+    issueSummary: buildIssueSummary(issues, blockedSeverities, dimension.id),
   }));
 }
 
@@ -189,13 +280,15 @@ export function formatCount(value: number): string {
 export function sortDimensionsForOverview(
   dimensions: DimensionRecord[],
   issueSummaryByDimensionId: Map<string, IssueSummary>,
-  prioritizeIssues: boolean
+  prioritizeIssues: boolean,
 ): DimensionRecord[] {
   const sorted = [...dimensions];
   if (!prioritizeIssues) return sortDimensionsByType(sorted);
 
   return sorted.sort((left, right) => {
-    const issueDelta = (issueSummaryByDimensionId.get(right.id)?.total ?? 0) - (issueSummaryByDimensionId.get(left.id)?.total ?? 0);
+    const issueDelta =
+      (issueSummaryByDimensionId.get(right.id)?.total ?? 0) -
+      (issueSummaryByDimensionId.get(left.id)?.total ?? 0);
     if (issueDelta !== 0) return issueDelta;
     const [first] = sortDimensionsByType([left, right]);
     return first.id === left.id ? -1 : 1;
@@ -214,12 +307,18 @@ export function scoreValidationHealth(issues: ValidationIssue[]): number {
   return Math.max(0, Math.min(100, Math.round(100 - Math.min(90, penalty))));
 }
 
-export function blendProjectHealthScores(metadataScore: number, validationScore: number): number {
+export function blendProjectHealthScores(
+  metadataScore: number,
+  validationScore: number,
+): number {
   if (metadataScore >= 100 && validationScore >= 100) return 100;
   return Math.round(metadataScore * 0.35 + validationScore * 0.65);
 }
 
-export function computeProjectHealthFallback(coverage: number | null, issues: ValidationIssue[]): number | null {
+export function computeProjectHealthFallback(
+  coverage: number | null,
+  issues: ValidationIssue[],
+): number | null {
   const validationScore = scoreValidationHealth(issues);
   if (coverage === null) return validationScore;
   return blendProjectHealthScores(coverage, validationScore);
@@ -229,7 +328,7 @@ export function formatProjectHealthTitle({
   metadataScore,
   validationScore,
   coverage,
-  fallback
+  fallback,
 }: {
   metadataScore?: number | null;
   validationScore?: number | null;
@@ -239,7 +338,7 @@ export function formatProjectHealthTitle({
   const parts = [
     metadataScore != null ? `Metadata ${metadataScore}%` : null,
     validationScore != null ? `Validation ${validationScore}%` : null,
-    coverage != null ? `Coverage ${coverage}%` : null
+    coverage != null ? `Coverage ${coverage}%` : null,
   ].filter(Boolean);
   const detail = parts.length ? parts.join(" · ") : "Project health";
   return fallback ? `${detail} (estimated)` : detail;

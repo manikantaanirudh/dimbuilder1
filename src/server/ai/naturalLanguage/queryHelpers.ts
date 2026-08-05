@@ -17,39 +17,64 @@ export function resolveDimensionToken(
 ): DimensionRecord | undefined {
   if (!token?.trim()) return undefined;
   const normalized = token.trim().toLowerCase();
-  return dimensions.find((dimension) =>
-    dimension.dimensionType.toLowerCase() === normalized ||
-    dimension.dimensionName.toLowerCase() === normalized ||
-    dimension.dimensionType.toLowerCase().includes(normalized) ||
-    dimension.dimensionName.toLowerCase().includes(normalized)
-  );
+
+  // 1. Exact match on dimensionName
+  const exactName = dimensions.find((d) => d.dimensionName.toLowerCase() === normalized);
+  if (exactName) return exactName;
+
+  // 2. Exact match on ID
+  const exactId = dimensions.find((d) => d.id.toLowerCase() === normalized);
+  if (exactId) return exactId;
+
+  // 3. Exact match on sheet name
+  const exactSheet = dimensions.find((d) => (d as unknown as { sheet?: string }).sheet?.toLowerCase() === normalized);
+  if (exactSheet) return exactSheet;
+
+  // 4. Exact match on dimensionType
+  const exactType = dimensions.find((d) => d.dimensionType.toLowerCase() === normalized);
+  if (exactType) return exactType;
+
+  // 5. Substring match on dimensionName
+  const subName = dimensions.find((d) => d.dimensionName.toLowerCase().includes(normalized));
+  if (subName) return subName;
+
+  // 6. Substring match on dimensionType
+  return dimensions.find((d) => d.dimensionType.toLowerCase().includes(normalized));
 }
 
 export function extractDimensionToken(question: string, dimensions: DimensionRecord[]): string | undefined {
   const haystack = question.toLowerCase();
-  const matches: Array<{ type: string; score: number }> = [];
+  const matches: Array<{ token: string; score: number }> = [];
 
   for (const dimension of dimensions) {
     const type = dimension.dimensionType;
     const name = dimension.dimensionName;
+    const sheet = (dimension as unknown as { sheet?: string }).sheet ?? "";
     const typeLower = type.toLowerCase();
     const nameLower = name.toLowerCase();
-    const strippedName = nameLower.replace(/^ref[_-]?/i, "");
+    const sheetLower = sheet.toLowerCase();
 
+    // Check full dimension name first (highest priority)
+    if (nameLower && (haystack.includes(nameLower) || new RegExp(`\\b${escapeRegex(name)}\\b`, "i").test(question))) {
+      matches.push({ token: name, score: 1000 + name.length });
+    }
+
+    // Check sheet name
+    if (sheetLower && (haystack.includes(sheetLower) || new RegExp(`\\b${escapeRegex(sheet)}\\b`, "i").test(question))) {
+      matches.push({ token: name, score: 800 + sheet.length });
+    }
+
+    // Check type as standalone word
     if (new RegExp(`\\b${escapeRegex(type)}\\b`, "i").test(question)) {
-      matches.push({ type, score: 100 + type.length });
-    } else if (new RegExp(`\\b${escapeRegex(name)}\\b`, "i").test(question)) {
-      matches.push({ type, score: 90 + name.length });
-    } else if (strippedName && haystack.includes(strippedName)) {
-      matches.push({ type, score: 70 + strippedName.length });
+      matches.push({ token: type, score: 500 + type.length });
     } else if (haystack.includes(typeLower)) {
-      matches.push({ type, score: 50 + typeLower.length });
+      matches.push({ token: type, score: 300 + typeLower.length });
     }
   }
 
   if (matches.length === 0) return undefined;
   matches.sort((a, b) => b.score - a.score);
-  return matches[0].type;
+  return matches[0].token;
 }
 
 export function membersForDimension(

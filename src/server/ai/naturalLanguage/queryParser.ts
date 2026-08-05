@@ -2,7 +2,7 @@ import type { DimensionMemberRecord, DimensionRelationshipRecord, DimensionRecor
 import type { NLQueryResult } from "../../../shared/aiTypes";
 import type { ProjectAIContext } from "../projectContext";
 import { buildHierarchyAnalytics } from "../../../shared/hierarchyAnalytics";
-import { generateResponse } from "./responseGenerator";
+import { generateResponse, buildStructuredAnswer } from "./responseGenerator";
 import { normalizeQuery, matchesAny } from "./queryNormalizer";
 import { scoreIntentFromKeywords } from "./intentScoring";
 import {
@@ -76,7 +76,7 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
     return { type: 'dimension_issues', params: { dimension: '' } };
   }
 
-  const issuesInDimMatch = q.match(/(?:issues?|problems?|errors?)\s+(?:in|for)\s+['"]?(\w[\w\s-]*)['"]?/i);
+  const issuesInDimMatch = q.match(/(?:issues?|problems?|errors?)\s+(?:in|for)\s+['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (issuesInDimMatch) {
     return { type: 'dimension_issues', params: { dimension: issuesInDimMatch[1].trim() } };
   }
@@ -122,12 +122,12 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
     return { type: 'member_details', params: { memberKey: memberDetailsMatch[1].trim() } };
   }
 
-  const missingMatch = q.match(/which\s+(\w+)\s+(?:are|is)\s+missing\s+['"]?(\w+)['"]?/i);
+  const missingMatch = q.match(/which\s+([^'"?]+?)\s+(?:are|is)\s+missing\s+['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (missingMatch) {
     return { type: 'missing_property', params: { dimension: missingMatch[1], property: missingMatch[2] } };
   }
 
-  const withoutMatch = q.match(/(?:find|show|list)\s+members?\s+without\s+['"]?(\w+)['"]?/i);
+  const withoutMatch = q.match(/(?:find|show|list)\s+members?\s+without\s+['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (withoutMatch) {
     return { type: 'missing_property', params: { dimension: '', property: withoutMatch[1] } };
   }
@@ -137,9 +137,12 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
     return { type: 'children', params: { parent: childrenMatch[1].trim() } };
   }
 
-  const countMatch = q.match(/how\s+many\s+members?\s*(?:in\s+['"]?(\w+)['"]?)?/i);
+  const countMatch = q.match(/how\s+many\s+members?\s*(?:in\s+['"]?([^'"?]+?)['"]?)?\s*\??$/i);
   if (countMatch) {
-    return { type: 'count', params: { dimension: countMatch[1] || dimensionToken } };
+    const rawMatch = countMatch[1]?.trim();
+    const resolvedDim = rawMatch ? resolveDimensionToken(rawMatch, dimensions) : undefined;
+    const chosenDim = resolvedDim?.dimensionName ?? dimensionToken;
+    return { type: 'count', params: { dimension: chosenDim || rawMatch || '' } };
   }
 
   const dimCountMatch = q.match(/(?:how\s+many|total|count)\s+dimensions?/i);
@@ -147,7 +150,7 @@ function parseIntent(question: string, dimensions: DimensionRecord[]): ParsedInt
     return { type: 'count', params: { dimension: '__dimensions__' } };
   }
 
-  const filterMatch = q.match(/(?:which|find|show)\s+members?\s+(?:have|with|where)\s+['"]?(\w+)['"]?\s*=\s*['"]?([^'"?]+?)['"]?\s*\??$/i);
+  const filterMatch = q.match(/(?:which|find|show)\s+members?\s+(?:have|with|where)\s+['"]?([^'"?]+?)['"]?\s*=\s*['"]?([^'"?]+?)['"]?\s*\??$/i);
   if (filterMatch) {
     return { type: 'property_filter', params: { property: filterMatch[1], value: filterMatch[2].trim() } };
   }
@@ -186,8 +189,8 @@ function wantsMemberList(raw: string, normalized: string, dimensionToken: string
     /\b(list|show|get|display|enumerate|all|every|available|what|which)\b/i.test(normalized) ||
     /\bmembers?\s+(?:in|for|from|of)\b/i.test(normalized) ||
     /\b(?:in|for|from|of)\s+[\w\s-]+\s+members?\b/i.test(normalized) ||
-    new RegExp(`\\b${dimensionToken}\\b[\\s\\S]*\\bmembers?\\b`, "i").test(normalized) ||
-    new RegExp(`\\bmembers?\\b[\\s\\S]*\\b${dimensionToken}\\b`, "i").test(normalized)
+    new RegExp(`\\b${escapeRegex(dimensionToken)}\\b[\\s\\S]*\\bmembers?\\b`, "i").test(normalized) ||
+    new RegExp(`\\bmembers?\\b[\\s\\S]*\\b${escapeRegex(dimensionToken)}\\b`, "i").test(normalized)
   );
 }
 
@@ -205,18 +208,39 @@ function executeIntent(
         return unavailableContext('summary');
       }
       const dimList = context.dimensions.length > 0
-        ? context.dimensions.map(d => `${d.dimensionType} (${d.dimensionName}): ${d.memberCount} member(s)`).join('\n  ')
+        ? context.dimensions.map(d => `${d.dimensionType} (${d.dimensionName}): ${d.memberCount} member(s)`).join(', ')
         : 'No dimensions yet.';
-      const health = context.validation.totalIssues === 0
-        ? 'No validation issues.'
-        : `${context.validation.totalIssues} issue(s): ${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s), ${context.validation.infos ?? 0} info.`;
-      const exportLine = context.exportReady
-        ? 'Export status: ready (no blocking issues).'
-        : `Export status: blocked by ${context.validation.blockingIssues} issue(s).`;
-      const coverageLine = `Metadata coverage: ${context.coverage.overallPercent}% overall.`;
+
       return {
         intent: 'summary',
-        answer: `Project "${context.projectName}"\n• ${context.dimensionCount} dimension(s), ${context.memberCount} member(s), ${context.relationshipCount} relationship(s).\n• ${health}\n• ${exportLine}\n• ${coverageLine}\n\nDimensions:\n  ${dimList}`,
+        answer: buildStructuredAnswer({
+          summary: `Project "${context.projectName}" contains ${context.dimensionCount} dimension(s), ${context.memberCount} member(s), and ${context.relationshipCount} relationship(s).`,
+          keyMetrics: [
+            { label: "Total Dimensions", value: context.dimensionCount },
+            { label: "Total Members", value: context.memberCount },
+            { label: "Total Relationships", value: context.relationshipCount },
+            { label: "Overall Metadata Coverage", value: `${context.coverage.overallPercent}%` },
+            { label: "Export Readiness", value: context.exportReady ? "Ready" : "Blocked" }
+          ],
+          findings: [
+            {
+              severity: context.validation.blockingIssues > 0 ? 'Critical' : context.validation.totalIssues > 0 ? 'Warning' : 'Information',
+              text: context.validation.totalIssues === 0
+                ? "No validation issues detected."
+                : `${context.validation.totalIssues} total issues (${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s)).`
+            }
+          ],
+          impact: context.exportReady
+            ? "Project is fully compliant with OneStream schema guidelines and ready for XML generation."
+            : `Export is blocked by ${context.validation.blockingIssues} validation issue(s).`,
+          recommendations: context.exportReady
+            ? ["Proceed to XML Export tab to generate production artifacts."]
+            : ["Review top blocking issues in the Validation tab before exporting."],
+          relatedInsights: [
+            `Dimensions summary: ${dimList}`
+          ],
+          followUps: ["What is wrong with my project?", "Which dimensions are empty?", "How many leaf members in Account?"]
+        }),
         matchedMembers: [],
         confidence: 1.0,
         evidence: [
@@ -233,270 +257,53 @@ function executeIntent(
       if (context.validation.totalIssues === 0) {
         return {
           intent: 'issues',
-          answer: `No validation issues in "${context.projectName}". The project is clean.`,
+          answer: buildStructuredAnswer({
+            summary: `No validation issues found in "${context.projectName}". The project is completely clean.`,
+            keyMetrics: [
+              { label: "Total Issues", value: 0 },
+              { label: "Blocking Issues", value: 0 }
+            ],
+            findings: [
+              { severity: 'Information', text: "0 errors, 0 warnings, 0 information messages." }
+            ],
+            impact: "Clean validation state guarantees zero build errors during XML compilation.",
+            recommendations: ["Proceed to export or perform final metadata review."],
+            followUps: ["Is my project ready to export?", "What is the metadata coverage?"]
+          }),
           matchedMembers: [],
           confidence: 1.0,
           followUps: ["Is my project ready to export?", "What is the metadata coverage?"]
         };
       }
-      const breakdown = `${context.validation.totalIssues} issue(s): ${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s), ${context.validation.infos ?? 0} info.`;
-      const top = context.topIssues.length > 0
-        ? '\n\nMost frequent:\n  ' + context.topIssues.map(i => `${i.code} (x${i.count}): ${i.message}`).join('\n  ')
-        : '';
-      const byDimension = context.issuesByDimension.length > 0
-        ? '\n\nBy dimension:\n  ' + context.issuesByDimension.slice(0, 5).map(row =>
-          `${row.dimensionType}: ${row.totalCount} (${row.errors} error(s), ${row.warnings} warning(s))`
-        ).join('\n  ')
-        : '';
-      const blocking = context.validation.blockingIssues > 0
-        ? `\n\n${context.validation.blockingIssues} of these block export.`
-        : '\n\nNone of these block export.';
+
       return {
         intent: 'issues',
-        answer: `${breakdown}${top}${byDimension}${blocking}`,
+        answer: buildStructuredAnswer({
+          summary: `Found ${context.validation.totalIssues} validation issue(s) in "${context.projectName}".`,
+          keyMetrics: [
+            { label: "Total Issues", value: context.validation.totalIssues },
+            { label: "Errors", value: context.validation.errors ?? 0 },
+            { label: "Warnings", value: context.validation.warnings ?? 0 },
+            { label: "Export Blocking", value: context.validation.blockingIssues }
+          ],
+          findings: context.topIssues.map(i => ({
+            severity: i.severity === 'error' ? 'Critical' : 'Warning',
+            text: `${i.code} (x${i.count}): ${i.message}`
+          })),
+          impact: context.validation.blockingIssues > 0
+            ? `${context.validation.blockingIssues} issue(s) block OneStream XML export.`
+            : "No issues currently block export, but warnings should be reviewed.",
+          recommendations: [
+            "Filter validation table by 'Error' severity first.",
+            "Fix missing parent references and invalid member keys."
+          ],
+          relatedInsights: context.issuesByDimension.slice(0, 3).map(r => `${r.dimensionType} (${r.dimensionName}): ${r.totalCount} issues`),
+          followUps: ["What's blocking export?", "Which dimension has the most issues?"]
+        }),
         matchedMembers: [],
         confidence: 1.0,
         evidence: context.topIssues.slice(0, 3).map(i => `${i.code} ×${i.count}`),
         followUps: ["What's blocking export?", "Which dimension has the most issues?"]
-      };
-    }
-
-    case 'export_ready': {
-      if (!context) return unavailableContext('export_ready');
-      if (context.exportReady) {
-        return {
-          intent: 'export_ready',
-          answer: `Yes, "${context.projectName}" is ready to export. No blocking validation issues.`,
-          matchedMembers: [],
-          confidence: 1.0,
-          evidence: ["0 blocking issues"],
-          followUps: ["Summarize my project", "What is the metadata coverage?"]
-        };
-      }
-      const top = context.topIssues.length > 0
-        ? '\n\nTop issues:\n  ' + context.topIssues.map(i => `${i.code} (x${i.count}): ${i.message}`).join('\n  ')
-        : '';
-      return {
-        intent: 'export_ready',
-        answer: `Not yet. Export is blocked by ${context.validation.blockingIssues} issue(s) in "${context.projectName}". Resolve the blocking issues, then export.${top}`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: [`${context.validation.blockingIssues} blocking issue(s)`],
-        followUps: ["What is wrong with my project?", "Which dimension has the most issues?"]
-      };
-    }
-
-    case 'coverage': {
-      if (!context) return unavailableContext('coverage');
-      const rows = context.coverage.dimensions
-        .map(row => `${row.dimensionType}: ${row.propertyCoverage}% properties, ${row.descriptionCoverage}% descriptions${row.isStale ? " (stale)" : ""}`)
-        .join('\n  ');
-      return {
-        intent: 'coverage',
-        answer: `Overall metadata coverage for "${context.projectName}" is ${context.coverage.overallPercent}%.\n\nBy dimension:\n  ${rows || "No dimensions."}`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: [`${context.coverage.overallPercent}% overall`],
-        followUps: ["Which dimensions are empty?", "Summarize my project"]
-      };
-    }
-
-    case 'empty_dimensions': {
-      if (!context) return unavailableContext('empty_dimensions');
-      const empty = context.dimensions.filter(d => d.memberCount === 0);
-      if (empty.length === 0) {
-        return {
-          intent: 'empty_dimensions',
-          answer: `All ${context.dimensions.length} dimension(s) in "${context.projectName}" have at least one member.`,
-          matchedMembers: [],
-          confidence: 1.0
-        };
-      }
-      const labels = empty.map(d => `${d.dimensionType} (${d.dimensionName})`).join(', ');
-      return {
-        intent: 'empty_dimensions',
-        answer: `${empty.length} empty dimension(s): ${labels}.`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: empty.map(d => d.dimensionType),
-        followUps: ["Summarize my project", "What is the metadata coverage?"]
-      };
-    }
-
-    case 'dimension_issues': {
-      if (!context) return unavailableContext('dimension_issues');
-      if (!intent.params.dimension) {
-        const top = context.issuesByDimension[0];
-        if (!top) {
-          return {
-            intent: 'dimension_issues',
-            answer: `No validation issues in "${context.projectName}".`,
-            matchedMembers: [],
-            confidence: 1.0
-          };
-        }
-        return {
-          intent: 'dimension_issues',
-          answer: `${top.dimensionType} (${top.dimensionName}) has the most issues: ${top.totalCount} total (${top.errors} error(s), ${top.warnings} warning(s)).`,
-          matchedMembers: [],
-          confidence: 1.0,
-          evidence: [`${top.totalCount} issues in ${top.dimensionType}`],
-          followUps: [`What is wrong with issues in ${top.dimensionType}?`, "What's blocking export?"]
-        };
-      }
-      const dimToken = intent.params.dimension;
-      const row = context.issuesByDimension.find(d =>
-        d.dimensionType.toLowerCase() === dimToken.toLowerCase() ||
-        d.dimensionName.toLowerCase() === dimToken.toLowerCase()
-      );
-      if (!row) {
-        return {
-          intent: 'dimension_issues',
-          answer: `No validation issues found for "${dimToken}" in "${context.projectName}".`,
-          matchedMembers: [],
-          confidence: 0.9
-        };
-      }
-      return {
-        intent: 'dimension_issues',
-        answer: `${row.dimensionType} (${row.dimensionName}) has ${row.totalCount} issue(s): ${row.errors} error(s), ${row.warnings} warning(s).`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: [`${row.errors} errors`, `${row.warnings} warnings`]
-      };
-    }
-
-    case 'leaf_count':
-    case 'list_leaves':
-    case 'hierarchy_depth':
-    case 'hierarchy_summary':
-    case 'shared_members':
-      return executeHierarchyIntent(intent, question, dimensions, members, relationships);
-
-    case 'list_members': {
-      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
-      if (!dim) {
-        return {
-          intent: 'list_members',
-          answer: intent.params.dimension
-            ? `Could not find a dimension matching "${intent.params.dimension}".`
-            : "Please specify a dimension, for example: List all members in Scenario.",
-          matchedMembers: [],
-          confidence: 0.5,
-          followUps: ["List all members in Account", "What dimensions exist in this project?"]
-        };
-      }
-      const filtered = members
-        .filter((member) => member.dimensionId === dim.id)
-        .sort((left, right) => left.memberKey.localeCompare(right.memberKey));
-      const matchedKeys = filtered.map((member) => member.memberKey);
-      return {
-        intent: 'list_members',
-        answer: generateResponse({
-          matchedMembers: matchedKeys,
-          intent: 'list_members',
-          params: { dimension: dim.dimensionType }
-        }),
-        matchedMembers: matchedKeys,
-        confidence: 1.0,
-        evidence: [`${dim.dimensionType} (${dim.dimensionName})`, `${matchedKeys.length} members`],
-        followUps: [
-          `How many members in ${dim.dimensionType}?`,
-          `Show leaf members in ${dim.dimensionType}`,
-          `What is the max hierarchy depth in ${dim.dimensionType}?`
-        ]
-      };
-    }
-
-    case 'list_dimensions': {
-      const rows = context?.dimensions ?? dimensions.map((dimension) => ({
-        dimensionType: dimension.dimensionType,
-        dimensionName: dimension.dimensionName,
-        memberCount: members.filter((member) => member.dimensionId === dimension.id).length
-      }));
-      const lines = rows.map((row) => `${row.dimensionType} (${row.dimensionName}): ${row.memberCount} member(s)`);
-      return {
-        intent: 'list_dimensions',
-        answer: rows.length === 0
-          ? "No dimensions exist in this project yet."
-          : `This project has ${rows.length} dimension(s):\n  ${lines.join("\n  ")}`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: rows.slice(0, 5).map((row) => row.dimensionType),
-        followUps: rows.slice(0, 3).map((row) => `List all members in ${row.dimensionType}`)
-      };
-    }
-
-    case 'member_details':
-      return executeMemberDetails(intent.params.memberKey, dimensions, members, relationships);
-
-    case 'relationship_count': {
-      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
-      const scoped = membersForDimension(dim, members, relationships);
-      const label = dim ? `${dim.dimensionType} (${dim.dimensionName})` : "the project";
-      return {
-        intent: 'relationship_count',
-        answer: `${label} has ${scoped.relationships.length} relationship(s) across ${scoped.members.length} member(s).`,
-        matchedMembers: [],
-        confidence: 1.0,
-        evidence: [`${scoped.relationships.length} relationships`],
-        followUps: dim
-          ? [`Hierarchy health for ${dim.dimensionType}`, `List all members in ${dim.dimensionType}`]
-          : ["Summarize my project"]
-      };
-    }
-
-    case 'inactive_members': {
-      const dim = resolveDimensionToken(intent.params.dimension, dimensions);
-      const scoped = membersForDimension(dim, members, relationships);
-      const inactive = scoped.members.filter((member) => member.isActive === false);
-      const matchedKeys = inactive.map((member) => member.memberKey);
-      const label = dim ? `${dim.dimensionType} (${dim.dimensionName})` : "the project";
-      return {
-        intent: 'inactive_members',
-        answer: matchedKeys.length === 0
-          ? `No inactive members in ${label}.`
-          : `${matchedKeys.length} inactive member(s) in ${label}: ${formatMemberList(matchedKeys)}`,
-        matchedMembers: matchedKeys,
-        confidence: 1.0
-      };
-    }
-
-    case 'root_members': {
-      const dim = resolveDimensionToken(intent.params.dimension, dimensions) ?? dimensions[0];
-      if (!dim) {
-        return { intent: 'root_members', answer: "No dimensions exist in this project yet.", matchedMembers: [], confidence: 0.8 };
-      }
-      const scoped = membersForDimension(dim, members, relationships);
-      const childKeys = new Set(scoped.relationships.map((relationship) => relationship.childKey));
-      const rootKeys = scoped.members
-        .filter((member) => !childKeys.has(member.memberKey))
-        .map((member) => member.memberKey)
-        .sort((left, right) => left.localeCompare(right));
-      const label = `${dim.dimensionType} (${dim.dimensionName})`;
-      return {
-        intent: 'root_members',
-        answer: rootKeys.length === 0
-          ? `No root members found in ${label}.`
-          : `${rootKeys.length} root member(s) in ${label}: ${formatMemberList(rootKeys)}`,
-        matchedMembers: rootKeys,
-        confidence: 1.0,
-        followUps: [`Show members under ${rootKeys[0] ?? dim.dimensionType}`, `List all members in ${dim.dimensionType}`]
-      };
-    }
-
-    case 'find': {
-      const pattern = intent.params.pattern.toLowerCase();
-      const matched = members.filter(m =>
-        m.memberKey.toLowerCase().includes(pattern) ||
-        m.description.toLowerCase().includes(pattern)
-      );
-      const matchedKeys = matched.map(m => m.memberKey);
-      return {
-        intent: 'find',
-        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'find', params: intent.params }),
-        matchedMembers: matchedKeys,
-        confidence: 0.8
       };
     }
 
@@ -505,20 +312,94 @@ function executeIntent(
       if (dimFilter === '__dimensions__') {
         return {
           intent: 'count',
-          answer: `This project has ${dimensions.length} dimension(s): ${dimensions.map(d => `${d.dimensionType} (${d.dimensionName})`).join(', ')}`,
+          answer: buildStructuredAnswer({
+            summary: `This project contains ${dimensions.length} defined dimension(s).`,
+            keyMetrics: [
+              { label: "Total Dimensions", value: dimensions.length },
+              { label: "Total Members Across Project", value: members.length },
+              { label: "Total Relationships", value: relationships.length }
+            ],
+            findings: [
+              { severity: 'Information', text: `Dimensions: ${dimensions.map(d => `${d.dimensionName} (${d.dimensionType})`).join(', ')}` }
+            ],
+            impact: "Having structured dimensions ensures clean OneStream metadata modeling.",
+            recommendations: ["Select a specific dimension to inspect member breakdown and health."],
+            followUps: ["Summarize my project", "Which dimensions are empty?", "What is the metadata coverage?"]
+          }),
           matchedMembers: [],
           confidence: 1.0
         };
       }
-      let filtered = members;
+
       const dim = resolveDimensionToken(dimFilter, dimensions);
       if (dim) {
-        filtered = members.filter(m => m.dimensionId === dim.id);
+        const scoped = membersForDimension(dim, members, relationships);
+        const analytics = buildHierarchyAnalytics(dim, scoped.members, scoped.relationships);
+        const dimLabel = `${dim.dimensionName} (${dim.dimensionType})`;
+        const count = scoped.members.length;
+        const leaves = analytics.summary.leafCount;
+        const parents = analytics.summary.parentCount;
+        const maxDepth = analytics.summary.maxDepth;
+        const orphans = analytics.summary.orphanCount;
+        const shared = analytics.summary.sharedMemberCount;
+        const missingDesc = scoped.members.filter(m => !m.description || m.description.trim() === '').length;
+
+        const findings: Array<{ severity: 'Critical' | 'Warning' | 'Information'; text: string }> = [
+          { severity: 'Information', text: `${count} active member(s) found in ${dimLabel}.` }
+        ];
+        if (orphans > 0) {
+          findings.push({ severity: 'Critical', text: `${orphans} orphan member(s) detected (unconnected to roots).` });
+        }
+        if (analytics.summary.hasCycle) {
+          findings.push({ severity: 'Critical', text: `Hierarchy cycle detected in ${dimLabel}.` });
+        }
+        if (missingDesc > 0) {
+          findings.push({ severity: 'Warning', text: `${missingDesc} member(s) missing descriptions.` });
+        }
+        if (shared > 0) {
+          findings.push({ severity: 'Warning', text: `${shared} shared member(s) have multiple parents.` });
+        }
+
+        return {
+          intent: 'count',
+          answer: buildStructuredAnswer({
+            summary: `There are ${count} member(s) in the ${dimLabel} dimension.`,
+            keyMetrics: [
+              { label: "Total Members", value: count },
+              { label: "Leaf Members", value: `${leaves} (${count > 0 ? ((leaves / count) * 100).toFixed(1) : 0}%)` },
+              { label: "Parent Members", value: parents },
+              { label: "Max Hierarchy Depth", value: maxDepth },
+              { label: "Orphan Members", value: orphans },
+              { label: "Shared Members", value: shared }
+            ],
+            findings,
+            impact: orphans > 0 || analytics.summary.hasCycle
+              ? `Hierarchy issues in ${dim.dimensionName} will block OneStream XML export.`
+              : `${dim.dimensionName} structure is reachable and valid for export.`,
+            recommendations: orphans > 0
+              ? [`Attach ${orphans} orphan members to hierarchy roots or parent nodes.`, `Review member descriptions in ${dim.dimensionName}.`]
+              : [`Review leaf member properties in ${dim.dimensionName} before export.`],
+            relatedInsights: [
+              `Dimension Type: ${dim.dimensionType}`,
+              `Sheet Name: ${(dim as unknown as { sheet?: string }).sheet || dim.dimensionName}`
+            ],
+            followUps: [
+              `Show leaf members in ${dim.dimensionName}`,
+              `What is the max hierarchy depth in ${dim.dimensionName}?`,
+              `Show orphan members in ${dim.dimensionName}`,
+              `List all members in ${dim.dimensionName}`
+            ]
+          }),
+          matchedMembers: scoped.members.map(m => m.memberKey),
+          confidence: 1.0,
+          evidence: [`${count} members in ${dim.dimensionName}`, `${leaves} leaves`, `Depth ${maxDepth}`]
+        };
       }
-      const matchedKeys = filtered.map(m => m.memberKey);
+
+      const matchedKeys = members.map(m => m.memberKey);
       return {
         intent: 'count',
-        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'count', params: { dimension: dim?.dimensionType ?? dimFilter } }),
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'count', params: { dimension: dimFilter } }),
         matchedMembers: matchedKeys,
         confidence: 1.0
       };

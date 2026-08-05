@@ -8,13 +8,25 @@ import {
   hierarchyOrphansCsvUrl,
   hierarchyParentChildCsvUrl,
   hierarchyPathsCsvUrl,
-  hierarchySharedMembersCsvUrl
+  hierarchySharedMembersCsvUrl,
 } from "../api/client";
 import { StatusBadge } from "./ui";
 
-export function HierarchyAnalyticsPanel({ projectId, dimension }: { projectId: string; dimension: DimensionRecord }) {
-  const [analytics, setAnalytics] = useState<HierarchyAnalyticsResult | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+export function HierarchyAnalyticsPanel({
+  projectId,
+  dimension,
+  refreshSignal = 0,
+}: {
+  projectId: string;
+  dimension: DimensionRecord;
+  refreshSignal?: number;
+}) {
+  const [analytics, setAnalytics] = useState<HierarchyAnalyticsResult | null>(
+    null,
+  );
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -32,13 +44,17 @@ export function HierarchyAnalyticsPanel({ projectId, dimension }: { projectId: s
     return () => {
       cancelled = true;
     };
-  }, [projectId, dimension.id]);
+  }, [projectId, dimension.id, refreshSignal]);
 
   const summary = analytics?.summary;
-  const statusTone = status === "error" ? "danger" : summary?.hasCycle ? "warning" : "neutral";
+  const statusTone =
+    status === "error" ? "danger" : summary?.hasCycle ? "warning" : "neutral";
 
   return (
-    <section className="hierarchy-analytics-panel" aria-label={`${dimension.dimensionName} hierarchy analytics`}>
+    <section
+      className="hierarchy-analytics-panel"
+      aria-label={`${dimension.dimensionName} hierarchy analytics`}
+    >
       <div className="hierarchy-analytics-header">
         <div className="grid-toolbar-title">
           <strong>Hierarchy analytics</strong>
@@ -46,30 +62,71 @@ export function HierarchyAnalyticsPanel({ projectId, dimension }: { projectId: s
         </div>
         <StatusBadge tone={statusTone}>
           {status === "loading" && <RefreshCw size={13} />}
-          {status === "error" ? "Unavailable" : summary?.hasCycle ? "Cycle warning" : "Ready"}
+          {status === "error"
+            ? "Unavailable"
+            : summary?.hasCycle
+              ? "Cycle warning"
+              : "Ready"}
         </StatusBadge>
       </div>
       <div className="hierarchy-metrics">
         <Metric label="Max depth" value={formatMetric(summary?.maxDepth)} />
         <Metric label="Members" value={formatMetric(summary?.memberCount)} />
-        <Metric label="Relationships" value={formatMetric(summary?.relationshipCount)} />
+        <Metric
+          label="Relationships"
+          value={formatMetric(summary?.relationshipCount)}
+        />
         <Metric label="Leaves" value={formatMetric(summary?.leafCount)} />
         <Metric label="Parents" value={formatMetric(summary?.parentCount)} />
-        <Metric label="Orphans" value={formatMetric(summary?.orphanCount)} tone={summary?.orphanCount ? "warning" : undefined} />
-        <Metric label="Shared" value={formatMetric(summary?.sharedMemberCount)} tone={summary?.sharedMemberCount ? "info" : undefined} />
+        <Metric
+          label="Orphans"
+          value={formatMetric(summary?.orphanCount)}
+          tone={summary?.orphanCount ? "warning" : undefined}
+        />
+        <Metric
+          label="Shared"
+          value={formatMetric(summary?.sharedMemberCount)}
+          tone={summary?.sharedMemberCount ? "info" : undefined}
+        />
       </div>
-      <div className="hierarchy-export-actions" aria-label="Hierarchy CSV exports">
-        <ExportLink href={hierarchyLevelizedCsvUrl(projectId, dimension.id)} label="Export levelized CSV" />
-        <ExportLink href={hierarchyPathsCsvUrl(projectId, dimension.id)} label="Export paths CSV" />
-        <ExportLink href={hierarchyParentChildCsvUrl(projectId, dimension.id)} label="Export parent-child CSV" />
-        <ExportLink href={hierarchySharedMembersCsvUrl(projectId, dimension.id)} label="Export shared CSV" />
-        <ExportLink href={hierarchyOrphansCsvUrl(projectId, dimension.id)} label="Export orphan CSV" />
+      <div
+        className="hierarchy-export-actions"
+        aria-label="Hierarchy CSV exports"
+      >
+        <ExportLink
+          href={hierarchyLevelizedCsvUrl(projectId, dimension.id)}
+          label="Export levelized CSV"
+        />
+        <ExportLink
+          href={hierarchyPathsCsvUrl(projectId, dimension.id)}
+          label="Export paths CSV"
+        />
+        <ExportLink
+          href={hierarchyParentChildCsvUrl(projectId, dimension.id)}
+          label="Export parent-child CSV"
+        />
+        <ExportLink
+          href={hierarchySharedMembersCsvUrl(projectId, dimension.id)}
+          label="Export shared CSV"
+        />
+        <ExportLink
+          href={hierarchyOrphansCsvUrl(projectId, dimension.id)}
+          label="Export orphan CSV"
+        />
       </div>
     </section>
   );
 }
 
-function Metric({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "warning" | "info" }) {
+function Metric({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "warning" | "info";
+}) {
   return (
     <span className={`hierarchy-metric ${tone}`}>
       <span>{label}</span>

@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Database } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
-import { getDimensionDisplayLabel, getDimensionDisplaySubtitle } from "../../shared/dimensionDisplay";
+import {
+  getDimensionDisplayLabel,
+  getDimensionDisplaySubtitle,
+} from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
 import {
   buildDimensionFacts,
   buildIssueSummary,
   getReadinessLabel,
   getWorkspaceTabs,
-  type ExportAvailability
+  type ExportAvailability,
 } from "../ui/viewModel";
 import { BulkUpdatePanel } from "./BulkUpdatePanel";
 import { EditableGrid } from "./EditableGrid";
@@ -24,11 +27,30 @@ import { WorkflowPanel } from "./WorkflowPanel";
 import { PropertyDefaultsPanel } from "./PropertyDefaultsPanel";
 import { XmlPreview } from "./XmlPreview";
 
-type WorkspaceTab = "Overview" | "Members" | "Relationships" | "Hierarchy" | "Varying" | "Property Defaults" | "Bulk Update" | "Compare" | "Change Sets" | "Workflows" | "XML" | "Issues";
+type WorkspaceTab =
+  | "Overview"
+  | "Members"
+  | "Relationships"
+  | "Hierarchy"
+  | "Varying"
+  | "Property Defaults"
+  | "Bulk Update"
+  | "Compare"
+  | "Change Sets"
+  | "Workflows"
+  | "XML"
+  | "Issues";
 
-function getFallbackTab(defaultWorkspaceTab: string, xmlPreviewEnabled: boolean): WorkspaceTab {
-  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
-  return availableTabs.includes(defaultWorkspaceTab as WorkspaceTab) ? defaultWorkspaceTab as WorkspaceTab : "Overview";
+function getFallbackTab(
+  defaultWorkspaceTab: string,
+  xmlPreviewEnabled: boolean,
+): WorkspaceTab {
+  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map(
+    (item) => item.label,
+  );
+  return availableTabs.includes(defaultWorkspaceTab as WorkspaceTab)
+    ? (defaultWorkspaceTab as WorkspaceTab)
+    : "Overview";
 }
 
 export function DimensionWorkspace({
@@ -39,7 +61,7 @@ export function DimensionWorkspace({
   onDimensionDeleted,
   onDimensionRecreated,
   appConfig,
-  exportAvailability
+  exportAvailability,
 }: {
   projectId: string;
   dimension: DimensionRecord;
@@ -50,23 +72,47 @@ export function DimensionWorkspace({
   appConfig: ClientAppConfig;
   exportAvailability: ExportAvailability;
 }) {
-  const xmlPreviewEnabled = appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
+  const xmlPreviewEnabled =
+    appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
   const defaultWorkspaceTab = appConfig.ui.defaultWorkspaceTab;
-  const [tab, setTab] = useState<WorkspaceTab>(() => getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled));
-  const [highlightedEntityId, setHighlightedEntityId] = useState<string | null>(null);
-  const [issueFilter, setIssueFilter] = useState<"all" | "errors" | "warnings">("all");
-  const dimensionIssues = issues.filter((issue) => issue.dimensionId === dimension.id);
-  const issueSummary = buildIssueSummary(dimensionIssues, appConfig.validation.exportBlockedBySeverities);
-  const projectIssueSummary = buildIssueSummary(issues, appConfig.validation.exportBlockedBySeverities);
+  const [tab, setTab] = useState<WorkspaceTab>(() =>
+    getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled),
+  );
+  const [highlightedEntityId, setHighlightedEntityId] = useState<string | null>(
+    null,
+  );
+  const [issueFilter, setIssueFilter] = useState<"all" | "errors" | "warnings">(
+    "all",
+  );
+  const [relationshipRefreshSignal, setRelationshipRefreshSignal] = useState(0);
+  const dimensionIssues = issues.filter(
+    (issue) => issue.dimensionId === dimension.id,
+  );
+  const issueSummary = buildIssueSummary(
+    dimensionIssues,
+    appConfig.validation.exportBlockedBySeverities,
+  );
+  const projectIssueSummary = buildIssueSummary(
+    issues,
+    appConfig.validation.exportBlockedBySeverities,
+  );
   const readinessLabel = getReadinessLabel(issueSummary);
   const facts = buildDimensionFacts(dimension, issueSummary);
   const filteredEntityIds = useMemo(() => {
     if (issueFilter === "all") return null;
     const targetSeverity = issueFilter === "errors" ? "error" : "warning";
-    return new Set(dimensionIssues.filter((i) => i.severity === targetSeverity).map((i) => i.entityId));
+    return new Set(
+      dimensionIssues
+        .filter((i) => i.severity === targetSeverity)
+        .map((i) => i.entityId),
+    );
   }, [dimensionIssues, issueFilter]);
-  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map((item) => item.label);
-  const activeTab = availableTabs.includes(tab) ? tab : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
+  const availableTabs = getWorkspaceTabs(xmlPreviewEnabled).map(
+    (item) => item.label,
+  );
+  const activeTab = availableTabs.includes(tab)
+    ? tab
+    : getFallbackTab(defaultWorkspaceTab, xmlPreviewEnabled);
   const dimensionDisplayConfig = appConfig.dimensions.display;
 
   useEffect(() => {
@@ -75,9 +121,15 @@ export function DimensionWorkspace({
   }, [activeTab, tab]);
 
   function handleIssueClick(issue: ValidationIssue) {
-    const targetTab: WorkspaceTab = issue.entityType === "relationship" ? "Relationships" : "Members";
+    const targetTab: WorkspaceTab =
+      issue.entityType === "relationship" ? "Relationships" : "Members";
     setTab(targetTab);
     setHighlightedEntityId(issue.entityId);
+  }
+
+  function handleRelationshipChanged() {
+    setRelationshipRefreshSignal((current) => current + 1);
+    onRefresh();
   }
 
   useEffect(() => {
@@ -93,39 +145,79 @@ export function DimensionWorkspace({
         <div className="workspace-page-body">
           <div className="workspace-header">
             <div className="workspace-title-block">
-              <h1>{getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}</h1>
-              <small>{getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}</small>
+              <h1>
+                {getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}
+              </h1>
+              <small>
+                {getDimensionDisplaySubtitle(dimension, dimensionDisplayConfig)}
+              </small>
             </div>
             <div className="workspace-health">
-              <StatusBadge tone={issueSummary.blocksExport ? "danger" : issueSummary.total ? "warning" : "success"}>
-                {issueSummary.blocksExport ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+              <StatusBadge
+                tone={
+                  issueSummary.blocksExport
+                    ? "danger"
+                    : issueSummary.total
+                      ? "warning"
+                      : "success"
+                }
+              >
+                {issueSummary.blocksExport ? (
+                  <AlertTriangle size={14} />
+                ) : (
+                  <CheckCircle2 size={14} />
+                )}
                 {readinessLabel}
               </StatusBadge>
             </div>
           </div>
           <FactStrip className="workspace-facts">
-            {facts.filter(f => f.label !== "Errors" && f.label !== "Warnings").map((fact) => (
-              <FactItem key={fact.label} label={fact.label} value={fact.value} tone={fact.tone ?? "neutral"} />
-            ))}
+            {facts
+              .filter((f) => f.label !== "Errors" && f.label !== "Warnings")
+              .map((fact) => (
+                <FactItem
+                  key={fact.label}
+                  label={fact.label}
+                  value={fact.value}
+                  tone={fact.tone ?? "neutral"}
+                />
+              ))}
             <button
               className={`fact-button ${issueFilter === "errors" ? "active" : ""}`}
-              onClick={() => setIssueFilter(issueFilter === "errors" ? "all" : "errors")}
+              onClick={() =>
+                setIssueFilter(issueFilter === "errors" ? "all" : "errors")
+              }
               title="Click to filter grid to rows with errors"
             >
-              <FactItem label="Errors" value={String(issueSummary.errors)} tone={issueSummary.errors > 0 ? "danger" : "neutral"} />
+              <FactItem
+                label="Errors"
+                value={String(issueSummary.errors)}
+                tone={issueSummary.errors > 0 ? "danger" : "neutral"}
+              />
             </button>
             <button
               className={`fact-button ${issueFilter === "warnings" ? "active" : ""}`}
-              onClick={() => setIssueFilter(issueFilter === "warnings" ? "all" : "warnings")}
+              onClick={() =>
+                setIssueFilter(issueFilter === "warnings" ? "all" : "warnings")
+              }
               title="Click to filter grid to rows with warnings"
             >
-              <FactItem label="Warnings" value={String(issueSummary.warnings)} tone={issueSummary.warnings > 0 ? "warning" : "neutral"} />
+              <FactItem
+                label="Warnings"
+                value={String(issueSummary.warnings)}
+                tone={issueSummary.warnings > 0 ? "warning" : "neutral"}
+              />
             </button>
           </FactStrip>
           <div className="workspace-document">
-            <div className={`workspace-grid${activeTab === "Issues" ? " workspace-grid--single" : ""}`}>
+            <div
+              className={`workspace-grid${activeTab === "Issues" ? " workspace-grid--single" : ""}`}
+            >
               <div className="workspace-primary">
-                <nav className="tabs workspace-tablist" aria-label="Dimension workspace tabs">
+                <nav
+                  className="tabs workspace-tablist"
+                  aria-label="Dimension workspace tabs"
+                >
                   {availableTabs.map((item) => (
                     <button
                       key={item}
@@ -140,7 +232,11 @@ export function DimensionWorkspace({
                 <div className="workspace-main">
                   {activeTab === "Overview" && (
                     <>
-                      <MetadataEditor projectId={projectId} dimension={dimension} onSaved={onRefresh} />
+                      <MetadataEditor
+                        projectId={projectId}
+                        dimension={dimension}
+                        onSaved={onRefresh}
+                      />
                       <DimensionLifecyclePanel
                         projectId={projectId}
                         dimension={dimension}
@@ -150,14 +246,58 @@ export function DimensionWorkspace({
                       />
                     </>
                   )}
-                  {activeTab === "Members" && <EditableGrid projectId={projectId} kind="members" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} issues={dimensionIssues} />}
-                  {activeTab === "Relationships" && <EditableGrid projectId={projectId} kind="relationships" dimension={dimension} pageSize={appConfig.ui.gridPageSize} highlightedEntityId={highlightedEntityId} issueFilteredIds={filteredEntityIds} issues={dimensionIssues} />}
-                  {activeTab === "Hierarchy" && <HierarchyTree projectId={projectId} dimension={dimension} />}
-                  {activeTab === "Varying" && <VaryingPropertiesPanel projectId={projectId} dimension={dimension} />}
-                  {activeTab === "Property Defaults" && (
-                    <PropertyDefaultsPanel projectId={projectId} dimension={dimension} />
+                  {activeTab === "Members" && (
+                    <EditableGrid
+                      projectId={projectId}
+                      kind="members"
+                      dimension={dimension}
+                      pageSize={appConfig.ui.gridPageSize}
+                      highlightedEntityId={highlightedEntityId}
+                      issueFilteredIds={filteredEntityIds}
+                      issues={dimensionIssues}
+                      refreshSignal={relationshipRefreshSignal}
+                    />
                   )}
-                  {activeTab === "Bulk Update" && <BulkUpdatePanel projectId={projectId} dimension={dimension} onApplied={onRefresh} />}
+                  {activeTab === "Relationships" && (
+                    <EditableGrid
+                      projectId={projectId}
+                      kind="relationships"
+                      dimension={dimension}
+                      pageSize={appConfig.ui.gridPageSize}
+                      highlightedEntityId={highlightedEntityId}
+                      issueFilteredIds={filteredEntityIds}
+                      issues={dimensionIssues}
+                      refreshSignal={relationshipRefreshSignal}
+                    />
+                  )}
+                  {activeTab === "Hierarchy" && (
+                    <HierarchyTree
+                      projectId={projectId}
+                      dimension={dimension}
+                      onRelationshipChanged={handleRelationshipChanged}
+                      refreshSignal={relationshipRefreshSignal}
+                    />
+                  )}
+                  {activeTab === "Varying" && (
+                    <VaryingPropertiesPanel
+                      projectId={projectId}
+                      dimension={dimension}
+                      refreshSignal={relationshipRefreshSignal}
+                    />
+                  )}
+                  {activeTab === "Property Defaults" && (
+                    <PropertyDefaultsPanel
+                      projectId={projectId}
+                      dimension={dimension}
+                    />
+                  )}
+                  {activeTab === "Bulk Update" && (
+                    <BulkUpdatePanel
+                      projectId={projectId}
+                      dimension={dimension}
+                      onApplied={onRefresh}
+                    />
+                  )}
                   {activeTab === "Compare" && (
                     <MetadataDiffPanel
                       projectId={projectId}
@@ -178,16 +318,31 @@ export function DimensionWorkspace({
                       projectId={projectId}
                       dimension={dimension}
                       defaultScope={appConfig.ui.xmlPreview.defaultScope}
-                      allowAllDimensions={appConfig.ui.xmlPreview.allowAllDimensions}
+                      allowAllDimensions={
+                        appConfig.ui.xmlPreview.allowAllDimensions
+                      }
                       xmlExportEnabled={appConfig.export.xml.enabled}
                       exportAvailability={exportAvailability}
                     />
                   )}
-                  {activeTab === "Issues" && <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} expanded onIssueClick={handleIssueClick} />}
+                  {activeTab === "Issues" && (
+                    <IssuePanel
+                      dimension={dimension}
+                      issues={dimensionIssues}
+                      appConfig={appConfig}
+                      expanded
+                      onIssueClick={handleIssueClick}
+                    />
+                  )}
                 </div>
               </div>
               {activeTab !== "Issues" && (
-                <IssuePanel dimension={dimension} issues={dimensionIssues} appConfig={appConfig} onIssueClick={handleIssueClick} />
+                <IssuePanel
+                  dimension={dimension}
+                  issues={dimensionIssues}
+                  appConfig={appConfig}
+                  onIssueClick={handleIssueClick}
+                />
               )}
             </div>
           </div>

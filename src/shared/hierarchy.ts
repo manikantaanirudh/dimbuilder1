@@ -18,9 +18,14 @@ export interface HierarchyAnalysis {
   orphanMemberKeys: string[];
 }
 
+export interface ReparentValidationResult {
+  ok: boolean;
+  reason?: string;
+}
+
 export function analyzeHierarchy(
   relationships: HierarchyRelationshipInput[],
-  memberKeys: string[] = []
+  memberKeys: string[] = [],
 ): HierarchyAnalysis {
   const childrenByParent = new Map<string, string[]>();
   const incoming = new Set<string>();
@@ -33,55 +38,122 @@ export function analyzeHierarchy(
     if (seenPairs.has(pair)) duplicateRelationshipIds.push(relationship.id);
     seenPairs.add(pair);
 
-    if (!childrenByParent.has(relationship.parentKey)) childrenByParent.set(relationship.parentKey, []);
+    if (!childrenByParent.has(relationship.parentKey))
+      childrenByParent.set(relationship.parentKey, []);
     childrenByParent.get(relationship.parentKey)?.push(relationship.childKey);
     incoming.add(relationship.childKey);
   }
 
   const hasCycle = detectCycle(childrenByParent);
-  const referencedParents = new Set(relationships.map((relationship) => relationship.parentKey).filter(Boolean));
-  const referencedChildren = new Set(relationships.map((relationship) => relationship.childKey).filter(Boolean));
-  const missingParentKeys = [...referencedParents].filter((key) => knownMembers.size > 0 && key !== "Root" && !knownMembers.has(key));
-  const missingChildKeys = [...referencedChildren].filter((key) => knownMembers.size > 0 && !knownMembers.has(key));
+  const referencedParents = new Set(
+    relationships.map((relationship) => relationship.parentKey).filter(Boolean),
+  );
+  const referencedChildren = new Set(
+    relationships.map((relationship) => relationship.childKey).filter(Boolean),
+  );
+  const missingParentKeys = [...referencedParents].filter(
+    (key) => knownMembers.size > 0 && key !== "Root" && !knownMembers.has(key),
+  );
+  const missingChildKeys = [...referencedChildren].filter(
+    (key) => knownMembers.size > 0 && !knownMembers.has(key),
+  );
   const roots = [...referencedParents].filter((key) => !incoming.has(key));
   const reachable = new Set<string>();
 
-  for (const root of roots.length ? roots : ["Root"]) collectReachable(root, childrenByParent, reachable);
+  for (const root of roots.length ? roots : ["Root"])
+    collectReachable(root, childrenByParent, reachable);
 
-  const orphanMemberKeys = [...knownMembers].filter((key) => relationships.length > 0 && !reachable.has(key));
+  const orphanMemberKeys = [...knownMembers].filter(
+    (key) => relationships.length > 0 && !reachable.has(key),
+  );
 
   return {
     hasCycle,
     duplicateRelationshipIds,
     missingParentKeys,
     missingChildKeys,
-    orphanMemberKeys
+    orphanMemberKeys,
   };
 }
 
-export function buildHierarchyTree(relationships: HierarchyRelationshipInput[]): HierarchyNode[] {
+export function canReparentHierarchy(
+  relationships: HierarchyRelationshipInput[],
+  childKey: string,
+  newParentKey: string,
+): ReparentValidationResult {
+  const trimmedChildKey = childKey.trim();
+  const trimmedParentKey = newParentKey.trim();
+
+  if (!trimmedChildKey || !trimmedParentKey) {
+    return { ok: false, reason: "Choose both a member and a target parent." };
+  }
+
+  if (trimmedChildKey === trimmedParentKey) {
+    return { ok: false, reason: "A member cannot be moved under itself." };
+  }
+
+  const childrenByParent = new Map<string, string[]>();
+  for (const relationship of relationships) {
+    if (!childrenByParent.has(relationship.parentKey))
+      childrenByParent.set(relationship.parentKey, []);
+    childrenByParent.get(relationship.parentKey)?.push(relationship.childKey);
+  }
+
+  const visited = new Set<string>();
+  const stack = [trimmedChildKey];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+
+    if (current === trimmedParentKey) {
+      return { ok: false, reason: "This move would create a cycle." };
+    }
+
+    for (const child of childrenByParent.get(current) ?? []) {
+      stack.push(child);
+    }
+  }
+
+  return { ok: true };
+}
+
+export function buildHierarchyTree(
+  relationships: HierarchyRelationshipInput[],
+): HierarchyNode[] {
   const childrenByParent = new Map<string, string[]>();
   const incoming = new Set<string>();
 
   for (const relationship of relationships) {
-    if (!childrenByParent.has(relationship.parentKey)) childrenByParent.set(relationship.parentKey, []);
+    if (!childrenByParent.has(relationship.parentKey))
+      childrenByParent.set(relationship.parentKey, []);
     childrenByParent.get(relationship.parentKey)?.push(relationship.childKey);
     incoming.add(relationship.childKey);
   }
 
-  const roots = [...childrenByParent.keys()].filter((key) => !incoming.has(key));
+  const roots = [...childrenByParent.keys()].filter(
+    (key) => !incoming.has(key),
+  );
   return roots.map((root) => buildNode(root, childrenByParent, new Set()));
 }
 
-function buildNode(key: string, childrenByParent: Map<string, string[]>, ancestry: Set<string>): HierarchyNode {
-  if (ancestry.has(key)) return { key, children: [], issueCodes: ["CIRCULAR_HIERARCHY"] };
+function buildNode(
+  key: string,
+  childrenByParent: Map<string, string[]>,
+  ancestry: Set<string>,
+): HierarchyNode {
+  if (ancestry.has(key))
+    return { key, children: [], issueCodes: ["CIRCULAR_HIERARCHY"] };
   const nextAncestry = new Set(ancestry);
   nextAncestry.add(key);
 
   return {
     key,
-    children: (childrenByParent.get(key) ?? []).map((child) => buildNode(child, childrenByParent, nextAncestry)),
-    issueCodes: []
+    children: (childrenByParent.get(key) ?? []).map((child) =>
+      buildNode(child, childrenByParent, nextAncestry),
+    ),
+    issueCodes: [],
   };
 }
 
@@ -108,9 +180,13 @@ function detectCycle(childrenByParent: Map<string, string[]>): boolean {
   return false;
 }
 
-function collectReachable(node: string, childrenByParent: Map<string, string[]>, reachable: Set<string>): void {
+function collectReachable(
+  node: string,
+  childrenByParent: Map<string, string[]>,
+  reachable: Set<string>,
+): void {
   if (reachable.has(node)) return;
   reachable.add(node);
-  for (const child of childrenByParent.get(node) ?? []) collectReachable(child, childrenByParent, reachable);
+  for (const child of childrenByParent.get(node) ?? [])
+    collectReachable(child, childrenByParent, reachable);
 }
-

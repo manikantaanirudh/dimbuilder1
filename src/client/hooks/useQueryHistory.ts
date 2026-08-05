@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import type { NLQueryResult } from "../../shared/aiTypes";
 
 export interface QueryMessage {
@@ -9,81 +9,204 @@ export interface QueryMessage {
   timestamp: string;
 }
 
-const STORAGE_KEY = "dimbuilder:query-history";
-const MAX_MESSAGES_PER_PROJECT = 100;
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: QueryMessage[];
+}
 
-const memoryCache = new Map<string, QueryMessage[]>();
+const STORAGE_KEY = "dimbuilder:query-sessions";
 
-function readStorage(): Record<string, QueryMessage[]> {
+function readStorage(): Record<string, ChatSession[]> {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) as Record<string, QueryMessage[]> : {};
+    const raw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ChatSession[]>) : {};
   } catch {
     return {};
   }
 }
 
-function writeStorage(projectId: string, messages: QueryMessage[]): void {
+function writeStorage(projectId: string, sessions: ChatSession[]): void {
   try {
     const all = readStorage();
-    all[projectId] = messages;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    all[projectId] = sessions;
+    const json = JSON.stringify(all);
+    localStorage.setItem(STORAGE_KEY, json);
+    sessionStorage.setItem(STORAGE_KEY, json);
   } catch {
-    // sessionStorage may be unavailable; in-memory cache still works for the session.
+    // ignore quota/security errors
   }
-}
-
-function loadMessages(projectId: string): QueryMessage[] {
-  if (memoryCache.has(projectId)) {
-    return memoryCache.get(projectId)!;
-  }
-  const stored = readStorage()[projectId];
-  const messages = stored ?? [];
-  memoryCache.set(projectId, messages);
-  return messages;
-}
-
-function persistMessages(projectId: string, messages: QueryMessage[]): void {
-  const trimmed = messages.length > MAX_MESSAGES_PER_PROJECT
-    ? messages.slice(-MAX_MESSAGES_PER_PROJECT)
-    : messages;
-  memoryCache.set(projectId, trimmed);
-  writeStorage(projectId, trimmed);
 }
 
 export function useQueryHistory(projectId: string | null) {
-  const [messages, setMessagesState] = useState<QueryMessage[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
 
+  // Load sessions from storage when projectId changes
   useEffect(() => {
     if (!projectId) {
-      setMessagesState([]);
+      setSessions([]);
+      setActiveSessionId("");
       return;
     }
-    setMessagesState(loadMessages(projectId));
+
+    const all = readStorage();
+    let projSessions = all[projectId] ?? [];
+
+    if (projSessions.length === 0) {
+      const initialSession: ChatSession = {
+        id: Date.now().toString(),
+        title: "New Chat Session",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        messages: []
+      };
+      projSessions = [initialSession];
+      writeStorage(projectId, projSessions);
+    }
+
+    setSessions(projSessions);
+    setActiveSessionId(projSessions[0].id);
   }, [projectId]);
+
+  const activeSession = useMemo(() => {
+    return sessions.find(s => s.id === activeSessionId) || sessions[0] || null;
+  }, [sessions, activeSessionId]);
+
+  const messages = useMemo(() => {
+    return activeSession ? activeSession.messages : [];
+  }, [activeSession]);
 
   const setMessages = useCallback((
     value: QueryMessage[] | ((previous: QueryMessage[]) => QueryMessage[])
   ) => {
-    setMessagesState((previous) => {
-      const next = typeof value === "function" ? value(previous) : value;
-      if (projectId) persistMessages(projectId, next);
+    if (!projectId) return;
+
+    setSessions(prevSessions => {
+      if (prevSessions.length === 0) return prevSessions;
+
+      const currentActiveId = activeSessionId || prevSessions[0].id;
+      const targetSessionIndex = prevSessions.findIndex(s => s.id === currentActiveId);
+      if (targetSessionIndex === -1) return prevSessions;
+
+      const targetSession = prevSessions[targetSessionIndex];
+      const nextMessages = typeof value === "function" ? value(targetSession.messages) : value;
+
+      // Update title based on first user query if still generic
+      let updatedTitle = targetSession.title;
+      if (targetSession.title === "New Chat Session") {
+        const firstUserMsg = nextMessages.find(m => m.role === "user");
+        if (firstUserMsg) {
+          updatedTitle = firstUserMsg.content.length > 38
+            ? firstUserMsg.content.slice(0, 35) + "..."
+            : firstUserMsg.content;
+        }
+      }
+
+      const updatedSession: ChatSession = {
+        ...targetSession,
+        title: updatedTitle,
+        updatedAt: new Date().toISOString(),
+        messages: nextMessages
+      };
+
+      const nextSessions = [...prevSessions];
+      nextSessions[targetSessionIndex] = updatedSession;
+
+      // Sort sessions with most recently updated first
+      nextSessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+      writeStorage(projectId, nextSessions);
+      return nextSessions;
+    });
+  }, [projectId, activeSessionId]);
+
+  const createNewSession = useCallback(() => {
+    if (!projectId) return;
+
+    // Check if active session is already empty
+    const currentActive = sessions.find(s => s.id === activeSessionId);
+    if (currentActive && currentActive.messages.length === 0) {
+      return; // Already in a fresh empty session
+    }
+
+    const newSession: ChatSession = {
+      id: Date.now().toString(),
+      title: "New Chat Session",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      messages: []
+    };
+
+    setSessions(prev => {
+      const next = [newSession, ...prev];
+      writeStorage(projectId, next);
       return next;
     });
-  }, [projectId]);
 
-  const clearHistory = useCallback(() => {
+    setActiveSessionId(newSession.id);
+  }, [projectId, sessions, activeSessionId]);
+
+  const selectSession = useCallback((sessionId: string) => {
+    setActiveSessionId(sessionId);
+  }, []);
+
+  const deleteSession = useCallback((sessionId: string) => {
     if (!projectId) return;
-    memoryCache.delete(projectId);
-    try {
-      const all = readStorage();
-      delete all[projectId];
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    } catch {
-      // ignore
-    }
-    setMessagesState([]);
+
+    setSessions(prev => {
+      const filtered = prev.filter(s => s.id !== sessionId);
+      let nextSessions = filtered;
+
+      if (nextSessions.length === 0) {
+        const fresh: ChatSession = {
+          id: Date.now().toString(),
+          title: "New Chat Session",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: []
+        };
+        nextSessions = [fresh];
+      }
+
+      writeStorage(projectId, nextSessions);
+
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(nextSessions[0].id);
+      }
+
+      return nextSessions;
+    });
+  }, [projectId, activeSessionId]);
+
+  const clearAllSessions = useCallback(() => {
+    if (!projectId) return;
+
+    const freshSession: ChatSession = {
+      id: Date.now().toString(),
+      title: "New Chat Session",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      messages: []
+    };
+
+    const nextSessions = [freshSession];
+    writeStorage(projectId, nextSessions);
+    setSessions(nextSessions);
+    setActiveSessionId(freshSession.id);
   }, [projectId]);
 
-  return { messages, setMessages, clearHistory };
+  return {
+    sessions,
+    activeSessionId,
+    messages,
+    setMessages,
+    createNewSession,
+    selectSession,
+    deleteSession,
+    clearAllSessions
+  };
 }
+
