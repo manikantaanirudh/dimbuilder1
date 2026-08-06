@@ -6,32 +6,16 @@ application:
   environmentName: Local
   oneStreamVersionFallback: 9.2.0.18004
   supportText: Create or seed a metadata project
-
-paths:
-  metadataDirectory: metadata
-  defaultMetadataFile: SWF.xml
-  uploadsDirectory: data/uploads
-  exportsDirectory: data/exports
-  databaseFile: data/app.db
-
-server:
-  host: 127.0.0.1
-  port: 8787
-  clientDevPort: 5173
-  # corsOrigins:
-  #   - http://localhost:5173
-  #   - https://your-production-domain.com
-
-auth:
-  enabled: false
-  strategy: none
-  jwt:
-    secret: change-me-in-production
-    accessTokenExpiry: 15m
-    refreshTokenExpiry: 7d
-  defaultRole: author
-  allowSelfRegistration: false
-
+database:
+  poolMax: 10
+modules:
+  multiTenancy: false
+  offlineSync: false
+  apiPlatform: false
+  environmentManagement: false
+  chatAssistant: false
+  scheduler: false
+  platformExtras: false
 features:
   enableMetadataReferenceAlignment: true
   includeMetadataOnlyDimensions: true
@@ -41,7 +25,6 @@ features:
   enableJsonBackup: true
   enableAuditLog: true
   enableSnapshots: true
-
 dashboard:
   cards:
     totalDimensions: true
@@ -52,7 +35,6 @@ dashboard:
     recentDimensions: true
     importStatus: true
     exportStatus: true
-
 dimensions:
   expectedDimensionCount: 18
   enabledTypes:
@@ -88,8 +70,8 @@ dimensions:
   metadataOnly:
     includeWhenWorkbookSheetMissing: true
     excludeNamePatterns:
-      - "^FVA_"
-      - "^Root"
+      - ^FVA_
+      - ^Root
   sheetAliases:
     UD3:
       - UD3
@@ -199,7 +181,6 @@ dimensions:
       relationshipDefaults:
         aggregationWeight: 1
       allowMultipleParents: true
-
 import:
   workbook:
     mergeDuplicateDimensionSheets: true
@@ -212,7 +193,6 @@ import:
     preferExactDimensionNameMatch: true
     fallbackToLargestPopulatedDimension: true
     includeMetadataOnlyDimensions: true
-
 validation:
   duplicateMemberSeverity: warning
   duplicateRelationshipSeverity: warning
@@ -220,6 +200,7 @@ validation:
   missingRequiredFieldSeverity: error
   circularHierarchySeverity: error
   relationshipsWithNoLocalMembersSeverity: warning
+  defaultProfileId: consultant-review
   oneStreamProfile:
     enabled: true
     memberNameMaxLength: 500
@@ -270,23 +251,23 @@ validation:
       - Workflow
       - XFCommon
     restrictedCharacters:
-      - "/"
+      - /
       - "|"
       - "!"
       - "@"
       - "#"
       - ","
-      - ";"
-      - "^"
+      - ;
+      - ^
       - "*"
-      - "+"
+      - +
       - "-"
-      - "="
-      - "\\"
+      - =
+      - \
       - "?"
-      - "<"
+      - <
       - ">"
-      - "\""
+      - '"'
       - "{"
       - "}"
       - "&"
@@ -297,9 +278,9 @@ validation:
     unknownPropertySeverity: warning
     invalidEnumSeverity: error
     invalidPropertyTypeSeverity: error
+    maxHierarchyDepth: 30
   exportBlockedBySeverities:
     - error
-
 export:
   allowValidationBypass: false
   validationBypassRequiresReason: true
@@ -317,7 +298,6 @@ export:
     enabled: true
   json:
     enabled: true
-
 ui:
   defaultWorkspaceTab: Members
   gridPageSize: 600
@@ -330,11 +310,35 @@ ui:
   xmlPreview:
     defaultScope: currentDimension
     allowAllDimensions: true
-
 workflows:
   enabled: true
   requireApprovalForDeploy: true
   defaultDefinition: standard-review
-
 operations:
-  exportMaxMembers: 100000  # set to 0 to disable the limit
+  uploadMaxMb: 25
+  exportRetentionDays: 30
+  artifactRetentionDays: 30
+  corsAllowLocalhostByDefault: true
+  exportMaxMembers: 100000
+  appMode: local
+ai:
+  enabled: false
+  provider: none
+  model: ""
+  apiKey: ""
+  features:
+    parentSuggestions: true
+    duplicateDetection: true
+    namingAnomalies: true
+    hierarchyOptimization: true
+    propertySuggestions: true
+    naturalLanguageQuery: true
+  duplicateDetection:
+    similarityThreshold: 0.85
+    methods:
+      - levenshtein
+      - soundex
+      - prefix
+  suggestions:
+    maxPerAnalysis: 50
+    autoRunOnImport: true

@@ -4,6 +4,7 @@ import type { AppConfig } from "../../shared/appConfigTypes";
 import type { AIConfigSection, AISuggestionType, AISuggestionStatus } from "../../shared/aiTypes";
 import type { Repositories } from "../db/repositories";
 import { runFullAnalysis, runParentSuggestion, runDuplicateDetection, runNaturalLanguageQuery } from "../ai/aiEngine";
+import { analyzeGraphTopology } from "../ai/suggestions/graphIntelligence";
 import { buildProjectAIContext } from "../ai/projectContext";
 
 const defaultAIConfig: AIConfigSection = {
@@ -24,7 +25,11 @@ const defaultAIConfig: AIConfigSection = {
 };
 
 function getAIConfig(config: AppConfig): AIConfigSection {
-  return config.ai ?? defaultAIConfig;
+  return {
+    ...defaultAIConfig,
+    ...(config.ai ?? {}),
+    enabled: config.ai?.enabled ?? true,
+  };
 }
 
 export function createAIRouter(repos: Repositories, config: AppConfig): Router {
@@ -162,13 +167,99 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const aiConfig = getAIConfig(config);
     if (!aiConfig.enabled) return res.status(503).json({ error: "AI features are disabled" });
 
-    const threshold = typeof req.body?.threshold === 'number' ? req.body.threshold : undefined;
-    const members = await repos.members.listByProject(project.id);
-    const dimensions = await repos.dimensions.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
+    const threshold = typeof req.body?.threshold === "number" ? req.body.threshold : undefined;
+    const dimensionId = (req.query.dimensionId as string | undefined) || (req.body?.dimensionId as string | undefined);
 
-    const duplicates = runDuplicateDetection({ dimensions, members, relationships }, aiConfig, threshold);
+    let members = Array.isArray(req.body?.members) && req.body.members.length > 0
+      ? req.body.members
+      : await repos.members.listByProject(project.id);
+    let dimensions = await repos.dimensions.listByProject(project.id);
+    let relationships = await repos.relationships.listByProject(project.id);
+
+    if (dimensionId && dimensionId !== "ALL") {
+      const targetDim = dimensions.find(
+        (d) => d.id === dimensionId || d.dimensionName.toLowerCase() === dimensionId.toLowerCase(),
+      );
+      const matchingDimKeys = new Set(
+        [dimensionId, targetDim?.id, targetDim?.dimensionName].filter(Boolean),
+      );
+
+      members = members.filter((m: any) => matchingDimKeys.has(m.dimensionId));
+      relationships = relationships.filter((r: any) => matchingDimKeys.has(r.dimensionId));
+    }
+
+    const duplicates = runDuplicateDetection({ dimensions, members, relationships }, aiConfig, threshold ?? 0.75);
     res.json(duplicates);
+  });
+
+  router.get("/projects/:id/ai/graph-analysis", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const dimensionId = req.query.dimensionId as string | undefined;
+    let members = await repos.members.listByProject(project.id);
+    let dimensions = await repos.dimensions.listByProject(project.id);
+    let relationships = await repos.relationships.listByProject(project.id);
+
+    if (dimensionId && dimensionId !== "ALL") {
+      const targetDim = dimensions.find(
+        (d) => d.id === dimensionId || d.dimensionName.toLowerCase() === dimensionId.toLowerCase(),
+      );
+      const matchingDimKeys = new Set(
+        [dimensionId, targetDim?.id, targetDim?.dimensionName].filter(Boolean),
+      );
+
+      members = members.filter((m) => matchingDimKeys.has(m.dimensionId));
+      relationships = relationships.filter((r) => matchingDimKeys.has(r.dimensionId));
+    }
+
+    const graphResult = analyzeGraphTopology({ members, relationships });
+    res.json(graphResult);
+  });
+
+  router.post("/projects/:id/ai/apply-fix", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const { type, payload } = req.body ?? {};
+    if (!type || !payload) return res.status(400).json({ error: "Invalid fix payload" });
+
+    if (type === "linkOrphan") {
+      const { memberKey, parentKey, dimensionId } = payload;
+      const createdRel = await repos.relationships.create({
+        dimensionId,
+        parentKey: parentKey || "Root",
+        childKey: memberKey,
+        aggregationWeight: 1.0,
+        percentConsol: 100,
+        percentOwnership: 100,
+        ownershipType: "Global",
+        properties: {},
+        rowOrder: 9999,
+        sourceRowNumber: 0
+      });
+      return res.json({ success: true, action: "linkedOrphan", record: createdRel });
+    }
+
+    if (type === "trimWhitespace") {
+      const { memberId, trimmedKey } = payload;
+      const member = await repos.members.get(memberId);
+      if (member) {
+        const updated = await repos.members.update(memberId, { memberKey: trimmedKey });
+        return res.json({ success: true, action: "trimmedWhitespace", record: updated });
+      }
+    }
+
+    if (type === "assignDescription") {
+      const { memberId, description } = payload;
+      const member = await repos.members.get(memberId);
+      if (member) {
+        const updated = await repos.members.update(memberId, { description });
+        return res.json({ success: true, action: "assignedDescription", record: updated });
+      }
+    }
+
+    res.status(400).json({ error: `Unsupported fix type: ${type}` });
   });
 
   router.post("/projects/:id/ai/query", async (req, res) => {

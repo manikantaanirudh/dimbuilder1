@@ -13,7 +13,7 @@ import {
   Undo2,
   User,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
   buildDimensionNavItems,
@@ -46,6 +46,7 @@ import { QualityScoresPanel } from "./QualityScoresPanel";
 import { AuditLogViewer } from "./AuditLogViewer";
 import { ChatPanel } from "./ChatPanel";
 import { ToastProvider } from "./Toast";
+import { DimensionTreeNav } from "./DimensionTreeNav";
 import { ActionButton, IconButton, StatusBadge, ToolbarGroup } from "./ui";
 
 const PROJECT_OVERVIEW_VALUE = "__project_overview__";
@@ -172,6 +173,14 @@ export function AppShell({
     setActiveWorkspace(PROJECT_OVERVIEW_VALUE);
     setStatus("");
   }
+
+  useEffect(() => {
+    if (!status) return;
+    const timer = setTimeout(() => {
+      setStatus("");
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   return (
     <ToastProvider>
@@ -356,7 +365,7 @@ export function AppShell({
             className={`secondary-nav-item ${activeWorkspace === AI_INSIGHTS_VALUE ? "active" : ""}`}
             onClick={() => setActiveWorkspace(AI_INSIGHTS_VALUE)}
           >
-            AI Insights
+            Insights
           </button>
           <button
             className={`secondary-nav-item ${activeWorkspace === QUALITY_VALUE ? "active" : ""}`}
@@ -421,50 +430,22 @@ export function AppShell({
             </StatusBadge>
           </div>
 
-          {dimensionNavItems.length === 0 && (
+          {store.dimensions.length === 0 ? (
             <div className="empty-sidebar">
               Create or seed a project to begin.
             </div>
-          )}
-          {dimensionNavItems.length > 0 &&
-            filteredDimensionNavItems.length === 0 && (
-              <div className="empty-sidebar">
-                No dimensions match this search.
-              </div>
-            )}
-          {filteredDimensionNavItems.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${activeDimension?.id === item.id ? "selected" : ""}`}
-              onClick={() => {
-                setActiveWorkspace(item.id);
-                setNavSearch("");
+          ) : (
+            <DimensionTreeNav
+              dimensions={store.dimensions}
+              issues={store.issues}
+              activeDimensionId={activeDimension?.id ?? null}
+              searchQuery={navSearch}
+              blockedSeverities={appConfig.validation.exportBlockedBySeverities}
+              onSelectDimension={(id) => {
+                setActiveWorkspace(id);
               }}
-              title={item.subtitle}
-            >
-              <span>{item.label}</span>
-              <small>{item.subtitle}</small>
-              {item.issueSummary.errors > 0 && (
-                <b
-                  className="nav-issue error"
-                  title={`${item.issueSummary.errors} errors`}
-                  aria-label={`${item.issueSummary.errors} errors`}
-                >
-                  {item.issueSummary.errors}
-                </b>
-              )}
-              {item.issueSummary.errors === 0 &&
-                item.issueSummary.warnings > 0 && (
-                  <b
-                    className="nav-issue warning"
-                    title={`${item.issueSummary.warnings} warnings`}
-                    aria-label={`${item.issueSummary.warnings} warnings`}
-                  >
-                    {item.issueSummary.warnings}
-                  </b>
-                )}
-            </button>
-          ))}
+            />
+          )}
         </aside>
 
         <main className="main" id="main-content">

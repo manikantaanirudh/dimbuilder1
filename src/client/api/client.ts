@@ -470,3 +470,17 @@ export function queryNaturalLanguage(projectId: string, question: string) {
     { question }
   );
 }
+
+export function fetchGraphAnalysis(projectId: string, dimensionId?: string) {
+  const query = dimensionId ? `?dimensionId=${encodeURIComponent(dimensionId)}` : "";
+  return apiGet<import("../../server/ai/suggestions/graphIntelligence").GraphAnalysisResult>(
+    `/projects/${projectId}/ai/graph-analysis${query}`
+  );
+}
+
+export function applyAIFix(projectId: string, type: string, payload: Record<string, unknown>) {
+  return apiPost<{ success: boolean; action: string }>(
+    `/projects/${projectId}/ai/apply-fix`,
+    { type, payload }
+  );
+}

@@ -42,6 +42,7 @@ export function EditableGrid({
   issueFilteredIds = null,
   issues = [],
   refreshSignal = 0,
+  onRefresh,
 }: {
   projectId: string;
   kind: "members" | "relationships";
@@ -51,6 +52,7 @@ export function EditableGrid({
   issueFilteredIds?: Set<string> | null;
   issues?: ValidationIssue[];
   refreshSignal?: number;
+  onRefresh?: () => void;
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
@@ -76,8 +78,7 @@ export function EditableGrid({
   const saveSequenceRef = useRef(0);
   const rowSaveTokensRef = useRef(new Map<string, number>());
   const columnMenuId = `${kind}-column-menu`;
-  const selectionCount =
-    selectedIds.size > 0 ? selectedIds.size : selectedId ? 1 : 0;
+  const selectionCount = selectedIds.size;
   const actionTitles = buildGridActionTitles(selectedId, selectionCount);
   const selectionSummary = buildGridSelectionSummary(kind, selectionCount);
   const supportsMultiSelect = true;
@@ -206,6 +207,7 @@ export function EditableGrid({
     if (index >= 0) {
       virtualizer.scrollToIndex(index, { align: "center" });
       setSelectedId(highlightedEntityId);
+      setSelectedIds(new Set([highlightedEntityId]));
     }
   }, [highlightedEntityId, filteredRecords, virtualizer]);
 
@@ -284,17 +286,33 @@ export function EditableGrid({
 
   async function addRow() {
     if (kind === "members") {
+      const existingKeys = new Set(
+        recordsRef.current
+          .map((r) =>
+            "memberKey" in r ? (r as DimensionMemberRecord).memberKey : "",
+          )
+          .filter(Boolean),
+      );
+      let index = 1;
+      while (existingKeys.has(`NewMember_${index}`)) {
+        index += 1;
+      }
+      const defaultKey = `NewMember_${index}`;
       const properties = Object.fromEntries(
         columns.map((column) => [column.name, ""]),
       );
+      if (schema.memberKeyField) {
+        properties[schema.memberKeyField] = defaultKey;
+      }
       const created = await createMember(projectId, dimension.id, {
-        memberKey: "",
+        memberKey: defaultKey,
         properties,
       });
       recordsRef.current = [...recordsRef.current, created];
       confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
+      setSelectedIds(new Set([created.id]));
     } else {
       const properties = Object.fromEntries(
         columns.map((column) => [column.name, ""]),
@@ -308,8 +326,10 @@ export function EditableGrid({
       confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
+      setSelectedIds(new Set([created.id]));
     }
     setTotal((current) => current + 1);
+    onRefresh?.();
   }
 
   async function duplicateRow() {
@@ -330,6 +350,7 @@ export function EditableGrid({
       confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
+      setSelectedIds(new Set([created.id]));
     } else {
       const relationship = source as DimensionRelationshipRecord;
       const created = await createRelationship(projectId, dimension.id, {
@@ -341,7 +362,9 @@ export function EditableGrid({
       confirmedRecordsRef.current.set(created.id, created);
       setRecords((current) => [...current, created]);
       setSelectedId(created.id);
+      setSelectedIds(new Set([created.id]));
     }
+    onRefresh?.();
   }
 
   function clearSelectionState() {
@@ -356,6 +379,13 @@ export function EditableGrid({
     useRange: boolean,
     exclusive: boolean,
   ) {
+    if (exclusive) {
+      setSelectedIds(new Set([recordId]));
+      setSelectedId(recordId);
+      selectionAnchorIndexRef.current = rowIndex;
+      return;
+    }
+
     setSelectedIds((current) => {
       const next = new Set(current);
       if (useRange && selectionAnchorIndexRef.current !== null) {
@@ -363,21 +393,26 @@ export function EditableGrid({
         const start = Math.min(anchor, rowIndex);
         const end = Math.max(anchor, rowIndex);
         for (let index = start; index <= end; index += 1) {
-          next.add(filteredRecords[index]!.id);
+          const rec = filteredRecords[index];
+          if (rec) next.add(rec.id);
         }
-        return next;
-      }
-      if (exclusive) {
-        next.clear();
+      } else if (next.has(recordId)) {
+        next.delete(recordId);
+      } else {
         next.add(recordId);
-        return next;
       }
-      if (next.has(recordId)) next.delete(recordId);
-      else next.add(recordId);
+
+      if (next.size === 0) {
+        setSelectedId(null);
+      } else if (!next.has(recordId)) {
+        setSelectedId(Array.from(next).pop() ?? null);
+      } else {
+        setSelectedId(recordId);
+      }
+
       return next;
     });
     selectionAnchorIndexRef.current = rowIndex;
-    setSelectedId(recordId);
   }
 
   function toggleSelectAllOnPage(checked: boolean) {
@@ -447,6 +482,7 @@ export function EditableGrid({
       if (idsToDelete.length === 1) {
         setStatus("Deleted");
       }
+      onRefresh?.();
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Delete failed");
     }

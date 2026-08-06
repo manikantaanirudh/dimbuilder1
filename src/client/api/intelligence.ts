@@ -15,10 +15,11 @@ export function fetchAIAnalysis(projectId: string) {
   return apiPost<AISuggestionResponse>(`/projects/${projectId}/ai/analyze`, {});
 }
 
-export function fetchDuplicateDetection(projectId: string) {
+export function fetchDuplicateDetection(projectId: string, dimensionId?: string, members?: any[]) {
+  const query = dimensionId ? `?dimensionId=${encodeURIComponent(dimensionId)}` : "";
   return apiPost<Array<{ members: string[]; similarity: number; method: string }>>(
-    `/projects/${projectId}/ai/duplicates`,
-    {}
+    `/projects/${projectId}/ai/duplicates${query}`,
+    { dimensionId, members }
   );
 }
 

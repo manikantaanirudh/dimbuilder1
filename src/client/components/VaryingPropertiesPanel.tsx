@@ -211,14 +211,15 @@ export function VaryingPropertiesPanel({
           <span>Target type</span>
           <select
             value={draft.targetType}
-            onChange={(event) =>
+            onChange={(event) => {
+              const targetType = event.target
+                .value as VaryingPropertyTargetType;
               setDraft((current) => ({
                 ...current,
-                targetType: event.currentTarget
-                  .value as VaryingPropertyTargetType,
+                targetType,
                 targetId: "",
-              }))
-            }
+              }));
+            }}
           >
             <option value="dimension">Dimension</option>
             <option value="member">Member</option>
@@ -229,12 +230,13 @@ export function VaryingPropertiesPanel({
           <span>Target</span>
           <select
             value={draft.targetId}
-            onChange={(event) =>
+            onChange={(event) => {
+              const targetId = event.target.value;
               setDraft((current) => ({
                 ...current,
-                targetId: event.currentTarget.value,
-              }))
-            }
+                targetId,
+              }));
+            }}
           >
             {targetOptions.map((option) => (
               <option key={option.id} value={option.id}>
@@ -247,12 +249,13 @@ export function VaryingPropertiesPanel({
           <span>Property</span>
           <select
             value={draft.propertyName}
-            onChange={(event) =>
+            onChange={(event) => {
+              const propertyName = event.target.value;
               setDraft((current) => ({
                 ...current,
-                propertyName: event.currentTarget.value,
-              }))
-            }
+                propertyName,
+              }));
+            }}
           >
             {propertyDefinitions.map((definition) => (
               <option
@@ -268,60 +271,65 @@ export function VaryingPropertiesPanel({
           <span>Cube type</span>
           <input
             value={draft.cubeType}
-            onChange={(event) =>
+            onChange={(event) => {
+              const cubeType = event.target.value;
               setDraft((current) => ({
                 ...current,
-                cubeType: event.currentTarget.value,
-              }))
-            }
+                cubeType,
+              }));
+            }}
           />
         </label>
         <label>
           <span>Scenario type</span>
           <input
             value={draft.scenarioType}
-            onChange={(event) =>
+            onChange={(event) => {
+              const scenarioType = event.target.value;
               setDraft((current) => ({
                 ...current,
-                scenarioType: event.currentTarget.value,
-              }))
-            }
+                scenarioType,
+              }));
+            }}
           />
         </label>
         <label>
           <span>Time member</span>
           <input
             value={draft.timeMember}
-            onChange={(event) =>
+            onChange={(event) => {
+              const timeMember = event.target.value;
               setDraft((current) => ({
                 ...current,
-                timeMember: event.currentTarget.value,
-              }))
-            }
+                timeMember,
+              }));
+            }}
           />
         </label>
         <label className="varying-value-input">
           <span>Value</span>
           <input
             value={draft.value}
-            onChange={(event) =>
+            onChange={(event) => {
+              const value = event.target.value;
               setDraft((current) => ({
                 ...current,
-                value: event.currentTarget.value,
-              }))
-            }
+                value,
+              }));
+            }}
           />
         </label>
         <label className="checkbox-row">
           <input
             type="checkbox"
             checked={draft.isDefault}
-            onChange={(event) =>
+            onChange={(event) => {
+              const isDefault = event.target.checked;
               setDraft((current) => ({
                 ...current,
-                isDefault: event.currentTarget.checked,
-              }))
-            }
+                isDefault,
+              }));
+            }}
           />
           <span>Default</span>
         </label>

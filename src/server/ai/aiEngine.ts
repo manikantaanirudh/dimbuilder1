@@ -14,6 +14,7 @@ import { detectDuplicates } from "./suggestions/duplicateDetection";
 import { detectNamingAnomalies } from "./suggestions/namingAnomaly";
 import { suggestHierarchyOptimizations } from "./suggestions/hierarchyOptimization";
 import { suggestProperties } from "./suggestions/propertySuggestion";
+import { analyzeGraphTopology, type GraphAnalysisResult } from "./suggestions/graphIntelligence";
 import { parseAndExecuteQuery } from "./naturalLanguage/queryParser";
 import type { ProjectAIContext } from "./projectContext";
 
@@ -34,6 +35,7 @@ export interface AnalysisResult {
   namingAnomalies: NamingAnomaly[];
   hierarchyOptimizations: HierarchyOptimization[];
   propertySuggestions: PropertySuggestion[];
+  graphAnalysis: GraphAnalysisResult;
 }
 
 export function runFullAnalysis(projectData: ProjectData, config: AIConfigSection, scope?: AnalysisScope): AnalysisResult {
@@ -42,7 +44,8 @@ export function runFullAnalysis(projectData: ProjectData, config: AIConfigSectio
     duplicates: [],
     namingAnomalies: [],
     hierarchyOptimizations: [],
-    propertySuggestions: []
+    propertySuggestions: [],
+    graphAnalysis: analyzeGraphTopology({ members: projectData.members, relationships: projectData.relationships })
   };
 
   const shouldRun = (type: AISuggestionType) => !scope?.suggestionTypes || scope.suggestionTypes.includes(type);

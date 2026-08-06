@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGridActionTitles,
+  buildGridSelectionSummary,
   buildGridStatusTone,
   buildOptimisticGridRecord,
   clampGridPageSize,
@@ -56,15 +57,29 @@ describe("client UI view model", () => {
   });
 
   it("builds selected row action titles for the grid toolbar", () => {
-    expect(buildGridActionTitles(null)).toEqual({
+    expect(buildGridActionTitles(null, 0)).toEqual({
       duplicateTitle: "Select a row to duplicate",
       deleteTitle: "Select a row to delete",
     });
 
-    expect(buildGridActionTitles("row-1")).toEqual({
+    expect(buildGridActionTitles("row-1", 1)).toEqual({
       duplicateTitle: "Duplicate selected row",
       deleteTitle: "Delete selected row",
     });
+
+    expect(buildGridActionTitles("row-5", 5)).toEqual({
+      duplicateTitle: "Duplicate selected row",
+      deleteTitle: "Delete 5 selected rows",
+    });
+  });
+
+  it("builds selection summary text for members and relationships", () => {
+    expect(buildGridSelectionSummary("members", 0)).toBe("No rows selected");
+    expect(buildGridSelectionSummary("members", 1)).toBe("1 member selected");
+    expect(buildGridSelectionSummary("members", 5)).toBe("5 members selected");
+    expect(buildGridSelectionSummary("relationships", 0)).toBe("No rows selected");
+    expect(buildGridSelectionSummary("relationships", 1)).toBe("1 relationship selected");
+    expect(buildGridSelectionSummary("relationships", 3)).toBe("3 relationships selected");
   });
 
   it("maps grid status text to stable badge tones", () => {

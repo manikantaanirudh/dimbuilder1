@@ -84,10 +84,7 @@ export function registerApiRoutes(
   }
 
   app.use("/api", createImpactRouter(repos, config));
-
-  if (modules.chatAssistant && config.ai?.enabled) {
-    app.use("/api", createAIRouter(repos, config));
-  }
+  app.use("/api", createAIRouter(repos, config));
 
   app.use("/api/reports", createReportingRouter(repos, config));
 

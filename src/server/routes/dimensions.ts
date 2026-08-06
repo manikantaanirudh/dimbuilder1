@@ -113,7 +113,19 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     if (!dimension) return res.status(404).json({ error: "dimension not found" });
     const schema = getDimensionSchema(dimension.dimensionType);
     const properties = req.body.properties ?? {};
-    const memberKey = String(req.body.memberKey ?? properties[schema.memberKeyField] ?? "");
+    let memberKey = String(req.body.memberKey ?? properties[schema.memberKeyField] ?? "").trim();
+    if (!memberKey) {
+      const existingMembers = await repos.members.listByDimension(dimension.id);
+      const existingKeys = new Set(existingMembers.map((m) => m.memberKey));
+      let idx = 1;
+      while (existingKeys.has(`NewMember_${idx}`)) {
+        idx += 1;
+      }
+      memberKey = `NewMember_${idx}`;
+      if (!properties[schema.memberKeyField]) {
+        properties[schema.memberKeyField] = memberKey;
+      }
+    }
     const keyError = validateMemberKey(memberKey, config.validation.oneStreamProfile);
     if (keyError) return res.status(400).json({ error: keyError });
     const member = await repos.members.create({

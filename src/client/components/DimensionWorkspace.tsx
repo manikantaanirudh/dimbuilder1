@@ -23,6 +23,7 @@ import { MetadataEditor } from "./MetadataEditor";
 import { MetadataDiffPanel } from "./MetadataDiffPanel";
 import { FactItem, FactStrip, StatusBadge } from "./ui";
 import { VaryingPropertiesPanel } from "./VaryingPropertiesPanel";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { WorkflowPanel } from "./WorkflowPanel";
 import { PropertyDefaultsPanel } from "./PropertyDefaultsPanel";
 import { XmlPreview } from "./XmlPreview";
@@ -256,6 +257,7 @@ export function DimensionWorkspace({
                       issueFilteredIds={filteredEntityIds}
                       issues={dimensionIssues}
                       refreshSignal={relationshipRefreshSignal}
+                      onRefresh={onRefresh}
                     />
                   )}
                   {activeTab === "Relationships" && (
@@ -268,6 +270,7 @@ export function DimensionWorkspace({
                       issueFilteredIds={filteredEntityIds}
                       issues={dimensionIssues}
                       refreshSignal={relationshipRefreshSignal}
+                      onRefresh={onRefresh}
                     />
                   )}
                   {activeTab === "Hierarchy" && (
@@ -279,11 +282,13 @@ export function DimensionWorkspace({
                     />
                   )}
                   {activeTab === "Varying" && (
-                    <VaryingPropertiesPanel
-                      projectId={projectId}
-                      dimension={dimension}
-                      refreshSignal={relationshipRefreshSignal}
-                    />
+                    <ErrorBoundary fallbackTitle="Error displaying Varying Properties">
+                      <VaryingPropertiesPanel
+                        projectId={projectId}
+                        dimension={dimension}
+                        refreshSignal={relationshipRefreshSignal}
+                      />
+                    </ErrorBoundary>
                   )}
                   {activeTab === "Property Defaults" && (
                     <PropertyDefaultsPanel
