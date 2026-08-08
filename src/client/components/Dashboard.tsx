@@ -167,14 +167,13 @@ export function Dashboard({
     return sortDimensionsForOverview(
       scoped,
       dimensionIssueMap,
-      issueSummary.total > 0,
+      false, // Always keep canonical dimension type order matching the sidebar
     );
   }, [
     dimensions,
     dimSearch,
     dimensionDisplayConfig,
     dimensionIssueMap,
-    issueSummary.total,
   ]);
 
   async function handleRename() {

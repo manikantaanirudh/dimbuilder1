@@ -400,52 +400,56 @@ export function AppShell({
         </nav>
 
         <aside className="sidebar workbench-nav">
-          <div className="sidebar-heading">
-            <strong>Dimensions</strong>
-            <span>{dimensionNavItems.length} total</span>
-          </div>
-
-          <div className="nav-search search-box">
-            <Search size={14} />
-            <input
-              value={navSearch}
-              onChange={(event) => setNavSearch(event.target.value)}
-              placeholder="Search dimensions"
-              aria-label="Search dimensions"
-            />
-          </div>
-
-          <div className="sidebar-section-header">
-            <span className="sidebar-label">Dimensions</span>
-            <StatusBadge
-              tone={
-                issueSummary.blocksExport
-                  ? "danger"
-                  : issueSummary.total
-                    ? "warning"
-                    : "success"
-              }
-            >
-              {issueSummary.total ? `${issueSummary.total} errors` : "Ready"}
-            </StatusBadge>
-          </div>
-
-          {store.dimensions.length === 0 ? (
-            <div className="empty-sidebar">
-              Create or seed a project to begin.
+          <div className="sidebar-fixed-header">
+            <div className="nav-search search-box">
+              <Search size={14} />
+              <input
+                value={navSearch}
+                onChange={(event) => setNavSearch(event.target.value)}
+                placeholder="Search dimensions"
+                aria-label="Search dimensions"
+              />
             </div>
-          ) : (
-            <DimensionTreeNav
-              dimensions={store.dimensions}
-              issues={store.issues}
-              activeDimensionId={activeDimension?.id ?? null}
-              searchQuery={navSearch}
-              blockedSeverities={appConfig.validation.exportBlockedBySeverities}
-              onSelectDimension={(id) => {
-                setActiveWorkspace(id);
-              }}
-            />
-          )}
+
+            <div className="sidebar-section-header">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span className="sidebar-label">DIMENSIONS</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--muted)", fontWeight: 600 }}>
+                  {dimensionNavItems.length} total
+                </span>
+              </div>
+              <StatusBadge
+                tone={
+                  issueSummary.blocksExport
+                    ? "danger"
+                    : issueSummary.total
+                      ? "warning"
+                      : "success"
+                }
+              >
+                {issueSummary.total ? `${issueSummary.total} errors` : "Ready"}
+              </StatusBadge>
+            </div>
+          </div>
+
+          <div className="sidebar-tree-scroll-container">
+            {store.dimensions.length === 0 ? (
+              <div className="empty-sidebar">
+                Create or seed a project to begin.
+              </div>
+            ) : (
+              <DimensionTreeNav
+                dimensions={store.dimensions}
+                issues={store.issues}
+                activeDimensionId={activeDimension?.id ?? null}
+                searchQuery={navSearch}
+                blockedSeverities={appConfig.validation.exportBlockedBySeverities}
+                onSelectDimension={(id) => {
+                  setActiveWorkspace(id);
+                }}
+              />
+            )}
+          </div>
         </aside>
 
         <main className="main" id="main-content">

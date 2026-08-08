@@ -43,7 +43,11 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
       baseSeverities.oneStreamProfile = profile;
     }
 
-    const dimensions = await repos.dimensions.listByProject(project.id);
+    const dimensionId = req.body?.dimensionId;
+    let dimensions = await repos.dimensions.listByProject(project.id);
+    if (dimensionId) {
+      dimensions = dimensions.filter((d) => d.id === dimensionId);
+    }
     const members = await repos.members.listByProject(project.id);
     const relationships = await repos.relationships.listByProject(project.id);
     const varyingPropertyValues = await repos.varyingProperties.listVaryingPropertyValues(project.id);
@@ -60,9 +64,18 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
       })
     );
 
-    await repos.issues.replaceForProject(project.id, issues);
-    await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: issues.length } });
-    res.json({ issues });
+    if (dimensionId) {
+      const existingIssues = await repos.issues.listByProject(project.id);
+      const otherIssues = existingIssues.filter(issue => issue.dimensionId !== dimensionId);
+      const mergedIssues = [...otherIssues, ...issues];
+      await repos.issues.replaceForProject(project.id, mergedIssues);
+      await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: mergedIssues.length } });
+      res.json({ issues: mergedIssues });
+    } else {
+      await repos.issues.replaceForProject(project.id, issues);
+      await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: issues.length } });
+      res.json({ issues });
+    }
   });
 
   return router;

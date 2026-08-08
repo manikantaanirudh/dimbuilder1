@@ -394,7 +394,7 @@ export async function commitCsvImport(
 export function validateProject(
   projectId: string,
   duplicateSeverity = "warning",
-  options: { profile?: "default" | "onestream"; options?: Partial<OneStreamValidationProfileConfig> } = {}
+  options: { profile?: "default" | "onestream"; options?: Partial<OneStreamValidationProfileConfig>; dimensionId?: string } = {}
 ) {
   return apiPost<{ issues: ValidationIssue[] }>(`/validation/${projectId}/run`, { duplicateSeverity, ...options });
 }

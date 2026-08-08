@@ -240,7 +240,7 @@ describe("client component markup", () => {
   it("keeps the left rail focused on searchable dimensions", () => {
     const markup = renderAppShell({ appConfig: defaultAppConfig });
 
-    expect(markup).toContain("sidebar-heading");
+    expect(markup).toContain("sidebar-section-header");
     expect(markup).toContain("Search dimensions");
     expect(markup).not.toContain(
       'OneStream XF Dimension Builder</span></div><div class="nav-project"',

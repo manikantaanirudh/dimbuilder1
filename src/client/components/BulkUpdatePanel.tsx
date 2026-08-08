@@ -1,4 +1,4 @@
-import { PlayCircle, Wand2 } from "lucide-react";
+import { PlayCircle, ShieldCheck, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type {
   BulkUpdateOperation,
@@ -106,12 +106,17 @@ export function BulkUpdatePanel({
 
   async function runValidation() {
     setValidationStatus("Running validation...");
-    const result = await validateProject(projectId);
-    const errorCount = getValidationErrors(result.issues).length;
-    setValidationStatus(
-      `Validation returned ${errorCount} error${errorCount === 1 ? "" : "s"}.`,
-    );
-    onApplied?.();
+    try {
+      const result = await validateProject(projectId, "warning", { dimensionId: dimension.id });
+      const dimIssues = result.issues.filter(issue => issue.dimensionId === dimension.id);
+      const errorCount = getValidationErrors(dimIssues).length;
+      setValidationStatus(
+        `Validation returned ${errorCount} error${errorCount === 1 ? "" : "s"} for ${dimension.dimensionName}.`,
+      );
+      onApplied?.();
+    } catch (error) {
+      setValidationStatus(error instanceof Error ? error.message : "Validation failed");
+    }
   }
 
   const warningCount =
@@ -272,8 +277,8 @@ export function BulkUpdatePanel({
           >
             <Wand2 size={15} /> Apply
           </ActionButton>
-          <ActionButton variant="ghost" onClick={() => void runValidation()}>
-            Run Validation
+          <ActionButton variant="secondary" onClick={() => void runValidation()}>
+            <ShieldCheck size={15} /> Run Validation
           </ActionButton>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Undo2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   buildHierarchyTree,
@@ -9,10 +9,12 @@ import type {
   DimensionRecord,
   DimensionRelationshipRecord,
 } from "../../shared/types";
+import type { HierarchyAnalyticsResult } from "../../shared/hierarchyAnalytics";
 import {
   createRelationship,
   fetchRelationships,
   patchRelationship,
+  fetchHierarchyAnalytics,
 } from "../api/client";
 import { HierarchyAnalyticsPanel } from "./HierarchyAnalyticsPanel";
 import { StatusBadge } from "./ui";
@@ -22,11 +24,13 @@ export function HierarchyTree({
   dimension,
   onRelationshipChanged,
   refreshSignal = 0,
+  onNodeClick,
 }: {
   projectId: string;
   dimension: DimensionRecord;
   onRelationshipChanged?: () => void;
   refreshSignal?: number;
+  onNodeClick?: (memberKey: string) => void;
 }) {
   const [relationships, setRelationships] = useState<
     DimensionRelationshipRecord[]
@@ -37,6 +41,10 @@ export function HierarchyTree({
   const [status, setStatus] = useState("");
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<HierarchyAnalyticsResult | null>(null);
+  const [analyticsStatus, setAnalyticsStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [filterOrphans, setFilterOrphans] = useState(false);
+  const [lastMove, setLastMove] = useState<{ childKey: string; oldParentKey: string } | null>(null);
 
   async function refreshRelationships() {
     const result = await fetchRelationships(
@@ -53,12 +61,40 @@ export function HierarchyTree({
     void refreshRelationships();
   }, [projectId, dimension.id, loadLimit, refreshSignal]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setAnalyticsStatus("loading");
+    void fetchHierarchyAnalytics(projectId, dimension.id)
+      .then((result) => {
+        if (cancelled) return;
+        setAnalytics(result);
+        setAnalyticsStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAnalyticsStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, dimension.id, refreshSignal]);
+
   const tree = useMemo(
     () => buildHierarchyTree(relationships),
     [relationships],
   );
 
-  async function handleReparent(childKey: string, newParentKey: string) {
+  const orphanNodes = useMemo(() => {
+    return (analytics?.orphanMembers ?? []).map((m) => ({
+      key: m.memberKey,
+      children: [],
+      issueCodes: [],
+    }));
+  }, [analytics?.orphanMembers]);
+
+  const displayedTree = filterOrphans ? orphanNodes : tree;
+
+  async function handleReparent(childKey: string, newParentKey: string, isUndo = false) {
     const validation = canReparentHierarchy(
       relationships,
       childKey,
@@ -76,6 +112,8 @@ export function HierarchyTree({
       setStatus("A member cannot be moved under itself.");
       return;
     }
+
+    const oldParentKey = existingRelationship ? existingRelationship.parentKey : "Root";
 
     setStatus(`Moving ${childKey} under ${newParentKey}...`);
     try {
@@ -96,8 +134,21 @@ export function HierarchyTree({
           properties: { Parent: newParentKey, Child: childKey },
         });
       }
+
+      if (!isUndo) {
+        setLastMove({ childKey, oldParentKey });
+      } else {
+        setLastMove(null);
+      }
+
       await refreshRelationships();
-      setStatus(`Moved ${childKey} under ${newParentKey}`);
+      // Refetch analytics on relationship changes
+      void fetchHierarchyAnalytics(projectId, dimension.id)
+        .then((result) => {
+          setAnalytics(result);
+          setAnalyticsStatus("ready");
+        });
+      setStatus(isUndo ? `Undid move of ${childKey}` : `Moved ${childKey} under ${newParentKey}`);
       onRelationshipChanged?.();
     } catch (caught) {
       setStatus(
@@ -117,6 +168,29 @@ export function HierarchyTree({
             <strong>Relationships</strong>
             <span>{relationships.length} local links</span>
           </div>
+          {lastMove && (
+            <button
+              className="action-button warning"
+              onClick={() => handleReparent(lastMove.childKey, lastMove.oldParentKey, true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                fontSize: "0.85rem",
+                borderRadius: "var(--radius-sm)",
+                background: "color-mix(in srgb, var(--warning, #f59e0b) 12%, transparent)",
+                border: "1px solid var(--warning, #f59e0b)",
+                color: "oklch(0.686 0.166 69.31)",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              title={`Undo move of ${lastMove.childKey} under ${lastMove.oldParentKey}`}
+            >
+              <Undo2 size={14} /> Undo Move
+            </button>
+          )}
           <div className="search-box hierarchy-search">
             <Search size={15} />
             <input
@@ -135,23 +209,27 @@ export function HierarchyTree({
         <HierarchyAnalyticsPanel
           projectId={projectId}
           dimension={dimension}
-          refreshSignal={refreshSignal}
+          analytics={analytics}
+          status={analyticsStatus}
+          isOrphansFiltered={filterOrphans}
+          onOrphansToggle={() => setFilterOrphans(!filterOrphans)}
         />
         <div
           className="tree hierarchy-tree"
           role="tree"
           aria-label={`${dimension.dimensionName} relationship hierarchy`}
         >
-          {tree.length === 0 ? (
+          {displayedTree.length === 0 ? (
             <div className="hierarchy-empty empty-state-block">
-              <strong>No local relationships found</strong>
+              <strong>{filterOrphans ? "No orphan members found" : "No local relationships found"}</strong>
               <span>
-                {dimension.sheetName} has no relationship rows to show in the
-                tree.
+                {filterOrphans
+                  ? `${dimension.sheetName} has no orphan members to display.`
+                  : `${dimension.sheetName} has no relationship rows to show in the tree.`}
               </span>
             </div>
           ) : (
-            tree.map((node) => (
+            displayedTree.map((node) => (
               <TreeNode
                 key={node.key}
                 node={node}
@@ -162,6 +240,7 @@ export function HierarchyTree({
                 onReparent={handleReparent}
                 setDraggedKey={setDraggedKey}
                 setDropTargetKey={setDropTargetKey}
+                onNodeClick={onNodeClick}
               />
             ))
           )}
@@ -189,6 +268,7 @@ function TreeNode({
   onReparent,
   setDraggedKey,
   setDropTargetKey,
+  onNodeClick,
 }: {
   node: HierarchyNode;
   search: string;
@@ -198,6 +278,7 @@ function TreeNode({
   onReparent: (childKey: string, newParentKey: string) => Promise<void>;
   setDraggedKey: (key: string | null) => void;
   setDropTargetKey: (key: string | null) => void;
+  onNodeClick?: (memberKey: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const match = search && node.key.toLowerCase().includes(search);
@@ -227,6 +308,7 @@ function TreeNode({
         draggable={Boolean(draggedKey || node.key)}
         onClick={() => {
           if (hasChildren) setOpen((current) => !current);
+          onNodeClick?.(node.key);
         }}
         onDragStart={(event) => {
           event.dataTransfer.effectAllowed = "move";
@@ -284,6 +366,7 @@ function TreeNode({
               onReparent={onReparent}
               setDraggedKey={setDraggedKey}
               setDropTargetKey={setDropTargetKey}
+              onNodeClick={onNodeClick}
             />
           ))}
         </div>

@@ -103,7 +103,7 @@ export function IssuePanel({
   const profileLabel = appConfig.validation.oneStreamProfile.enabled
     ? "OneStream"
     : "Default";
-  const reportableIssues = getValidationErrors(issues);
+  const reportableIssues = issues;
   const filteredIssues = useMemo(() => {
     const codeNeedle = codeFilter.trim().toLowerCase();
     return reportableIssues.filter((issue) => {
@@ -182,8 +182,10 @@ export function IssuePanel({
                   setSeverityFilter(event.target.value as Severity | "all")
                 }
               >
-                <option value="all">All errors</option>
+                <option value="all">All issues</option>
                 <option value="error">Errors</option>
+                <option value="warning">Warnings</option>
+                <option value="info">Info</option>
               </select>
             </label>
             <label>
@@ -215,10 +217,10 @@ export function IssuePanel({
 
         <div className={issuesSectionClassName}>
           {visibleIssues.length === 0 ? (
-            <EmptyState title="No errors recorded">
+            <EmptyState title="No issues recorded">
               {reportableIssues.length === 0
-                ? `${dimension.sheetName} has no recorded validation errors.`
-                : "No errors match the current filters."}
+                ? `${dimension.sheetName} has no recorded validation issues.`
+                : "No issues match the current filters."}
             </EmptyState>
           ) : (
             <div className="issue-list">
@@ -244,7 +246,7 @@ export function IssuePanel({
                   style={{ width: "100%", marginTop: "0.5rem" }}
                   onClick={() => setShowAll(true)}
                 >
-                  Show all {filteredIssues.length} errors (
+                  Show all {filteredIssues.length} issues (
                   {filteredIssues.length - 50} more)
                 </button>
               )}
@@ -265,7 +267,7 @@ export function IssuePanel({
                   onChange={() => setShowDismissed(!showDismissed)}
                   style={{ marginRight: "0.3rem" }}
                 />
-                Show {dismissedIds.size} dismissed error(s)
+                Show {dismissedIds.size} dismissed issue(s)
               </label>
             </div>
           )}

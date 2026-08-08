@@ -43,6 +43,7 @@ export function EditableGrid({
   issues = [],
   refreshSignal = 0,
   onRefresh,
+  onSelectRow,
 }: {
   projectId: string;
   kind: "members" | "relationships";
@@ -53,6 +54,7 @@ export function EditableGrid({
   issues?: ValidationIssue[];
   refreshSignal?: number;
   onRefresh?: () => void;
+  onSelectRow?: (row: any | null) => void;
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
@@ -200,16 +202,25 @@ export function EditableGrid({
   }, [records]);
 
   useEffect(() => {
+    const selectedRow = selectedId ? records.find((r) => r.id === selectedId) || null : null;
+    onSelectRow?.(selectedRow);
+  }, [selectedId, records, onSelectRow]);
+
+  useEffect(() => {
     if (!highlightedEntityId) return;
     const index = filteredRecords.findIndex(
-      (record) => record.id === highlightedEntityId,
+      (record) =>
+        record.id === highlightedEntityId ||
+        (kind === "members" &&
+          (record as DimensionMemberRecord).memberKey === highlightedEntityId),
     );
     if (index >= 0) {
+      const targetRecord = filteredRecords[index];
       virtualizer.scrollToIndex(index, { align: "center" });
-      setSelectedId(highlightedEntityId);
-      setSelectedIds(new Set([highlightedEntityId]));
+      setSelectedId(targetRecord.id);
+      setSelectedIds(new Set([targetRecord.id]));
     }
-  }, [highlightedEntityId, filteredRecords, virtualizer]);
+  }, [highlightedEntityId, filteredRecords, virtualizer, kind]);
 
   async function saveCell(
     record: GridRecord,
@@ -308,9 +319,9 @@ export function EditableGrid({
         memberKey: defaultKey,
         properties,
       });
-      recordsRef.current = [...recordsRef.current, created];
+      recordsRef.current = [created, ...recordsRef.current];
       confirmedRecordsRef.current.set(created.id, created);
-      setRecords((current) => [...current, created]);
+      setRecords((current) => [created, ...current]);
       setSelectedId(created.id);
       setSelectedIds(new Set([created.id]));
     } else {
@@ -322,9 +333,9 @@ export function EditableGrid({
         childKey: "",
         properties,
       });
-      recordsRef.current = [...recordsRef.current, created];
+      recordsRef.current = [created, ...recordsRef.current];
       confirmedRecordsRef.current.set(created.id, created);
-      setRecords((current) => [...current, created]);
+      setRecords((current) => [created, ...current]);
       setSelectedId(created.id);
       setSelectedIds(new Set([created.id]));
     }
@@ -346,9 +357,9 @@ export function EditableGrid({
           [schema.memberKeyField]: `${member.memberKey}_Copy`,
         },
       });
-      recordsRef.current = [...recordsRef.current, created];
+      recordsRef.current = [created, ...recordsRef.current];
       confirmedRecordsRef.current.set(created.id, created);
-      setRecords((current) => [...current, created]);
+      setRecords((current) => [created, ...current]);
       setSelectedId(created.id);
       setSelectedIds(new Set([created.id]));
     } else {
@@ -358,9 +369,9 @@ export function EditableGrid({
         childKey: relationship.childKey,
         properties: relationship.properties,
       });
-      recordsRef.current = [...recordsRef.current, created];
+      recordsRef.current = [created, ...recordsRef.current];
       confirmedRecordsRef.current.set(created.id, created);
-      setRecords((current) => [...current, created]);
+      setRecords((current) => [created, ...current]);
       setSelectedId(created.id);
       setSelectedIds(new Set([created.id]));
     }

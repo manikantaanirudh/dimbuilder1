@@ -63,16 +63,15 @@ export function PropertyDefaultsPanel({
   }
 
   return (
-    <section className="panel">
-      <header className="panel-header">
-        <div>
-          <h2>Property Defaults</h2>
-          <p className="panel-subtitle">
-            Default property values for <strong>{dimension.dimensionType}</strong> apply on export and validation for every project.
-            Import hierarchy-only CSV or XLSX; missing member and relationship properties are filled from these defaults.
-          </p>
+    <div className="panel property-defaults-panel">
+      <div className="property-defaults-toolbar">
+        <div className="grid-toolbar-title">
+          <strong>Property Defaults</strong>
+          <span>
+            Default property values for <strong>{dimension.dimensionType}</strong> apply on export and validation. Missing member and relationship properties are filled from these defaults.
+          </span>
         </div>
-      </header>
+      </div>
 
       {status && <p className="panel-status">{status}</p>}
 
@@ -127,6 +126,6 @@ export function PropertyDefaultsPanel({
           )}
         </div>
       ))}
-    </section>
+    </div>
   );
 }

@@ -1,9 +1,7 @@
 import { Download, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { DimensionRecord } from "../../shared/types";
 import type { HierarchyAnalyticsResult } from "../../shared/hierarchyAnalytics";
 import {
-  fetchHierarchyAnalytics,
   hierarchyLevelizedCsvUrl,
   hierarchyOrphansCsvUrl,
   hierarchyParentChildCsvUrl,
@@ -15,37 +13,18 @@ import { StatusBadge } from "./ui";
 export function HierarchyAnalyticsPanel({
   projectId,
   dimension,
-  refreshSignal = 0,
+  analytics,
+  status,
+  isOrphansFiltered,
+  onOrphansToggle,
 }: {
   projectId: string;
   dimension: DimensionRecord;
-  refreshSignal?: number;
+  analytics: HierarchyAnalyticsResult | null;
+  status: "loading" | "ready" | "error";
+  isOrphansFiltered: boolean;
+  onOrphansToggle: () => void;
 }) {
-  const [analytics, setAnalytics] = useState<HierarchyAnalyticsResult | null>(
-    null,
-  );
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading",
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    setStatus("loading");
-    void fetchHierarchyAnalytics(projectId, dimension.id)
-      .then((result) => {
-        if (cancelled) return;
-        setAnalytics(result);
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setStatus("error");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, dimension.id, refreshSignal]);
-
   const summary = analytics?.summary;
   const statusTone =
     status === "error" ? "danger" : summary?.hasCycle ? "warning" : "neutral";
@@ -82,6 +61,9 @@ export function HierarchyAnalyticsPanel({
           label="Orphans"
           value={formatMetric(summary?.orphanCount)}
           tone={summary?.orphanCount ? "warning" : undefined}
+          interactive
+          active={isOrphansFiltered}
+          onClick={onOrphansToggle}
         />
         <Metric
           label="Shared"
@@ -122,13 +104,41 @@ function Metric({
   label,
   value,
   tone = "neutral",
+  interactive = false,
+  active = false,
+  onClick,
 }: {
   label: string;
   value: string;
   tone?: "neutral" | "warning" | "info";
+  interactive?: boolean;
+  active?: boolean;
+  onClick?: () => void;
 }) {
+  const className = `hierarchy-metric ${tone} ${interactive ? "interactive" : ""} ${active ? "active" : ""}`;
+  
+  if (interactive) {
+    return (
+      <button
+        className={className}
+        onClick={onClick}
+        type="button"
+        style={{
+          borderStyle: "solid",
+          textAlign: "left",
+          fontFamily: "inherit",
+          width: "100%",
+          cursor: "pointer",
+        }}
+      >
+        <span>{label}</span>
+        <b>{value}</b>
+      </button>
+    );
+  }
+
   return (
-    <span className={`hierarchy-metric ${tone}`}>
+    <span className={className}>
       <span>{label}</span>
       <b>{value}</b>
     </span>

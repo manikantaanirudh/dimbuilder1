@@ -92,7 +92,7 @@ export function buildDimensionTreeGroups(
 
     result.push({
       type,
-      label: `${type} Dimensions`,
+      label: type,
       nodes,
       totalErrors,
       totalWarnings

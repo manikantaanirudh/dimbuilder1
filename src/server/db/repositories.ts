@@ -404,6 +404,9 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
       async bulkInsert(records: DimensionMemberRecord[]): Promise<void> {
         await bulkInsertMembers(client, records);
       },
+      async shiftOrders(dimensionId: string): Promise<void> {
+        await client.exec("UPDATE dimension_members SET row_order = row_order + 1 WHERE dimension_id = ?", [dimensionId]);
+      },
       async create(input: Omit<DimensionMemberRecord, "id" | "createdAt" | "updatedAt">): Promise<DimensionMemberRecord> {
         const createdAt = now();
         const record: DimensionMemberRecord = { id: nanoid(), ...input, createdAt, updatedAt: createdAt };
@@ -517,6 +520,9 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
     relationships: {
       async bulkInsert(records: DimensionRelationshipRecord[]): Promise<void> {
         await bulkInsertRelationships(client, records);
+      },
+      async shiftOrders(dimensionId: string): Promise<void> {
+        await client.exec("UPDATE dimension_relationships SET row_order = row_order + 1 WHERE dimension_id = ?", [dimensionId]);
       },
       async create(input: Omit<DimensionRelationshipRecord, "id" | "createdAt" | "updatedAt">): Promise<DimensionRelationshipRecord> {
         const createdAt = now();

@@ -240,11 +240,75 @@ svg {
   color: var(--text);
   background: var(--surface-subtle);
   border-right: 1px solid var(--border);
-  padding: 16px 12px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 104px);
+  max-height: calc(100vh - 104px);
+  overflow: hidden;
+  position: sticky;
+  top: 104px;
+}
+
+.sidebar-fixed-header {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow: hidden auto;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-tree-scroll-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-top: 8px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+}
+
+.sidebar-tree-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-tree-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-tree-scroll-container::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 6px;
+}
+
+.sidebar-tree-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 75%, transparent);
+}
+
+.inspector-scroll-container {
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+}
+
+.inspector-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inspector-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inspector-scroll-container::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 6px;
+}
+
+.inspector-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 .brand {
@@ -1019,30 +1083,37 @@ svg {
 .overview-dim-search {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
   background: var(--surface);
   margin-bottom: var(--space-sm);
-  color: var(--muted);
+  color: var(--text);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.overview-dim-search:hover {
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--border-strong));
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
 .overview-dim-search input {
   flex: 1;
   min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--text);
+  border: none !important;
+  outline: none !important;
+  padding: 4px 0;
+  background: transparent !important;
+  box-shadow: none !important;
   font-size: 13px;
-  outline: none;
-  padding: 0;
-  min-height: auto;
+  color: var(--text);
 }
 
 .overview-dim-search:focus-within {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 8%, transparent);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 .snapshot-manager {
@@ -1420,6 +1491,28 @@ svg {
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+}
+
+.tabs::-webkit-scrollbar,
+.workspace-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tabs::-webkit-scrollbar-track,
+.workspace-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabs::-webkit-scrollbar-thumb,
+.workspace-tabs::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 6px;
+}
+
+.tabs::-webkit-scrollbar-thumb:hover,
+.workspace-tabs::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 .tabs button,
@@ -1480,6 +1573,7 @@ svg {
 .xml-panel,
 .varying-properties-panel,
 .bulk-update-panel,
+.property-defaults-panel,
 .metadata-diff-panel,
 .change-sets-panel,
 .dimension-lifecycle-panel {
@@ -1584,13 +1678,15 @@ svg {
 }
 
 .varying-properties-panel,
-.bulk-update-panel {
+.bulk-update-panel,
+.property-defaults-panel {
   display: grid;
   gap: 14px;
 }
 
 .varying-toolbar,
 .bulk-update-toolbar,
+.property-defaults-toolbar,
 .diff-toolbar,
 .change-set-toolbar {
   min-width: 0;
@@ -1666,6 +1762,12 @@ svg {
   display: flex;
   align-items: end;
   gap: var(--space-sm);
+}
+
+.bulk-update-actions {
+  grid-column: 1 / -1;
+  justify-content: center;
+  margin-top: 8px;
 }
 
 .bulk-update-steps {
@@ -1853,18 +1955,20 @@ svg {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .grid-toolbar-title strong {
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .grid-toolbar-title span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 18px;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .grid-toolbar-tools {
@@ -1912,29 +2016,39 @@ svg {
 .search-box {
   min-width: 220px;
   max-width: 100%;
-  min-height: 34px;
+  min-height: 36px;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 0 9px;
+  border-radius: 20px;
+  padding: 0 12px;
   background: var(--surface);
-  color: var(--muted);
+  color: var(--text);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box:hover {
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--border-strong));
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
 .search-box:focus-within {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 .search-box input {
   width: 100%;
   min-height: 32px;
-  border: 0;
-  outline: 0;
-  padding: 6px 0;
-  background: transparent;
+  border: none !important;
+  outline: none !important;
+  padding: 4px 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  color: var(--text);
 }
 
 .column-menu,
@@ -2544,6 +2658,22 @@ svg {
 .hierarchy-metric.info {
   border-color: oklch(0.8619 0.0533 250.19);
   background: var(--info-soft);
+}
+
+.hierarchy-metric.interactive {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.hierarchy-metric.interactive:hover {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.hierarchy-metric.active {
+  outline: 2px solid oklch(0.686 0.166 69.31) !important;
+  outline-offset: -2px;
 }
 
 .hierarchy-export-actions {
@@ -3324,6 +3454,7 @@ svg {
 .admin-page { max-width: 1000px; }
 .rules-table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--text); }
 .rules-table th, .rules-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--text); }
+.rules-table th:not(:first-child), .rules-table td:not(:first-child) { text-align: center; }
 .rules-table th { font-weight: 700; background: var(--surface-subtle); color: var(--text); border-bottom: 2px solid var(--border-strong); }
 .rules-table code { font-size: 12px; font-weight: 600; background: var(--surface-muted); color: var(--text); padding: 0.15rem 0.45rem; border-radius: var(--radius-xs); border: 1px solid var(--border); font-family: monospace; }
 .blocking-rule { background: var(--danger-soft); }

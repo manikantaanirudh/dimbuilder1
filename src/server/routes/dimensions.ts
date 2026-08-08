@@ -113,6 +113,20 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     if (!dimension) return res.status(404).json({ error: "dimension not found" });
     const schema = getDimensionSchema(dimension.dimensionType);
     const properties = req.body.properties ?? {};
+    
+    // Automatically merge enabled member property defaults
+    try {
+      const defaults = await repos.propertyDefaults.listDisplayRows(dimension.projectId, dimension.dimensionType);
+      const memberDefaults = defaults.filter((d) => d.targetLevel === "member" && d.enabled);
+      for (const d of memberDefaults) {
+        if (properties[d.propertyName] === undefined || properties[d.propertyName] === "") {
+          properties[d.propertyName] = d.defaultValue;
+        }
+      }
+    } catch (e) {
+      // Fallback silently if any error fetching defaults
+    }
+
     let memberKey = String(req.body.memberKey ?? properties[schema.memberKeyField] ?? "").trim();
     if (!memberKey) {
       const existingMembers = await repos.members.listByDimension(dimension.id);
@@ -128,12 +142,21 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     }
     const keyError = validateMemberKey(memberKey, config.validation.oneStreamProfile);
     if (keyError) return res.status(400).json({ error: keyError });
+
+    // Shift existing member orders down, then insert new member at the top (rowOrder: 1)
+    try {
+      // @ts-expect-error shiftOrders is custom added repository method
+      await repos.members.shiftOrders(dimension.id);
+    } catch (e) {
+      // Ignore fallback
+    }
+
     const member = await repos.members.create({
       dimensionId: dimension.id,
       memberKey,
       description: String(properties.Description ?? ""),
       properties,
-      rowOrder: (await repos.members.countByDimension(dimension.id)) + 1,
+      rowOrder: 1,
       sourceRowNumber: 0,
       isActive: true
     });
@@ -241,14 +264,35 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       percentOwnership: req.body.percentOwnership ?? relationshipPropertyValues.percentOwnership ?? relationshipDefaults.percentOwnership,
       ownershipType: req.body.ownershipType ?? relationshipPropertyValues.ownershipType ?? relationshipDefaults.ownershipType
     };
-    const parentKey = String(req.body.parentKey ?? req.body.properties?.Parent ?? "");
-    const childKey = String(req.body.childKey ?? req.body.properties?.Child ?? "");
+    const parentKey = String(req.body.parentKey ?? req.body.properties?.Parent ?? "").trim();
+    const childKey = String(req.body.childKey ?? req.body.properties?.Child ?? "").trim();
+
+    if (parentKey || childKey) {
+      const existingMembers = await repos.members.listAllByDimension(dimension.id);
+      const memberKeys = new Set(existingMembers.map((m) => m.memberKey.trim().toLowerCase()));
+
+      if (parentKey && !memberKeys.has(parentKey.toLowerCase())) {
+        return res.status(400).json({ error: `Parent member '${parentKey}' does not exist in the members list of this dimension.` });
+      }
+      if (childKey && !memberKeys.has(childKey.toLowerCase())) {
+        return res.status(400).json({ error: `Child member '${childKey}' does not exist in the members list of this dimension.` });
+      }
+    }
+
     const properties = {
       ...(req.body.properties ?? {}),
       ...relationshipDefaultsToProperties(relationshipValues, supportedRelationshipFields),
       Parent: parentKey,
       Child: childKey
     };
+    // Shift existing relationship orders down, then insert new relationship at the top (rowOrder: 1)
+    try {
+      // @ts-expect-error shiftOrders is custom added repository method
+      await repos.relationships.shiftOrders(dimension.id);
+    } catch (e) {
+      // Ignore fallback
+    }
+
     const relationship = await repos.relationships.create({
       dimensionId: dimension.id,
       parentKey,
@@ -258,7 +302,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       percentOwnership: relationshipValues.percentOwnership ?? null,
       ownershipType: String(relationshipValues.ownershipType ?? ""),
       properties,
-      rowOrder: (await repos.relationships.countByDimension(dimension.id)) + 1,
+      rowOrder: 1,
       sourceRowNumber: 0
     });
     await repos.audit.record({ projectId: (req.params as Record<string, string>).projectId, action: "relationship.create", entityType: "relationship", entityId: relationship.id, after: relationship });
@@ -266,12 +310,41 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
   });
 
   router.patch("/relationships/:relationshipId", async (req, res) => {
-    await repos.relationships.update((req.params as Record<string, string>).relationshipId, req.body);
+    const relationshipId = (req.params as Record<string, string>).relationshipId;
+    const relationship = await repos.relationships.getById(relationshipId);
+    if (!relationship) return res.status(404).json({ error: "relationship not found" });
+
+    const parentKey = req.body.parentKey !== undefined ? String(req.body.parentKey).trim() : undefined;
+    const childKey = req.body.childKey !== undefined ? String(req.body.childKey).trim() : undefined;
+    const properties = req.body.properties;
+
+    let parentKeyToCheck = parentKey;
+    if (parentKeyToCheck === undefined && properties && properties.Parent !== undefined) {
+      parentKeyToCheck = String(properties.Parent).trim();
+    }
+    let childKeyToCheck = childKey;
+    if (childKeyToCheck === undefined && properties && properties.Child !== undefined) {
+      childKeyToCheck = String(properties.Child).trim();
+    }
+
+    if (parentKeyToCheck || childKeyToCheck) {
+      const existingMembers = await repos.members.listAllByDimension(relationship.dimensionId);
+      const memberKeys = new Set(existingMembers.map((m) => m.memberKey.trim().toLowerCase()));
+
+      if (parentKeyToCheck && !memberKeys.has(parentKeyToCheck.toLowerCase())) {
+        return res.status(400).json({ error: `Parent member '${parentKeyToCheck}' does not exist in the members list of this dimension.` });
+      }
+      if (childKeyToCheck && !memberKeys.has(childKeyToCheck.toLowerCase())) {
+        return res.status(400).json({ error: `Child member '${childKeyToCheck}' does not exist in the members list of this dimension.` });
+      }
+    }
+
+    await repos.relationships.update(relationshipId, req.body);
     await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.update",
       entityType: "relationship",
-      entityId: (req.params as Record<string, string>).relationshipId,
+      entityId: relationshipId,
       after: req.body
     });
     res.json({ ok: true });

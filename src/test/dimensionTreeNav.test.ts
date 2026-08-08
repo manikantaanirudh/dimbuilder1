@@ -23,9 +23,9 @@ describe("DimensionTreeNav grouping and hierarchy", () => {
 
     const groups = buildDimensionTreeGroups(dimensions, [], ["error"]);
     expect(groups.map((g) => g.label)).toEqual([
-      "Entity Dimensions",
-      "Account Dimensions",
-      "UD1 Dimensions",
+      "Entity",
+      "Account",
+      "UD1",
     ]);
   });
 

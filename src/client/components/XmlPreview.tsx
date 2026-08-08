@@ -1,6 +1,6 @@
 import { Copy, Download } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { DimensionRecord } from "../../shared/types";
+import type { DimensionRecord, ValidationIssue } from "../../shared/types";
 import { apiText } from "../api/client";
 import type { ExportAvailability } from "../ui/viewModel";
 import { ActionButton, ActionLink, StatusBadge } from "./ui";
@@ -18,7 +18,8 @@ export function XmlPreview({
   defaultScope = "allDimensions",
   allowAllDimensions = true,
   xmlExportEnabled = true,
-  exportAvailability
+  exportAvailability,
+  dimensionIssues = [],
 }: {
   projectId: string;
   dimension: DimensionRecord;
@@ -26,6 +27,7 @@ export function XmlPreview({
   allowAllDimensions?: boolean;
   xmlExportEnabled?: boolean;
   exportAvailability: ExportAvailability;
+  dimensionIssues?: ValidationIssue[];
 }) {
   const [xml, setXml] = useState("");
   const [scope, setScope] = useState<XmlPreviewScope>(() => mapDefaultScope(defaultScope, allowAllDimensions));
@@ -67,11 +69,26 @@ export function XmlPreview({
   }, [allowAllDimensions, defaultScope]);
 
   const preview = xml;
-  const dimensionHasBlockingIssues = exportAvailability.disabled;
-  const downloadDisabled = dimensionHasBlockingIssues;
+  
+  // Calculate if the current dimension has errors
+  const currentDimHasErrors = dimensionIssues.some((issue) => issue.severity === "error");
+
+  // Enable download for current dimension if it has no errors, even if other dimensions do
+  const downloadDisabled =
+    scope === "dimension"
+      ? currentDimHasErrors
+      : exportAvailability.disabled;
+
   const downloadTitle = downloadDisabled
-    ? exportAvailability.title
+    ? scope === "dimension"
+      ? "Dimension has validation errors. Fix errors to download."
+      : exportAvailability.title
     : "Download XML";
+
+  const downloadUrl =
+    scope === "dimension"
+      ? `/api/export/${projectId}/xml?dimensionId=${encodeURIComponent(dimension.id)}`
+      : `/api/export/${projectId}/xml`;
 
   async function copy() {
     await navigator.clipboard.writeText(preview);
@@ -101,7 +118,7 @@ export function XmlPreview({
               <ActionLink
                 className="button-link"
                 aria-disabled={downloadDisabled}
-                href={downloadDisabled ? undefined : `/api/export/${projectId}/xml`}
+                href={downloadDisabled ? undefined : downloadUrl}
                 onClick={(event) => {
                   if (downloadDisabled) event.preventDefault();
                 }}

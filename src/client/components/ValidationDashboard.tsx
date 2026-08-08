@@ -18,8 +18,8 @@ export function ValidationDashboard({
   onNavigateDimension?: (dimensionId: string) => void;
 }) {
   const blockedSeverities = appConfig.validation.exportBlockedBySeverities;
-  const reportableIssues = getValidationErrors(issues);
-  const totalErrors = reportableIssues.length;
+  const reportableIssues = issues;
+  const totalErrors = issues.filter((i) => i.severity === "error").length;
   const totalWarnings = issues.filter((i) => i.severity === "warning").length;
   const totalInfos = issues.filter((i) => i.severity === "info").length;
   const hasBlocking = issues.some((i) =>
@@ -114,11 +114,25 @@ export function ValidationDashboard({
             <span className="summary-value">{totalErrors}</span>
             <span className="summary-label">Errors</span>
           </div>
-          <div className="summary-card warning">
+          <div
+            className={`summary-card warning clickable-card ${severityFilter === "warning" ? "active-filter" : ""}`}
+            role="button"
+            tabIndex={0}
+            aria-pressed={severityFilter === "warning"}
+            onClick={() => handleCardClick("warning")}
+            onKeyDown={onActivate(() => handleCardClick("warning"))}
+          >
             <span className="summary-value">{totalWarnings}</span>
             <span className="summary-label">Warnings</span>
           </div>
-          <div className="summary-card info">
+          <div
+            className={`summary-card info clickable-card ${severityFilter === "info" ? "active-filter" : ""}`}
+            role="button"
+            tabIndex={0}
+            aria-pressed={severityFilter === "info"}
+            onClick={() => handleCardClick("info")}
+            onKeyDown={onActivate(() => handleCardClick("info"))}
+          >
             <span className="summary-value">{totalInfos}</span>
             <span className="summary-label">Info</span>
           </div>
@@ -143,7 +157,7 @@ export function ValidationDashboard({
               marginBottom: "0.5rem",
             }}
           >
-            Showing <b>{filteredIssues.length}</b> {severityFilter} error(s).{" "}
+            Showing <b>{filteredIssues.length}</b> {severityFilter} issue(s).{" "}
             <button className="chip" onClick={() => setSeverityFilter(null)}>
               Clear filter
             </button>
@@ -152,7 +166,7 @@ export function ValidationDashboard({
 
         {byDimension.length > 0 && (
           <div className="validation-section">
-            <h2>Errors by Dimension</h2>
+            <h2>Issues by Dimension</h2>
             <table className="rules-table">
               <thead>
                 <tr>
@@ -190,7 +204,7 @@ export function ValidationDashboard({
 
         {byRuleCode.length > 0 && (
           <div className="validation-section">
-            <h2>Most Frequent Errors</h2>
+            <h2>Most Frequent Issues</h2>
             <table className="rules-table">
               <thead>
                 <tr>
