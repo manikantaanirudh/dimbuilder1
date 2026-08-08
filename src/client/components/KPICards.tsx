@@ -6,7 +6,7 @@ import {
   Layers,
   GitFork,
 } from "lucide-react";
-import { fetchQualityScores } from "../api/client";
+import { fetchQualityScores } from "../api/intelligence";
 import { fetchCoverageReport } from "../api/reports";
 import { ScoreRing } from "./ScoreRing";
 import type {

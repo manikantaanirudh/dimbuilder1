@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Database, Search } from "lucide-react";
+import { ArrowRight, Clock, Database, GitBranch, Search } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
   getDimensionDisplayLabel,
@@ -9,9 +9,10 @@ import type {
   DashboardSummary,
   DimensionRecord,
   ProjectRecord,
+  ProjectVersionRecord,
   ValidationIssue,
 } from "../../shared/types";
-import { apiPatchJson, fetchCoverageReport } from "../api/client";
+import { apiPatchJson, fetchCoverageReport, fetchProjectVersions } from "../api/client";
 import {
   buildIssueSummary,
   formatCount,
@@ -20,9 +21,26 @@ import {
 import { BlueprintStudio } from "./BlueprintStudio";
 import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
-import { EmptyState, StatusBadge } from "./ui";
+import { ActionButton, EmptyState, StatusBadge } from "./ui";
 
 const DISCLOSURE_KEY = "dimbuilder-overview-disclosure";
+
+function formatSeededTime(isoString?: string): string {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  } catch {
+    return isoString;
+  }
+}
 
 export function Dashboard({
   dimensions,
@@ -76,10 +94,29 @@ export function Dashboard({
   const [coverageByType, setCoverageByType] = useState<Map<string, number>>(
     new Map(),
   );
+  const [versions, setVersions] = useState<ProjectVersionRecord[]>([]);
   const [disclosureOpen, setDisclosureOpen] = useState(
     () => localStorage.getItem(DISCLOSURE_KEY) === "open",
   );
   const dimSearchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!project) {
+      setVersions([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchProjectVersions(project.id)
+      .then((data) => {
+        if (!cancelled) setVersions(data);
+      })
+      .catch(() => {
+        if (!cancelled) setVersions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id, project?.versionNumber]);
 
   useEffect(() => {
     if (!project) {
@@ -266,7 +303,21 @@ export function Dashboard({
               </p>
             )}
           </div>
-          <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+          <div className="overview-badges" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+            {project?.versionLabel && (
+              <StatusBadge tone="info">
+                <GitBranch size={13} style={{ marginRight: 4, verticalAlign: "text-bottom" }} />
+                {project.versionLabel}
+              </StatusBadge>
+            )}
+            {project?.seededAt && (
+              <StatusBadge tone="neutral" title={`Seeded: ${new Date(project.seededAt).toLocaleString()}`}>
+                <Clock size={13} style={{ marginRight: 4, verticalAlign: "text-bottom" }} />
+                Seeded: {formatSeededTime(project.seededAt)}
+              </StatusBadge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -279,6 +330,35 @@ export function Dashboard({
             blockedSeverities={appConfig.validation.exportBlockedBySeverities}
             dimensionCount={dimensions.length}
           />
+        )}
+
+        {project && versions.length > 0 && (
+          <div className="version-history-panel" style={{ marginTop: 20, padding: 16, background: "var(--color-bg-subtle, #f8fafc)", borderRadius: 8, border: "1px solid var(--color-border, #e2e8f0)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <GitBranch size={16} /> Seeded Version History
+              </h3>
+              <span style={{ fontSize: "12px", opacity: 0.75 }}>{versions.length} version(s) recorded</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {versions.map((ver) => (
+                <div key={ver.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--color-bg, #fff)", borderRadius: 6, border: "1px solid var(--color-border-subtle, #cbd5e1)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <StatusBadge tone={ver.versionNumber === (project.versionNumber ?? 1) ? "info" : "neutral"}>
+                      {ver.versionLabel}
+                    </StatusBadge>
+                    <span style={{ fontWeight: 500, fontSize: "13px" }}>{ver.sourceFileName || "Seeded Metadata"}</span>
+                    {ver.versionNumber === (project.versionNumber ?? 1) && (
+                      <span style={{ fontSize: "11px", background: "var(--color-primary-light, #e0f2fe)", color: "var(--color-primary, #0284c7)", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>Active</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "12px", opacity: 0.8 }}>
+                    <span><Clock size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />{formatSeededTime(ver.seededAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         <section className="overview-dimensions">

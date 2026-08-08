@@ -58,8 +58,9 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
     const members = await repos.members.listByProject(project.id);
     const relationships = await repos.relationships.listByProject(project.id);
     const existingSnapshots = await repos.healthSnapshots.listByProject(project.id);
+    const issues = await repos.issues.listByProject(project.id);
 
-    const report = generateHealthReport(project.id, { dimensions, members, relationships }, existingSnapshots);
+    const report = generateHealthReport(project.id, { dimensions, members, relationships }, existingSnapshots, issues);
 
     // Store new snapshots
     for (const snapshot of report.snapshots) {

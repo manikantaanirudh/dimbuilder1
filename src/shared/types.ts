@@ -33,6 +33,21 @@ export interface ProjectRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  versionNumber?: number;
+  versionLabel?: string;
+  seededAt?: string;
+}
+
+export interface ProjectVersionRecord {
+  id: string;
+  projectId: string;
+  versionNumber: number;
+  versionLabel: string;
+  sourceFileName: string;
+  seededAt: string;
+  createdBy: string;
+  summary: Record<string, unknown>;
+  snapshot?: Record<string, unknown>;
 }
 
 export interface DimensionRecord {

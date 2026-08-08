@@ -48,6 +48,9 @@ function evolveSchema(db: AppDatabase): void {
   ensureColumn(db, "dimension_relationships", "operation", "TEXT");
   ensureColumn(db, "dimension_relationships", "operation_source", "TEXT");
   ensureColumn(db, "dimension_relationships", "operation_notes", "TEXT");
+  ensureColumn(db, "projects", "version_number", "INTEGER NOT NULL DEFAULT 1");
+  ensureColumn(db, "projects", "version_label", "TEXT NOT NULL DEFAULT 'v1'");
+  ensureColumn(db, "projects", "seeded_at", "TEXT NOT NULL DEFAULT ''");
 }
 
 function ensureColumn(db: AppDatabase, tableName: string, columnName: string, definition: string): void {

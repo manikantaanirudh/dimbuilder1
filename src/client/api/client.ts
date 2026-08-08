@@ -18,6 +18,7 @@ import type {
   ProjectRecord,
   ProjectSnapshotRecord,
   ProjectSnapshotSummaryRecord,
+  ProjectVersionRecord,
   ReleasePackageMode,
   ReleasePackageRecord,
   SnapshotRestoreSummary,
@@ -267,6 +268,14 @@ export function createChangeSet(projectId: string, body: { diffRunId?: string; s
   return apiPost<ChangeSetDetail>(`/projects/${projectId}/change-sets`, body);
 }
 
+export function fetchProjectVersions(projectId: string): Promise<ProjectVersionRecord[]> {
+  return apiGet<ProjectVersionRecord[]>(`/projects/${projectId}/versions`);
+}
+
+export function restoreProjectVersion(projectId: string, versionNumber: number) {
+  return apiPost<{ project: ProjectRecord; message: string }>(`/projects/${projectId}/versions/${versionNumber}/restore`);
+}
+
 export function fetchChangeSet(projectId: string, changeSetId: string) {
   return apiGet<ChangeSetDetail>(`/projects/${projectId}/change-sets/${changeSetId}`);
 }
@@ -295,17 +304,19 @@ export function fetchChangeSetPackage(projectId: string, changeSetId: string) {
   return apiGet<{ changeSet: ChangeSetRecord; package: ReleasePackageRecord; manifest: Record<string, unknown> }>(`/projects/${projectId}/change-sets/${changeSetId}/package`);
 }
 
-export async function uploadWorkbook(file: File, projectName: string) {
+export async function uploadWorkbook(file: File, projectName: string, projectId?: string) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("projectName", projectName);
+  if (projectId) formData.append("projectId", projectId);
   return apiPost<{ project: ProjectRecord; importSummary: Record<string, unknown> }>("/import/workbook", formData);
 }
 
-export async function uploadXml(file: File, projectName: string) {
+export async function uploadXml(file: File, projectName: string, projectId?: string) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("projectName", projectName);
+  if (projectId) formData.append("projectId", projectId);
   return apiPost<{ project: ProjectRecord; importSummary: Record<string, unknown> }>("/import/xml", formData);
 }
 

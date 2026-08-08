@@ -201,6 +201,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
   router.post("/workbook", uploadSingle("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
+      const targetProjectId = typeof req.body.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const metadataReferencePath = config.import.metadataReference.enabled
         ? findDefaultMetadataReferencePath({
             directory: config.paths.metadataDirectory,
@@ -215,30 +216,89 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         metadataReference
       });
 
-      const project = await repos.transaction(async (tx) => {
-        const savedProject = await tx.projects.create({
-          name: parsed.project.name,
-          description: parsed.project.description,
-          sourceFileName: req.file?.originalname ?? "upload",
-          createdBy: "local-admin"
-        });
+      const existingProject = targetProjectId ? await repos.projects.get(targetProjectId) : null;
+      const isExisting = Boolean(existingProject);
+      const seededAt = new Date().toISOString();
+      const currentVer = existingProject?.versionNumber ?? 1;
+      const nextVerNum = isExisting ? currentVer + 1 : 1;
+      const nextVerLabel = `v${nextVerNum}`;
+      const fileName = req.file.originalname;
 
-        const dimensionIdMap = new Map<string, string>();
-        for (const dimension of parsed.dimensions) {
-          const saved = await tx.dimensions.create({ ...dimension, projectId: savedProject.id });
-          dimensionIdMap.set(dimension.id, saved.id);
+      const project = await repos.transaction(async (tx) => {
+        let savedProject: typeof existingProject;
+        if (isExisting && existingProject) {
+          const oldVersions = await tx.projectVersions.listByProject(existingProject.id);
+          if (oldVersions.length === 0) {
+            const oldDims = await tx.dimensions.listByProject(existingProject.id);
+            const oldMems = await tx.members.listByProject(existingProject.id);
+            const oldRels = await tx.relationships.listByProject(existingProject.id);
+            await tx.projectVersions.create({
+              projectId: existingProject.id,
+              versionNumber: existingProject.versionNumber ?? 1,
+              versionLabel: existingProject.versionLabel ?? "v1",
+              sourceFileName: existingProject.sourceFileName || "Original Import",
+              seededAt: existingProject.seededAt || existingProject.createdAt,
+              createdBy: existingProject.createdBy || "local-admin",
+              summary: { dimensionsImported: oldDims.length, membersImported: oldMems.length, relationshipsImported: oldRels.length },
+              snapshot: { dimensions: oldDims, members: oldMems, relationships: oldRels }
+            });
+          }
+          savedProject = await tx.projects.updateVersion(existingProject.id, {
+            versionNumber: nextVerNum,
+            versionLabel: nextVerLabel,
+            sourceFileName: fileName,
+            seededAt
+          });
+          const oldDims = await tx.dimensions.listByProject(existingProject.id);
+          for (const d of oldDims) {
+            await tx.dimensions.delete(d.id);
+          }
+        } else {
+          savedProject = await tx.projects.create({
+            name: parsed.project.name,
+            description: parsed.project.description,
+            sourceFileName: fileName,
+            createdBy: "local-admin"
+          });
         }
 
-        await tx.members.bulkInsert(parsed.members.map((member) => ({
+        const targetProj = (savedProject ?? existingProject)!;
+
+        const dimensionIdMap = new Map<string, string>();
+        const savedDims: typeof parsed.dimensions = [];
+        for (const dimension of parsed.dimensions) {
+          const saved = await tx.dimensions.create({ ...dimension, projectId: targetProj.id });
+          dimensionIdMap.set(dimension.id, saved.id);
+          savedDims.push(saved);
+        }
+
+        const mappedMembers = parsed.members.map((member) => ({
           ...member,
           dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId
-        })));
-        await tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
+        }));
+        await tx.members.bulkInsert(mappedMembers);
+
+        const mappedRelationships = parsed.relationships.map((relationship) => ({
           ...relationship,
           dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId
-        })));
+        }));
+        await tx.relationships.bulkInsert(mappedRelationships);
 
-        return savedProject;
+        await tx.projectVersions.create({
+          projectId: targetProj.id,
+          versionNumber: nextVerNum,
+          versionLabel: nextVerLabel,
+          sourceFileName: fileName,
+          createdBy: "local-admin",
+          summary: parsed.importSummary,
+          snapshot: {
+            dimensions: savedDims,
+            members: mappedMembers,
+            relationships: mappedRelationships
+          }
+        });
+
+        return targetProj;
       });
 
       const [dimensions, members, relationships] = await Promise.all([
@@ -256,13 +316,22 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         })
       );
       await repos.issues.replaceForProject(project.id, issues);
-      await repos.audit.record({ projectId: project.id, action: "project.import", entityType: "project", entityId: project.id, after: parsed.importSummary });
+      await repos.audit.record({
+        projectId: project.id,
+        action: isExisting ? "project.reseed" : "project.import",
+        entityType: "project",
+        entityId: project.id,
+        after: { ...parsed.importSummary, versionNumber: nextVerNum, versionLabel: nextVerLabel, seededAt }
+      });
 
       res.json({
         project,
         importSummary: {
           ...parsed.importSummary,
-          validationIssues: issues.length
+          validationIssues: issues.length,
+          versionNumber: nextVerNum,
+          versionLabel: nextVerLabel,
+          seededAt
         }
       });
     } catch (error) {
@@ -273,6 +342,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
   router.post("/xml", uploadSingle("file"), async (req, res, next) => {
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
+      const targetProjectId = typeof req.body.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const stream = createReadStream(req.file.path);
       const parsed = await parseOneStreamXmlFromStream(stream, {
         projectName: req.body.projectName || req.file.originalname.replace(/\.xml$/i, ""),
@@ -280,30 +350,89 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         createdBy: "local-admin"
       });
 
-      const project = await repos.transaction(async (tx) => {
-        const savedProject = await tx.projects.create({
-          name: parsed.project.name,
-          description: parsed.project.description,
-          sourceFileName: req.file?.originalname ?? parsed.project.sourceFileName,
-          createdBy: "local-admin"
-        });
+      const existingProject = targetProjectId ? await repos.projects.get(targetProjectId) : null;
+      const isExisting = Boolean(existingProject);
+      const seededAt = new Date().toISOString();
+      const currentVer = existingProject?.versionNumber ?? 1;
+      const nextVerNum = isExisting ? currentVer + 1 : 1;
+      const nextVerLabel = `v${nextVerNum}`;
+      const fileName = req.file.originalname;
 
-        const dimensionIdMap = new Map<string, string>();
-        for (const dimension of parsed.dimensions) {
-          const saved = await tx.dimensions.create({ ...dimension, projectId: savedProject.id });
-          dimensionIdMap.set(dimension.id, saved.id);
+      const project = await repos.transaction(async (tx) => {
+        let savedProject: typeof existingProject;
+        if (isExisting && existingProject) {
+          const oldVersions = await tx.projectVersions.listByProject(existingProject.id);
+          if (oldVersions.length === 0) {
+            const oldDims = await tx.dimensions.listByProject(existingProject.id);
+            const oldMems = await tx.members.listByProject(existingProject.id);
+            const oldRels = await tx.relationships.listByProject(existingProject.id);
+            await tx.projectVersions.create({
+              projectId: existingProject.id,
+              versionNumber: existingProject.versionNumber ?? 1,
+              versionLabel: existingProject.versionLabel ?? "v1",
+              sourceFileName: existingProject.sourceFileName || "Original Import",
+              seededAt: existingProject.seededAt || existingProject.createdAt,
+              createdBy: existingProject.createdBy || "local-admin",
+              summary: { dimensionsImported: oldDims.length, membersImported: oldMems.length, relationshipsImported: oldRels.length },
+              snapshot: { dimensions: oldDims, members: oldMems, relationships: oldRels }
+            });
+          }
+          savedProject = await tx.projects.updateVersion(existingProject.id, {
+            versionNumber: nextVerNum,
+            versionLabel: nextVerLabel,
+            sourceFileName: fileName,
+            seededAt
+          });
+          const oldDims = await tx.dimensions.listByProject(existingProject.id);
+          for (const d of oldDims) {
+            await tx.dimensions.delete(d.id);
+          }
+        } else {
+          savedProject = await tx.projects.create({
+            name: parsed.project.name,
+            description: parsed.project.description,
+            sourceFileName: fileName,
+            createdBy: "local-admin"
+          });
         }
 
-        await tx.members.bulkInsert(parsed.members.map((member) => ({
+        const targetProj = (savedProject ?? existingProject)!;
+
+        const dimensionIdMap = new Map<string, string>();
+        const savedDims: typeof parsed.dimensions = [];
+        for (const dimension of parsed.dimensions) {
+          const saved = await tx.dimensions.create({ ...dimension, projectId: targetProj.id });
+          dimensionIdMap.set(dimension.id, saved.id);
+          savedDims.push(saved);
+        }
+
+        const mappedMembers = parsed.members.map((member) => ({
           ...member,
           dimensionId: dimensionIdMap.get(member.dimensionId) ?? member.dimensionId
-        })));
-        await tx.relationships.bulkInsert(parsed.relationships.map((relationship) => ({
+        }));
+        await tx.members.bulkInsert(mappedMembers);
+
+        const mappedRelationships = parsed.relationships.map((relationship) => ({
           ...relationship,
           dimensionId: dimensionIdMap.get(relationship.dimensionId) ?? relationship.dimensionId
-        })));
+        }));
+        await tx.relationships.bulkInsert(mappedRelationships);
 
-        return savedProject;
+        await tx.projectVersions.create({
+          projectId: targetProj.id,
+          versionNumber: nextVerNum,
+          versionLabel: nextVerLabel,
+          sourceFileName: fileName,
+          createdBy: "local-admin",
+          summary: parsed.importSummary,
+          snapshot: {
+            dimensions: savedDims,
+            members: mappedMembers,
+            relationships: mappedRelationships
+          }
+        });
+
+        return targetProj;
       });
 
       const [dimensions, members, relationships] = await Promise.all([
@@ -321,13 +450,22 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         })
       );
       await repos.issues.replaceForProject(project.id, issues);
-      await repos.audit.record({ projectId: project.id, action: "project.importXml", entityType: "project", entityId: project.id, after: parsed.importSummary });
+      await repos.audit.record({
+        projectId: project.id,
+        action: isExisting ? "project.reseed" : "project.importXml",
+        entityType: "project",
+        entityId: project.id,
+        after: { ...parsed.importSummary, versionNumber: nextVerNum, versionLabel: nextVerLabel, seededAt }
+      });
 
       res.json({
         project,
         importSummary: {
           ...parsed.importSummary,
-          validationIssues: issues.length
+          validationIssues: issues.length,
+          versionNumber: nextVerNum,
+          versionLabel: nextVerLabel,
+          seededAt
         }
       });
     } catch (error) {

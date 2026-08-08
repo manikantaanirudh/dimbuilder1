@@ -3522,6 +3522,8 @@ svg {
 .reporting-dashboard .export-buttons { display: flex; gap: 0.5rem; }
 .report-overview { display: flex; align-items: center; gap: 2.5rem; margin-bottom: 2rem; padding: 1.5rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
 .score-hero { display: flex; align-items: center; gap: 1.25rem; }
+.score-hero-group { display: flex; align-items: center; gap: 2rem; }
+.score-hero-group .score-hero + .score-hero { padding-left: 2rem; border-left: 1px solid var(--border); }
 .score-trend { display: flex; align-items: center; gap: 0.35rem; font-size: 14px; color: var(--muted); text-transform: capitalize; }
 .trend-up { color: var(--success); }
 .trend-down { color: var(--danger); }
@@ -3614,6 +3616,17 @@ svg {
 .qd-bars { display: flex; flex-direction: column; gap: 0.5rem; }
 .qd-bar-row { display: flex; align-items: center; gap: 0.5rem; }
 .qd-bar-row > span:first-child { font-size: 12px; color: var(--muted); min-width: 90px; }
+
+.quality-gates-panel { margin-bottom: 1rem; }
+.quality-gates-grid { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
+.qd-lowest-members { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+.qd-lowest-members small { font-size: 0.72rem; color: var(--muted); display: block; margin-bottom: 0.3rem; }
+.qd-low-member { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 0.15rem 0; }
+.qd-low-member code { font-size: 0.72rem; background: var(--surface-muted); padding: 0.1rem 0.3rem; border-radius: var(--radius-xs); }
+.qd-low-score { font-weight: 600; font-size: 0.78rem; }
+.qd-low-score.success { color: var(--success); }
+.qd-low-score.warning { color: var(--warning-text); }
+.qd-low-score.danger { color: var(--danger); }
 
 /* Audit Log Viewer */
 .audit-log-viewer { padding: 1.5rem 2rem; }

@@ -118,6 +118,9 @@ export function ImportModal({
   const [importedProject, setImportedProject] = useState<ProjectRecord | null>(null);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [fileTarget, setFileTarget] = useState<"new" | "existing">("new");
+  const [fileProjectId, setFileProjectId] = useState<string>("");
+  const [fileProjectName, setFileProjectName] = useState("");
   const [csvTarget, setCsvTarget] = useState<"new" | "existing">("new");
   const [csvProjectId, setCsvProjectId] = useState<string>("");
   const [csvProjectName, setCsvProjectName] = useState("");
@@ -138,6 +141,9 @@ export function ImportModal({
       setImportedProject(null);
       setSummary(null);
       setIsImporting(false);
+      setFileTarget("new");
+      setFileProjectId(selectedProjectId ?? "");
+      setFileProjectName("");
       setCsvTarget("new");
       setCsvProjectId(selectedProjectId ?? "");
       setCsvProjectName("");
@@ -189,6 +195,9 @@ export function ImportModal({
     setFile(null);
     setStatus("");
     setSummary(null);
+    setFileTarget("new");
+    setFileProjectId(selectedProjectId ?? "");
+    setFileProjectName("");
     setCsvPreview(null);
     setCsvHeaders([]);
     setCsvMapping(null);
@@ -258,16 +267,23 @@ export function ImportModal({
       return;
     }
 
-    setStatus(importMode === "xlsx" ? "Seeding project from file..." : "Importing editable OneStream metadata XML...");
+    const defaultProjectName = fileProjectName.trim() || file.name.replace(importMode === "xlsx" ? /\.xlsx$/i : /\.xml$/i, "");
+    const targetId = fileTarget === "existing" ? fileProjectId : undefined;
+    if (fileTarget === "existing" && !targetId) {
+      setStatus("Please select an existing project to re-seed.");
+      return;
+    }
+
+    setStatus(fileTarget === "existing" ? "Seeding new version into project..." : (importMode === "xlsx" ? "Seeding project from file..." : "Importing OneStream metadata XML..."));
     setIsImporting(true);
     try {
-      const defaultProjectName = file.name.replace(importMode === "xlsx" ? /\.xlsx$/i : /\.xml$/i, "");
       const result = importMode === "xlsx"
-        ? await uploadWorkbook(file, defaultProjectName)
-        : await uploadXml(file, defaultProjectName);
+        ? await uploadWorkbook(file, defaultProjectName, targetId)
+        : await uploadXml(file, defaultProjectName, targetId);
       setImportedProject(result.project);
       setSummary(result.importSummary);
-      setStatus(`${importMode === "xlsx" ? "Seeded" : "Imported"} ${String(result.importSummary.dimensionsImported)} dimensions`);
+      const verText = result.project.versionLabel ? ` (${result.project.versionLabel})` : "";
+      setStatus(`${importMode === "xlsx" ? "Seeded" : "Imported"} ${String(result.importSummary.dimensionsImported)} dimensions${verText}`);
       onImported(result.project.id);
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Import failed");
@@ -319,6 +335,48 @@ export function ImportModal({
                   ? "Upload OneStream metadata XML to create an editable project while preserving unknown XML fields for export."
                   : "Upload CSV metadata, map file columns to dimension fields, preview counts, then commit. Existing projects are append/update only."}
             </p>
+            {(importMode === "xlsx" || importMode === "xml") && (
+              <div className="import-csv-panel">
+                <label className="modal-field">
+                  <span>Target</span>
+                  <select
+                    value={fileTarget}
+                    disabled={isImporting || isPreviewing}
+                    onChange={(event) => setFileTarget(event.target.value as "new" | "existing")}
+                  >
+                    <option value="new">New project</option>
+                    <option value="existing">Existing project</option>
+                  </select>
+                </label>
+                {fileTarget === "new" ? (
+                  <label className="modal-field">
+                    <span>Project name</span>
+                    <input
+                      value={fileProjectName}
+                      disabled={isImporting || isPreviewing}
+                      placeholder={importMode === "xlsx" ? "Defaults to XLSX file name" : "Defaults to XML file name"}
+                      onChange={(event) => setFileProjectName(event.target.value)}
+                    />
+                  </label>
+                ) : (
+                  <label className="modal-field">
+                    <span>Project</span>
+                    <select
+                      value={fileProjectId}
+                      disabled={isImporting || isPreviewing}
+                      onChange={(event) => setFileProjectId(event.target.value)}
+                    >
+                      <option value="">Select a project</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name} ({project.versionLabel ?? "v1"})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+            )}
             {importMode === "csv" && (
               <div className="import-csv-panel">
                 <label className="modal-field">
@@ -481,13 +539,14 @@ export function ImportModal({
                 || isImporting
                 || isPreviewing
                 || (importMode === "csv" && (!csvPreview?.ok || (csvTarget === "existing" && !csvProjectId)))
+                || ((importMode === "xlsx" || importMode === "xml") && fileTarget === "existing" && !fileProjectId)
               }
               onClick={() => void importSelectedFile()}
             >
               {importMode === "xlsx" ? <FileUp size={15} /> : <FileText size={15} />}
               {isImporting
-                ? (importMode === "csv" ? "Committing..." : importMode === "xlsx" ? "Seeding..." : "Importing...")
-                : (importMode === "csv" ? "Commit CSV" : importMode === "xlsx" ? "Seed Project" : "Import Project")}
+                ? (importMode === "csv" ? "Committing..." : fileTarget === "existing" ? "Seeding New Version..." : importMode === "xlsx" ? "Seeding..." : "Importing...")
+                : (importMode === "csv" ? "Commit CSV" : fileTarget === "existing" ? "Seed New Version" : importMode === "xlsx" ? "Seed Project" : "Import Project")}
             </ActionButton>
           )}
         </div>

@@ -189,6 +189,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
         action: "member.update",
         entityType: "member",
         entityId: (req.params as Record<string, string>).memberId,
+        before: existing,
         after: req.body
       });
 
@@ -208,7 +209,8 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       action: "member.delete",
       entityType: "member",
       entityId: member.id,
-      after: result
+      before: { memberKey: member.memberKey, ...member },
+      after: { memberKey: member.memberKey, ...result }
     });
     res.json({ ok: true, ...result });
   });
@@ -224,12 +226,14 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       return res.status(400).json({ error: "memberIds array is required" });
     }
     const result = await deleteMembersWithRelationships(repos, dimensionId, memberIds);
+    const keys = result.memberKeys && result.memberKeys.length > 0 ? result.memberKeys : [];
     await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "member.bulkDelete",
       entityType: "dimension",
       entityId: dimensionId,
-      after: { memberIds, ...result }
+      before: { memberKeys: keys, memberIds },
+      after: { memberIds, memberKeys: keys, ...result }
     });
     res.json(result);
   });
@@ -345,6 +349,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       action: "relationship.update",
       entityType: "relationship",
       entityId: relationshipId,
+      before: relationship,
       after: req.body
     });
     res.json({ ok: true });
@@ -361,6 +366,7 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
       action: "relationship.delete",
       entityType: "relationship",
       entityId: relationship.id,
+      before: relationship,
       after: result
     });
     res.json({ ok: true, ...result });
@@ -376,13 +382,18 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
     if (relationshipIds.length === 0) {
       return res.status(400).json({ error: "relationshipIds array is required" });
     }
+    const existingRels = await repos.relationships.listByDimension(dimensionId);
+    const deletedRels = existingRels
+      .filter((r) => relationshipIds.includes(r.id))
+      .map((r) => `"${r.parentKey}" → "${r.childKey}"`);
     const result = await deleteRelationshipsByIds(repos, dimensionId, relationshipIds);
     await repos.audit.record({
       projectId: (req.params as Record<string, string>).projectId,
       action: "relationship.bulkDelete",
       entityType: "dimension",
       entityId: dimensionId,
-      after: { relationshipIds, ...result }
+      before: { relationships: deletedRels },
+      after: { relationshipIds, relationships: deletedRels, ...result }
     });
     res.json(result);
   });

@@ -66,7 +66,9 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
         dimensionId,
         propertyDefaults: await repos.propertyDefaults.getEffectiveDefaultsForExport(snapshot.project.id)
       };
-      await repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
+      if (!previewOnly) {
+        await repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
+      }
       res.type("application/xml");
       for (const chunk of iterateProjectXmlChunks(snapshot, xmlOptions)) {
         res.write(chunk);

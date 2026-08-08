@@ -8,7 +8,22 @@ CREATE TABLE IF NOT EXISTS projects (
   source_file_name TEXT NOT NULL DEFAULT '',
   created_by TEXT NOT NULL,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  version_number INTEGER NOT NULL DEFAULT 1,
+  version_label TEXT NOT NULL DEFAULT 'v1',
+  seeded_at TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS project_versions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  version_number INTEGER NOT NULL,
+  version_label TEXT NOT NULL,
+  source_file_name TEXT NOT NULL DEFAULT '',
+  seeded_at TEXT NOT NULL,
+  created_by TEXT NOT NULL DEFAULT 'local-admin',
+  summary_json TEXT NOT NULL DEFAULT '{}',
+  snapshot_json TEXT NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS dimensions (

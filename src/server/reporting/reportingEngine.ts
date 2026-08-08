@@ -1,4 +1,4 @@
-import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecord } from "../../shared/types";
+import type { DimensionMemberRecord, DimensionRecord, DimensionRelationshipRecord, ValidationIssue } from "../../shared/types";
 import type {
   HealthReport,
   MetadataHealthSnapshot,
@@ -23,7 +23,8 @@ export interface ValidationSummary {
 export function generateHealthReport(
   projectId: string,
   projectData: ProjectData,
-  existingSnapshots: MetadataHealthSnapshot[]
+  existingSnapshots: MetadataHealthSnapshot[],
+  issues: ValidationIssue[] = []
 ): HealthReport {
   const { dimensions, members, relationships } = projectData;
   const snapshots: MetadataHealthSnapshot[] = [];
@@ -31,6 +32,7 @@ export function generateHealthReport(
   for (const dim of dimensions) {
     const dimMembers = members.filter(m => m.dimensionId === dim.id);
     const dimRels = relationships.filter(r => r.dimensionId === dim.id);
+    const dimIssues = issues.filter(i => i.dimensionId === dim.id);
 
     const memberCount = dimMembers.length;
     const childKeys = new Set(dimRels.map(r => r.childKey));
@@ -43,6 +45,9 @@ export function generateHealthReport(
     const namingScore = calculateNamingConsistency(dimMembers);
     const qualityScore = Math.round((completenessScore + namingScore) / 2);
 
+    const validationErrorCount = dimIssues.filter(i => i.severity === "error").length;
+    const validationWarningCount = dimIssues.filter(i => i.severity === "warning").length;
+
     snapshots.push({
       id: '',
       projectId,
@@ -50,8 +55,8 @@ export function generateHealthReport(
       qualityScore,
       completenessScore,
       namingScore,
-      validationErrorCount: 0,
-      validationWarningCount: 0,
+      validationErrorCount,
+      validationWarningCount,
       memberCount,
       orphanCount,
       capturedAt: new Date().toISOString()

@@ -319,6 +319,7 @@ export function DimensionWorkspace({
                   {activeTab === "Compare" && (
                     <MetadataDiffPanel
                       projectId={projectId}
+                      dimension={dimension}
                       hasBlockingIssues={projectIssueSummary.blocksExport}
                     />
                   )}

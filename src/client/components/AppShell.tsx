@@ -42,7 +42,6 @@ import { ConfigEditor } from "./ConfigEditor";
 import { ValidationDashboard } from "./ValidationDashboard";
 import { ReportingDashboard } from "./ReportingDashboard";
 import { AIInsightsPanel } from "./AIInsightsPanel";
-import { QualityScoresPanel } from "./QualityScoresPanel";
 import { AuditLogViewer } from "./AuditLogViewer";
 import { ChatPanel } from "./ChatPanel";
 import { ToastProvider } from "./Toast";
@@ -55,7 +54,6 @@ const CONFIG_EDITOR_VALUE = "__config_editor__";
 const VALIDATION_DASHBOARD_VALUE = "__validation_dashboard__";
 const REPORTING_VALUE = "__reporting__";
 const AI_INSIGHTS_VALUE = "__ai_insights__";
-const QUALITY_VALUE = "__quality__";
 const AUDIT_LOG_VALUE = "__audit_log__";
 const CHAT_VALUE = "__chat__";
 
@@ -367,12 +365,7 @@ export function AppShell({
           >
             Insights
           </button>
-          <button
-            className={`secondary-nav-item ${activeWorkspace === QUALITY_VALUE ? "active" : ""}`}
-            onClick={() => setActiveWorkspace(QUALITY_VALUE)}
-          >
-            Quality
-          </button>
+
           <button
             className={`secondary-nav-item ${activeWorkspace === AUDIT_LOG_VALUE ? "active" : ""}`}
             onClick={() => setActiveWorkspace(AUDIT_LOG_VALUE)}
@@ -478,10 +471,12 @@ export function AppShell({
           ) : activeWorkspace === AI_INSIGHTS_VALUE &&
             store.selectedProjectId ? (
             <AIInsightsPanel projectId={store.selectedProjectId} />
-          ) : activeWorkspace === QUALITY_VALUE && store.selectedProjectId ? (
-            <QualityScoresPanel projectId={store.selectedProjectId} />
           ) : activeWorkspace === AUDIT_LOG_VALUE && store.selectedProjectId ? (
-            <AuditLogViewer projectId={store.selectedProjectId} />
+            <AuditLogViewer
+              projectId={store.selectedProjectId}
+              dimensions={store.dimensions}
+              appConfig={appConfig}
+            />
           ) : activeWorkspace === CHAT_VALUE && store.selectedProjectId ? (
             <ChatPanel
               projectId={store.selectedProjectId}

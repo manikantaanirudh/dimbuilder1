@@ -132,6 +132,7 @@ import type {
   ProjectSnapshotRecord,
   ProjectSnapshotState,
   ProjectSnapshotSummaryRecord,
+  ProjectVersionRecord,
   ReleasePackageRecord,
   SnapshotRestoreSummary,
   VaryingPropertyContext,
@@ -243,15 +244,36 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           sourceFileName: input.sourceFileName,
           createdBy: input.createdBy,
           createdAt,
-          updatedAt: createdAt
+          updatedAt: createdAt,
+          versionNumber: 1,
+          versionLabel: "v1",
+          seededAt: createdAt
         };
 
         await client.exec(`
-          INSERT INTO projects (id, name, description, source_file_name, created_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [project.id, project.name, project.description, project.sourceFileName, project.createdBy, project.createdAt, project.updatedAt]);
+          INSERT INTO projects (id, name, description, source_file_name, created_by, created_at, updated_at, version_number, version_label, seeded_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [project.id, project.name, project.description, project.sourceFileName, project.createdBy, project.createdAt, project.updatedAt, 1, "v1", createdAt]);
 
         return project;
+      },
+      async updateVersion(projectId: string, input: { versionNumber: number; versionLabel: string; sourceFileName: string; seededAt: string }): Promise<ProjectRecord | null> {
+        const project = await this.get(projectId);
+        if (!project) return null;
+        const updatedAt = now();
+        await client.exec(`
+          UPDATE projects
+          SET version_number = ?, version_label = ?, source_file_name = ?, seeded_at = ?, updated_at = ?
+          WHERE id = ?
+        `, [input.versionNumber, input.versionLabel, input.sourceFileName, input.seededAt, updatedAt, projectId]);
+        return {
+          ...project,
+          versionNumber: input.versionNumber,
+          versionLabel: input.versionLabel,
+          sourceFileName: input.sourceFileName,
+          seededAt: input.seededAt,
+          updatedAt
+        };
       },
       async list(): Promise<ProjectRecord[]> {
         const rows = await client.query<Record<string, unknown>>("SELECT * FROM projects ORDER BY updated_at DESC");
@@ -1036,6 +1058,8 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
         entityType: string;
         entityId: string;
         changes: Record<string, unknown>;
+        before?: Record<string, unknown>;
+        after?: Record<string, unknown>;
         timestamp: string;
       }>> {
         const rows = await client.query<Record<string, unknown>>(`
@@ -1057,6 +1081,8 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
             entityType: String(row.entity_type),
             entityId: String(row.entity_id),
             changes,
+            before,
+            after,
             timestamp: String(row.created_at)
           };
         });
@@ -1182,6 +1208,59 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
       async get(projectId: string, baselineId: string): Promise<ProjectBaselineRecord | null>{
         const row = (await client.queryOne("SELECT * FROM project_baselines WHERE project_id = ? AND id = ?", [projectId, baselineId]));
         return row ? mapProjectBaseline(row) : null;
+      }
+    },
+    projectVersions: {
+      async create(input: {
+        projectId: string;
+        versionNumber: number;
+        versionLabel: string;
+        sourceFileName: string;
+        createdBy?: string;
+        summary?: Record<string, unknown>;
+        snapshot?: Record<string, unknown>;
+      }): Promise<ProjectVersionRecord> {
+        const id = nanoid();
+        const seededAt = now();
+        const createdBy = input.createdBy ?? "local-admin";
+        const record: ProjectVersionRecord = {
+          id,
+          projectId: input.projectId,
+          versionNumber: input.versionNumber,
+          versionLabel: input.versionLabel,
+          sourceFileName: input.sourceFileName,
+          seededAt,
+          createdBy,
+          summary: input.summary ?? {},
+          snapshot: input.snapshot
+        };
+        await client.exec(`
+          INSERT INTO project_versions (id, project_id, version_number, version_label, source_file_name, seeded_at, created_by, summary_json, snapshot_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          id,
+          input.projectId,
+          input.versionNumber,
+          input.versionLabel,
+          input.sourceFileName,
+          seededAt,
+          createdBy,
+          JSON.stringify(input.summary ?? {}),
+          JSON.stringify(input.snapshot ?? {})
+        ]);
+        return record;
+      },
+      async listByProject(projectId: string): Promise<ProjectVersionRecord[]> {
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT * FROM project_versions WHERE project_id = ? ORDER BY version_number DESC
+        `, [projectId]);
+        return rows.map(mapProjectVersion);
+      },
+      async getByVersion(projectId: string, versionNumber: number): Promise<ProjectVersionRecord | null> {
+        const row = await client.queryOne<Record<string, unknown>>(`
+          SELECT * FROM project_versions WHERE project_id = ? AND version_number = ?
+        `, [projectId, versionNumber]);
+        return row ? mapProjectVersion(row) : null;
       }
     },
     diffRuns: {
@@ -2883,7 +2962,24 @@ function mapProject(row: Record<string, unknown>): ProjectRecord {
     sourceFileName: String(row.source_file_name),
     createdBy: String(row.created_by),
     createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at)
+    updatedAt: String(row.updated_at),
+    versionNumber: row.version_number !== undefined && row.version_number !== null ? Number(row.version_number) : 1,
+    versionLabel: String(row.version_label || "v1"),
+    seededAt: String(row.seeded_at || row.created_at)
+  };
+}
+
+function mapProjectVersion(row: Record<string, unknown>): ProjectVersionRecord {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    versionNumber: Number(row.version_number ?? 1),
+    versionLabel: String(row.version_label ?? 'v1'),
+    sourceFileName: String(row.source_file_name ?? ''),
+    seededAt: String(row.seeded_at ?? row.created_at ?? ''),
+    createdBy: String(row.created_by ?? 'local-admin'),
+    summary: parseJson(String(row.summary_json ?? '{}'), {}),
+    snapshot: parseJson(String(row.snapshot_json ?? '{}'), {})
   };
 }
 

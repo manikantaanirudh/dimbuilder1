@@ -48,9 +48,6 @@ export function buildMoreNavItems(
       ]);
       if (platformOnly.has(item.value)) return false;
     }
-    if (!resolved.platformExtras && item.value === "__quality__") {
-      return false;
-    }
     return true;
   });
 }
@@ -62,7 +59,6 @@ export function showSecondaryNavItem(
 ): boolean {
   const resolved = resolvedModules(modules);
   const chatOn = resolved.chatAssistant && (options.aiEnabled ?? false);
-  if (value === "__quality__") return resolved.platformExtras;
   if (value === "__project_assistant__") return chatOn;
   return true;
 }
