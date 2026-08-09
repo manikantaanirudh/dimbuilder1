@@ -4,6 +4,7 @@ import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
 import { generateHealthReport, generateVelocityReport, generateCoverageReport, generateComplianceReport } from "../reporting/reportingEngine";
 import { exportReportAsHtml, exportReportAsCsv } from "../reporting/reportExporter";
+import { scoreProjectQuality } from "../tier3/tier3Engine";
 import type { ExportFormat } from "../reporting/reportExporter";
 import type { ReportType } from "../../shared/reportingTypes";
 
@@ -150,74 +151,128 @@ export function createReportingRouter(repos: Repositories, _config: AppConfig): 
 
   // POST /reports/export/:type — export a report in a given format (html, csv, json)
   router.post("/export/:type", async (req, res) => {
-    const schema = z.object({
-      projectId: z.string().min(1),
-      format: z.enum(['html', 'csv', 'json']).default('html')
-    });
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
+    try {
+      const schema = z.object({
+        projectId: z.string().min(1),
+        format: z.enum(['html', 'csv', 'json']).default('html')
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const reportType = req.params.type as ReportType;
-    if (!['health', 'velocity', 'coverage', 'compliance'].includes(reportType)) {
-      return res.status(400).json({ error: `Invalid report type: ${reportType}` });
-    }
-
-    const project = await repos.projects.get(parsed.data.projectId);
-    if (!project) return res.status(404).json({ error: "Project not found" });
-
-    const dimensions = await repos.dimensions.listByProject(project.id);
-    const members = await repos.members.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
-    const dataCtx = { dimensions, members, relationships };
-
-    let report: unknown;
-    let title = "Report";
-
-    switch (reportType) {
-      case 'health': {
-        const existingSnapshots = await repos.healthSnapshots.listByProject(project.id);
-        report = generateHealthReport(project.id, dataCtx, existingSnapshots);
-        title = `Health Report - ${project.name}`;
-        break;
+      const reportType = req.params.type as string;
+      if (!['executive', 'health', 'velocity', 'coverage', 'compliance'].includes(reportType)) {
+        return res.status(400).json({ error: `Invalid report type: ${reportType}` });
       }
-      case 'velocity':
-        report = generateVelocityReport(project.id, dataCtx);
-        title = `Velocity Report - ${project.name}`;
-        break;
-      case 'coverage':
-        report = generateCoverageReport(project.id, dataCtx);
-        title = `Coverage Report - ${project.name}`;
-        break;
-      case 'compliance': {
-        const validationSummaries = dimensions.map(dim => ({
-          dimensionType: dim.dimensionType,
-          errorCount: 0,
-          warningCount: 0
+
+      const project = await repos.projects.get(parsed.data.projectId);
+      if (!project) return res.status(404).json({ error: "Project not found" });
+
+      const dimensions = await repos.dimensions.listByProject(project.id).catch(() => []);
+      const members = await repos.members.listByProject(project.id).catch(() => []);
+      const relationships = await repos.relationships.listByProject(project.id).catch(() => []);
+      const issues = await repos.issues.listByProject(project.id).catch(() => []);
+      const dataCtx = { dimensions, members, relationships };
+
+      let report: unknown;
+      let title = "Report";
+
+      if (reportType === 'executive' || reportType === 'health') {
+        const existingSnapshots = await repos.healthSnapshots.listByProject(project.id).catch(() => []);
+        const healthReport = generateHealthReport(project.id, dataCtx, existingSnapshots, issues);
+        const coverageReport = generateCoverageReport(project.id, dataCtx);
+
+        // Gather Quality rules & gates
+        const rules = await repos.qualityRules.listByProject(project.id).catch(() => []);
+        const qualityScoreResult = scoreProjectQuality(dimensions, members, rules, issues);
+        const rawGates = await repos.qualityGates.listByProject(project.id).catch(() => []);
+        const gates = rawGates.map(g => ({
+          id: g.id,
+          name: g.name,
+          threshold: g.threshold,
+          passed: qualityScoreResult.overallScore >= g.threshold
         }));
-        report = generateComplianceReport(project.id, dataCtx, validationSummaries);
-        title = `Compliance Report - ${project.name}`;
-        break;
+
+        const totalErrors = healthReport.snapshots.reduce((s, d) => s + d.validationErrorCount, 0);
+        const totalWarnings = healthReport.snapshots.reduce((s, d) => s + d.validationWarningCount, 0);
+        const totalOrphans = healthReport.snapshots.reduce((s, d) => s + d.orphanCount, 0);
+        const totalMembers = healthReport.snapshots.reduce((s, d) => s + d.memberCount, 0);
+
+        report = {
+          project: { id: project.id, name: project.name },
+          generatedAt: new Date().toISOString(),
+          summary: {
+            healthScore: healthReport.overallScore,
+            healthTrend: healthReport.trend,
+            qualityScore: qualityScoreResult.overallScore,
+            overallCoverage: coverageReport.overallCoverage,
+            totalDimensions: dimensions.length,
+            totalMembers,
+            totalOrphans,
+            totalErrors,
+            totalWarnings
+          },
+          health: healthReport,
+          quality: {
+            overallScore: qualityScoreResult.overallScore,
+            dimensions: qualityScoreResult.dimensions.map(d => {
+              const dimObj = dimensions.find(dm => dm.id === d.dimensionId);
+              return {
+                ...d,
+                dimensionName: dimObj?.dimensionName || d.dimensionType
+              };
+            })
+          },
+          coverage: coverageReport,
+          gates
+        };
+        title = `Executive Governance Report - ${project.name}`;
+      } else {
+        switch (reportType) {
+          case 'velocity':
+            report = generateVelocityReport(project.id, dataCtx);
+            title = `Velocity Report - ${project.name}`;
+            break;
+          case 'coverage':
+            report = generateCoverageReport(project.id, dataCtx);
+            title = `Coverage Report - ${project.name}`;
+            break;
+          case 'compliance': {
+            const validationSummaries = dimensions.map(dim => ({
+              dimensionType: dim.dimensionType,
+              errorCount: 0,
+              warningCount: 0
+            }));
+            report = generateComplianceReport(project.id, dataCtx, validationSummaries);
+            title = `Compliance Report - ${project.name}`;
+            break;
+          }
+        }
       }
-    }
 
-    const format = parsed.data.format as ExportFormat;
-    if (format === 'json') {
-      res.setHeader('Content-Disposition', `attachment; filename="${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json"`);
-      return res.json(report);
-    }
+      const format = parsed.data.format as ExportFormat;
+      if (format === 'json') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json"`);
+        return res.json(report);
+      }
 
-    if (format === 'html') {
-      const result = exportReportAsHtml(report as any, title);
-      res.setHeader('Content-Type', result.contentType);
-      res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-      return res.send(result.content);
-    }
+      if (format === 'html') {
+        const result = exportReportAsHtml(report as any, title);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+        return res.send(result.content);
+      }
 
-    if (format === 'csv') {
-      const result = exportReportAsCsv(report as any, title);
-      res.setHeader('Content-Type', result.contentType);
-      res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-      return res.send(result.content);
+      if (format === 'csv') {
+        const result = exportReportAsCsv(report as any, title);
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+        return res.send(result.content);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Export endpoint error:", err);
+      return res.status(500).json({ error: msg });
     }
   });
 

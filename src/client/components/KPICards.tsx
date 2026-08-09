@@ -7,7 +7,7 @@ import {
   GitFork,
 } from "lucide-react";
 import { fetchQualityScores } from "../api/intelligence";
-import { fetchCoverageReport } from "../api/reports";
+import { fetchCoverageReport, fetchHealthReport } from "../api/reports";
 import { ScoreRing } from "./ScoreRing";
 import type {
   DashboardSummary,
@@ -34,6 +34,7 @@ export function KPICards({
   blockedSeverities: Severity[];
   dimensionCount: number;
 }) {
+  const [healthScore, setHealthScore] = useState<number | null>(null);
   const [qualityScore, setQualityScore] = useState<number | null>(null);
   const [metadataScore, setMetadataScore] = useState<number | null>(null);
   const [validationScore, setValidationScore] = useState<number | null>(null);
@@ -46,18 +47,24 @@ export function KPICards({
     let cancelled = false;
     setQualityLoaded(false);
     setCoverageLoaded(false);
+    setHealthScore(null);
     setQualityScore(null);
     setMetadataScore(null);
     setValidationScore(null);
     setCoverage(null);
 
     async function load() {
-      const [qualityResult, coverageResult] = await Promise.allSettled([
+      const [healthResult, qualityResult, coverageResult] = await Promise.allSettled([
+        fetchHealthReport(projectId),
         fetchQualityScores(projectId),
         fetchCoverageReport(projectId),
       ]);
 
       if (cancelled) return;
+
+      if (healthResult.status === "fulfilled") {
+        setHealthScore(healthResult.value.overallScore ?? null);
+      }
 
       if (qualityResult.status === "fulfilled") {
         setQualityScore(qualityResult.value.overallScore);
@@ -83,11 +90,11 @@ export function KPICards({
   const healthPresentation = useMemo(() => {
     const fallbackValidation = validationScore ?? scoreValidationHealth(issues);
     const fallbackScore = computeProjectHealthFallback(coverage, issues);
-    const usingFallback = qualityScore === null && fallbackScore !== null;
+    const displayScore = healthScore ?? qualityScore;
 
-    if (qualityScore !== null) {
+    if (displayScore !== null) {
       return {
-        score: qualityScore,
+        score: displayScore,
         title: formatProjectHealthTitle({
           metadataScore: metadataScore ?? undefined,
           validationScore: fallbackValidation,

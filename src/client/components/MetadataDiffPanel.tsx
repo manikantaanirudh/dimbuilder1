@@ -146,7 +146,7 @@ export function MetadataDiffPanel({
       </div>
 
       {hasBlockingIssues && (
-        <div className="diff-warning" style={{ background: "#fffbeb", border: "1px solid #fef3c7", padding: "8px 12px", borderRadius: 6, color: "#b45309", fontSize: "12px", marginBottom: 12 }}>
+        <div className="diff-warning" style={{ background: "var(--warning-soft)", border: "1px solid var(--warning-border)", padding: "8px 12px", borderRadius: 6, color: "var(--warning-text, var(--text))", fontSize: "12px", marginBottom: 12 }}>
           Current project has validation issues. Diff is generated based on recorded version snapshots.
         </div>
       )}
@@ -154,14 +154,14 @@ export function MetadataDiffPanel({
       {/* VERSION SELECTORS */}
       <div className="diff-controls" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: "12px", fontWeight: 600, opacity: 0.8 }}>Base Version (Source)</span>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Base Version (Source)</span>
           <select
             value={baseVerNum}
             onChange={(e) => setBaseVerNum(Number(e.target.value))}
-            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--color-border, #cbd5e1)" }}
+            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}
           >
             {versions.map((ver) => (
-              <option key={ver.id} value={ver.versionNumber}>
+              <option key={ver.id} value={ver.versionNumber} style={{ background: "var(--surface)", color: "var(--text)" }}>
                 {ver.versionLabel} — {ver.sourceFileName || "Seeded"} ({new Date(ver.seededAt).toLocaleString()})
               </option>
             ))}
@@ -169,14 +169,14 @@ export function MetadataDiffPanel({
         </label>
 
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: "12px", fontWeight: 600, opacity: 0.8 }}>Target Version (Compare)</span>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Target Version (Compare)</span>
           <select
             value={compareVerNum}
             onChange={(e) => setCompareVerNum(Number(e.target.value))}
-            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--color-border, #cbd5e1)" }}
+            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}
           >
             {versions.map((ver) => (
-              <option key={ver.id} value={ver.versionNumber}>
+              <option key={ver.id} value={ver.versionNumber} style={{ background: "var(--surface)", color: "var(--text)" }}>
                 {ver.versionLabel} — {ver.sourceFileName || "Seeded"} ({new Date(ver.seededAt).toLocaleString()})
               </option>
             ))}
@@ -195,13 +195,13 @@ export function MetadataDiffPanel({
 
       {/* SEARCH AND DOWNLOAD */}
       <div className="diff-filter-row" style={{ display: "flex", justifyContent: "space-between", margin: "16px 0 12px 0", gap: 12 }}>
-        <div className="search-box" style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "var(--color-bg-subtle, #f8fafc)", border: "1px solid var(--color-border, #e2e8f0)", borderRadius: 6 }}>
-          <GitCompare size={14} />
+        <div className="search-box" style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "var(--surface-subtle)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text)" }}>
+          <GitCompare size={14} style={{ color: "var(--muted)" }} />
           <input
             value={filter}
             onChange={(event) => setFilter(event.currentTarget.value)}
             placeholder="Search diff items by member, property, or value..."
-            style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "13px" }}
+            style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "13px", color: "var(--text)" }}
           />
         </div>
         <ActionButton disabled={filteredItems.length === 0} onClick={downloadCsv}>
@@ -211,7 +211,7 @@ export function MetadataDiffPanel({
 
       {/* DIFF TABLE */}
       <div className="diff-table" role="table" aria-label="Version diff items">
-        <div className="diff-row header" role="row" style={{ display: "grid", gridTemplateColumns: "1.2fr 1.5fr 1.2fr 2fr 2fr 1fr", gap: 8, padding: "8px 12px", background: "var(--color-bg-subtle, #f1f5f9)", fontWeight: 600, fontSize: "12px", borderRadius: "6px 6px 0 0" }}>
+        <div className="diff-row header" role="row" style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr 1.1fr 1.8fr 1.8fr minmax(150px, 1.4fr)", gap: 8, padding: "8px 12px", background: "var(--surface-subtle)", color: "var(--muted)", fontWeight: 600, fontSize: "12px", borderRadius: "6px 6px 0 0" }}>
           <span>Change Type</span>
           <span>Member / Object</span>
           <span>Property</span>
@@ -220,19 +220,19 @@ export function MetadataDiffPanel({
           <span>Status</span>
         </div>
         {filteredItems.map((item) => (
-          <div key={item.id} className="diff-row" role="row" style={{ display: "grid", gridTemplateColumns: "1.2fr 1.5fr 1.2fr 2fr 2fr 1fr", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--color-border-subtle, #f1f5f9)", fontSize: "13px", alignItems: "center" }}>
+          <div key={item.id} className="diff-row" role="row" style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr 1.1fr 1.8fr 1.8fr minmax(150px, 1.4fr)", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--border)", fontSize: "13px", alignItems: "center", color: "var(--text)" }}>
             <span style={{ fontWeight: 500 }}>{item.changeType}</span>
             <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{item.objectKey}</span>
             <span>{item.propertyName || "—"}</span>
-            <span style={{ color: item.changeType === "Member Deleted" ? "var(--color-danger, #ef4444)" : "inherit" }}>{item.oldValue || "—"}</span>
-            <span style={{ color: item.changeType === "Member Added" ? "var(--color-success, #10b981)" : "inherit" }}>{item.newValue || "—"}</span>
+            <span style={{ color: item.changeType === "Member Deleted" ? "var(--danger)" : "var(--text)" }}>{item.oldValue || "—"}</span>
+            <span style={{ color: item.changeType === "Member Added" ? "var(--success)" : "var(--text)" }}>{item.newValue || "—"}</span>
             <span>
               <StatusBadge tone={item.severity}>{item.changeType}</StatusBadge>
             </span>
           </div>
         ))}
         {filteredItems.length === 0 && (
-          <div className="diff-empty" style={{ padding: 24, textAlign: "center", color: "var(--color-text-muted, #64748b)", fontSize: "13px" }}>
+          <div className="diff-empty" style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
             {baseVerNum === compareVerNum
               ? "Base version and compare version are identical. Select different versions above."
               : "No metadata differences found between these two versions for this dimension."}

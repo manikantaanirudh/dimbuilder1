@@ -2,6 +2,7 @@ import {
   Download,
   FileUp,
   FolderOpen,
+  GitBranch,
   LogOut,
   Moon,
   PlusCircle,
@@ -231,7 +232,6 @@ export function AppShell({
 
           <ToolbarGroup className="toolbar-actions">
             <ActionButton
-              variant="primary"
               onClick={() => setCreateProjectOpen(true)}
             >
               <PlusCircle size={16} /> New Project
@@ -241,7 +241,7 @@ export function AppShell({
             </ActionButton>
             {toolbar.showImport && (
               <ActionButton onClick={() => setImportOpen(true)}>
-                <FileUp size={16} /> Seed from file
+                <FileUp size={16} /> Import metadata
               </ActionButton>
             )}
             {toolbar.showValidate && (

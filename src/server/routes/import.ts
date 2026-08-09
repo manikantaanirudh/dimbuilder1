@@ -204,9 +204,9 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const targetProjectId = typeof req.body.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
       const metadataReferencePath = config.import.metadataReference.enabled
         ? findDefaultMetadataReferencePath({
-            directory: config.paths.metadataDirectory,
-            defaultFile: config.paths.defaultMetadataFile
-          })
+          directory: config.paths.metadataDirectory,
+          defaultFile: config.paths.defaultMetadataFile
+        })
         : null;
       const metadataReference = metadataReferencePath ? await parseMetadataReference(metadataReferencePath) : undefined;
       const parsed = await parseWorkbook(req.file.path, {

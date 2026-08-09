@@ -280,13 +280,35 @@ export function Dashboard({
             ) : (
               <h1>No project open</h1>
             )}
-            <p>
-              {project
-                ? project.sourceFileName ||
-                  project.description ||
-                  "Created manually."
-                : "Create a project or seed from a file."}
-            </p>
+            {versions.length > 0 ? (
+              <div style={{ marginTop: 6, display: "flex", alignItems: "center" }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: "5px 12px", borderRadius: 8, fontSize: "12px", cursor: "pointer", transition: "all 0.15s ease", color: "var(--text)" }}>
+                  <GitBranch size={13} style={{ color: "var(--primary)", flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600, color: "var(--muted)" }}>Version:</span>
+                  <select
+                    aria-label="Project seeded version history"
+                    value={project?.versionNumber ?? 1}
+                    onChange={() => {}}
+                    title="Seeded Project Version History"
+                    style={{ background: "transparent", border: "none", outline: "none", fontSize: "12px", fontWeight: 600, color: "var(--text)", cursor: "pointer", maxWidth: "100%" }}
+                  >
+                    {versions.map((ver) => (
+                      <option key={ver.id} value={ver.versionNumber} style={{ background: "var(--surface)", color: "var(--text)" }}>
+                        {ver.versionLabel} — {ver.sourceFileName || "Seeded Metadata"} ({formatSeededTime(ver.seededAt)}){ver.versionNumber === (project?.versionNumber ?? 1) ? " (Active)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              <p>
+                {project
+                  ? project.sourceFileName ||
+                    project.description ||
+                    "Created manually."
+                  : "Create a project or seed from a file."}
+              </p>
+            )}
             {renameError && (
               <p className="rename-error" role="alert">
                 {renameError}{" "}
@@ -304,19 +326,13 @@ export function Dashboard({
             )}
           </div>
           <div className="overview-badges" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
-            {project?.versionLabel && (
+            {project?.versionLabel && versions.length === 0 ? (
               <StatusBadge tone="info">
                 <GitBranch size={13} style={{ marginRight: 4, verticalAlign: "text-bottom" }} />
                 {project.versionLabel}
               </StatusBadge>
-            )}
-            {project?.seededAt && (
-              <StatusBadge tone="neutral" title={`Seeded: ${new Date(project.seededAt).toLocaleString()}`}>
-                <Clock size={13} style={{ marginRight: 4, verticalAlign: "text-bottom" }} />
-                Seeded: {formatSeededTime(project.seededAt)}
-              </StatusBadge>
-            )}
+            ) : null}
+            <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
           </div>
         </div>
       </div>
@@ -332,34 +348,7 @@ export function Dashboard({
           />
         )}
 
-        {project && versions.length > 0 && (
-          <div className="version-history-panel" style={{ marginTop: 20, padding: 16, background: "var(--color-bg-subtle, #f8fafc)", borderRadius: 8, border: "1px solid var(--color-border, #e2e8f0)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                <GitBranch size={16} /> Seeded Version History
-              </h3>
-              <span style={{ fontSize: "12px", opacity: 0.75 }}>{versions.length} version(s) recorded</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {versions.map((ver) => (
-                <div key={ver.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--color-bg, #fff)", borderRadius: 6, border: "1px solid var(--color-border-subtle, #cbd5e1)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <StatusBadge tone={ver.versionNumber === (project.versionNumber ?? 1) ? "info" : "neutral"}>
-                      {ver.versionLabel}
-                    </StatusBadge>
-                    <span style={{ fontWeight: 500, fontSize: "13px" }}>{ver.sourceFileName || "Seeded Metadata"}</span>
-                    {ver.versionNumber === (project.versionNumber ?? 1) && (
-                      <span style={{ fontSize: "11px", background: "var(--color-primary-light, #e0f2fe)", color: "var(--color-primary, #0284c7)", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>Active</span>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "12px", opacity: 0.8 }}>
-                    <span><Clock size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />{formatSeededTime(ver.seededAt)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         <section className="overview-dimensions">
           <div className="panel-heading">

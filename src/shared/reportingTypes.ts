@@ -34,6 +34,7 @@ export interface MetadataHealthSnapshot {
   id: string;
   projectId: string;
   dimensionType: string;
+  dimensionName?: string;
   qualityScore: number;
   completenessScore: number;
   namingScore: number;

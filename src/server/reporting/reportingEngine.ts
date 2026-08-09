@@ -52,6 +52,7 @@ export function generateHealthReport(
       id: '',
       projectId,
       dimensionType: dim.dimensionType,
+      dimensionName: dim.dimensionName,
       qualityScore,
       completenessScore,
       namingScore,
