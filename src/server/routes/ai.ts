@@ -5,7 +5,9 @@ import type { AIConfigSection, AISuggestionType, AISuggestionStatus } from "../.
 import type { Repositories } from "../db/repositories";
 import { runFullAnalysis, runParentSuggestion, runDuplicateDetection, runNaturalLanguageQuery } from "../ai/aiEngine";
 import { analyzeGraphTopology } from "../ai/suggestions/graphIntelligence";
+import { buildKnowledgeGraph } from "../ai/suggestions/knowledgeGraph";
 import { buildProjectAIContext } from "../ai/projectContext";
+import { executeProjectQuery, toLegacyProjectQueryResult } from "../projectQuery/engine";
 
 const defaultAIConfig: AIConfigSection = {
   enabled: true,
@@ -217,6 +219,24 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     res.json(graphResult);
   });
 
+  router.get("/projects/:id/ai/knowledge-graph", async (req, res) => {
+    const project = await repos.projects.get(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const dimensionId = req.query.dimensionId as string | undefined;
+    const members = await repos.members.listByProject(project.id);
+    const dimensions = await repos.dimensions.listByProject(project.id);
+    const relationships = await repos.relationships.listByProject(project.id);
+
+    const model = buildKnowledgeGraph({
+      dimensions,
+      members,
+      relationships,
+      scopeDimensionId: dimensionId,
+    });
+    res.json(model);
+  });
+
   router.post("/projects/:id/ai/apply-fix", async (req, res) => {
     const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
@@ -263,36 +283,24 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
   });
 
   router.post("/projects/:id/ai/query", async (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Sunset", "Wed, 10 Feb 2027 00:00:00 GMT");
     const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-
-    const aiConfig = getAIConfig(config);
-    if (!aiConfig.enabled || !aiConfig.features.naturalLanguageQuery) {
-      return res.status(503).json({ error: "Natural language query is disabled" });
-    }
 
     const schema = z.object({ question: z.string().min(1) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Validation failed", details: parsed.error.issues });
 
-    const dimensions = await repos.dimensions.listByProject(project.id);
-    const members = await repos.members.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
-
-    const result = runNaturalLanguageQuery(
-      parsed.data.question,
-      { dimensions, members, relationships },
-      (await buildProjectAIContext(repos, config, project.id)) ?? undefined
-    );
-    res.json(result);
+    const execution = await executeProjectQuery(repos, config, project.id, parsed.data.question);
+    res.json(execution ? toLegacyProjectQueryResult(execution.result) : { error: "Project not found" });
   });
 
   router.post("/projects/:id/ai/chat", async (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Sunset", "Wed, 10 Feb 2027 00:00:00 GMT");
     const project = await repos.projects.get(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
-
-    const aiConfig = getAIConfig(config);
-    if (!aiConfig.enabled) return res.status(503).json({ error: "AI features are disabled" });
 
     const schema = z.object({ message: z.string().min(1), conversationId: z.string().optional() });
     const parsed = schema.safeParse(req.body);
@@ -302,14 +310,9 @@ export function createAIRouter(repos: Repositories, config: AppConfig): Router {
     const timestamp = new Date().toISOString();
     const userMessage = { role: 'user' as const, content: parsed.data.message, timestamp };
 
-    const dimensions = await repos.dimensions.listByProject(project.id);
-    const members = await repos.members.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
-    const queryResult = runNaturalLanguageQuery(
-      parsed.data.message,
-      { dimensions, members, relationships },
-      (await buildProjectAIContext(repos, config, project.id)) ?? undefined
-    );
+    const execution = await executeProjectQuery(repos, config, project.id, parsed.data.message);
+    const queryResult = execution ? toLegacyProjectQueryResult(execution.result) : null;
+    if (!queryResult) return res.status(404).json({ error: "Project not found" });
 
     const assistantMessage = {
       role: 'assistant' as const,

@@ -20,6 +20,7 @@ import type {
   VaryingPropertyValueRecord
 } from "./types";
 import { findDuplicateVaryingPropertyValues } from "./varyingProperties";
+import { resolveValidationSeverity } from "./validationRuleCatalog";
 
 export interface ValidateOneStreamProfileInput {
   project: ProjectRecord;
@@ -40,12 +41,15 @@ export function validateOneStreamProfile(input: ValidateOneStreamProfileInput): 
   const createdAt = new Date().toISOString();
 
   const addIssue = (params: IssueParams): void => {
+    const severity = resolveValidationSeverity(params.code, params.severity);
+    if (severity === "off") return;
     issues.push({
       id: nanoid(),
       projectId: input.project.id,
       dimensionId: input.dimension.id,
       createdAt,
-      ...params
+      ...params,
+      severity
     });
   };
 
@@ -154,7 +158,18 @@ function validateMemberNames(
     }
 
     const reservedCanonical = reservedByLower.get(memberKey.toLowerCase());
-    if (reservedCanonical && reservedCanonical !== memberKey) {
+    const systemMember = ["root", "none"].includes(memberKey.toLowerCase());
+    if (reservedCanonical && !systemMember) {
+      addIssue({
+        entityType: "member",
+        entityId: member.id,
+        severity: "error",
+        code: "RESERVED_MEMBER_NAME",
+        message: `Member '${memberKey}' uses reserved OneStream structural name '${reservedCanonical}'.`,
+        fieldName: "Member Name",
+        rowNumber: member.sourceRowNumber
+      });
+    } else if (reservedCanonical && reservedCanonical !== memberKey) {
       addIssue({
         entityType: "member",
         entityId: member.id,

@@ -3,8 +3,7 @@ import { useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import { DIMENSION_TYPE_DISPLAY_ORDER } from "../../shared/dimensionTypeOrder";
 import type { DimensionRecord, DimensionType, ValidationIssue } from "../../shared/types";
-import { buildIssueSummary, type IssueSummary } from "../ui/viewModel";
-import { StatusBadge } from "./ui";
+import { buildBlockingIssueSummary, type IssueSummary } from "../ui/viewModel";
 
 export interface DimensionTreeNode {
   id: string;
@@ -19,7 +18,6 @@ export interface DimensionCategoryGroup {
   label: string;
   nodes: DimensionTreeNode[];
   totalErrors: number;
-  totalWarnings: number;
 }
 
 /**
@@ -29,7 +27,7 @@ export interface DimensionCategoryGroup {
 export function buildDimensionTreeGroups(
   dimensions: DimensionRecord[],
   issues: ValidationIssue[],
-  blockedSeverities: Array<"error" | "warning" | "info" | "off">
+  _blockedSeverities: Array<"error" | "warning" | "info" | "off">
 ): DimensionCategoryGroup[] {
   // Map dimensions by normalized name for quick parent lookup
   const byNormalizedName = new Map<string, DimensionRecord>();
@@ -75,27 +73,24 @@ export function buildDimensionTreeGroups(
         name: dim.dimensionName,
         dimension: dim,
         children,
-        issueSummary: buildIssueSummary(issues, blockedSeverities, dim.id)
+        issueSummary: buildBlockingIssueSummary(issues, dim.id)
       };
     }
 
     const nodes = rootDims.map(buildNode);
 
-    // Compute category error & warning totals
+    // Compute category blocking-error totals
     let totalErrors = 0;
-    let totalWarnings = 0;
     for (const dim of typeDimensions) {
-      const summary = buildIssueSummary(issues, blockedSeverities, dim.id);
+      const summary = buildBlockingIssueSummary(issues, dim.id);
       totalErrors += summary.errors;
-      totalWarnings += summary.warnings;
     }
 
     result.push({
       type,
       label: type,
       nodes,
-      totalErrors,
-      totalWarnings
+      totalErrors
     });
   }
 
@@ -211,14 +206,9 @@ export function DimensionTreeNav({
               </span>
               <strong className="tree-category-title">{group.label}</strong>
               {group.totalErrors > 0 && (
-                <StatusBadge tone="danger" className="tree-badge">
+                <span className="status-badge danger tree-badge">
                   {group.totalErrors}
-                </StatusBadge>
-              )}
-              {group.totalErrors === 0 && group.totalWarnings > 0 && (
-                <StatusBadge tone="warning" className="tree-badge">
-                  {group.totalWarnings}
-                </StatusBadge>
+                </span>
               )}
             </div>
 
@@ -302,13 +292,8 @@ function TreeNodeItem({
           </span>
 
           {node.issueSummary.errors > 0 && (
-            <span className="nav-issue error" title={`${node.issueSummary.errors} errors`}>
+            <span className="nav-issue error" title={`${node.issueSummary.errors} blocking errors`}>
               {node.issueSummary.errors}
-            </span>
-          )}
-          {node.issueSummary.errors === 0 && node.issueSummary.warnings > 0 && (
-            <span className="nav-issue warning" title={`${node.issueSummary.warnings} warnings`}>
-              {node.issueSummary.warnings}
             </span>
           )}
         </div>

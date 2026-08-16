@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS project_versions (
   seeded_at TEXT NOT NULL,
   created_by TEXT NOT NULL DEFAULT 'local-admin',
   summary_json TEXT NOT NULL DEFAULT '{}',
-  snapshot_json TEXT NOT NULL DEFAULT '{}'
+  snapshot_json TEXT NOT NULL DEFAULT '{}',
+  description TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS dimensions (
@@ -600,6 +601,93 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
 CREATE INDEX IF NOT EXISTS idx_ai_suggestions_project ON ai_suggestions(project_id, suggestion_type);
 CREATE INDEX IF NOT EXISTS idx_ai_suggestions_status ON ai_suggestions(project_id, status);
 CREATE INDEX IF NOT EXISTS idx_ai_conversations_project ON ai_conversations(project_id, user_id);
+
+CREATE TABLE IF NOT EXISTS project_query_sessions (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  legacy_id TEXT,
+  title TEXT NOT NULL DEFAULT 'New Query Session',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_query_entries (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES project_query_sessions(id) ON DELETE CASCADE,
+  question TEXT NOT NULL,
+  result_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_project_query_session_legacy
+  ON project_query_sessions(project_id, user_id, legacy_id);
+CREATE INDEX IF NOT EXISTS idx_project_query_sessions_owner
+  ON project_query_sessions(project_id, user_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_project_query_sessions_expiry
+  ON project_query_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_project_query_entries_session
+  ON project_query_entries(session_id, created_at);
+
+CREATE TABLE IF NOT EXISTS validation_snapshots (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  project_updated_at TEXT NOT NULL,
+  captured_at TEXT NOT NULL,
+  issue_count INTEGER NOT NULL DEFAULT 0,
+  blocking_count INTEGER NOT NULL DEFAULT 0,
+  result_json TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_validation_snapshots_project ON validation_snapshots(project_id, captured_at);
+CREATE TABLE IF NOT EXISTS project_query_entry_rows (
+  id TEXT PRIMARY KEY,
+  entry_id TEXT NOT NULL REFERENCES project_query_entries(id) ON DELETE CASCADE,
+  row_order INTEGER NOT NULL,
+  row_json TEXT NOT NULL DEFAULT '{}',
+  search_text TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_project_query_entry_rows_entry ON project_query_entry_rows(entry_id, row_order);
+CREATE TABLE IF NOT EXISTS project_query_playbook_runs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  session_id TEXT REFERENCES project_query_sessions(id) ON DELETE SET NULL,
+  playbook_id TEXT NOT NULL,
+  definition_version INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  scope_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_project_query_playbook_runs_owner ON project_query_playbook_runs(project_id, user_id, updated_at);
+CREATE TABLE IF NOT EXISTS project_query_playbook_steps (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL REFERENCES project_query_playbook_runs(id) ON DELETE CASCADE,
+  step_id TEXT NOT NULL,
+  step_order INTEGER NOT NULL,
+  label TEXT NOT NULL,
+  status TEXT NOT NULL,
+  result_json TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(run_id, step_id)
+);
+CREATE INDEX IF NOT EXISTS idx_project_query_playbook_steps_run ON project_query_playbook_steps(run_id, step_order);
+CREATE TABLE IF NOT EXISTS project_query_templates (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'General',
+  question TEXT NOT NULL,
+  parameters_json TEXT NOT NULL DEFAULT '[]',
+  scope_json TEXT NOT NULL DEFAULT '[]',
+  last_run_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_project_query_templates_owner ON project_query_templates(project_id, user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS cross_dimension_rules (
   id TEXT PRIMARY KEY,

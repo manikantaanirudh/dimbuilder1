@@ -722,7 +722,7 @@ export function EditableGrid({
               return (
                 <div
                   key={record.id}
-                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${selectedIds.has(record.id) ? "multi-selected" : ""} ${highlightedEntityId === record.id ? "highlighted" : ""} ${rowIssues.length > 0 ? "has-issues" : ""}`}
+                  className={`grid-row ${selectedId === record.id ? "selected" : ""} ${selectedIds.has(record.id) ? "multi-selected" : ""} ${highlightedEntityId != null && (record.id === highlightedEntityId || (kind === "members" && (record as DimensionMemberRecord).memberKey === highlightedEntityId)) ? "highlighted" : ""} ${rowIssues.length > 0 ? "has-issues" : ""}`}
                   style={{
                     transform: `translateY(${item.start}px)`,
                     gridTemplateColumns,

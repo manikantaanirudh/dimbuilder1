@@ -34,7 +34,7 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 - [ ] PostgreSQL automated backups are enabled (Azure Flexible Server point-in-time restore or equivalent).
 - [ ] PostgreSQL connection pooling is configured (`DATABASE_POOL_MAX` reviewed for expected concurrency).
 - [ ] PostgreSQL `sslmode` is set to `require` (or stricter) for managed cloud databases.
-- [ ] Migration strategy exists.
+- [x] A named migration runner exists for SQLite and PostgreSQL (`src/server/db/migrations.ts`); deployment-specific rollout and rollback procedures still require review.
 - [ ] Schema evolution for `varying_property_values` is covered by the migration strategy.
 - [ ] Schema evolution for baseline and diff tables is covered by the migration strategy.
 - [ ] Schema evolution for change set and release package tables is covered by the migration strategy.
@@ -47,11 +47,11 @@ Use this checklist before treating SR Onestream Dim Builder as a production or s
 
 ## Security
 
-- [x] Authentication is implemented (HTTP Basic Auth via `src/server/middleware/basicAuth.ts`).
+- [x] Authentication is implemented (JWT local credentials and OIDC strategy via `src/server/routes/auth.ts`; legacy Basic Auth remains a compatibility path).
 - [x] CORS is configurable (`server.corsOrigins` in config).
 - [x] Rate limiting is applied (general 100/min, heavy ops 10/min via `src/server/middleware/rateLimiter.ts`).
 - [x] Request body validation uses Zod schemas (`src/server/middleware/validate.ts`).
-- [ ] Authorization is project-aware.
+- [x] Authorization includes system roles and project-level permission checks (`src/server/middleware/authorize.ts`, `src/server/acl/projectACL.ts`).
 - [ ] Upload size and file type are enforced.
 - [ ] Audit user id comes from authenticated identity.
 - [ ] Sensitive paths are not exposed.

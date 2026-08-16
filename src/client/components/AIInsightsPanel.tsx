@@ -5,11 +5,10 @@ import {
   Copy,
   Filter,
   GitBranch,
-  Network,
   Play,
   RotateCcw,
+  Share2,
   Sliders,
-  Sparkles,
   Wrench,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -24,7 +23,8 @@ import {
 import { detectDuplicates } from "../../server/ai/suggestions/duplicateDetection";
 import type { GraphAnalysisResult } from "../../server/ai/suggestions/graphIntelligence";
 import type { DimensionRecord } from "../../shared/types";
-import { GraphVisualizer } from "./GraphVisualizer";
+import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
+import { KnowledgeGraph } from "./KnowledgeGraph";
 import { SkeletonAIInsights } from "./Skeleton";
 import { ActionButton, Panel, StatusBadge } from "./ui";
 
@@ -42,9 +42,16 @@ interface AISuggestion {
   confidence: number;
 }
 
-export function AIInsightsPanel({ projectId }: { projectId: string }) {
+export function AIInsightsPanel({
+  projectId,
+  onNavigateDimension,
+}: {
+  projectId: string;
+  onNavigateDimension?: (dimensionId: string, memberKey?: string) => void;
+}) {
   const [dimensions, setDimensions] = useState<DimensionRecord[]>([]);
   const [selectedDimensionId, setSelectedDimensionId] = useState<string>("ALL");
+  const [dimensionsLoaded, setDimensionsLoaded] = useState(false);
 
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
   const [namingAnomalies, setNamingAnomalies] = useState<AISuggestion[]>([]);
@@ -57,14 +64,22 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
   const [fixMessage, setFixMessage] = useState("");
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "duplicates" | "naming" | "hierarchy" | "graph" | "properties"
-  >("graph");
+    "duplicates" | "naming" | "hierarchy" | "knowledge" | "properties"
+  >("knowledge");
 
-  // Load project dimensions list for scope filtering
+  // Load project dimensions list for scope filtering. Default the Graph Scope Filter to the
+  // Scenario dimension (the most useful starting point for the Knowledge Graph) for any project.
   useEffect(() => {
+    setDimensionsLoaded(false);
     fetchDimensions(projectId)
-      .then(setDimensions)
-      .catch(() => setDimensions([]));
+      .then((dims) => {
+        const sorted = sortDimensionsByType(dims);
+        setDimensions(sorted);
+        const scenarioDim = sorted.find((d) => d.dimensionType === "Scenario");
+        setSelectedDimensionId(scenarioDim ? scenarioDim.id : "ALL");
+      })
+      .catch(() => setDimensions([]))
+      .finally(() => setDimensionsLoaded(true));
   }, [projectId]);
 
   const runAnalysis = useCallback(async (dimId?: string) => {
@@ -125,8 +140,9 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
   }, [projectId, selectedDimensionId]);
 
   useEffect(() => {
+    if (!dimensionsLoaded) return;
     void runAnalysis();
-  }, [runAnalysis]);
+  }, [runAnalysis, dimensionsLoaded]);
 
   const handleDimensionScopeChange = (dimId: string) => {
     setSelectedDimensionId(dimId);
@@ -206,15 +222,10 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
 
       <div className="ai-tabs">
         <button
-          className={`ai-tab ${activeTab === "graph" ? "active" : ""}`}
-          onClick={() => setActiveTab("graph")}
+          className={`ai-tab ${activeTab === "knowledge" ? "active" : ""}`}
+          onClick={() => setActiveTab("knowledge")}
         >
-          <Network size={14} /> Graph Topology{" "}
-          {graphData && (graphData.orphans.length > 0 || graphData.cycles.length > 0) && (
-            <span className="tab-count">
-              {graphData.orphans.length + graphData.cycles.length}
-            </span>
-          )}
+          <Share2 size={14} /> Knowledge Graph
         </button>
         <button
           className={`ai-tab ${activeTab === "duplicates" ? "active" : ""}`}
@@ -254,11 +265,12 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
         </button>
       </div>
 
-      {activeTab === "graph" && graphData && (
-        <GraphVisualizer
-          graphData={graphData}
-          dimensionName={selectedDimensionName}
-          onApplyFix={handleApplyFix}
+      {activeTab === "knowledge" && (
+        <KnowledgeGraph
+          projectId={projectId}
+          scopeDimensionId={selectedDimensionId === "ALL" ? undefined : selectedDimensionId}
+          scopeLabel={selectedDimensionName}
+          onNavigateDimension={onNavigateDimension}
         />
       )}
 
@@ -429,15 +441,6 @@ export function AIInsightsPanel({ projectId }: { projectId: string }) {
         </Panel>
       )}
 
-      <Panel style={{ marginTop: "1rem", padding: "1.25rem", background: "var(--surface-subtle)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-          <Sparkles size={18} style={{ color: "var(--accent)" }} />
-          <h4 style={{ margin: 0 }}>What does this Graph & Metadata Engine analyze?</h4>
-        </div>
-        <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-          This graph & deterministic intelligence engine runs 100% locally without external API dependencies. Select any specific dimension or <strong>All Dimensions</strong> above to inspect topology maps, tree depth, orphaned member keys, circular cycles, and diamond node relationships.
-        </p>
-      </Panel>
     </section>
   );
 }

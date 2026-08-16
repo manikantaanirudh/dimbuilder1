@@ -97,12 +97,14 @@
 11. **Entity ownership values out of range** - Consolidation math breaks
 12. **Missing Account Type on Account members** - Critical for consolidation behavior
 
-### Critical Problems This Engine Would MISS
+### Historical Review Notes
 
-1. **Member key uniqueness across dimensions** - OneStream shares member keys in certain operations (XF scenarios); cross-dimension collisions are not checked
-2. **Missing Root member** - Every dimension needs a Root member; not explicitly validated
+This review predates the shared OneStream 9.2 catalog. Current behavior is defined by `docs/validation-rules.md` and `src/shared/validationRuleCatalog.ts`.
+
+1. **Member key uniqueness across dimensions** - now covered by `DUPLICATE_MEMBER_ACROSS_DIMENSION_TYPE`
+2. **Missing Root member** - intentionally not a platform error; inherited/system Root and None states are allowed
 3. **Self-referencing relationship** (parent == child) - Passes the cycle detector but is invalid
-4. **Maximum hierarchy depth** - OneStream has practical limits (~20 levels); deep nesting causes performance issues
+4. **Maximum hierarchy depth** - the product reports the configured consultant threshold as an advisory; OneStream does not define a hard 20/30-level limit here
 5. **Member count limits per dimension** - Large dimensions (>50k members) can hit OneStream performance walls
 6. **Required dimension completeness** - No check that all 8 UD dimensions + Account + Entity + Scenario + Flow are present in a project
 7. **Cross-dimension reference validation** - E.g., Entity Currency values should reference valid ISOCurrency dimension members
@@ -139,10 +141,10 @@
 
 | # | Rule Name | What It Should Check | Why It Matters | Severity | Difficulty |
 |---|-----------|---------------------|----------------|----------|------------|
-| 1 | `ROOT_MEMBER_MISSING` | Every dimension must have at least one member named "Root" (or configured root member) | OneStream dimensions MUST have a root node; without it, hierarchy traversal fails completely and import is rejected | error | Easy |
+| 1 | `ROOT_MEMBER_MISSING` | Retired | Inherited/system Root behavior is not represented as a platform error | — | — |
 | 2 | `SELF_REFERENCING_RELATIONSHIP` | parentKey === childKey on any relationship | Self-references are logically invalid and cause processing errors in consolidation traversal; the cycle detector may not catch single-node self-loops depending on graph construction | error | Easy |
 | 3 | `MEMBER_NAME_LEADING_TRAILING_WHITESPACE` | memberKey has leading or trailing spaces/tabs | Silent matching failures in MemberScript, business rules, and API lookups; causes "member not found" at runtime while appearing correct in UIs | error | Easy |
-| 4 | `HIERARCHY_MAX_DEPTH_EXCEEDED` | Hierarchy depth exceeds configurable limit (e.g., 20 levels) | Deep hierarchies cause severe performance degradation in consolidation, slow UI rendering, and can hit stack overflow in recursive processing | warning | Medium |
+| 4 | `HIERARCHY_MAX_DEPTH_EXCEEDED` | Hierarchy depth exceeds the configured consultant threshold | Deep hierarchies may affect performance; this is not a documented OneStream maximum | warning | Medium |
 | 5 | `SCENARIO_TYPE_MISSING` | Scenario dimension members missing ScenarioType property | ScenarioType drives data storage behavior (Actual vs. Budget vs. Forecast); missing values cause runtime calculation failures | warning | Easy |
 | 6 | `DIMENSION_MISSING_FROM_PROJECT` | Project is missing one or more expected dimension types per config | OneStream applications require a complete dimension set; a missing Account or Entity dimension will fail at cube creation | warning | Medium |
 | 7 | `CROSS_DIMENSION_CURRENCY_INVALID` | Entity member Currency value doesn't match a known currency code | Invalid currency codes cause translation failures at runtime; requires a reference list of valid ISO/OneStream currencies | error | Medium |
@@ -178,7 +180,7 @@ validation:
     restrictedCharacters: [...]  # 22 restricted characters
 ```
 
-The export gate (`exportBlockedBySeverities: [error]`) means only rules at "error" severity prevent export. Warnings and info are advisory only. This is appropriate but means `ACCOUNT_TYPE_MISSING` (warning) and `ENTITY_CURRENCY_MISSING` (warning) will not prevent export of incomplete metadata.
+The catalog export gate allows only locked hard-error rules to prevent export. Warnings and info are advisory only. `ACCOUNT_TYPE_MISSING` and `ENTITY_CURRENCY_MISSING` remain consultant review items.
 
 ---
 

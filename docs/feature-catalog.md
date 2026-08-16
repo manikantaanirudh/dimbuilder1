@@ -1,8 +1,12 @@
 # Feature Catalog
 
+## Availability
+
+The catalog includes both core capabilities and optional platform modules implemented in the repository. The committed local configuration enables the core workbench and leaves optional platform modules disabled. Project Query is a core deterministic capability; see [configuration-guide.md](configuration-guide.md#modules) before treating optional modules as reachable in a deployment.
+
 ## App Identity
 
-The UI, workbook exports, and config identify the app as Spaulding Ridge Onestream Dim Builder.
+The UI, workbook exports, and config identify the app as SR Onestream Dim Builder.
 
 Source:
 
@@ -208,6 +212,8 @@ Source:
 
 Users can run validation and see issue counts. Validation includes generic metadata integrity checks plus the configurable OneStream validation profile for naming conventions, aliases, Root/None casing, sort order, shared members, parent input risks, missing dimension-specific properties, relationship weight gaps, and Entity ownership range checks.
 
+The Project Overview intentionally presents only catalog-defined blocking errors. Advisory warnings and informational findings remain available in the Validation Dashboard and Reports so they can be investigated without making the overview imply that every diagnostic is an export issue.
+
 Source:
 
 - `src/client/components/IssuePanel.tsx`
@@ -215,6 +221,8 @@ Source:
 - `src/server/routes/validation.ts`
 - `src/shared/validationEngine.ts`
 - `src/shared/oneStreamValidation.ts`
+
+The overview projection is implemented by `buildBlockingIssueSummary` in `src/client/ui/viewModel.ts` and uses `isExportBlockingValidationIssue` from `src/shared/validationRuleCatalog.ts`.
 
 ## XML Preview
 
@@ -522,17 +530,19 @@ Source:
 - `src/client/hooks/useFocusTrap.ts`
 - `src/client/styles.css`
 
-## Chat Page (Natural Language Query)
+## Project Query
 
-Conversational chatbot interface for querying project metadata in plain English. Supports 11 query intents: project summary, project issues/health, export readiness, find member, count members, count dimensions, show children, find orphans, check member existence, missing property, property filter. The summary, issues, and export-readiness intents are answered from injected project context (dimension/member/relationship counts, validation summary, top issue codes, export-blocking status) computed server-side by `buildProjectAIContext`, so the assistant reports on the actual project state rather than falling back to keyword search. Hybrid AI: local pattern matching first, optional LLM fallback if configured.
+Deterministic diagnostic workbench for querying project metadata, saved validation results, hierarchy analytics, coverage, diffs, change sets, risks, and artifact impact. Queries are classified before loading only their required repository context; they never invoke an AI provider or run full validation as a side effect. The surface provides live interpretation, visible scope, freshness qualification, typed paged tables, immutable reruns, four consultant playbooks, pinned query templates, provenance, remediation steps, and Markdown/CSV snapshot exports.
 
 Source:
 
-- `src/client/components/ChatPanel.tsx`
+- `src/client/components/ProjectQueryPanel.tsx`
 - `src/server/ai/naturalLanguage/queryParser.ts`
 - `src/server/ai/naturalLanguage/responseGenerator.ts`
 - `src/server/ai/projectContext.ts` (project context builder)
-- `src/server/routes/ai.ts` (`POST /projects/:id/ai/query`, `POST /projects/:id/ai/chat`)
+- `src/server/projectQuery/engine.ts`
+- `src/server/routes/projectQuery.ts` (`POST /projects/:projectId/query`, session/history routes, and suggestions)
+- Legacy `/ai/query`, `/ai/chat`, and `/assistant/query` adapters remain for one release and return deprecation headers.
 
 ## Validation Dashboard Drill-Down
 
@@ -553,7 +563,9 @@ Source:
 
 ## Admin: Export Validation Rules
 
-"Export Rules" button in the Admin panel that downloads all validation rules as a CSV file with columns: Rule Code, Description, Category, Severity, Active, Blocks Export. Allows business teams to review and validate rules offline.
+Admin loads the shared OneStream 9.2 validation catalog and groups rules into Blocking Errors, Advisories, and Informational Rules. It shows effective project severity, allowed severities, lock/export state, evidence links, target version, ignored legacy overrides, and filters by category/active state. The CSV export includes the same provenance and classification fields.
+
+Only locked hard errors block export. Advisory and informational rules remain nonblocking even when their display severity changes.
 
 Source:
 

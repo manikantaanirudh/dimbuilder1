@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Clock, Database, GitBranch, Search } from "lucide-react";
+import { ArrowRight, ChevronDown, Clock, Database, GitBranch, Search } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
   getDimensionDisplayLabel,
@@ -12,13 +12,16 @@ import type {
   ProjectVersionRecord,
   ValidationIssue,
 } from "../../shared/types";
-import { apiPatchJson, fetchCoverageReport, fetchProjectVersions } from "../api/client";
+import { apiPatchJson, fetchCoverageReport, fetchProjectVersions, restoreProjectVersion } from "../api/client";
+import { getGroupedOneStreamPropertyDictionary } from "../../shared/oneStreamPropertyDictionary";
+import { buildFieldCatalog, type FieldCatalogEntry } from "../ui/fieldCatalog";
 import {
-  buildIssueSummary,
+  buildBlockingIssueSummary,
   formatCount,
   sortDimensionsForOverview,
 } from "../ui/viewModel";
 import { BlueprintStudio } from "./BlueprintStudio";
+import { GuidedFilterBar } from "./GuidedFilterBar";
 import { KPICards } from "./KPICards";
 import { SnapshotManager } from "./SnapshotManager";
 import { ActionButton, EmptyState, StatusBadge } from "./ui";
@@ -48,6 +51,7 @@ export function Dashboard({
   project,
   issues,
   onOpenDimension,
+  onOpenEntity,
   onProjectChanged,
   appConfig,
 }: {
@@ -56,49 +60,38 @@ export function Dashboard({
   project: ProjectRecord | null;
   issues: ValidationIssue[];
   onOpenDimension: (dimensionId: string) => void;
+  onOpenEntity: (dimensionId: string, entityId: string, kind: "member" | "relationship") => void;
   onProjectChanged?: (projectId: string) => void;
   appConfig: ClientAppConfig;
 }) {
   const dimensionDisplayConfig = appConfig.dimensions.display;
-  const issueSummary = buildIssueSummary(
-    issues,
-    appConfig.validation.exportBlockedBySeverities,
-  );
-  const summaryErrors = summary?.validationErrors ?? issueSummary.errors;
-  const summaryWarnings = summary?.validationWarnings ?? issueSummary.warnings;
+  const issueSummary = buildBlockingIssueSummary(issues);
   const blocksExport = issueSummary.blocksExport;
-  const needsReview =
-    blocksExport ||
-    summaryErrors > 0 ||
-    summaryWarnings > 0 ||
-    issueSummary.total > 0;
   const statusTone = !project
     ? "neutral"
     : blocksExport
       ? "danger"
-      : needsReview
-        ? "warning"
-        : "success";
+      : "success";
   const statusLabel = !project
     ? "No project"
     : blocksExport
       ? "Export blocked"
-      : needsReview
-        ? "Needs review"
-        : "Ready";
+      : "No blocking errors";
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(project?.name ?? "");
   const [renameError, setRenameError] = useState("");
   const [renaming, setRenaming] = useState(false);
-  const [dimSearch, setDimSearch] = useState("");
   const [coverageByType, setCoverageByType] = useState<Map<string, number>>(
     new Map(),
   );
   const [versions, setVersions] = useState<ProjectVersionRecord[]>([]);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const [switchStatus, setSwitchStatus] = useState("");
+  const switcherRef = useRef<HTMLDivElement>(null);
   const [disclosureOpen, setDisclosureOpen] = useState(
     () => localStorage.getItem(DISCLOSURE_KEY) === "open",
   );
-  const dimSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!project) {
@@ -117,6 +110,48 @@ export function Dashboard({
       cancelled = true;
     };
   }, [project?.id, project?.versionNumber]);
+
+  useEffect(() => {
+    if (!switcherOpen) return;
+    function handlePointer(event: MouseEvent) {
+      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
+        setSwitcherOpen(false);
+      }
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setSwitcherOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [switcherOpen]);
+
+  async function handleSwitchVersion(versionNumber: number, versionLabel: string) {
+    if (!project || switching) return;
+    if (versionNumber === (project.versionNumber ?? 1)) {
+      setSwitcherOpen(false);
+      return;
+    }
+    const confirmed = window.confirm(
+      `Switch to ${versionLabel}? This replaces the current working data with that version.`,
+    );
+    if (!confirmed) return;
+    setSwitching(true);
+    setSwitchStatus(`Switching to ${versionLabel}...`);
+    try {
+      const result = await restoreProjectVersion(project.id, versionNumber);
+      setSwitchStatus(result.message);
+      setSwitcherOpen(false);
+      onProjectChanged?.(project.id);
+    } catch (caught) {
+      setSwitchStatus(caught instanceof Error ? caught.message : "Failed to switch version");
+    } finally {
+      setSwitching(false);
+    }
+  }
 
   useEffect(() => {
     if (!project) {
@@ -144,29 +179,20 @@ export function Dashboard({
     };
   }, [project?.id, issueSummary.total]);
 
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const tag = (e.target as HTMLElement).tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-        e.preventDefault();
-        dimSearchRef.current?.focus();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const fieldCatalog = useMemo<FieldCatalogEntry[]>(() => {
+    if (!project || dimensions.length === 0) return [];
+    return buildFieldCatalog(
+      getGroupedOneStreamPropertyDictionary(),
+      dimensions.map((d) => d.dimensionType),
+    );
+  }, [project, dimensions]);
 
   const dimensionIssueMap = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof buildIssueSummary>>();
+    const map = new Map<string, ReturnType<typeof buildBlockingIssueSummary>>();
     for (const dim of dimensions) {
       map.set(
         dim.id,
-        buildIssueSummary(
-          issues,
-          appConfig.validation.exportBlockedBySeverities,
-          dim.id,
-        ),
+        buildBlockingIssueSummary(issues, dim.id),
       );
     }
     return map;
@@ -187,31 +213,12 @@ export function Dashboard({
   }, [summary?.dimensionStats]);
 
   const filteredDimensions = useMemo(() => {
-    const query = dimSearch.trim().toLowerCase();
-    const scoped = !query
-      ? dimensions
-      : dimensions.filter((dim) => {
-          const label = getDimensionDisplayLabel(
-            dim,
-            dimensionDisplayConfig,
-          ).toLowerCase();
-          const subtitle = getDimensionDisplaySubtitle(
-            dim,
-            dimensionDisplayConfig,
-          ).toLowerCase();
-          return label.includes(query) || subtitle.includes(query);
-        });
     return sortDimensionsForOverview(
-      scoped,
+      dimensions,
       dimensionIssueMap,
       false, // Always keep canonical dimension type order matching the sidebar
     );
-  }, [
-    dimensions,
-    dimSearch,
-    dimensionDisplayConfig,
-    dimensionIssueMap,
-  ]);
+  }, [dimensions, dimensionIssueMap]);
 
   async function handleRename() {
     if (!project || !editName.trim() || editName.trim() === project.name) {
@@ -281,24 +288,63 @@ export function Dashboard({
               <h1>No project open</h1>
             )}
             {versions.length > 0 ? (
-              <div style={{ marginTop: 6, display: "flex", alignItems: "center" }}>
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: "5px 12px", borderRadius: 8, fontSize: "12px", cursor: "pointer", transition: "all 0.15s ease", color: "var(--text)" }}>
-                  <GitBranch size={13} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                  <span style={{ fontWeight: 600, color: "var(--muted)" }}>Version:</span>
-                  <select
-                    aria-label="Project seeded version history"
-                    value={project?.versionNumber ?? 1}
-                    onChange={() => {}}
-                    title="Seeded Project Version History"
-                    style={{ background: "transparent", border: "none", outline: "none", fontSize: "12px", fontWeight: 600, color: "var(--text)", cursor: "pointer", maxWidth: "100%" }}
+              <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                <div ref={switcherRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={switcherOpen}
+                    disabled={switching}
+                    onClick={() => setSwitcherOpen((prev) => !prev)}
+                    title="Switch project version"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: "5px 12px", borderRadius: 8, fontSize: "12px", fontWeight: 600, color: "var(--text)", cursor: switching ? "default" : "pointer", transition: "all 0.15s ease" }}
                   >
-                    {versions.map((ver) => (
-                      <option key={ver.id} value={ver.versionNumber} style={{ background: "var(--surface)", color: "var(--text)" }}>
-                        {ver.versionLabel} — {ver.sourceFileName || "Seeded Metadata"} ({formatSeededTime(ver.seededAt)}){ver.versionNumber === (project?.versionNumber ?? 1) ? " (Active)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <GitBranch size={13} style={{ color: "var(--primary)", flexShrink: 0 }} />
+                    <span style={{ color: "var(--muted)" }}>Version:</span>
+                    <span>{project?.versionLabel ?? `v${project?.versionNumber ?? 1}`}</span>
+                    <ChevronDown size={13} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                  </button>
+                  {switcherOpen && (
+                    <div
+                      role="listbox"
+                      style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 30, minWidth: 320, maxWidth: 460, maxHeight: 320, overflowY: "auto", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", padding: 4 }}
+                    >
+                      {versions.map((ver) => {
+                        const isActive = ver.versionNumber === (project?.versionNumber ?? 1);
+                        return (
+                          <button
+                            key={ver.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            disabled={switching}
+                            title={ver.description || undefined}
+                            onClick={() => void handleSwitchVersion(ver.versionNumber, ver.versionLabel)}
+                            style={{ display: "block", width: "100%", textAlign: "left", background: isActive ? "var(--surface-subtle)" : "transparent", border: "none", borderRadius: 6, padding: "8px 10px", cursor: switching ? "default" : "pointer", color: "var(--text)" }}
+                            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                            onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                          >
+                            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "12px", fontWeight: 600 }}>
+                              {ver.versionLabel}
+                              {isActive && <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--primary)", border: "1px solid var(--primary)", borderRadius: 4, padding: "0 4px" }}>ACTIVE</span>}
+                            </span>
+                            <span style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginTop: 2 }}>
+                              {ver.sourceFileName || "Seeded Metadata"} ({formatSeededTime(ver.seededAt)})
+                            </span>
+                            {ver.description && (
+                              <span style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginTop: 2, fontStyle: "italic" }}>
+                                {ver.description}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                {switchStatus && (
+                  <span style={{ fontSize: "11px", color: "var(--muted)" }}>{switchStatus}</span>
+                )}
               </div>
             ) : (
               <p>
@@ -359,17 +405,12 @@ export function Dashboard({
             <span>{dimensions.length} available</span>
           </div>
 
-          {dimensions.length > 3 && (
-            <div className="overview-dim-search">
-              <Search size={14} />
-              <input
-                ref={dimSearchRef}
-                value={dimSearch}
-                onChange={(e) => setDimSearch(e.target.value)}
-                placeholder="Filter dimensions (press /)"
-                aria-label="Filter dimensions"
-              />
-            </div>
+          {project && fieldCatalog.length > 0 && (
+            <GuidedFilterBar
+              projectId={project.id}
+              fieldCatalog={fieldCatalog}
+              onOpenEntity={onOpenEntity}
+            />
           )}
 
           {filteredDimensions.length ? (
@@ -421,7 +462,7 @@ export function Dashboard({
                     className="dimension-row"
                     key={dimension.id}
                     role="row"
-                    aria-label={`${getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}. ${statsLabel}. ${dimensionIssues.total ? `${dimensionIssues.total} errors` : "Clean"}.`}
+                    aria-label={`${getDimensionDisplayLabel(dimension, dimensionDisplayConfig)}. ${statsLabel}. ${dimensionIssues.total ? `${dimensionIssues.total} blocking errors` : "No blockers"}.`}
                     onClick={() => onOpenDimension(dimension.id)}
                   >
                     <span className="dimension-label" role="cell">
@@ -464,14 +505,12 @@ export function Dashboard({
                         tone={
                           dimensionIssues.errors
                             ? "danger"
-                            : dimensionIssues.warnings
-                              ? "warning"
-                              : "success"
+                            : "success"
                         }
                       >
                         {dimensionIssues.total
-                          ? `${dimensionIssues.total} errors`
-                          : "Clean"}
+                          ? `${dimensionIssues.total} blocking errors`
+                          : "No blockers"}
                       </StatusBadge>
                     </span>
                     <span
@@ -485,10 +524,6 @@ export function Dashboard({
                 );
               })}
             </div>
-          ) : dimensions.length ? (
-            <EmptyState title="No dimensions match">
-              No dimensions match "{dimSearch}".
-            </EmptyState>
           ) : (
             <EmptyState
               title={project ? "No dimensions available" : "No project open"}

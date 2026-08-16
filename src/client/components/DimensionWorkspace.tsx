@@ -6,6 +6,7 @@ import {
   getDimensionDisplaySubtitle,
 } from "../../shared/dimensionDisplay";
 import type { DimensionRecord, ValidationIssue } from "../../shared/types";
+import type { ProjectQueryTarget } from "../../shared/projectQuery";
 import {
   buildDimensionFacts,
   buildIssueSummary,
@@ -66,6 +67,11 @@ export function DimensionWorkspace({
   onDimensionRecreated,
   appConfig,
   exportAvailability,
+  initialEntityFocus,
+  onEntityFocusConsumed,
+  queryTarget,
+  focusMemberKey = null,
+  onFocusMemberConsumed,
 }: {
   projectId: string;
   dimension: DimensionRecord;
@@ -75,6 +81,11 @@ export function DimensionWorkspace({
   onDimensionRecreated: (dimension: DimensionRecord) => void;
   appConfig: ClientAppConfig;
   exportAvailability: ExportAvailability;
+  initialEntityFocus?: { id: string; kind: "member" | "relationship" } | null;
+  onEntityFocusConsumed?: () => void;
+  queryTarget?: ProjectQueryTarget | null;
+  focusMemberKey?: string | null;
+  onFocusMemberConsumed?: () => void;
 }) {
   const xmlPreviewEnabled =
     appConfig.features.enableXmlPreview && appConfig.export.xml.enabled;
@@ -166,6 +177,26 @@ export function DimensionWorkspace({
   useEffect(() => {
     setSelectedMember(null);
   }, [tab, dimension.id]);
+
+  useEffect(() => {
+    if (!initialEntityFocus) return;
+    setTab(initialEntityFocus.kind === "relationship" ? "Relationships" : "Members");
+    setHighlightedEntityId(initialEntityFocus.id);
+    onEntityFocusConsumed?.();
+  }, [initialEntityFocus, dimension.id]);
+
+  useEffect(() => {
+    if (queryTarget?.kind !== "member" || queryTarget.dimensionId !== dimension.id) return;
+    setTab("Members");
+    setHighlightedEntityId(queryTarget.memberKey);
+  }, [dimension.id, queryTarget]);
+
+  useEffect(() => {
+    if (!focusMemberKey) return;
+    setTab("Members");
+    setHighlightedEntityId(focusMemberKey);
+    onFocusMemberConsumed?.();
+  }, [dimension.id, focusMemberKey, onFocusMemberConsumed]);
 
   const filteredEntityIds = useMemo(() => {
     if (issueFilter === "all") return null;
@@ -387,6 +418,32 @@ export function DimensionWorkspace({
                         )}
                       </div>
                     </div>
+                  )}
+                  {activeTab === "Relationships" && (
+                    <EditableGrid
+                      projectId={projectId}
+                      kind="relationships"
+                      dimension={dimension}
+                      pageSize={appConfig.ui.gridPageSize}
+                      highlightedEntityId={highlightedEntityId}
+                      issueFilteredIds={filteredEntityIds}
+                      issues={dimensionIssues}
+                      refreshSignal={relationshipRefreshSignal}
+                      onRefresh={onRefresh}
+                      onSelectRow={setSelectedMember}
+                    />
+                  )}
+                  {activeTab === "Hierarchy" && (
+                    <HierarchyTree
+                      projectId={projectId}
+                      dimension={dimension}
+                      onRelationshipChanged={handleRelationshipChanged}
+                      refreshSignal={relationshipRefreshSignal}
+                      onNodeClick={(memberKey) => {
+                        setTab("Members");
+                        setHighlightedEntityId(memberKey);
+                      }}
+                    />
                   )}
                   {activeTab === "Varying" && (
                     <ErrorBoundary fallbackTitle="Error displaying Varying Properties">

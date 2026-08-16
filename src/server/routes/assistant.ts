@@ -4,6 +4,7 @@ import { answerProjectQuestion, SUGGESTED_QUESTIONS, type AssistantContext } fro
 import { computeReadinessScore } from "../../shared/readinessScore";
 import type { Repositories } from "../db/repositories";
 import { ArtifactStore } from "./artifactStore";
+import { executeProjectQuery, toLegacyProjectQueryResult } from "../projectQuery/engine";
 
 /**
  * Evidence-based Project Assistant (TASK-14). Answers project questions strictly from stored
@@ -20,13 +21,15 @@ export function createAssistantRouter(repos: Repositories, config: AppConfig): R
   });
 
   router.post("/:projectId/assistant/query", async (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Sunset", "Wed, 10 Feb 2027 00:00:00 GMT");
     const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const question = typeof req.body?.question === "string" ? req.body.question.trim() : "";
     if (!question) return res.status(400).json({ error: "question is required" });
 
-    const answer = answerProjectQuestion(question, await buildContext(repos, config, artifactStore, project.id, project.name));
-    res.json({ question, answer });
+    const execution = await executeProjectQuery(repos, config, project.id, question);
+    res.json({ question, answer: execution ? toLegacyProjectQueryResult(execution.result) : null });
   });
 
   return router;

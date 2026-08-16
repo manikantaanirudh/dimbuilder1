@@ -17,15 +17,15 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
 import {
+  buildBlockingIssueSummary,
   buildDimensionNavItems,
-  buildIssueSummary,
   filterDimensionNavItems,
   resolveActiveDimensionId,
   getValidationErrors,
   type DimensionNavItem,
   getExportAvailability,
 } from "../ui/viewModel";
-import { createProjectSnapshot, validateProject } from "../api/client";
+import { updateCurrentProjectVersion, validateProject } from "../api/client";
 import { useProjectStore } from "../state/useProjectStore";
 import { useAuth } from "../auth/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -44,7 +44,8 @@ import { ValidationDashboard } from "./ValidationDashboard";
 import { ReportingDashboard } from "./ReportingDashboard";
 import { AIInsightsPanel } from "./AIInsightsPanel";
 import { AuditLogViewer } from "./AuditLogViewer";
-import { ChatPanel } from "./ChatPanel";
+import { ProjectQueryPanel } from "./ProjectQueryPanel";
+import type { ProjectQueryTarget } from "../../shared/projectQuery";
 import { ToastProvider } from "./Toast";
 import { DimensionTreeNav } from "./DimensionTreeNav";
 import { ActionButton, IconButton, StatusBadge, ToolbarGroup } from "./ui";
@@ -60,10 +61,8 @@ const CHAT_VALUE = "__chat__";
 
 function mobileNavLabel(item: DimensionNavItem) {
   if (item.issueSummary.errors > 0)
-    return `${item.label} - ${item.issueSummary.errors} errors`;
-  if (item.issueSummary.warnings > 0)
-    return `${item.label} - ${item.issueSummary.warnings} warnings`;
-  return `${item.label} - Clean`;
+    return `${item.label} - ${item.issueSummary.errors} blocking errors`;
+  return `${item.label} - No blockers`;
 }
 
 export function AppShell({
@@ -77,6 +76,15 @@ export function AppShell({
   const { user, authEnabled, logout } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const [activeWorkspace, setActiveWorkspace] = useState<string | null>(null);
+  const [pendingEntityFocus, setPendingEntityFocus] = useState<{
+    dimensionId: string;
+    entityId: string;
+    kind: "member" | "relationship";
+  } | null>(null);
+  const [focusMember, setFocusMember] = useState<{
+    dimensionId: string;
+    memberKey: string;
+  } | null>(null);
   const [navSearch, setNavSearch] = useState("");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [openProjectOpen, setOpenProjectOpen] = useState(false);
@@ -85,15 +93,13 @@ export function AppShell({
   const [saveAsOpen, setSaveAsOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [queryTarget, setQueryTarget] = useState<ProjectQueryTarget | null>(null);
   const toolbar = appConfig.ui.toolbar;
   const dimensionDisplayConfig = appConfig.dimensions.display;
   const selectedProject =
     store.projects.find((project) => project.id === store.selectedProjectId) ??
     null;
-  const issueSummary = buildIssueSummary(
-    store.issues,
-    appConfig.validation.exportBlockedBySeverities,
-  );
+  const issueSummary = buildBlockingIssueSummary(store.issues);
   const exportAvailability = getExportAvailability({
     projectId: store.selectedProjectId,
     exportConfig: appConfig.export,
@@ -139,6 +145,12 @@ export function AppShell({
     !activeDimension ||
     !store.selectedProjectId;
 
+  // Navigate to a dimension's Members tab and focus a specific member.
+  const navigateToDimension = (dimensionId: string, memberKey?: string) => {
+    setActiveWorkspace(dimensionId);
+    setFocusMember(memberKey ? { dimensionId, memberKey } : null);
+  };
+
   async function runValidation() {
     if (!store.selectedProjectId) return;
     setStatus("Validating metadata...");
@@ -158,8 +170,8 @@ export function AppShell({
     setIsSaving(true);
     setStatus("Saving project...");
     try {
-      const result = await createProjectSnapshot(store.selectedProjectId);
-      setStatus(`Project saved: ${result.name}`);
+      const result = await updateCurrentProjectVersion(store.selectedProjectId, {});
+      setStatus(result.message);
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Save failed");
     } finally {
@@ -376,7 +388,7 @@ export function AppShell({
             className={`secondary-nav-item ${activeWorkspace === CHAT_VALUE ? "active" : ""}`}
             onClick={() => setActiveWorkspace(CHAT_VALUE)}
           >
-            Chat
+            Project Query
           </button>
           <button
             className={`secondary-nav-item ${activeWorkspace === ADMIN_VALUE ? "active" : ""}`}
@@ -415,12 +427,12 @@ export function AppShell({
                 tone={
                   issueSummary.blocksExport
                     ? "danger"
-                    : issueSummary.total
-                      ? "warning"
-                      : "success"
+                    : "success"
                 }
               >
-                {issueSummary.total ? `${issueSummary.total} errors` : "Ready"}
+                {issueSummary.total
+                  ? `${issueSummary.total} errors`
+                  : "No errors"}
               </StatusBadge>
             </div>
           </div>
@@ -470,7 +482,10 @@ export function AppShell({
             <ReportingDashboard projectId={store.selectedProjectId} />
           ) : activeWorkspace === AI_INSIGHTS_VALUE &&
             store.selectedProjectId ? (
-            <AIInsightsPanel projectId={store.selectedProjectId} />
+            <AIInsightsPanel
+              projectId={store.selectedProjectId}
+              onNavigateDimension={navigateToDimension}
+            />
           ) : activeWorkspace === AUDIT_LOG_VALUE && store.selectedProjectId ? (
             <AuditLogViewer
               projectId={store.selectedProjectId}
@@ -478,13 +493,22 @@ export function AppShell({
               appConfig={appConfig}
             />
           ) : activeWorkspace === CHAT_VALUE && store.selectedProjectId ? (
-            <ChatPanel
+            <ProjectQueryPanel
               projectId={store.selectedProjectId}
               dimensions={store.dimensions}
-              onNavigateMember={(_key) => {
-                // Navigate to first dimension - member lookup needs dimension context
-                if (store.dimensions.length > 0) {
-                  setActiveWorkspace(store.dimensions[0].id);
+              onNavigateTarget={(target) => {
+                setQueryTarget(target);
+                if (target.kind === "member" && target.dimensionId) setActiveWorkspace(target.dimensionId);
+                else if (target.kind === "dimension") setActiveWorkspace(target.dimensionId);
+                else if (target.kind === "surface") {
+                  const targetWorkspace = target.surface === "validation"
+                    ? VALIDATION_DASHBOARD_VALUE
+                    : target.surface === "compare"
+                      ? REPORTING_VALUE
+                      : target.surface === "change-sets"
+                        ? PROJECT_OVERVIEW_VALUE
+                        : AI_INSIGHTS_VALUE;
+                  setActiveWorkspace(targetWorkspace);
                 }
               }}
             />
@@ -500,6 +524,19 @@ export function AppShell({
               projectId={store.selectedProjectId}
               dimension={activeDimension}
               issues={store.issues}
+              initialEntityFocus={
+                pendingEntityFocus &&
+                pendingEntityFocus.dimensionId === activeDimension.id
+                  ? { id: pendingEntityFocus.entityId, kind: pendingEntityFocus.kind }
+                  : null
+              }
+              onEntityFocusConsumed={() => setPendingEntityFocus(null)}
+              focusMemberKey={
+                focusMember && focusMember.dimensionId === activeDimension.id
+                  ? focusMember.memberKey
+                  : null
+              }
+              onFocusMemberConsumed={() => setFocusMember(null)}
               onRefresh={() =>
                 store.refresh(store.selectedProjectId ?? undefined)
               }
@@ -515,6 +552,7 @@ export function AppShell({
               }}
               appConfig={appConfig}
               exportAvailability={exportAvailability}
+              queryTarget={queryTarget}
             />
           ) : (
             <Dashboard
@@ -523,6 +561,10 @@ export function AppShell({
               project={selectedProject}
               issues={store.issues}
               onOpenDimension={setActiveWorkspace}
+              onOpenEntity={(dimId, entityId, kind) => {
+                setPendingEntityFocus({ dimensionId: dimId, entityId, kind });
+                setActiveWorkspace(dimId);
+              }}
               onProjectChanged={(projectId) => {
                 setStatus("Project snapshot action completed");
                 void store.refresh(projectId);
@@ -575,8 +617,9 @@ export function AppShell({
           open={saveAsOpen}
           onClose={() => setSaveAsOpen(false)}
           projectId={store.selectedProjectId}
-          onSaved={(name) => {
-            setStatus(`Saved: ${name}`);
+          activeVersionLabel={selectedProject?.versionLabel ?? null}
+          onSaved={(message) => {
+            setStatus(message);
             void store.refresh();
           }}
         />

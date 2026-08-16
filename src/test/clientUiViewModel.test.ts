@@ -16,6 +16,7 @@ import type {
 import {
   buildDimensionFacts,
   buildDimensionNavItems,
+  buildBlockingIssueSummary,
   buildIssueSummary,
   computeProjectHealthFallback,
   filterDimensionNavItems,
@@ -39,7 +40,7 @@ function issue(overrides: Partial<ValidationIssue>): ValidationIssue {
     entityType: "member",
     entityId: "member-1",
     severity: "error",
-    code: "REQUIRED_FIELD",
+    code: "MEMBER_KEY_REQUIRED",
     message: "Member is required",
     fieldName: "Member",
     rowNumber: 9,
@@ -220,6 +221,33 @@ describe("client UI view model", () => {
       infos: 0,
       total: 1,
       blocksExport: true,
+    });
+  });
+
+  it("projects only catalog-defined blockers for overview navigation", () => {
+    const issues = [
+      issue({ id: "warning-1", severity: "warning", code: "UNKNOWN_PROPERTY" }),
+      issue({ id: "info-1", severity: "info", code: "MEMBER_NAME_CONTAINS_SPACE" }),
+      issue({ id: "blocker-1", severity: "error", code: "MEMBER_KEY_REQUIRED" }),
+    ];
+
+    expect(buildBlockingIssueSummary(issues)).toEqual({
+      errors: 1,
+      warnings: 0,
+      infos: 0,
+      total: 1,
+      blocksExport: true,
+    });
+    expect(
+      buildBlockingIssueSummary(
+        issues.filter((candidate) => candidate.id !== "blocker-1"),
+      ),
+    ).toEqual({
+      errors: 0,
+      warnings: 0,
+      infos: 0,
+      total: 0,
+      blocksExport: false,
     });
   });
 
@@ -435,7 +463,7 @@ describe("client UI view model", () => {
       subtitle: "Scenarios",
       issueSummary: {
         errors: 0,
-        warnings: 1,
+        warnings: 0,
         infos: 0,
         total: 0,
         blocksExport: false,

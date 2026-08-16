@@ -2,6 +2,8 @@
 
 The central configuration file is `config/dimbuilder.yaml`. It is merged with `defaultAppConfig` from `src/shared/appConfigDefaults.ts`, validated by `src/shared/appConfigValidation.ts`, and loaded at server startup by `src/server/config/loadAppConfig.ts`.
 
+The committed configuration is a conservative local workbench profile: optional platform modules are disabled by default. Their code remains in the repository, but the server and client mount or display module-specific routes only when the corresponding flag is enabled.
+
 ## Load Order
 
 1. Start with `defaultAppConfig`.
@@ -47,13 +49,32 @@ Controls host, ports, and CORS.
 
 ### `auth`
 
-Controls HTTP Basic Authentication.
+Controls the authentication strategy applied to API routes.
 
-- `enabled`: boolean, default `false`. When true, all `/api/*` routes (except `/api/health`) require Basic Auth credentials.
-- `username`: string, default `"admin"`.
-- `password`: string, default `"changeme"`.
+- `enabled`: boolean, default `false`.
+- `strategy`: `none`, `local`, or `oidc`.
+- `jwt.secret`, `jwt.accessTokenExpiry`, `jwt.refreshTokenExpiry`: JWT configuration. Prefer the `JWT_SECRET` environment override for the secret.
+- `oidc.issuerUrl`, `oidc.clientId`, `oidc.clientSecret`, `oidc.callbackUrl`, `oidc.scopes`: OIDC provider configuration when `strategy` is `oidc`.
+- `defaultRole`: role assigned to users after the first user.
+- `allowSelfRegistration`: whether users after the first account may register themselves.
+- `username` and `password`: legacy Basic Auth credentials used only when `enabled` is true, `strategy` is `none`, and a username is configured.
 
-The auth middleware is defined in `src/server/middleware/basicAuth.ts`. When disabled, it is a no-op passthrough. The `auth` section is server-only and excluded from the client config payload (`src/shared/appConfigValidation.ts:262`).
+When authentication is disabled or `strategy` is `none`, API requests receive the synthetic system/admin identity. With `local` or `oidc`, API routes below `/api` require a Bearer access token. The auth section is server-only and excluded from the client config payload (`src/shared/appConfigValidation.ts`, `buildClientAppConfig`). See [security-model.md](security-model.md) for route and role behavior.
+
+### `modules`
+
+Optional platform modules are disabled in the committed local profile:
+
+| Flag | Mounted or displayed capability when enabled |
+|---|---|
+| `environmentManagement` | Environments, connectors, mappings, sync jobs/runs, and source registries. |
+| `chatAssistant` | Legacy assistant compatibility routes and related optional navigation. Core Project Query is not gated by this flag. |
+| `platformExtras` | Migration, cross-dimension, templates, VCS, extensibility, risk heatmap, pattern profiler, and config-editor navigation. |
+| `offlineSync` or `apiPlatform` | Tier-3 Excel/add-in, scheduler, quality, migration, and API-platform routes. |
+| `multiTenancy` | Tier-4 tenant/platform routes. |
+| `scheduler` | Reserved configuration flag; scheduler code exists, but route mounting is controlled by the Tier-3 module condition. |
+
+The mapping is implemented in `src/server/registerApiRoutes.ts` and `src/client/ui/moduleNav.ts`. In non-local `shared` or `production` app modes, `src/server/startupSafety.ts` forces experimental modules off unless `UNSAFE_ALLOW_EXPERIMENTAL=true` is explicitly set.
 
 ### `features`
 
@@ -120,7 +141,7 @@ validation:
     invalidPropertyTypeSeverity: error
 ```
 
-The profile adds OneStream-aware warnings for naming conventions, aliases, Root/None casing, sort order, shared members, parent input, missing Account Type, missing Entity Currency, missing relationship weights, and invalid Entity ownership percentages.
+The profile adds OneStream-aware advisories and informational findings for naming conventions, aliases, reserved Root/None casing, sort order, shared members, parent input, missing Account Type, missing Entity Currency, missing relationship weights, and invalid Entity ownership percentages. Spaces, periods, alternate hierarchies, shared members, orphan members, and the configured hierarchy-depth threshold are not platform errors. Currency references are checked only when `validCurrencyCodes` is explicitly configured.
 
 ### `export`
 
@@ -136,6 +157,22 @@ Validation gate fields:
 
 Controls default workspace tab, grid page size, toolbar visibility, and XML preview defaults.
 
+### `operations`
+
+Controls runtime posture and operational limits:
+
+- `appMode`: `local`, `shared`, or `production`.
+- `uploadMaxMb`: upload limit used by import handling.
+- `exportRetentionDays` and `artifactRetentionDays`: retention settings exposed to the operational model.
+- `exportMaxMembers`: export size guard.
+- `corsAllowLocalhostByDefault`: local CORS behavior.
+
+`APP_MODE` overrides `operations.appMode`. Shared and production modes require authentication and reject placeholder JWT secrets; first-admin bootstrap also requires non-default credentials.
+
+### `ai`
+
+Controls optional AI features such as insights and suggestions. Core Project Query is deterministic, uses stored project data, and does not require `ai.enabled`, a provider, an API key, or `modules.chatAssistant`. Secret values should be supplied through environment or deployment secret management rather than committed YAML.
+
 ## Validation Rules
 
 `validateAppConfig()` rejects:
@@ -148,10 +185,13 @@ Controls default workspace tab, grid page size, toolbar visibility, and XML prev
 - invalid Blueprint Studio drafts, because they are normalized and checked with the same blueprint validation rules before YAML is generated
 - invalid severities
 - invalid `validation.oneStreamProfile` booleans, positive integer limits, string arrays, or severities
+- invalid database pool sizes and operational limits
 - non-boolean export validation gate fields
 - invalid TCP ports
 - non-positive grid page size
 - invalid metadata-only exclude regex patterns
+
+Project validation rules are configured through the versioned catalog API, not by changing the global export-blocking severity list. See [Validation Rules](validation-rules.md) for classifications and OneStream evidence.
 
 ## Environment Overrides
 
@@ -161,13 +201,22 @@ The loader currently supports these environment overrides:
 DIMBUILDER_CONFIG_FILE
 METADATA_DIRECTORY
 DATABASE_FILE
+DATABASE_URL
+DATABASE_POOL_MAX
 PORT
+HOST
+AUTH_ENABLED
+AUTH_USERNAME
+AUTH_PASSWORD
+JWT_SECRET
+EXPORT_MAX_MEMBERS
+APP_MODE
 ```
 
 Environment overrides should remain small and operational. Functional behavior should stay in YAML so it can be reviewed and documented.
 
 ## Frontend Config Editor
 
-The app includes a browser-based config editor accessible from the "Config" section in the sidebar. It displays the current merged configuration as JSON in an editable textarea. Clicking "Save" sends a `PUT /api/config` request that writes the updated values to the YAML file and hot-reloads the configuration without restarting the server.
+The app includes a browser-based config editor accessible from the "Config" section when the `platformExtras` module is enabled. It displays the current client-safe merged configuration as JSON in an editable textarea. Clicking "Save" sends a `PUT /api/config` request that validates and writes the submitted values to the YAML file, updates the in-memory config, and reloads the client view. Server-only paths, ports, and authentication settings are excluded from the client payload.
 
 This is useful for making quick configuration tweaks (e.g., toggling features, adjusting validation severities, or changing export options) without SSH access or manual YAML editing. The editor respects the same validation rules as the YAML loader — invalid configurations are rejected with a descriptive error.

@@ -46,6 +46,7 @@ export interface ProjectVersionRecord {
   sourceFileName: string;
   seededAt: string;
   createdBy: string;
+  description?: string;
   summary: Record<string, unknown>;
   snapshot?: Record<string, unknown>;
 }
@@ -242,6 +243,45 @@ export interface DimensionOverviewStats {
   memberCount: number;
   relationshipCount: number;
 }
+
+export interface MemberSearchResult {
+  memberId: string;
+  memberKey: string;
+  description: string | null;
+  dimensionId: string;
+  dimensionType: string;
+  dimensionName: string;
+  /** Parsed properties_json; populated by structured search, omitted by the lightweight member search. */
+  properties?: Record<string, unknown>;
+}
+
+export interface MemberSearchResponse {
+  results: MemberSearchResult[];
+  hasMore: boolean;
+}
+
+export interface RelationshipSearchResult {
+  relationshipId: string;
+  parentKey: string;
+  childKey: string;
+  ownershipType: string;
+  properties: Record<string, unknown>;
+  dimensionId: string;
+  dimensionType: string;
+  dimensionName: string;
+}
+
+export interface StructuredSearchResponse {
+  members: MemberSearchResult[];
+  membersHasMore: boolean;
+  relationships: RelationshipSearchResult[];
+  relationshipsHasMore: boolean;
+}
+
+export interface FieldValuesResponse {
+  values: string[];
+}
+
 
 export interface DashboardSummary {
   totalDimensions: number;

@@ -15,7 +15,7 @@ import type {
   ValidationIssue,
 } from "../../shared/types";
 import {
-  buildIssueSummary,
+  buildBlockingIssueSummary,
   computeProjectHealthFallback,
   formatProjectHealthTitle,
   scoreValidationHealth,
@@ -41,7 +41,7 @@ export function KPICards({
   const [coverage, setCoverage] = useState<number | null>(null);
   const [qualityLoaded, setQualityLoaded] = useState(false);
   const [coverageLoaded, setCoverageLoaded] = useState(false);
-  const issueSummary = buildIssueSummary(issues, blockedSeverities);
+  const issueSummary = buildBlockingIssueSummary(issues);
 
   useEffect(() => {
     let cancelled = false;
@@ -200,9 +200,9 @@ export function KPICards({
           </span>
           <span
             className="kpi-metric-label"
-            title="Validation errors that need attention"
+            title="Validation errors that block export"
           >
-            Errors
+            Blocking errors
           </span>
         </div>
         <div className="kpi-metric">

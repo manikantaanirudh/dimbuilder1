@@ -21,17 +21,16 @@ Authentication is controlled by `config.auth`:
 ```yaml
 auth:
   enabled: true
-  selfRegistration: false
-  jwtSecret: "<random-secret>"
-  oidc:
-    enabled: false
-    issuerUrl: "https://login.microsoftonline.com/{tenant}/v2.0"
-    clientId: "<client-id>"
-    clientSecret: "<client-secret>"
-    callbackUrl: "http://localhost:3000/api/auth/oidc/callback"
+  strategy: local
+  jwt:
+    secret: "<random-secret>"
+    accessTokenExpiry: 15m
+    refreshTokenExpiry: 7d
+  defaultRole: author
+  allowSelfRegistration: false
 ```
 
-When `auth.enabled` is `true`, the system uses JWT-based multi-user authentication. When `false`, the app operates in unauthenticated mode with a synthetic `local-admin` identity for backward compatibility.
+When `auth.enabled` is false or `strategy` is `none`, the app operates in unauthenticated local mode and the middleware assigns a synthetic system/admin identity. With `strategy: local` or `strategy: oidc`, API routes below `/api` require a Bearer access token. `/api/health` and the auth status/login/registration endpoints have their own public behavior.
 
 ### Authentication Strategies
 
@@ -43,7 +42,7 @@ When `auth.enabled` is `true`, the system uses JWT-based multi-user authenticati
 - Login via `POST /api/auth/login` returns an access token and refresh token
 
 **OIDC / SSO (Azure AD, Okta, any OpenID Connect provider):**
-- When `auth.oidc.enabled` is `true`, the server exposes `GET /api/auth/oidc` to initiate the OIDC flow
+- When `auth.strategy` is `oidc` and `auth.oidc` is configured, the server exposes `GET /api/auth/oidc/authorize` to initiate the OIDC flow
 - Callback at `GET /api/auth/oidc/callback` validates the ID token and creates or links the user
 - OIDC users are auto-provisioned on first login with the `viewer` role
 - Provider metadata is discovered from the `issuerUrl` (`.well-known/openid-configuration`)
@@ -53,11 +52,11 @@ When `auth.enabled` is `true`, the system uses JWT-based multi-user authenticati
 | Token | Lifetime | Storage |
 |-------|----------|---------|
 | Access token (JWT) | 15 minutes | Client memory only |
-| Refresh token (opaque) | 7 days | Hashed (SHA-256) in `user_sessions` table |
+| Refresh token (signed JWT) | 7 days | Bcrypt hash in `user_sessions` table |
 
-- Access tokens are signed with HS256 using `auth.jwtSecret`
-- Refresh tokens are single-use: each refresh issues a new pair and invalidates the old refresh token
-- `POST /api/auth/refresh` returns a new access token given a valid refresh token
+- Access tokens are signed with HS256 using `JWT_SECRET` when set, otherwise `auth.jwt.secret`
+- Refresh tokens are verified against both their JWT signature/expiry and the stored bcrypt session hash
+- `POST /api/auth/refresh` returns a new access token given a valid refresh token; the current implementation does not rotate the refresh token
 - `POST /api/auth/logout` deletes the session server-side, invalidating the refresh token
 
 ### Password Requirements and Hashing
@@ -141,13 +140,20 @@ Projects support granular permission grants beyond system roles:
 
 Project permissions are stored in the `project_permissions` table and checked by the authorize middleware when a `projectId` route parameter is present.
 
-### Backward Compatibility
+### Legacy Basic Auth Compatibility
 
-When `auth.enabled` is `false`:
-- No authentication middleware is applied
-- All requests use the synthetic identity `local-admin` with admin privileges
-- The system behaves identically to pre-auth versions
-- No user registration, login, or session management is available
+When `auth.enabled` is true, `auth.strategy` is `none`, and legacy `auth.username` is configured, the app applies HTTP Basic Auth to API routes below `/api`. This is a compatibility path implemented by `src/server/middleware/basicAuth.ts`; it is not the primary local/OIDC authentication flow. When auth is disabled, no credentials are required and the synthetic system/admin identity is used.
+
+### Startup Safety
+
+`src/server/startupSafety.ts` rejects unsafe shared or production startup configurations:
+
+- non-localhost binding without authentication;
+- shared/production `appMode` without authentication;
+- placeholder JWT secrets on non-localhost/shared/production deployments;
+- first-admin bootstrap with missing or default credentials.
+
+Experimental platform modules are also forced off in shared and production modes unless `UNSAFE_ALLOW_EXPERIMENTAL=true` is explicitly supplied.
 
 ## Request Validation
 
@@ -181,15 +187,14 @@ Defined schemas (`src/server/schemas.ts`):
 ## Known Gaps
 
 - No CSRF protection.
-- No upload file type or size policy beyond middleware defaults.
-- No database migration framework.
-- No secrets management model (use environment variables for `jwtSecret` and OIDC credentials in production).
+- Upload validation is limited to the configured multipart handling and application checks; deployment-specific file type policy remains an operational concern.
+- Secret management is external to the repository; use environment variables or a deployment secret store for `JWT_SECRET`, OIDC client secrets, and admin bootstrap credentials.
 
 ## Production Hardening Recommendations
 
 Before shared or production use:
 
-- Enable auth (`auth.enabled: true`) and configure a strong `jwtSecret` (32+ random bytes).
+- Enable auth (`auth.enabled: true`) with `strategy: local` or `strategy: oidc`, and configure a strong JWT secret (32+ random bytes).
 - Configure OIDC for enterprise SSO rather than relying solely on local credentials.
 - Set `server.corsOrigins` to restrict allowed origins.
 - Add CSRF protection or same-site deployment controls.
@@ -197,4 +202,4 @@ Before shared or production use:
 - Keep export bypass disabled in shared environments unless an approval workflow records the reason.
 - Add backup and restore procedures for SQLite or move to a managed database.
 - Add migration tooling.
-- Store `jwtSecret` and OIDC `clientSecret` via environment variable overrides rather than plaintext YAML.
+- Store `JWT_SECRET`, OIDC client secrets, and admin bootstrap credentials via environment or deployment secret management rather than plaintext YAML.

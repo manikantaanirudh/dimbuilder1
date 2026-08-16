@@ -33,8 +33,8 @@ describe("validation engine", () => {
 
     expect(issues.filter((issue) => issue.code === "DUPLICATE_MEMBER").map((issue) => issue.severity)).toEqual(["error", "error"]);
     expect(issues.find((issue) => issue.code === "DUPLICATE_RELATIONSHIP")?.severity).toBe("info");
-    expect(issues.find((issue) => issue.code === "DIMENSION_NAME_REQUIRED")?.severity).toBe("warning");
-    expect(issues.find((issue) => issue.code === "UNKNOWN_RELATIONSHIP_CHILD")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "DIMENSION_NAME_REQUIRED")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "UNKNOWN_RELATIONSHIP_CHILD")?.severity).toBe("warning");
   });
 
   it("detects duplicate members and missing relationship children", () => {
@@ -74,8 +74,9 @@ describe("validation engine", () => {
     });
 
     expect(issues.filter((issue) => issue.severity === "error").map((issue) => issue.code)).toEqual(
-      expect.arrayContaining(["INVALID_BOOLEAN", "INVALID_NUMBER", "CIRCULAR_HIERARCHY"])
+      expect.arrayContaining(["INVALID_BOOLEAN", "INVALID_NUMBER"])
     );
+    expect(issues.find((issue) => issue.code === "CIRCULAR_HIERARCHY")?.severity).toBe("warning");
   });
 
   it("blocks invalid numeric relationship properties for OneStream relationship fields", () => {
@@ -219,8 +220,8 @@ describe("validation engine", () => {
     });
 
     expect(issues.find((issue) => issue.code === "ACCOUNT_TYPE_MISSING")).toBeUndefined();
-    expect(issues.find((issue) => issue.code === "INVALID_ENUM_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("warning");
-    expect(issues.find((issue) => issue.code === "INVALID_PROPERTY_TYPE" && issue.fieldName === "Allow Input")?.severity).toBe("warning");
+    expect(issues.find((issue) => issue.code === "INVALID_ENUM_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "INVALID_PROPERTY_TYPE" && issue.fieldName === "Allow Input")?.severity).toBe("error");
     expect(issues.find((issue) => issue.code === "UNKNOWN_PROPERTY" && issue.fieldName === "Legacy Custom Property")?.severity).toBe("info");
   });
 
@@ -411,7 +412,7 @@ describe("validation engine", () => {
       "INVALID_VARYING_PROPERTY_VALUE"
     ]));
     expect(issues.find((issue) => issue.code === "UNKNOWN_VARYING_PROPERTY")?.severity).toBe("warning");
-    expect(issues.find((issue) => issue.code === "INVALID_VARYING_PROPERTY_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "INVALID_VARYING_PROPERTY_VALUE" && issue.fieldName === "Account Type")?.severity).toBe("warning");
   });
 
   it("reports preserved unknown XML attributes and unsupported elements as non-blocking import notes", () => {
@@ -576,6 +577,6 @@ describe("validation engine", () => {
       "RELATIONSHIP_OPERATION_UNSUPPORTED"
     ]));
     expect(issues.find((issue) => issue.code === "RELATIONSHIP_DELETE_CREATES_ORPHAN")?.severity).toBe("warning");
-    expect(issues.find((issue) => issue.code === "RELATIONSHIP_OPERATION_UNSUPPORTED")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "RELATIONSHIP_OPERATION_UNSUPPORTED")?.severity).toBe("warning");
   });
 });

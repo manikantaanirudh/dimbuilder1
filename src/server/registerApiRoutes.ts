@@ -24,6 +24,7 @@ import { createImportRouter } from "./routes/import";
 import { createMigrationRouter } from "./routes/migration";
 import { createPatternProfileRouter } from "./routes/patternProfiles";
 import { createProjectRouter } from "./routes/projects";
+import { createProjectQueryRouter } from "./routes/projectQuery";
 import { createReadinessRouter } from "./routes/readiness";
 import { createReportingRouter } from "./routes/reporting";
 import { createRiskHeatmapRouter } from "./routes/riskHeatmap";
@@ -51,6 +52,7 @@ export function registerApiRoutes(
   app.use("/api/config", createConfigRouter(config));
   app.use("/api/blueprints", createBlueprintRouter(config));
   app.use("/api/projects", createProjectRouter(repos, config));
+  app.use("/api/projects", createProjectQueryRouter(repos, config));
   app.use("/api/projects", createCertificationRouter(repos, config));
   app.use("/api/projects", createWaiversRouter(repos));
   app.use("/api/projects", createReadinessRouter(repos, config));

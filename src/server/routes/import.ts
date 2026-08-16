@@ -12,8 +12,8 @@ import {
 import { parseMetadataCsvColumnMapping } from "../../shared/metadataCsvMapping";
 import { parseOneStreamXmlFromStream } from "../../shared/xmlImport";
 import { parseWorkbook } from "../../shared/workbookParser";
-import { validateDimension } from "../../shared/validationEngine";
 import type { Repositories } from "../db/repositories";
+import { runProjectValidation } from "../helpers/runValidation";
 import { findDefaultMetadataReferencePath, parseMetadataReference } from "../metadataReference";
 import { applyMetadataCsvCommitPlan } from "../metadataCsvCommit";
 
@@ -202,6 +202,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
       const targetProjectId = typeof req.body.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
+      const versionDescription = typeof req.body.description === "string" ? req.body.description.trim() : "";
       const metadataReferencePath = config.import.metadataReference.enabled
         ? findDefaultMetadataReferencePath({
           directory: config.paths.metadataDirectory,
@@ -220,7 +221,9 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const isExisting = Boolean(existingProject);
       const seededAt = new Date().toISOString();
       const currentVer = existingProject?.versionNumber ?? 1;
-      const nextVerNum = isExisting ? currentVer + 1 : 1;
+      const existingVersionRows = isExisting && existingProject ? await repos.projectVersions.listByProject(existingProject.id) : [];
+      const maxKnownVer = existingVersionRows.reduce((max, v) => Math.max(max, v.versionNumber), currentVer);
+      const nextVerNum = isExisting ? maxKnownVer + 1 : 1;
       const nextVerLabel = `v${nextVerNum}`;
       const fileName = req.file.originalname;
 
@@ -290,6 +293,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
           versionLabel: nextVerLabel,
           sourceFileName: fileName,
           createdBy: "local-admin",
+          description: versionDescription,
           summary: parsed.importSummary,
           snapshot: {
             dimensions: savedDims,
@@ -301,21 +305,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         return targetProj;
       });
 
-      const [dimensions, members, relationships] = await Promise.all([
-        await repos.dimensions.listByProject(project.id),
-        await repos.members.listByProject(project.id),
-        await repos.relationships.listByProject(project.id)
-      ]);
-      const issues = dimensions.flatMap((dimension) =>
-        validateDimension({
-          project,
-          dimension,
-          members: members.filter((member) => member.dimensionId === dimension.id),
-          relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
-          severities: config.validation
-        })
-      );
-      await repos.issues.replaceForProject(project.id, issues);
+      const issues = await runProjectValidation(repos, config, project.id);
       await repos.audit.record({
         projectId: project.id,
         action: isExisting ? "project.reseed" : "project.import",
@@ -343,6 +333,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
     try {
       if (!req.file) return res.status(400).json({ error: "file is required" });
       const targetProjectId = typeof req.body.projectId === "string" && req.body.projectId.trim() ? req.body.projectId.trim() : undefined;
+      const versionDescription = typeof req.body.description === "string" ? req.body.description.trim() : "";
       const stream = createReadStream(req.file.path);
       const parsed = await parseOneStreamXmlFromStream(stream, {
         projectName: req.body.projectName || req.file.originalname.replace(/\.xml$/i, ""),
@@ -354,7 +345,9 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
       const isExisting = Boolean(existingProject);
       const seededAt = new Date().toISOString();
       const currentVer = existingProject?.versionNumber ?? 1;
-      const nextVerNum = isExisting ? currentVer + 1 : 1;
+      const existingVersionRows = isExisting && existingProject ? await repos.projectVersions.listByProject(existingProject.id) : [];
+      const maxKnownVer = existingVersionRows.reduce((max, v) => Math.max(max, v.versionNumber), currentVer);
+      const nextVerNum = isExisting ? maxKnownVer + 1 : 1;
       const nextVerLabel = `v${nextVerNum}`;
       const fileName = req.file.originalname;
 
@@ -424,6 +417,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
           versionLabel: nextVerLabel,
           sourceFileName: fileName,
           createdBy: "local-admin",
+          description: versionDescription,
           summary: parsed.importSummary,
           snapshot: {
             dimensions: savedDims,
@@ -435,21 +429,7 @@ export function createImportRouter(repos: Repositories, config: AppConfig): Rout
         return targetProj;
       });
 
-      const [dimensions, members, relationships] = await Promise.all([
-        await repos.dimensions.listByProject(project.id),
-        await repos.members.listByProject(project.id),
-        await repos.relationships.listByProject(project.id)
-      ]);
-      const issues = dimensions.flatMap((dimension) =>
-        validateDimension({
-          project,
-          dimension,
-          members: members.filter((member) => member.dimensionId === dimension.id),
-          relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
-          severities: config.validation
-        })
-      );
-      await repos.issues.replaceForProject(project.id, issues);
+      const issues = await runProjectValidation(repos, config, project.id);
       await repos.audit.record({
         projectId: project.id,
         action: isExisting ? "project.reseed" : "project.importXml",

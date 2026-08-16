@@ -4,10 +4,10 @@ The app supports two OLTP backends selected at runtime:
 
 | Backend | Client | Selection |
 |---------|--------|-----------|
-| SQLite (default) | `better-sqlite3` via `src/server/db/sqliteClient.ts` | `DATABASE_FILE` when `DATABASE_URL` is unset |
+| SQLite (default) | Node.js `node:sqlite` `DatabaseSync` via `src/server/db/sqliteClient.ts` | `DATABASE_FILE` when `DATABASE_URL` is unset |
 | PostgreSQL | `pg` via `src/server/db/postgresClient.ts` | `DATABASE_URL` set (takes precedence) |
 
-Use SQLite for local development and the default Vitest suite. Use PostgreSQL for shared pilots, Docker Compose stacks, and production deployments. Both backends share one async repository layer in `src/server/db/repositories.ts`.
+Use SQLite for local development and the default Vitest suite. Use PostgreSQL for shared pilots, Docker Compose stacks, and production deployments. Both backends share one repository layer in `src/server/db/repositories.ts`; SQLite adapts its synchronous driver to the same async-facing interface.
 
 ## Configuration
 
@@ -307,9 +307,17 @@ Key columns:
 
 Rows preserve the exact preview values that were applied. The apply route writes these rows in the same synchronous repository transaction as member or relationship updates.
 
-### `users`, `roles`, `user_roles`
+### `users`, `roles`, `user_roles`, and sessions
 
-Reserved identity and role tables. The current app uses `local-admin` rather than full authentication.
+The `users` table stores local and OIDC identities and system roles. Startup seeds a `local-admin` system row for unauthenticated local mode; when JWT/OIDC authentication is enabled, registered or provisioned users and refresh sessions are persisted in the user/session tables. Passwords are stored as bcrypt hashes and refresh tokens are stored as hashes, not plaintext.
+
+### `schema_migrations`
+
+Named migration IDs and application timestamps are recorded here. SQLite applies the TypeScript migration registry through `runMigrationsSync`; PostgreSQL applies the shared registry plus SQL files in `src/server/db/migrations/postgres/`. Current named migrations cover relationship operation columns, validation waivers, XML-derived property default profiles, project default overrides, and the property default catalog.
+
+### Project Query workbench tables
+
+`project_query_sessions` and `project_query_entries` keep private 90-day query history. `project_query_entry_rows` stores immutable typed result rows for pagination and export. `validation_snapshots` records project version and validation results, including zero-issue runs, so Project Query can distinguish current, stale, and missing evidence. `project_query_playbook_runs` and `project_query_playbook_steps` store versioned diagnostic progress and result snapshots. `project_query_templates` stores private parameterized commands. All tables exist in SQLite and PostgreSQL migrations, use ownership indexes, and cascade dependent records.
 
 ## Referential Behavior
 
@@ -356,4 +364,4 @@ Indexes support common lookups:
 
 ## Schema Evolution
 
-`src/server/db/database.ts` applies `schemaSql` on startup, runs additive `evolveSchema()` helpers, and records named migrations from `src/server/db/migrations.ts` in `schema_migrations`. Migration `002_relationship_operation_columns` adds relationship operation metadata columns when missing from older local databases.
+`src/server/db/database.ts` applies the idempotent SQLite base schema on startup, runs additive `evolveSchema()` helpers, records named migrations from `src/server/db/migrations.ts`, and seeds the property-default catalog and default workflow/security rows. PostgreSQL uses `src/server/db/schema/postgres.sql` plus the PostgreSQL migration files and records the same migration IDs. Migration `002_relationship_operation_columns` adds relationship operation metadata columns when missing from older local databases; later migrations add waivers and property-default tables/catalog data.

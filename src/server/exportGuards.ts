@@ -2,6 +2,7 @@ import type { Response } from "express";
 import type { AppConfig } from "../shared/appConfigTypes";
 import { ExportLimitError } from "../shared/exportLimits";
 import type { Severity, ValidationIssue } from "../shared/types";
+import { isExportBlockingValidationIssue } from "../shared/validationRuleCatalog";
 import type { Repositories } from "./db/repositories";
 
 export interface ExportGuardOptions {
@@ -35,7 +36,7 @@ export async function assertProjectCanExport(
   repos: Repositories,
   options: ExportGuardOptions
 ): Promise<void> {
-  const blockedSeverities = uniqueSeverities(config.validation.exportBlockedBySeverities);
+  const blockedSeverities: Severity[] = ["error"];
   const issues = await repos.issues.listValidationIssuesForProject(projectId);
   const issueCounts = countIssuesBySeverity(issues);
   const bypassAllowed = config.export.allowValidationBypass === true;
@@ -52,7 +53,7 @@ export async function assertProjectCanExport(
     });
   }
 
-  const hasBlockingIssues = await repos.issues.hasBlockingValidationIssues(projectId, blockedSeverities);
+  const hasBlockingIssues = issues.some(isBlockingIssue);
   if (!hasBlockingIssues) return;
 
   if (bypassAllowed && options.bypassRequested) {
@@ -97,7 +98,7 @@ export async function assertDimensionCanExport(
   repos: Repositories,
   options: ExportGuardOptions
 ): Promise<void> {
-  const blockedSeverities = uniqueSeverities(config.validation.exportBlockedBySeverities);
+  const blockedSeverities: Severity[] = ["error"];
   const allIssues = await repos.issues.listValidationIssuesForProject(projectId);
   const dimensionIssues = allIssues.filter((issue) => issue.dimensionId === dimensionId);
   const issueCounts = countIssuesBySeverity(dimensionIssues);
@@ -115,7 +116,7 @@ export async function assertDimensionCanExport(
     });
   }
 
-  const hasBlockingIssues = dimensionIssues.some((issue) => blockedSeverities.includes(issue.severity));
+  const hasBlockingIssues = dimensionIssues.some(isBlockingIssue);
   if (!hasBlockingIssues) return;
 
   if (bypassAllowed && options.bypassRequested) {
@@ -177,13 +178,8 @@ function countIssuesBySeverity(issues: ValidationIssue[]): Record<Severity, numb
   };
 }
 
-function uniqueSeverities(values: Severity[]): Severity[] {
-  const seen = new Set<Severity>();
-  return values.filter((severity) => {
-    if (seen.has(severity)) return false;
-    seen.add(severity);
-    return true;
-  });
+function isBlockingIssue(issue: ValidationIssue): boolean {
+  return isExportBlockingValidationIssue(issue);
 }
 
 function isTruthyFlag(value: unknown): boolean {

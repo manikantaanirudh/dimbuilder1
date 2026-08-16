@@ -2,8 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import type { AppConfig } from "../../shared/appConfigTypes";
 import type { Repositories } from "../db/repositories";
-import { buildProjectAIContext } from "../ai/projectContext";
-import { runNaturalLanguageQuery } from "../ai/aiEngine";
+import { executeProjectQuery, toLegacyProjectQueryResult } from "../projectQuery/engine";
 import { createProjectFromBlueprints } from "../projectBlueprints";
 import { scoreProjectQuality } from "../tier3/tier3Engine";
 import { createAssistantRouter } from "./assistant";
@@ -16,7 +15,8 @@ import { createSnapshotsRouter } from "./snapshots";
 import { createProjectValidationRouter } from "./validation";
 import { createVaryingPropertiesRouter } from "./varyingProperties";
 
-import { validateDimension } from "../../shared/validationEngine";
+import { runProjectValidation } from "../helpers/runValidation";
+import type { ProjectVersionRecord } from "../../shared/types";
 
 export function createProjectRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
@@ -222,21 +222,7 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
         });
       });
 
-      const [dimensions, members, relationships] = await Promise.all([
-        await repos.dimensions.listByProject(project.id),
-        await repos.members.listByProject(project.id),
-        await repos.relationships.listByProject(project.id)
-      ]);
-      const issues = dimensions.flatMap((dimension) =>
-        validateDimension({
-          project: updatedProject ?? project,
-          dimension,
-          members: members.filter((member) => member.dimensionId === dimension.id),
-          relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
-          severities: config.validation
-        })
-      );
-      await repos.issues.replaceForProject(project.id, issues);
+      const issues = await runProjectValidation(repos, config, project.id);
       await repos.audit.record({
         projectId: project.id,
         action: "project.version.restore",
@@ -251,7 +237,131 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     }
   });
 
+  router.post("/:projectId/versions", async (req, res) => {
+    try {
+      const project = await repos.projects.get(req.params.projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+      const description = typeof req.body?.description === "string" ? req.body.description.trim() : "";
+
+      const [dimensions, members, relationships] = await Promise.all([
+        repos.dimensions.listByProject(project.id),
+        repos.members.listByProject(project.id),
+        repos.relationships.listByProject(project.id)
+      ]);
+      const liveSnapshot = { dimensions, members, relationships };
+      const summary = {
+        dimensionsImported: dimensions.length,
+        membersImported: members.length,
+        relationshipsImported: relationships.length
+      };
+
+      const currentVer = project.versionNumber ?? 1;
+      const existingVersions = await repos.projectVersions.listByProject(project.id);
+      if (!existingVersions.some((v) => v.versionNumber === currentVer)) {
+        await repos.projectVersions.create({
+          projectId: project.id,
+          versionNumber: currentVer,
+          versionLabel: project.versionLabel ?? `v${currentVer}`,
+          sourceFileName: project.sourceFileName || "Original Import",
+          createdBy: project.createdBy || "local-admin",
+          summary,
+          snapshot: liveSnapshot
+        });
+      }
+
+      const maxKnownVer = existingVersions.reduce((max, v) => Math.max(max, v.versionNumber), currentVer);
+      const nextVerNum = maxKnownVer + 1;
+      const nextVerLabel = `v${nextVerNum}`;
+      const seededAt = new Date().toISOString();
+      const version = await repos.projectVersions.create({
+        projectId: project.id,
+        versionNumber: nextVerNum,
+        versionLabel: nextVerLabel,
+        sourceFileName: project.sourceFileName || "Manual Save",
+        createdBy: project.createdBy || "local-admin",
+        description,
+        summary,
+        snapshot: liveSnapshot
+      });
+
+      const updatedProject = await repos.projects.updateVersion(project.id, {
+        versionNumber: nextVerNum,
+        versionLabel: nextVerLabel,
+        sourceFileName: project.sourceFileName || "",
+        seededAt
+      });
+
+      await repos.audit.record({
+        projectId: project.id,
+        action: "project.version.create",
+        entityType: "project",
+        entityId: project.id,
+        after: { versionLabel: nextVerLabel, description }
+      });
+
+      res.json({ project: updatedProject ?? project, version, message: `Created ${nextVerLabel}` });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create version" });
+    }
+  });
+
+  router.put("/:projectId/versions/current", async (req, res) => {
+    try {
+      const project = await repos.projects.get(req.params.projectId);
+      if (!project) return res.status(404).json({ error: "project not found" });
+      const description = typeof req.body?.description === "string" ? req.body.description.trim() : undefined;
+      const verNum = project.versionNumber ?? 1;
+
+      const [dimensions, members, relationships] = await Promise.all([
+        repos.dimensions.listByProject(project.id),
+        repos.members.listByProject(project.id),
+        repos.relationships.listByProject(project.id)
+      ]);
+      const liveSnapshot = { dimensions, members, relationships };
+      const summary = {
+        dimensionsImported: dimensions.length,
+        membersImported: members.length,
+        relationshipsImported: relationships.length
+      };
+
+      const existing = await repos.projectVersions.getByVersion(project.id, verNum);
+      let version: ProjectVersionRecord | null;
+      if (existing) {
+        version = await repos.projectVersions.updateSnapshot(project.id, verNum, {
+          snapshot: liveSnapshot,
+          summary,
+          description
+        });
+      } else {
+        version = await repos.projectVersions.create({
+          projectId: project.id,
+          versionNumber: verNum,
+          versionLabel: project.versionLabel ?? `v${verNum}`,
+          sourceFileName: project.sourceFileName || "Manual Save",
+          createdBy: project.createdBy || "local-admin",
+          description: description ?? "",
+          summary,
+          snapshot: liveSnapshot
+        });
+      }
+
+      await repos.audit.record({
+        projectId: project.id,
+        action: "project.version.update",
+        entityType: "project",
+        entityId: project.id,
+        after: { versionLabel: project.versionLabel ?? `v${verNum}`, description: description ?? "" }
+      });
+
+      res.json({ project, version, message: `Saved changes to ${project.versionLabel ?? `v${verNum}`}` });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update version" });
+    }
+  });
+
   router.post("/:projectId/ai/query", async (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Sunset", "Wed, 10 Feb 2027 00:00:00 GMT");
     const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
 
@@ -259,16 +369,8 @@ export function createProjectRouter(repos: Repositories, config: AppConfig): Rou
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "question is required" });
 
-    const dimensions = await repos.dimensions.listByProject(project.id);
-    const members = await repos.members.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
-    const context = await buildProjectAIContext(repos, config, project.id) ?? undefined;
-
-    res.json(runNaturalLanguageQuery(
-      parsed.data.question,
-      { dimensions, members, relationships },
-      context
-    ));
+    const execution = await executeProjectQuery(repos, config, project.id, parsed.data.question);
+    res.json(execution ? toLegacyProjectQueryResult(execution.result) : { error: "project not found" });
   });
 
   router.use(createAssistantRouter(repos, config));

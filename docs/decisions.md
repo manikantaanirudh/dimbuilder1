@@ -260,7 +260,7 @@ Impacted files:
 
 Decision:
 
-All export endpoints call a shared server guard before rendering files or writing snapshots. The guard reads stored validation issues through repository helpers and blocks severities listed in `validation.exportBlockedBySeverities`.
+All export endpoints call a shared server guard before rendering files or writing snapshots. The guard reads stored validation issues through repository helpers and blocks only registered locked hard-error rules from the shared validation catalog.
 
 Rationale:
 
@@ -296,7 +296,7 @@ Tradeoffs:
 
 - The profile is configurable and enabled by default, but users can run a generic-only validation pass with `profile: "default"` for compatibility checks.
 - The first profile focuses on high-signal design rules rather than attempting to encode every OneStream implementation preference.
-- Some findings are warnings by default so teams can tune their own export-blocking policy through `validation.exportBlockedBySeverities`.
+- Some findings are warnings or informational by default, but project configuration cannot turn advisory or informational findings into export blockers.
 
 Impacted files:
 

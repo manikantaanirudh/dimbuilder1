@@ -20,6 +20,12 @@ npm.cmd run dev
 
 The server defaults to `127.0.0.1:8787` and Vite defaults to `127.0.0.1:5173`, both configured in `config/dimbuilder.yaml`.
 
+On Windows, restart both development services from the current worktree with:
+
+```powershell
+scripts\restart-services.bat dev bg
+```
+
 ## Test
 
 ```powershell
@@ -123,6 +129,10 @@ Supported environment overrides:
 - `PG_TEST_URL`: connection string for optional Postgres parity tests (typically `localhost:5433` with Docker Compose).
 - `PORT`: overrides `server.port`.
 - `LOG_LEVEL`: controls Pino log verbosity (default `info`).
+- `HOST`: overrides the API bind host.
+- `AUTH_ENABLED`, `AUTH_USERNAME`, `AUTH_PASSWORD`, `JWT_SECRET`: authentication overrides.
+- `APP_MODE`: runtime posture (`local`, `shared`, or `production`).
+- `EXPORT_MAX_MEMBERS`: export size guard override.
 
 ## Useful Paths
 

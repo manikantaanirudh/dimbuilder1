@@ -2,6 +2,7 @@ import { bandLabel, type ReadinessReport } from "./readinessScore";
 import { normalizePropertyLookupName } from "./oneStreamPropertyDictionary";
 import { normalizeCellValue } from "./text";
 import type { Severity, ValidationIssue } from "./types";
+import { isExportBlockingValidationIssue } from "./validationRuleCatalog";
 
 export interface AssistantDimension {
   id: string;
@@ -120,7 +121,7 @@ export function classifyIntent(q: string): AssistantIntent {
 }
 
 function blockingIssues(context: AssistantContext): ValidationIssue[] {
-  return context.issues.filter((i) => context.exportBlockedBySeverities.includes(i.severity));
+  return context.issues.filter(isExportBlockingValidationIssue);
 }
 
 function answerExportReady(context: AssistantContext): AssistantAnswer {

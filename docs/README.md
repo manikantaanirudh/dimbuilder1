@@ -34,6 +34,8 @@ This folder is the maintained knowledge base for SR Onestream Dim Builder. It de
 - [System Integration Test Report](system-integration-test-report.md): Latest end-to-end SIT execution results.
 - [Deployment Guide](deployment-guide.md): Build output, runtime configuration, and deployment notes.
 - [Production Readiness Checklist](production-readiness-checklist.md): Checklist before production or shared use.
+- [Source Map](SOURCE-MAP.md): Evidence ledger for the maintained product and technical claims.
+- [Gaps And Questions](GAPS-AND-QUESTIONS.md): Open evidence, reachability, and operational questions.
 
 ## Planning And Governance
 

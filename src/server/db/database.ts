@@ -51,6 +51,9 @@ function evolveSchema(db: AppDatabase): void {
   ensureColumn(db, "projects", "version_number", "INTEGER NOT NULL DEFAULT 1");
   ensureColumn(db, "projects", "version_label", "TEXT NOT NULL DEFAULT 'v1'");
   ensureColumn(db, "projects", "seeded_at", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "project_versions", "description", "TEXT NOT NULL DEFAULT ''");
+  dedupeProjectVersions(db);
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS ux_project_versions_project_version ON project_versions(project_id, version_number)");
 }
 
 function ensureColumn(db: AppDatabase, tableName: string, columnName: string, definition: string): void {
@@ -58,6 +61,42 @@ function ensureColumn(db: AppDatabase, tableName: string, columnName: string, de
     .map((row) => String(row.name));
   if (existingColumns.includes(columnName)) return;
   db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+}
+
+// One-time, idempotent repair for a historical bug where duplicate (project_id, version_number)
+// rows could be created. Keeps the earliest-seeded row for each number and renumbers any later
+// duplicates to the next free number for that project, preserving all history without data loss.
+function dedupeProjectVersions(db: AppDatabase): void {
+  const rows = db
+    .prepare(
+      "SELECT id, project_id, version_number FROM project_versions ORDER BY project_id, version_number ASC, seeded_at ASC"
+    )
+    .all();
+  const usedByProject = new Map<string, Set<number>>();
+  const maxByProject = new Map<string, number>();
+  for (const row of rows) {
+    const projectId = String(row.project_id);
+    const versionNumber = Number(row.version_number);
+    maxByProject.set(projectId, Math.max(maxByProject.get(projectId) ?? 0, versionNumber));
+  }
+  for (const row of rows) {
+    const projectId = String(row.project_id);
+    const versionNumber = Number(row.version_number);
+    const used = usedByProject.get(projectId) ?? new Set<number>();
+    usedByProject.set(projectId, used);
+    if (used.has(versionNumber)) {
+      const nextFree = (maxByProject.get(projectId) ?? versionNumber) + 1;
+      maxByProject.set(projectId, nextFree);
+      db.prepare("UPDATE project_versions SET version_number = ?, version_label = ? WHERE id = ?").run(
+        nextFree,
+        `v${nextFree}`,
+        String(row.id)
+      );
+      used.add(nextFree);
+    } else {
+      used.add(versionNumber);
+    }
+  }
 }
 
 function seedSecurity(db: AppDatabase): void {

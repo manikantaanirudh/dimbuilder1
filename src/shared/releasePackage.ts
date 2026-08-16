@@ -8,6 +8,7 @@ import type {
   ValidationIssue
 } from "./types";
 import { normalizeCellValue } from "./text";
+import { isExportBlockingValidationIssue } from "./validationRuleCatalog";
 
 export interface ReleasePackageManifestInput {
   packageName: string;
@@ -210,7 +211,7 @@ export function summarizeValidationIssues(issues: ValidationIssue[], blockingSev
   const infos = issues.filter((issue) => issue.severity === "info").length;
   return {
     totalIssues: issues.length,
-    blockingIssues: issues.filter((issue) => blockingSeverities.includes(issue.severity)).length,
+    blockingIssues: issues.filter(isExportBlockingValidationIssue).length,
     errors,
     warnings,
     infos

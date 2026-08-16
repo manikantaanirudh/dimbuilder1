@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { supportedConfigSeverities, type AppConfig, type OneStreamValidationProfileConfig } from "../../shared/appConfigTypes";
-import { validateDimension } from "../../shared/validationEngine";
 import type { Severity } from "../../shared/types";
+import { VALIDATION_RULE_CATALOG_VERSION, VALIDATION_RULE_TARGET_VERSION, canOverrideValidationRule, getValidationRule, getValidationRuleCatalog, isExportBlockingValidationIssue, resolveValidationSeverity } from "../../shared/validationRuleCatalog";
+import { requireProjectRole } from "../acl/projectACL";
+import { collectProjectValidation } from "../helpers/runValidation";
 import type { Repositories } from "../db/repositories";
 
 export function createValidationRouter(repos: Repositories, config: AppConfig): Router {
   const router = Router();
+  const viewer = requireProjectRole(repos, "viewer");
 
-  router.post("/:projectId/run", async (req, res) => {
+  router.post("/:projectId/run", viewer, async (req, res) => {
     const project = await repos.projects.get(req.params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const oneStreamProfile = resolveValidationProfile(req.body, config);
@@ -17,62 +20,27 @@ export function createValidationRouter(repos: Repositories, config: AppConfig): 
     const projectOverrides = await repos.validationOverrides.listByProject(project.id);
     const overrideSeverityMap = new Map(projectOverrides.map(o => [o.ruleCode, o.severity as Severity]));
 
-    const baseSeverities: any = {
-      ...config.validation,
-      duplicateMemberSeverity: req.body?.duplicateSeverity ?? config.validation.duplicateMemberSeverity,
-      oneStreamProfile
-    };
-
-    // Apply per-project rule overrides
-    if (overrideSeverityMap.has("DUPLICATE_MEMBER")) baseSeverities.duplicateMemberSeverity = overrideSeverityMap.get("DUPLICATE_MEMBER");
-    if (overrideSeverityMap.has("DUPLICATE_RELATIONSHIP")) baseSeverities.duplicateRelationshipSeverity = overrideSeverityMap.get("DUPLICATE_RELATIONSHIP");
-    if (overrideSeverityMap.has("UNKNOWN_RELATIONSHIP_CHILD")) baseSeverities.unknownRelationshipMemberSeverity = overrideSeverityMap.get("UNKNOWN_RELATIONSHIP_CHILD");
-    if (overrideSeverityMap.has("MEMBER_KEY_REQUIRED") || overrideSeverityMap.has("RELATIONSHIP_PARENT_REQUIRED")) baseSeverities.missingRequiredFieldSeverity = overrideSeverityMap.get("MEMBER_KEY_REQUIRED") ?? baseSeverities.missingRequiredFieldSeverity;
-    if (overrideSeverityMap.has("CIRCULAR_HIERARCHY")) baseSeverities.circularHierarchySeverity = overrideSeverityMap.get("CIRCULAR_HIERARCHY");
-    if (overrideSeverityMap.has("RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS")) baseSeverities.relationshipsWithNoLocalMembersSeverity = overrideSeverityMap.get("RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS");
-
-    // Apply OneStream profile overrides
-    if (baseSeverities.oneStreamProfile) {
-      const profile = { ...baseSeverities.oneStreamProfile };
-      if (overrideSeverityMap.has("DUPLICATE_ALIAS")) profile.duplicateAliasSeverity = overrideSeverityMap.get("DUPLICATE_ALIAS");
-      if (overrideSeverityMap.has("INVALID_SORT_ORDER")) profile.invalidSortOrderSeverity = overrideSeverityMap.get("INVALID_SORT_ORDER");
-      if (overrideSeverityMap.has("SHARED_MEMBER_DETECTED")) profile.sharedMemberSeverity = overrideSeverityMap.get("SHARED_MEMBER_DETECTED");
-      if (overrideSeverityMap.has("UNKNOWN_PROPERTY")) profile.unknownPropertySeverity = overrideSeverityMap.get("UNKNOWN_PROPERTY");
-      if (overrideSeverityMap.has("INVALID_ENUM_VALUE")) profile.invalidEnumSeverity = overrideSeverityMap.get("INVALID_ENUM_VALUE");
-      if (overrideSeverityMap.has("INVALID_PROPERTY_TYPE")) profile.invalidPropertyTypeSeverity = overrideSeverityMap.get("INVALID_PROPERTY_TYPE");
-      baseSeverities.oneStreamProfile = profile;
-    }
-
-    const dimensionId = req.body?.dimensionId;
-    let dimensions = await repos.dimensions.listByProject(project.id);
-    if (dimensionId) {
-      dimensions = dimensions.filter((d) => d.id === dimensionId);
-    }
-    const members = await repos.members.listByProject(project.id);
-    const relationships = await repos.relationships.listByProject(project.id);
-    const varyingPropertyValues = await repos.varyingProperties.listVaryingPropertyValues(project.id);
-    const issues = dimensions.flatMap((dimension) =>
-      validateDimension({
-        project,
-        dimension,
-        members: members.filter((member) => member.dimensionId === dimension.id),
-        relationships: relationships.filter((relationship) => relationship.dimensionId === dimension.id),
-        varyingPropertyValues: varyingPropertyValues.filter((value) => value.dimensionId === dimension.id),
-        severities: baseSeverities,
-        duplicateSeverity: req.body?.duplicateSeverity,
-        ruleOverrides: overrideSeverityMap
-      })
-    );
+    const runConfig: AppConfig = { ...config, validation: { ...config.validation, oneStreamProfile } };
+    const dimensionId = typeof req.body?.dimensionId === "string" ? req.body.dimensionId : undefined;
+    const issues = await collectProjectValidation(repos, runConfig, project.id, {
+      dimensionId,
+      duplicateSeverity: isSeverity(req.body?.duplicateSeverity) ? req.body.duplicateSeverity : undefined,
+      ruleOverrides: overrideSeverityMap
+    });
 
     if (dimensionId) {
       const existingIssues = await repos.issues.listByProject(project.id);
       const otherIssues = existingIssues.filter(issue => issue.dimensionId !== dimensionId);
       const mergedIssues = [...otherIssues, ...issues];
       await repos.issues.replaceForProject(project.id, mergedIssues);
+      const blockingCount = mergedIssues.filter(isBlockingIssue).length;
+      await repos.validationSnapshots.create({ projectId: project.id, projectUpdatedAt: project.updatedAt, issueCount: mergedIssues.length, blockingCount, result: validationSnapshotResult(oneStreamProfile, dimensionId) });
       await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: mergedIssues.length } });
       res.json({ issues: mergedIssues });
     } else {
       await repos.issues.replaceForProject(project.id, issues);
+      const blockingCount = issues.filter(isBlockingIssue).length;
+      await repos.validationSnapshots.create({ projectId: project.id, projectUpdatedAt: project.updatedAt, issueCount: issues.length, blockingCount, result: validationSnapshotResult(oneStreamProfile, null) });
       await repos.audit.record({ projectId: project.id, action: "validation.run", entityType: "project", entityId: project.id, after: { issues: issues.length } });
       res.json({ issues });
     }
@@ -85,13 +53,38 @@ type ProjectValidationRouterDeps = { repos: Repositories; config?: AppConfig; ge
 
 export function createProjectValidationRouter({ repos }: ProjectValidationRouterDeps): Router {
   const router = Router({ mergeParams: true });
+  const viewer = requireProjectRole(repos, "viewer");
 
-  router.get("/issues", async (req, res) => {
+  router.get("/issues", viewer, async (req, res) => {
     const params = req.params as Record<string, string>;
     res.json(await repos.issues.listByProject(params.projectId));
   });
 
-  router.get("/validation-config", async (req, res) => {
+  router.get("/validation-rules", viewer, async (req, res) => {
+    const params = req.params as Record<string, string>;
+    const project = await repos.projects.get(params.projectId);
+    if (!project) return res.status(404).json({ error: "project not found" });
+    const overrides = await repos.validationOverrides.listByProject(project.id);
+    const overrideMap = new Map(overrides.map((override) => [override.ruleCode, override.severity]));
+    const rules = getValidationRuleCatalog().map((rule) => {
+      const override = overrideMap.get(rule.code);
+      const validOverride = override && canOverrideValidationRule(rule.code, override as Severity) ? override as Severity : undefined;
+      return {
+        ...rule,
+        effectiveSeverity: resolveValidationSeverity(rule.code, validOverride ?? rule.defaultSeverity),
+        active: validOverride !== "off",
+        overridden: Boolean(validOverride),
+        legacyOverride: override && !validOverride
+          ? { severity: override, reason: getValidationRule(rule.code)?.locked ? "locked_rule" as const : "illegal_severity" as const }
+          : undefined
+      };
+    });
+    const knownCodes = new Set(rules.map((rule) => rule.code));
+    const legacyOverrides = overrides.filter((override) => !knownCodes.has(override.ruleCode)).map((override) => ({ ...override, reason: "unknown_rule" as const }));
+    res.json({ catalogVersion: VALIDATION_RULE_CATALOG_VERSION, targetVersion: VALIDATION_RULE_TARGET_VERSION, rules, legacyOverrides });
+  });
+
+  router.get("/validation-config", viewer, async (req, res) => {
     const params = req.params as Record<string, string>;
     const project = await repos.projects.get(params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
@@ -99,26 +92,60 @@ export function createProjectValidationRouter({ repos }: ProjectValidationRouter
     res.json({ overrides });
   });
 
-  router.post("/validation-config", async (req, res) => {
+  router.put("/validation-config", viewer, async (req, res) => {
+    return replaceValidationConfig(req, res, repos);
+  });
+
+  router.post("/validation-config", viewer, async (req, res) => {
+    res.setHeader("Deprecation", "true");
+    res.setHeader("Sunset", "Wed, 10 Feb 2027 00:00:00 GMT");
+    return replaceValidationConfig(req, res, repos);
+  });
+
+  return router;
+}
+
+async function replaceValidationConfig(req: any, res: any, repos: Repositories): Promise<void> {
     const params = req.params as Record<string, string>;
     const project = await repos.projects.get(params.projectId);
     if (!project) return res.status(404).json({ error: "project not found" });
     const overrides = req.body?.overrides;
     if (!Array.isArray(overrides)) return res.status(400).json({ error: "overrides must be an array" });
-    for (const override of overrides) {
-      if (!override.ruleCode || !override.severity) continue;
-      if (override.severity === "default") {
-        await repos.validationOverrides.deleteByProject(project.id, override.ruleCode);
-      } else {
-        await repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
-      }
+    const normalized = overrides.map((override: unknown) => {
+      if (!isRecord(override) || typeof override.ruleCode !== "string" || typeof override.severity !== "string") return { error: "each override requires ruleCode and severity" };
+      return { ruleCode: override.ruleCode, severity: override.severity };
+    });
+    const invalid = normalized.find((override) => "error" in override || !getValidationRule(override.ruleCode) || (override.severity !== "default" && !canOverrideValidationRule(override.ruleCode, override.severity as Severity)));
+    if (invalid) {
+      const message = "error" in invalid
+        ? invalid.error
+        : !getValidationRule(invalid.ruleCode)
+          ? `unknown rule code '${invalid.ruleCode}'`
+          : getValidationRule(invalid.ruleCode)?.locked
+            ? `rule '${invalid.ruleCode}' is locked`
+            : `severity '${invalid.severity}' is not allowed for '${invalid.ruleCode}'`;
+      return res.status(400).json({ error: message });
+    }
+    const current = await repos.validationOverrides.listByProject(project.id);
+    const nextCodes = new Set(normalized.filter((override): override is { ruleCode: string; severity: string } => !("error" in override) && override.severity !== "default").map((override) => override.ruleCode));
+    for (const existing of current) {
+      if (!nextCodes.has(existing.ruleCode)) await repos.validationOverrides.deleteByProject(project.id, existing.ruleCode);
+    }
+    for (const override of normalized) {
+      if ("error" in override || override.severity === "default") continue;
+      await repos.validationOverrides.upsert(project.id, override.ruleCode, override.severity);
     }
     await repos.audit.record({ projectId: project.id, action: "validation.configUpdate", entityType: "project", entityId: project.id, after: { overrides } });
     const result = await repos.validationOverrides.listByProject(project.id);
     res.json({ overrides: result });
-  });
+}
 
-  return router;
+function isBlockingIssue(issue: { code: string; severity: Severity }): boolean {
+  return isExportBlockingValidationIssue(issue);
+}
+
+function validationSnapshotResult(profile: OneStreamValidationProfileConfig, dimensionId: string | null): Record<string, unknown> {
+  return { profile: profile.enabled ? "onestream" : "default", dimensionId, catalogVersion: VALIDATION_RULE_CATALOG_VERSION, targetVersion: VALIDATION_RULE_TARGET_VERSION };
 }
 
 function resolveValidationProfile(body: unknown, config: AppConfig): OneStreamValidationProfileConfig | null {

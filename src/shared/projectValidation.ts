@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { AppConfig } from "./appConfigTypes";
 import type { DimensionRecord, DimensionType, ProjectRecord, Severity, ValidationIssue } from "./types";
+import { resolveValidationSeverity } from "./validationRuleCatalog";
 
 export interface ValidateProjectStructureInput {
   project: ProjectRecord;
@@ -34,7 +35,7 @@ export function validateProjectStructure(input: ValidateProjectStructureInput): 
   for (const type of expected) {
     if (present.has(type)) continue;
     const overrideSeverity = input.ruleOverrides?.get("DIMENSION_MISSING_FROM_PROJECT");
-    const severity = overrideSeverity ?? missingSeverity;
+    const severity = resolveValidationSeverity("DIMENSION_MISSING_FROM_PROJECT", overrideSeverity ?? missingSeverity, input.ruleOverrides);
     if (severity === "off") continue;
     issues.push({
       id: nanoid(),

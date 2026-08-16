@@ -370,15 +370,15 @@ export function ReportingDashboard({ projectId }: { projectId: string }) {
       <Panel className="dimension-scores-panel">
         <div
           className="panel-heading compact"
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}
+          style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 16, minHeight: 36 }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Layers size={16} />
-            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Dimension Scores</h3>
-            <span style={{ fontSize: "12px", opacity: 0.7 }}>({filteredSnapshots.length} dimensions)</span>
+            <Layers size={20} />
+            <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, textAlign: "center" }}>Dimension Scores</h3>
+            <span style={{ fontSize: "13px", opacity: 0.7 }}>({filteredSnapshots.length} dimensions)</span>
           </div>
           {health.snapshots.length > 3 && (
-            <div style={{ position: "relative", minWidth: 220 }}>
+            <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", minWidth: 220 }}>
               <Search size={14} style={{ position: "absolute", left: 10, top: 9, opacity: 0.5 }} />
               <input
                 type="text"
@@ -460,13 +460,13 @@ export function ReportingDashboard({ projectId }: { projectId: string }) {
       {/* Per-Dimension Quality Breakdown */}
       {qualityDimensions.length > 0 && (
         <Panel className="dimension-quality-panel">
-          <div className="panel-heading compact" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                <Shield size={16} /> Per-Dimension Quality Breakdown
-              </h3>
+          <div className="panel-heading compact" style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 16, minHeight: 36 }}>
+            <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6, textAlign: "center" }}>
+              <Shield size={20} /> Per-Dimension Quality Breakdown
+            </h3>
+            <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)" }}>
+              <StatusBadge tone={scoreTone(qualityOverallScore)}>{qualityOverallScore}/100 Overall</StatusBadge>
             </div>
-            <StatusBadge tone={scoreTone(qualityOverallScore)}>{qualityOverallScore}/100 Overall</StatusBadge>
           </div>
           <div className="quality-dimension-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             {qualityDimensions.map((dim) => (
@@ -557,11 +557,13 @@ export function ReportingDashboard({ projectId }: { projectId: string }) {
       {/* Coverage Analysis */}
       {coverage && (
         <Panel className="coverage-panel">
-          <div className="panel-heading compact" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>Coverage Analysis</h3>
+          <div className="panel-heading compact" style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 16, minHeight: 36 }}>
+            <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, textAlign: "center" }}>
+              <TrendingUp size={20} /> Coverage Analysis
+            </h3>
+            <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)" }}>
+              <StatusBadge tone={scoreTone(coverage.overallCoverage)}>{coverage.overallCoverage}% overall</StatusBadge>
             </div>
-            <StatusBadge tone={scoreTone(coverage.overallCoverage)}>{coverage.overallCoverage}% overall</StatusBadge>
           </div>
           <div
             className="coverage-grid"

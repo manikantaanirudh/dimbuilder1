@@ -12,6 +12,8 @@ import type {
   DimensionRecord,
   DimensionRelationshipRecord,
   ExportLoadMode,
+  FieldValuesResponse,
+  MemberSearchResponse,
   MetadataDiffItemRecord,
   MetadataDiffRunRecord,
   ProjectBaselineRecord,
@@ -22,6 +24,7 @@ import type {
   ReleasePackageMode,
   ReleasePackageRecord,
   SnapshotRestoreSummary,
+  StructuredSearchResponse,
   VaryingPropertyValueFilters,
   VaryingPropertyValueInput,
   VaryingPropertyValueRecord,
@@ -33,6 +36,7 @@ import type { MetadataCsvColumnMapping, MetadataCsvInspectResult } from "../../s
 import type { HierarchyAnalyticsResult } from "../../shared/hierarchyAnalytics";
 import type { GroupedOneStreamPropertyDictionary } from "../../shared/oneStreamPropertyDictionary";
 import type { RelationshipOperationPlan } from "../../shared/relationshipOperations";
+import type { FilterCondition, FilterTarget } from "../../shared/structuredSearch";
 import {
   apiDelete,
   apiDeleteJson,
@@ -153,6 +157,30 @@ export function fetchMembers(projectId: string, dimensionId: string, offset = 0,
     return apiGet<GridResponse<DimensionMemberRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/members?ids=${ids.join(",")}`);
   }
   return apiGet<GridResponse<DimensionMemberRecord>>(`/projects/${projectId}/dimensions/${dimensionId}/members?offset=${offset}&limit=${limit}`);
+}
+
+export function searchMembers(projectId: string, q: string, limit = 50) {
+  return apiGet<MemberSearchResponse>(
+    `/projects/${projectId}/members/search?q=${encodeURIComponent(q)}&limit=${limit}`
+  );
+}
+
+export function structuredSearch(projectId: string, conditions: FilterCondition[], limit = 50) {
+  return apiPost<StructuredSearchResponse>(`/projects/${projectId}/structured-search`, {
+    conditions,
+    limit,
+  });
+}
+
+export function fetchFieldValues(
+  projectId: string,
+  target: FilterTarget,
+  field: string,
+  prefix = "",
+  limit = 20,
+) {
+  const params = new URLSearchParams({ target, field, q: prefix, limit: String(limit) });
+  return apiGet<FieldValuesResponse>(`/projects/${projectId}/field-values?${params.toString()}`);
 }
 
 export function fetchRelationships(projectId: string, dimensionId: string, offset = 0, limit = 300, ids?: string[]) {
@@ -276,6 +304,14 @@ export function restoreProjectVersion(projectId: string, versionNumber: number) 
   return apiPost<{ project: ProjectRecord; message: string }>(`/projects/${projectId}/versions/${versionNumber}/restore`);
 }
 
+export function createProjectVersion(projectId: string, body: { description?: string } = {}) {
+  return apiPost<{ project: ProjectRecord; version: ProjectVersionRecord; message: string }>(`/projects/${projectId}/versions`, body);
+}
+
+export function updateCurrentProjectVersion(projectId: string, body: { description?: string } = {}) {
+  return apiPut<{ project: ProjectRecord; version: ProjectVersionRecord; message: string }>(`/projects/${projectId}/versions/current`, body);
+}
+
 export function fetchChangeSet(projectId: string, changeSetId: string) {
   return apiGet<ChangeSetDetail>(`/projects/${projectId}/change-sets/${changeSetId}`);
 }
@@ -304,19 +340,21 @@ export function fetchChangeSetPackage(projectId: string, changeSetId: string) {
   return apiGet<{ changeSet: ChangeSetRecord; package: ReleasePackageRecord; manifest: Record<string, unknown> }>(`/projects/${projectId}/change-sets/${changeSetId}/package`);
 }
 
-export async function uploadWorkbook(file: File, projectName: string, projectId?: string) {
+export async function uploadWorkbook(file: File, projectName: string, projectId?: string, description?: string) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("projectName", projectName);
   if (projectId) formData.append("projectId", projectId);
+  if (description) formData.append("description", description);
   return apiPost<{ project: ProjectRecord; importSummary: Record<string, unknown> }>("/import/workbook", formData);
 }
 
-export async function uploadXml(file: File, projectName: string, projectId?: string) {
+export async function uploadXml(file: File, projectName: string, projectId?: string, description?: string) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("projectName", projectName);
   if (projectId) formData.append("projectId", projectId);
+  if (description) formData.append("description", description);
   return apiPost<{ project: ProjectRecord; importSummary: Record<string, unknown> }>("/import/xml", formData);
 }
 
@@ -472,6 +510,19 @@ export function saveValidationConfig(projectId: string, overrides: Array<{ ruleC
   return apiPost<{ overrides: Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> }>(`/projects/${projectId}/validation-config`, { overrides });
 }
 
+export function fetchValidationRules(projectId: string) {
+  return apiGet<{
+    catalogVersion: string;
+    targetVersion: string;
+    rules: import("../../shared/validationRuleCatalog").EffectiveValidationRule[];
+    legacyOverrides: Array<{ id: string; ruleCode: string; severity: string; reason: string }>;
+  }>(`/projects/${projectId}/validation-rules`);
+}
+
+export function replaceValidationConfig(projectId: string, overrides: Array<{ ruleCode: string; severity: string }>) {
+  return apiPut<{ overrides: Array<{ id: string; ruleCode: string; severity: string; updatedAt: string }> }>(`/projects/${projectId}/validation-config`, { overrides });
+}
+
 
 // Kept in the compatibility barrel because the overview branch added this helper
 // after the domain API extraction began.
@@ -480,6 +531,83 @@ export function queryNaturalLanguage(projectId: string, question: string) {
     `/projects/${projectId}/ai/query`,
     { question }
   );
+}
+
+export function fetchProjectQuerySuggestions(projectId: string, question = "") {
+  const query = question ? `?q=${encodeURIComponent(question)}` : "";
+  return apiGet<{ suggestions: import("../../shared/projectQuery").ProjectQuerySuggestion[] }>(`/projects/${projectId}/query/suggestions${query}`);
+}
+
+export function interpretProjectQuery(projectId: string, question: string) {
+  return apiPost<{ interpretation: import("../../shared/projectQuery").ProjectQueryInterpretation }>(`/projects/${projectId}/query/interpret`, { question });
+}
+
+export function fetchProjectQuerySessions(projectId: string) {
+  return apiGet<{ sessions: import("../../shared/projectQuery").ProjectQuerySessionSummary[] }>(`/projects/${projectId}/query/sessions`);
+}
+
+export function createProjectQuerySession(projectId: string) {
+  return apiPost<{ session: import("../../shared/projectQuery").ProjectQuerySessionSummary }>(`/projects/${projectId}/query/sessions`, {});
+}
+
+export function deleteProjectQuerySession(projectId: string, sessionId: string) {
+  return apiDelete(`/projects/${projectId}/query/sessions/${sessionId}`);
+}
+
+export function fetchProjectQuerySession(projectId: string, sessionId: string) {
+  return apiGet<{ session: import("../../shared/projectQuery").ProjectQuerySession }>(`/projects/${projectId}/query/sessions/${sessionId}`);
+}
+
+export function executeProjectQuery(projectId: string, question: string, sessionId?: string) {
+  return apiPost<{
+    result: import("../../shared/projectQuery").ProjectQueryResult;
+    session: import("../../shared/projectQuery").ProjectQuerySession | null;
+    entry: import("../../shared/projectQuery").ProjectQueryEntry | null;
+  }>(`/projects/${projectId}/query`, { question, sessionId });
+}
+
+export function importProjectQueryHistory(projectId: string, sessions: unknown[]) {
+  return apiPost<{ imported: number }>(`/projects/${projectId}/query/sessions/import`, { sessions });
+}
+
+export function fetchProjectQueryPlaybooks(projectId: string) {
+  return apiGet<{ playbooks: import("../../shared/projectQuery").ProjectQueryPlaybookDefinition[] }>(`/projects/${projectId}/query/playbooks`);
+}
+
+export function runProjectQueryPlaybook(projectId: string, playbookId: string, body: { sessionId?: string; scope?: import("../../shared/projectQuery").ProjectQueryScopeToken[] } = {}) {
+  return apiPost<{ run: import("../../shared/projectQuery").ProjectQueryPlaybookRun }>(`/projects/${projectId}/query/playbooks/${playbookId}/runs`, body);
+}
+
+export function fetchProjectQueryPlaybookRuns(projectId: string) {
+  return apiGet<{ runs: import("../../shared/projectQuery").ProjectQueryPlaybookRun[] }>(`/projects/${projectId}/query/playbook-runs`);
+}
+
+export function rerunProjectQueryPlaybook(projectId: string, runId: string) {
+  return apiPost<{ run: import("../../shared/projectQuery").ProjectQueryPlaybookRun }>(`/projects/${projectId}/query/playbook-runs/${runId}/rerun`, {});
+}
+
+export function rerunProjectQueryPlaybookStep(projectId: string, runId: string, stepId: string) {
+  return apiPost<{ run: import("../../shared/projectQuery").ProjectQueryPlaybookRun }>(`/projects/${projectId}/query/playbook-runs/${runId}/steps/${stepId}/rerun`, {});
+}
+
+export function fetchProjectQueryTemplates(projectId: string) {
+  return apiGet<{ templates: import("../../shared/projectQuery").ProjectQueryTemplate[] }>(`/projects/${projectId}/query/templates`);
+}
+
+export function createProjectQueryTemplate(projectId: string, body: { name: string; category?: string; question: string; parameters?: string[]; scope?: import("../../shared/projectQuery").ProjectQueryScopeToken[] }) {
+  return apiPost<{ template: import("../../shared/projectQuery").ProjectQueryTemplate }>(`/projects/${projectId}/query/templates`, body);
+}
+
+export function updateProjectQueryTemplate(projectId: string, templateId: string, body: Partial<{ name: string; category: string; question: string; parameters: string[]; scope: import("../../shared/projectQuery").ProjectQueryScopeToken[] }>) {
+  return apiPatchJson<{ template: import("../../shared/projectQuery").ProjectQueryTemplate }>(`/projects/${projectId}/query/templates/${templateId}`, body);
+}
+
+export function deleteProjectQueryTemplate(projectId: string, templateId: string) {
+  return apiDelete(`/projects/${projectId}/query/templates/${templateId}`);
+}
+
+export function runProjectQueryTemplate(projectId: string, templateId: string, parameters: Record<string, string> = {}) {
+  return apiPost<{ result: import("../../shared/projectQuery").ProjectQueryResult; question: string; session: import("../../shared/projectQuery").ProjectQuerySession | null }>(`/projects/${projectId}/query/templates/${templateId}/run`, { parameters });
 }
 
 export function fetchGraphAnalysis(projectId: string, dimensionId?: string) {
@@ -493,5 +621,12 @@ export function applyAIFix(projectId: string, type: string, payload: Record<stri
   return apiPost<{ success: boolean; action: string }>(
     `/projects/${projectId}/ai/apply-fix`,
     { type, payload }
+  );
+}
+
+export function fetchKnowledgeGraph(projectId: string, dimensionId?: string) {
+  const query = dimensionId ? `?dimensionId=${encodeURIComponent(dimensionId)}` : "";
+  return apiGet<import("../../shared/knowledgeGraphTypes").KnowledgeGraphModel>(
+    `/projects/${projectId}/ai/knowledge-graph${query}`
   );
 }

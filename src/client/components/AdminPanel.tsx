@@ -1,96 +1,109 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import type { ClientAppConfig } from "../../shared/appConfigTypes";
-import { fetchValidationConfig, saveValidationConfig } from "../api/client";
+import { getValidationRuleCatalog, type EffectiveValidationRule, type ValidationRuleClassification } from "../../shared/validationRuleCatalog";
+import { fetchValidationRules, replaceValidationConfig } from "../api/client";
 import { ActionButton, StatusBadge } from "./ui";
 
-interface ValidationRuleDisplay {
-  code: string;
-  description: string;
-  severity: string;
-  category: string;
-  blocksExport: boolean;
-}
-
-interface RuleOverride {
-  ruleCode: string;
-  severity: string;
-}
+type RuleFilter = "all" | "active" | "inactive";
 
 export function AdminPanel({ appConfig, projectId }: { appConfig: ClientAppConfig; projectId: string | null }) {
-  const rules = buildValidationRuleList(appConfig);
-  const blockedSeverities = appConfig.validation.exportBlockedBySeverities;
+  const [rules, setRules] = useState<EffectiveValidationRule[]>(() => defaultRules());
   const [overrides, setOverrides] = useState<Map<string, string>>(new Map());
+  const [legacyOverrides, setLegacyOverrides] = useState<Array<{ ruleCode: string; severity: string; reason: string }>>([]);
+  const [catalogVersion, setCatalogVersion] = useState("1.0.0");
+  const [targetVersion, setTargetVersion] = useState("9.2.0.18004");
+  const [category, setCategory] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<RuleFilter>("all");
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Keep the prop in the component contract while the catalog is now the source of truth.
+  void appConfig;
 
   useEffect(() => {
-    if (!projectId) return;
-    void fetchValidationConfig(projectId).then((result) => {
-      const map = new Map<string, string>();
-      for (const o of result.overrides) map.set(o.ruleCode, o.severity);
-      setOverrides(map);
-    }).catch(() => setStatus("Failed to load overrides"));
+    if (!projectId) {
+      setRules(defaultRules());
+      setOverrides(new Map());
+      setLegacyOverrides([]);
+      return;
+    }
+    setLoading(true);
+    setStatus("Loading validation catalog...");
+    void fetchValidationRules(projectId).then((result) => {
+      setRules(result.rules);
+      setCatalogVersion(result.catalogVersion);
+      setTargetVersion(result.targetVersion);
+      setLegacyOverrides(result.legacyOverrides);
+      const next = new Map<string, string>();
+      for (const rule of result.rules) if (rule.overridden) next.set(rule.code, rule.effectiveSeverity);
+      setOverrides(next);
+      setStatus(result.legacyOverrides.length > 0 ? "Loaded with ignored legacy overrides." : "Validation catalog loaded.");
+    }).catch(() => setStatus("Failed to load validation catalog. Retry by reopening Admin."))
+      .finally(() => setLoading(false));
   }, [projectId]);
 
-  function toggleRule(code: string, currentSeverity: string) {
+  const categories = useMemo(() => ["all", ...new Set(rules.map((rule) => rule.category))], [rules]);
+  const visibleRules = useMemo(() => rules
+    .filter((rule) => category === "all" || rule.category === category)
+    .filter((rule) => activeFilter === "all" || (activeFilter === "active" ? effectiveSeverity(rule, overrides) !== "off" : effectiveSeverity(rule, overrides) === "off")), [rules, category, activeFilter, overrides]);
+  const groupedRules = useMemo(() => ["hard_error", "advisory", "informational"].map((classification) => ({
+    classification: classification as ValidationRuleClassification,
+    rules: visibleRules.filter((rule) => rule.classification === classification)
+  })), [visibleRules]);
+
+  function changeSeverity(code: string, severity: string) {
+    const rule = rules.find((candidate) => candidate.code === code);
+    if (!rule || rule.locked) return;
     const next = new Map(overrides);
-    if (next.get(code) === "off") {
-      next.delete(code);
-    } else {
-      next.set(code, "off");
-    }
+    if (severity === "default") next.delete(code);
+    else next.set(code, severity);
     setOverrides(next);
   }
 
-  function changeSeverity(code: string, severity: string) {
-    const next = new Map(overrides);
-    if (severity === "default") {
-      next.delete(code);
-    } else {
-      next.set(code, severity);
-    }
-    setOverrides(next);
+  function toggleRule(rule: EffectiveValidationRule) {
+    if (rule.locked) return;
+    changeSeverity(rule.code, effectiveSeverity(rule, overrides) === "off" ? "default" : "off");
   }
 
   async function handleSave() {
     if (!projectId) return;
     setSaving(true);
-    setStatus("Saving...");
+    setStatus("Saving validation configuration...");
     try {
-      const payload: RuleOverride[] = [...overrides.entries()].map(([ruleCode, severity]) => ({ ruleCode, severity }));
-      await saveValidationConfig(projectId, payload);
-      setStatus("Saved. Re-run validation to apply changes.");
+      const payload = [...overrides.entries()].map(([ruleCode, severity]) => ({ ruleCode, severity }));
+      await replaceValidationConfig(projectId, payload);
+      setStatus("Saved. Run validation again to apply the updated rule configuration.");
     } catch {
-      setStatus("Save failed");
+      setStatus("Save failed. No validation configuration was changed.");
     } finally {
       setSaving(false);
     }
   }
 
-  function getEffectiveSeverity(rule: ValidationRuleDisplay): string {
-    return overrides.get(rule.code) ?? rule.severity;
-  }
-
-  function isRuleDisabled(code: string): boolean {
-    return overrides.get(code) === "off";
-  }
-
   function exportRulesAsCsv() {
-    const header = "Rule Code,Description,Category,Severity,Active,Blocks Export";
-    const rows = rules.map(r => {
-      const effectiveSev = getEffectiveSeverity(r);
-      const active = effectiveSev !== "off" ? "Yes" : "No";
-      const blocks = (blockedSeverities as string[]).includes(effectiveSev) ? "Yes" : "No";
-      return `"${r.code}","${r.description}","${r.category}","${effectiveSev}","${active}","${blocks}"`;
-    });
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const header = "Rule Code,Label,Description,Category,Classification,Allowed Severities,Effective Severity,Active,Locked,Blocks Export,Evidence,Target Version";
+    const rows = rules.map((rule) => [
+      rule.code,
+      rule.label,
+      rule.description,
+      rule.category,
+      rule.classification,
+      rule.allowedSeverities.join(" | "),
+      effectiveSeverity(rule, overrides),
+      effectiveSeverity(rule, overrides) === "off" ? "No" : "Yes",
+      rule.locked ? "Yes" : "No",
+      rule.blocksExport && effectiveSeverity(rule, overrides) === "error" ? "Yes" : "No",
+      rule.evidence.map((source) => source.url ? `${source.label} (${source.url})` : source.label).join(" | "),
+      rule.targetVersion
+    ].map(csvCell).join(","));
+    const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `validation-rules-export.csv`;
-    a.click();
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "validation-rule-catalog.csv";
+    anchor.click();
     URL.revokeObjectURL(url);
   }
 
@@ -101,120 +114,59 @@ export function AdminPanel({ appConfig, projectId }: { appConfig: ClientAppConfi
           <div>
             <span className="section-kicker">Administration</span>
             <h1>Validation Rules</h1>
-            <p>Rules at severity <b>{blockedSeverities.join(", ")}</b> block export. Toggle rules off or change severity per project.</p>
+            <p>OneStream target <strong>{targetVersion}</strong> · Catalog {catalogVersion}</p>
+            <p className="admin-note">Only locked hard errors block export. Advisories and informational findings never block export.</p>
           </div>
-          {projectId && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <ActionButton onClick={exportRulesAsCsv}>
-                <Download size={14} /> Export Rules
-              </ActionButton>
-              <ActionButton variant="primary" disabled={saving} onClick={() => void handleSave()}>
-                Save Overrides
-              </ActionButton>
-            </div>
-          )}
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <ActionButton onClick={exportRulesAsCsv} disabled={loading}><Download size={14} /> Export CSV</ActionButton>
+            {projectId && <ActionButton variant="primary" disabled={saving || loading} onClick={() => void handleSave()}>Save Configuration</ActionButton>}
+          </div>
         </div>
-        {status && <div className="admin-status">{status}</div>}
-        {!projectId && <p className="admin-note">Open a project to configure per-project rule overrides.</p>}
 
-        <div className="admin-rules-table">
-          <table className="rules-table">
-            <thead>
-              <tr>
-                <th>Active</th>
-                <th>Rule Code</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Severity</th>
-                <th>Blocks Export</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => {
-                const disabled = isRuleDisabled(rule.code);
-                const effectiveSeverity = getEffectiveSeverity(rule);
-                return (
-                  <tr key={rule.code} className={disabled ? "rule-disabled" : rule.blocksExport ? "blocking-rule" : ""}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={!disabled}
-                        onChange={() => toggleRule(rule.code, rule.severity)}
-                        disabled={!projectId}
-                        title={disabled ? "Enable this rule" : "Disable this rule"}
-                      />
-                    </td>
-                    <td><code>{rule.code}</code></td>
-                    <td>{rule.description}</td>
-                    <td>{rule.category}</td>
-                    <td>
-                      {projectId ? (
-                        <select
-                          value={overrides.has(rule.code) ? overrides.get(rule.code) : "default"}
-                          onChange={(e) => changeSeverity(rule.code, e.target.value)}
-                          disabled={disabled}
-                          className="severity-select"
-                        >
-                          <option value="default">Default ({rule.severity})</option>
-                          <option value="error">error</option>
-                          <option value="warning">warning</option>
-                          <option value="info">info</option>
-                          <option value="off">off</option>
-                        </select>
-                      ) : (
-                        <StatusBadge tone={rule.severity === "error" ? "danger" : rule.severity === "warning" ? "warning" : "info"}>
-                          {rule.severity}
-                        </StatusBadge>
-                      )}
-                    </td>
-                    <td>{!disabled && blockedSeverities.includes(effectiveSeverity as any) ? "Yes" : "No"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="admin-status" role="status" aria-live="polite">{status}</div>
+        {!projectId && <p className="admin-note">Open a project to view effective severities and change private project overrides.</p>}
+        {legacyOverrides.length > 0 && <div className="admin-warning" role="alert">Ignored legacy overrides: {legacyOverrides.map((item) => `${item.ruleCode} (${item.reason})`).join(", ")}. Saving replaces the project configuration.</div>}
+
+        <div className="admin-rule-filters" aria-label="Validation rule filters">
+          <label>Category <select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item} value={item}>{item === "all" ? "All categories" : item}</option>)}</select></label>
+          <label>State <select value={activeFilter} onChange={(event) => setActiveFilter(event.target.value as RuleFilter)}><option value="all">All rules</option><option value="active">Active</option><option value="inactive">Off</option></select></label>
         </div>
+
+        {groupedRules.map((group) => <RuleGroup key={group.classification} classification={group.classification} rules={group.rules} overrides={overrides} projectId={projectId} onToggle={toggleRule} onChange={changeSeverity} />)}
       </div>
     </section>
   );
 }
 
-function buildValidationRuleList(config: ClientAppConfig): ValidationRuleDisplay[] {
-  const blocked = config.validation.exportBlockedBySeverities;
-  const profile = config.validation.oneStreamProfile;
-  const rules: ValidationRuleDisplay[] = [
-    { code: "MEMBER_KEY_REQUIRED", description: "Member key field is empty", severity: config.validation.missingRequiredFieldSeverity, category: "Member", blocksExport: blocked.includes(config.validation.missingRequiredFieldSeverity) },
-    { code: "DUPLICATE_MEMBER", description: "Member appears more than once in the dimension", severity: config.validation.duplicateMemberSeverity, category: "Member", blocksExport: blocked.includes(config.validation.duplicateMemberSeverity) },
-    { code: "INVALID_BOOLEAN", description: "Boolean field contains non-TRUE/FALSE value", severity: "error", category: "Member", blocksExport: blocked.includes("error") },
-    { code: "INVALID_NUMBER", description: "Numeric field contains non-numeric value", severity: "error", category: "Member", blocksExport: blocked.includes("error") },
-    { code: "FORMULA_ERROR_VALUE", description: "Cell contains Excel formula error", severity: "error", category: "Member", blocksExport: blocked.includes("error") },
-    { code: "XML_INVALID_CHARACTER", description: "Value contains XML-invalid control characters", severity: "error", category: "Member", blocksExport: blocked.includes("error") },
-    { code: "ORPHAN_MEMBER", description: "Member not reachable from hierarchy root", severity: "warning", category: "Member", blocksExport: blocked.includes("warning") },
-    { code: "RELATIONSHIP_PARENT_REQUIRED", description: "Relationship missing parent key", severity: config.validation.missingRequiredFieldSeverity, category: "Relationship", blocksExport: blocked.includes(config.validation.missingRequiredFieldSeverity) },
-    { code: "RELATIONSHIP_CHILD_REQUIRED", description: "Relationship missing child key", severity: config.validation.missingRequiredFieldSeverity, category: "Relationship", blocksExport: blocked.includes(config.validation.missingRequiredFieldSeverity) },
-    { code: "UNKNOWN_RELATIONSHIP_CHILD", description: "Relationship child is not a known member", severity: config.validation.unknownRelationshipMemberSeverity, category: "Relationship", blocksExport: blocked.includes(config.validation.unknownRelationshipMemberSeverity) },
-    { code: "DUPLICATE_RELATIONSHIP", description: "Same parent-child pair appears more than once", severity: config.validation.duplicateRelationshipSeverity, category: "Relationship", blocksExport: blocked.includes(config.validation.duplicateRelationshipSeverity) },
-    { code: "CIRCULAR_HIERARCHY", description: "Circular parent-child reference detected", severity: config.validation.circularHierarchySeverity, category: "Hierarchy", blocksExport: blocked.includes(config.validation.circularHierarchySeverity) },
-    { code: "RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS", description: "Dimension has relationships but no local members", severity: config.validation.relationshipsWithNoLocalMembersSeverity, category: "Hierarchy", blocksExport: blocked.includes(config.validation.relationshipsWithNoLocalMembersSeverity) },
-    { code: "DIMENSION_TYPE_REQUIRED", description: "Dimension type is missing", severity: config.validation.missingRequiredFieldSeverity, category: "Dimension", blocksExport: blocked.includes(config.validation.missingRequiredFieldSeverity) },
-    { code: "DIMENSION_NAME_REQUIRED", description: "Dimension name is missing", severity: config.validation.missingRequiredFieldSeverity, category: "Dimension", blocksExport: blocked.includes(config.validation.missingRequiredFieldSeverity) },
-    { code: "XML_UNKNOWN_MEMBER_ATTRIBUTE", description: "Imported XML attribute not mapped - preserved on export", severity: "info", category: "XML Preservation", blocksExport: blocked.includes("info") },
-    { code: "XML_UNKNOWN_DIMENSION_ATTRIBUTE", description: "Imported dimension XML attribute not mapped", severity: "info", category: "XML Preservation", blocksExport: blocked.includes("info") },
-    { code: "XML_UNKNOWN_RELATIONSHIP_ATTRIBUTE", description: "Imported relationship XML attribute not mapped", severity: "info", category: "XML Preservation", blocksExport: blocked.includes("info") },
-    { code: "XML_UNSUPPORTED_ELEMENT_PRESERVED", description: "Unsupported XML element preserved for round-trip", severity: "info", category: "XML Preservation", blocksExport: blocked.includes("info") },
-  ];
-  if (profile.enabled) {
-    rules.push(
-      { code: "MEMBER_NAME_TOO_LONG", description: `Member name exceeds ${profile.memberNameMaxLength} characters`, severity: "error", category: "OneStream Profile", blocksExport: blocked.includes("error") },
-      { code: "MEMBER_NAME_RESTRICTED_CHAR", description: "Member name contains restricted character", severity: "error", category: "OneStream Profile", blocksExport: blocked.includes("error") },
-      { code: "MEMBER_NAME_RESERVED_WORD", description: "Member name matches a reserved word", severity: "warning", category: "OneStream Profile", blocksExport: blocked.includes("warning") },
-      { code: "DUPLICATE_ALIAS", description: "Alias duplicates another member's key or alias", severity: profile.duplicateAliasSeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.duplicateAliasSeverity) },
-      { code: "INVALID_SORT_ORDER", description: "Sort order is not a valid integer", severity: profile.invalidSortOrderSeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.invalidSortOrderSeverity) },
-      { code: "SHARED_MEMBER_DETECTED", description: "Member in multiple parent relationships", severity: profile.sharedMemberSeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.sharedMemberSeverity) },
-      { code: "UNKNOWN_PROPERTY", description: "Property not in OneStream dictionary", severity: profile.unknownPropertySeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.unknownPropertySeverity) },
-      { code: "INVALID_ENUM_VALUE", description: "Value not in allowed enumeration", severity: profile.invalidEnumSeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.invalidEnumSeverity) },
-      { code: "INVALID_PROPERTY_TYPE", description: "Value type mismatch (expected boolean/number)", severity: profile.invalidPropertyTypeSeverity, category: "OneStream Profile", blocksExport: blocked.includes(profile.invalidPropertyTypeSeverity) },
-    );
-  }
-  return rules.sort((a, b) => a.category.localeCompare(b.category) || a.code.localeCompare(b.code));
+function RuleGroup({ classification, rules, overrides, projectId, onToggle, onChange }: { classification: ValidationRuleClassification; rules: EffectiveValidationRule[]; overrides: Map<string, string>; projectId: string | null; onToggle: (rule: EffectiveValidationRule) => void; onChange: (code: string, severity: string) => void }) {
+  if (rules.length === 0) return null;
+  const title = classification === "hard_error" ? "Blocking Errors" : classification === "advisory" ? "Advisories" : "Informational Rules";
+  return <section className="admin-rule-group" aria-labelledby={`rule-group-${classification}`}>
+    <div className="admin-rule-group-heading"><h2 id={`rule-group-${classification}`}>{title}</h2><span>{rules.length} rules</span></div>
+    <div className="admin-rules-table"><table className="rules-table"><thead><tr><th>Active</th><th>Rule</th><th>Classification</th><th>Description and evidence</th><th>Severity</th><th>Export</th></tr></thead><tbody>
+      {rules.map((rule) => {
+        const severity = effectiveSeverity(rule, overrides);
+        return <tr key={rule.code} className={severity === "off" ? "rule-disabled" : rule.blocksExport ? "blocking-rule" : ""}>
+          <td><input type="checkbox" checked={severity !== "off"} disabled={!projectId || rule.locked} onChange={() => onToggle(rule)} aria-label={`${severity === "off" ? "Enable" : "Disable"} ${rule.code}`} /></td>
+          <td><code>{rule.code}</code><br /><span>{rule.label}</span></td>
+          <td><StatusBadge tone={classification === "hard_error" ? "danger" : classification === "advisory" ? "warning" : "info"}>{classification.replace("_", " ")}</StatusBadge>{rule.locked && <small> Locked</small>}</td>
+          <td><div>{rule.description}</div><div className="admin-rule-evidence">{rule.evidence.map((source) => source.url ? <a key={source.label} href={source.url} target="_blank" rel="noreferrer">{source.label}</a> : <span key={source.label}>{source.label}</span>)}</div></td>
+          <td><select value={overrides.get(rule.code) ?? "default"} disabled={!projectId || rule.locked} onChange={(event) => onChange(rule.code, event.target.value)} aria-label={`Severity for ${rule.code}`}><option value="default">Default ({rule.defaultSeverity})</option>{rule.allowedSeverities.map((option) => <option key={option} value={option}>{option}</option>)}</select></td>
+          <td>{rule.blocksExport && severity === "error" ? "Yes" : "No"}</td>
+        </tr>;
+      })}
+    </tbody></table></div>
+  </section>;
+}
+
+function defaultRules(): EffectiveValidationRule[] {
+  return getValidationRuleCatalog().map((rule) => ({ ...rule, effectiveSeverity: rule.defaultSeverity, active: true, overridden: false }));
+}
+
+function effectiveSeverity(rule: EffectiveValidationRule, overrides: Map<string, string>): string {
+  return overrides.get(rule.code) ?? rule.effectiveSeverity;
+}
+
+function csvCell(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
 }

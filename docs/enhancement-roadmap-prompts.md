@@ -15,7 +15,7 @@ Add a blueprint authoring UI for config/dimbuilder.yaml. It should let a user ma
 Prompt:
 
 ```text
-Enforce validation export blocking on the server. Export endpoints should refuse export when the project has issues whose severity appears in validation.exportBlockedBySeverities, unless an explicit admin override is supplied.
+Enforce validation export blocking on the server. Export endpoints should refuse export only when the project has registered locked hard-error findings from the shared validation catalog, unless an explicit audited bypass is supplied.
 ```
 
 ## Snapshot Restore

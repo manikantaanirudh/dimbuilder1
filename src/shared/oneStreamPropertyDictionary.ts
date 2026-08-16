@@ -350,7 +350,7 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
   define({
     propertyKey: "readDataGroup2",
     displayName: "Read Data Group 2",
-    xmlName: "readDataGroup2",
+    xmlName: "ReadDataGroup2",
     targetLevel: "member",
     dimensionTypes: ["Entity"],
     valueType: "securityGroup",
@@ -359,7 +359,7 @@ const seededDefinitions: OneStreamPropertyDefinition[] = [
   define({
     propertyKey: "readWriteDataGroup2",
     displayName: "Read Write Data Group 2",
-    xmlName: "readWriteDataGroup2",
+    xmlName: "ReadWriteDataGroup2",
     targetLevel: "member",
     dimensionTypes: ["Entity"],
     valueType: "securityGroup",

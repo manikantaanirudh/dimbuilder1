@@ -1,333 +1,57 @@
 # Validation Rules
 
-Validation is implemented in `src/shared/validationEngine.ts` and invoked by `src/server/routes/validation.ts` and the import route.
+Validation is driven by the shared catalog in `src/shared/validationRuleCatalog.ts`. The catalog is the source of truth for the validation engine, Admin page, API, export guards, snapshots, and documentation. The current target is OneStream `9.2.0.18004` (catalog `1.0.0`).
 
-## Validation Scope
+## Rule classes
 
-Validation runs per dimension and checks:
+| Class | Meaning | Export behavior |
+| --- | --- | --- |
+| Blocking error | Confirmed OneStream 9.2 constraint or deterministic file/schema integrity failure | Locked, always `error`, blocks export |
+| Advisory | Consultant, governance, performance, or unverified platform review | `warning`, `info`, or `off`; never blocks export |
+| Informational | Preservation or diagnostic context | `info` or `off`; never blocks export |
 
-- required dimension fields
-- required member keys
-- duplicate members
-- unknown member and relationship properties by OneStream dimension type
-- dictionary enum values
-- dictionary-backed boolean, number, and decimal property types
-- OneStream design profile rules for naming, aliases, Root/None casing, sort order, shared members, and high-risk dimension properties
-- varying property target existence, duplicate contexts, dictionary support, and dictionary value types
-- preserved unknown XML import attributes and unsupported child elements
-- boolean fields
-- numeric fields
-- Excel formula error values
-- XML-invalid control characters
-- missing relationship parent or child
-- unknown relationship child values
-- relationship operation planning metadata
-- duplicate relationships
-- circular hierarchy
-- orphan members
-- relationships with no local members
-- self-referencing relationships (parent == child)
-- member name leading/trailing whitespace
-- root member missing from hierarchy
-- hierarchy max depth exceeded (OneStream limit: 30 levels)
-- member name starts with digit
-- duplicate member (case-insensitive)
-- Scenario Type missing (Scenario dimensions only)
-- consolidation method mismatch (Entity dimensions only)
+The Admin page displays all catalog rules in these three sections. Hard errors cannot be overridden. Project overrides apply to the exact rule code only; changing `MEMBER_KEY_REQUIRED` does not change relationship or dimension-required rules.
 
-Additionally, project-level validation runs after per-dimension checks:
+## OneStream evidence
 
-- missing required dimension types (Account, Entity, Scenario, Flow)
-- cross-dimension currency references pointing to invalid values
+The catalog links official evidence where a rule is a platform constraint:
 
-## Severity Configuration
+- [Configurable Dimensions](https://documentation.onestream.com/9.2.0/Content/Design%20and%20Reference/Cube/Configurable%20Dimensions.html): member-name uniqueness within a dimension type, 500-character maximum, restricted characters, aliases, spaces, periods, and query bracket guidance.
+- [Parent Dimension](https://documentation.onestream.com/docs/Content/Design%20and%20Reference/Cube/Parent%20Dimension.html): alternate hierarchies and members with multiple parents are supported states.
+- [Metadata Analysis Reports](https://documentation.onestream.com/docs/Content/RPTA/Metadata%20Analysis%20Reports.html): orphaned members are reportable diagnostic states, not automatically platform errors.
 
-Config section:
+Rules without explicit official support remain advisories or informational. The catalog records evidence kind (`official`, `format`, `implementation`, or `local_policy`) and target version for every rule.
 
-```yaml
-validation:
-  duplicateMemberSeverity: warning
-  duplicateRelationshipSeverity: warning
-  unknownRelationshipMemberSeverity: warning
-  missingRequiredFieldSeverity: error
-  circularHierarchySeverity: error
-  relationshipsWithNoLocalMembersSeverity: warning
-  oneStreamProfile:
-    enabled: true
-    memberNameMaxLength: 500
-    warnOnMemberNameSpaces: true
-    warnOnMemberNamePeriods: true
-    reservedWords:
-      - Account
-      - All
-      - Cons
-      - Consolidation
-      - Default
-      - DimType
-      - Entity
-      - EntityDefault
-      - Flow
-      - IC
-      - None
-      - Origin
-      - Parent
-      - POV
-      - Root
-      - RootAccountDim
-      - RootEntityDim
-      - RootFlowDim
-      - RootScenarioDim
-      - RootUD1Dim
-      - RootUD2Dim
-      - RootUD3Dim
-      - RootUD4Dim
-      - RootUD5Dim
-      - RootUD6Dim
-      - RootUD7Dim
-      - RootUD8Dim
-      - Scenario
-      - Time
-      - UD1
-      - UD2
-      - UD3
-      - UD4
-      - UD5
-      - UD6
-      - UD7
-      - UD8
-      - UD1Default
-      - Unknown
-      - View
-      - WF
-      - Workflow
-      - XFCommon
-    restrictedCharacters:
-      - "/"
-      - "|"
-      - "!"
-      - "@"
-      - "#"
-      - ","
-      - ";"
-      - "^"
-      - "*"
-      - "+"
-      - "-"
-      - "="
-      - "\\"
-      - "?"
-      - "<"
-      - ">"
-      - "\""
-      - "["
-      - "]"
-      - "{"
-      - "}"
-      - "&"
-    duplicateAliasSeverity: warning
-    invalidSortOrderSeverity: warning
-    sharedMemberSeverity: info
-    parentInputWarningSeverity: warning
-    unknownPropertySeverity: warning
-    invalidEnumSeverity: error
-    invalidPropertyTypeSeverity: error
-  exportBlockedBySeverities:
-    - error
-```
+## Blocking errors
 
-### OneStream Naming Constraints (from official documentation)
+The locked blocking catalog includes missing required schema values, duplicate members and aliases within a dimension type, the documented member-name limit and restricted characters, invalid typed property values, formula/XML integrity failures, and missing relationship parent/child values. Cross-dimension member and alias uniqueness is evaluated across all dimensions of the same dimension type.
 
-- **Member name max length**: 500 characters (database schema: `nvarchar(500)`)
-- **Description max length**: 200 characters (separate field)
-- **Attribute dimension limit**: 100 characters
-- **Spaces**: Allowed but not recommended. Members with spaces require `[bracket notation]` in member filters and business rules.
-- **Periods**: Allowed but problematic. Periods conflict with the member filter path separator (e.g., `A#Root.Children`).
-- **Single quote (`'`)**: NOT on the official restricted characters list.
-- **`&` and `%`**: Soft restrictions — can be used but may affect platform functionality. Not recommended.
-- **Uniqueness**: Member names must be unique within a **dimension type** (not just within a single dimension). Aliases also cannot duplicate member names within the same dimension type.
+Reserved structural names are checked separately. User-created reserved names are errors, while recognized inherited/system `Root` and `None` members are allowed; non-canonical casing is an advisory. A missing local Root is not an error because inherited/system hierarchy behavior must not be mistaken for a platform failure.
 
-Allowed severities are:
+## Advisories and information
 
-- `error`
-- `warning`
-- `info`
-- `off` — disables the rule entirely; the validation engine skips creating issues for rules with this severity.
+The catalog keeps the following nonblocking:
 
-## Per-Project Validation Overrides
+- unknown or duplicate relationship references, cycles, self-references, orphans, and hierarchy-depth thresholds;
+- spaces, periods, query-bracket guidance, leading/trailing whitespace, sort-order zero/duplicates, parent input, and local single-parent policy conflicts;
+- shared members and relationships with no local members;
+- missing optional design properties, unknown properties, varying-property issues, currency checks without a configured authoritative list, and change-set risk checks;
+- XML preservation notices.
 
-Individual projects can override rule severities through the Admin Panel or the `GET/POST /:projectId/validation-config` API endpoints. Overrides are stored in the `project_validation_overrides` database table.
+Spaces, periods, alternate hierarchies, shared members, and orphan members are supported or diagnostic states in the official documentation. They must not be presented as OneStream import errors. The configured hierarchy threshold is a consultant performance advisory; there is no hard 30-level claim in this product.
 
-The Admin Panel exposes toggle switches per rule with a severity dropdown. Setting a rule to `"off"` disables it for that project only. Overrides take precedence over the global YAML configuration when validation runs.
+Currency validation is only performed when `validation.oneStreamProfile.validCurrencyCodes` contains an explicit authoritative list. It never compares Entity currencies to Account members.
 
-## Export Blocking
+## API and Admin configuration
 
-The client uses `validation.exportBlockedBySeverities` to disable export when matching issues exist, and the server enforces the same rule in `src/server/exportGuards.ts`.
+- `GET /api/projects/:projectId/validation-rules` returns the catalog, effective project severities, blocking state, target version, evidence, and ignored legacy overrides.
+- `PUT /api/projects/:projectId/validation-config` replaces the project override set. Unknown codes, illegal severities, and locked-rule changes return `400`.
+- `POST /api/projects/:projectId/validation-config` remains a deprecated compatibility adapter for one release and returns deprecation headers.
 
-Guarded endpoints:
+Advisory severities are limited to `warning`, `info`, and `off`. Informational severities are limited to `info` and `off`. A saved configuration removes overrides not present in the replacement payload; unknown legacy rows are reported as ignored until the project is saved again.
 
-- `GET /api/export/:projectId/xml`
-- `GET /api/export/:projectId/json`
-- `GET /api/export/:projectId/members.csv`
-- `GET /api/export/:projectId/relationships.csv`
-- `GET /api/export/:projectId/xlsx`
-- `POST /api/export/:projectId/snapshot`
+## Snapshots and exports
 
-Blocking validation severities return HTTP `409` with `blocked: true`, `blockedSeverities`, and `issueCounts`. Unknown-property warnings still do not block export unless warnings are configured as blocking.
+Every validation run stores the catalog version and OneStream target version in its snapshot. Export guards consult the catalog’s `blocksExport` result and only locked hard-error findings block XML, JSON, XLSX, CSV, and snapshot exports. The YAML `exportBlockedBySeverities` setting is no longer allowed to turn advisories or informational findings into export blockers.
 
-Optional export config can allow an audited bypass:
-
-- `export.allowValidationBypass`
-- `export.validationBypassRequiresReason`
-- `export.requireValidationBeforeExport`
-
-## Issue Codes
-
-Current issue codes include:
-
-- `DIMENSION_TYPE_REQUIRED`
-- `DIMENSION_NAME_REQUIRED`
-- `MEMBER_KEY_REQUIRED`
-- `DUPLICATE_MEMBER`
-- `RELATIONSHIP_PARENT_REQUIRED`
-- `RELATIONSHIP_CHILD_REQUIRED`
-- `UNKNOWN_RELATIONSHIP_CHILD`
-- `UNKNOWN_PROPERTY`
-- `INVALID_ENUM_VALUE`
-- `INVALID_PROPERTY_TYPE`
-- `MEMBER_NAME_TOO_LONG`
-- `MEMBER_NAME_CONTAINS_SPACE`
-- `MEMBER_NAME_CONTAINS_PERIOD`
-- `MEMBER_NAME_RESTRICTED_CHARACTER`
-- `RESERVED_MEMBER_NAME_CASE_MISMATCH`
-- `DUPLICATE_ALIAS`
-- `ALIAS_DUPLICATES_MEMBER_NAME`
-- `SORT_ORDER_ZERO`
-- `SORT_ORDER_DUPLICATE`
-- `SHARED_MEMBER_DETECTED`
-- `MULTIPLE_PARENT_NOT_ALLOWED`
-- `PARENT_MEMBER_ALLOW_INPUT_WARNING`
-- `ACCOUNT_TYPE_MISSING`
-- `ENTITY_CURRENCY_MISSING`
-- `RELATIONSHIP_WEIGHT_MISSING` (info — default 1.0 applies; not a genuine concern)
-- `ENTITY_OWNERSHIP_VALUE_INVALID`
-- `VARYING_PROPERTY_DUPLICATE`
-- `DUPLICATE_VARYING_PROPERTY`
-- `UNKNOWN_VARYING_PROPERTY`
-- `NON_VARYING_PROPERTY_OVERRIDE`
-- `VARYING_PROPERTY_TARGET_NOT_FOUND`
-- `INVALID_VARYING_PROPERTY_VALUE`
-- `INVALID_BOOLEAN`
-- `INVALID_NUMBER`
-- `FORMULA_ERROR_VALUE`
-- `XML_INVALID_CHARACTER`
-- `XML_UNKNOWN_DIMENSION_ATTRIBUTE`
-- `XML_UNKNOWN_MEMBER_ATTRIBUTE`
-- `XML_UNKNOWN_RELATIONSHIP_ATTRIBUTE`
-- `XML_UNSUPPORTED_ELEMENT_PRESERVED`
-- `RELATIONSHIP_DELETE_CREATES_ORPHAN`
-- `BREAK_BUILD_HAS_NO_BASELINE`
-- `MOVE_WITHOUT_OLD_PARENT`
-- `COPY_CONFLICTS_WITH_SINGLE_PARENT_POLICY`
-- `RELATIONSHIP_OPERATION_UNSUPPORTED`
-- `CIRCULAR_HIERARCHY`
-- `DUPLICATE_RELATIONSHIP`
-- `ORPHAN_MEMBER`
-- `RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS`
-- `SELF_REFERENCING_RELATIONSHIP`
-- `MEMBER_NAME_LEADING_TRAILING_WHITESPACE`
-- `ROOT_MEMBER_MISSING`
-- `HIERARCHY_MAX_DEPTH_EXCEEDED`
-- `MEMBER_NAME_STARTS_WITH_DIGIT`
-- `DUPLICATE_MEMBER_CASE_INSENSITIVE`
-- `SCENARIO_TYPE_MISSING`
-- `CONSOLIDATION_METHOD_MISMATCH`
-- `DIMENSION_MISSING_FROM_PROJECT` (project-level, `src/server/routes/projects.ts:930`)
-- `CROSS_DIMENSION_CURRENCY_INVALID` (project-level, `src/server/routes/projects.ts:951`)
-
-## Hierarchy Analysis
-
-Hierarchy checks are delegated to `src/shared/hierarchy.ts`. The validation engine uses that analysis to find cycles, duplicate relationships, and orphan members.
-
-## OneStream Property Dictionary
-
-Property-level validation uses `src/shared/oneStreamPropertyDictionary.ts`. The dictionary is shared with XML export, API schema responses, and grid labels so all layers reason about aliases, XML names, target levels, and value types consistently.
-
-Unknown property findings are warnings by default and do not block export unless warning severities are configured as blocking in `validation.exportBlockedBySeverities`. Enum and property type failures are errors because they indicate a value that does not match a known OneStream property contract. `validation.oneStreamProfile.unknownPropertySeverity`, `invalidEnumSeverity`, and `invalidPropertyTypeSeverity` can tune those severities while keeping the dictionary in shared domain logic.
-
-## OneStream Validation Profile
-
-The OneStream-specific profile lives in `src/shared/oneStreamValidation.ts` and is orchestrated by `src/shared/validationEngine.ts`. It is enabled by default through `validation.oneStreamProfile.enabled` and can be disabled for a single API validation run by posting `profile: "default"`.
-
-Profile rules include:
-
-- member name max length, spaces, periods, and restricted characters
-- reserved member casing for `Root` and `None`
-- duplicate aliases and aliases that match any member key in the same dimension
-- member and relationship sort order zero warnings
-- duplicate sibling relationship sort order warnings
-- shared-member detection, with `MULTIPLE_PARENT_NOT_ALLOWED` as an error when dimension metadata says `allowMultipleParents: false`
-- parent members with `Allow Input` enabled
-- missing Account Type on non-reserved Account members
-- missing Currency on non-reserved Entity members
-- missing Aggregation Weight on weighted relationship dimensions
-- Entity ownership and consolidation percentages outside `0-100`
-- duplicate varying property contexts as `VARYING_PROPERTY_DUPLICATE`
-
-The profile is intentionally a design-quality layer. It does not replace generic integrity checks, and it does not assume a live OneStream connection.
-
-## Varying Properties
-
-Varying-property validation reads `VaryingPropertyValueRecord` rows from `varying_property_values` through `src/server/routes/validation.ts` and validates them in `src/shared/validationEngine.ts`.
-
-Rules:
-
-- the target must exist in the current dimension
-- each target/property/cube/scenario/time combination must be unique
-- dictionary-known properties use enum, boolean, number, and decimal checks
-- unknown varying properties are warnings, not export blockers by default
-- overrides for properties not marked with `supportsVarying` warn with `NON_VARYING_PROPERTY_OVERRIDE`
-
-This keeps unknown custom metadata preservable while still surfacing likely OneStream contract problems.
-
-## Relationship Operation Planning
-
-Relationship load-mode planning uses optional operation metadata on relationship records and shared planning output from `src/shared/relationshipOperations.ts`.
-
-Validation emits:
-
-- `RELATIONSHIP_DELETE_CREATES_ORPHAN` when delete or break operations may make a member unreachable.
-- `BREAK_BUILD_HAS_NO_BASELINE` when a break operation is not sourced from a baseline comparison.
-- `MOVE_WITHOUT_OLD_PARENT` when a move operation lacks old-parent context.
-- `COPY_CONFLICTS_WITH_SINGLE_PARENT_POLICY` when a copy operation conflicts with blueprint metadata where `allowMultipleParents` is false.
-- `RELATIONSHIP_OPERATION_UNSUPPORTED` when a relationship row carries an operation outside the supported operation vocabulary.
-
-These checks are warnings by default except unsupported operations, which are errors.
-
-## XML Import Preservation Notes
-
-XML import stores unmapped attributes and unsupported child elements under `__unknownXml` in dimension metadata or member/relationship properties. Validation emits informational notes for those preserved fields:
-
-- `XML_UNKNOWN_DIMENSION_ATTRIBUTE`
-- `XML_UNKNOWN_MEMBER_ATTRIBUTE`
-- `XML_UNKNOWN_RELATIONSHIP_ATTRIBUTE`
-- `XML_UNSUPPORTED_ELEMENT_PRESERVED`
-
-These issues document round-trip preservation and do not block export by default. The exporter re-emits preserved unknown XML when a known edited value has not already claimed the same XML attribute or property name.
-
-## Persistence
-
-Validation issues are stored in `validation_issues`. A validation run replaces all existing issues for the project.
-Export blocking reads these stored issues through repository helpers; routes do not query `validation_issues` directly.
-
-## Admin Panel
-
-The Admin Panel provides a read-only view of all validation rules, their configured severities, categories, and whether they block export. It also includes per-project toggle switches with a severity dropdown to override rule severities (including `"off"` to disable). It is accessible from the sidebar and is useful for understanding and customizing the active validation configuration without editing YAML directly. See the [Feature Catalog](./feature-catalog.md#admin-panel) for source references.
-
-## Tests
-
-Primary coverage:
-
-- `src/test/validationEngine.test.ts`
-- `src/test/oneStreamValidation.test.ts`
-- `src/test/hierarchy.test.ts`
-- `src/test/projectRoutes.test.ts`
+Existing validation history is preserved. Corrected classifications apply to the next validation run.

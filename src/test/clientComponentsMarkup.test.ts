@@ -27,6 +27,7 @@ import type {
   DashboardSummary,
   DimensionRecord,
   ProjectRecord,
+  ValidationIssue,
 } from "../shared/types";
 import { sampleProject, sampleScenarioDimension } from "./fixtures";
 
@@ -86,13 +87,14 @@ function dashboardMarkup(
   summary: DashboardSummary | null = null,
   project: ProjectRecord | null = null,
   dimensions: DimensionRecord[] = [],
+  issues: ValidationIssue[] = [],
 ) {
   return render(
     createElement(Dashboard, {
       dimensions,
       summary,
       project,
-      issues: [],
+      issues,
       onOpenDimension: () => undefined,
       appConfig,
     }),
@@ -189,7 +191,7 @@ describe("client component markup", () => {
     expect(markup).toContain(">8<");
   });
 
-  it("keeps dashboard readiness aligned with configured blocking severities", () => {
+  it("keeps advisory findings out of dashboard readiness and counts", () => {
     const config = {
       ...defaultAppConfig,
       validation: {
@@ -209,9 +211,56 @@ describe("client component markup", () => {
     );
 
     expect(markup).toContain(
-      '<span class="status-badge warning">Needs review</span>',
+      '<span class="status-badge success">No blocking errors</span>',
     );
+    expect(markup).toContain("Blocking errors");
+    expect(markup).not.toContain("Needs review");
+    expect(markup).not.toContain("warnings");
+    expect(markup).not.toContain("Info");
     expect(markup).not.toContain("Export blocked");
+  });
+
+  it("shows only catalog-defined blockers on the project overview", () => {
+    const issues: ValidationIssue[] = [
+      {
+        id: "advisory",
+        projectId: sampleProject.id,
+        dimensionId: sampleScenarioDimension.id,
+        entityType: "member",
+        entityId: "member-1",
+        severity: "warning",
+        code: "UNKNOWN_PROPERTY",
+        message: "Review property",
+        fieldName: "Property",
+        rowNumber: 1,
+        createdAt: "2025-01-01T00:00:00.000Z",
+      },
+      {
+        id: "blocker",
+        projectId: sampleProject.id,
+        dimensionId: sampleScenarioDimension.id,
+        entityType: "member",
+        entityId: "member-2",
+        severity: "error",
+        code: "MEMBER_KEY_REQUIRED",
+        message: "Member key required",
+        fieldName: "Member",
+        rowNumber: 2,
+        createdAt: "2025-01-01T00:00:00.000Z",
+      },
+    ];
+    const markup = dashboardMarkup(
+      defaultAppConfig,
+      summaryWithValidationCounts,
+      sampleProject,
+      [sampleScenarioDimension],
+      issues,
+    );
+
+    expect(markup).toContain("Export blocked");
+    expect(markup).toContain("1 blocking errors");
+    expect(markup).not.toContain("1 warnings");
+    expect(markup).not.toContain("1 info");
   });
 
   it("renders SR Onestream Dim Builder identity and generic lifecycle actions", () => {

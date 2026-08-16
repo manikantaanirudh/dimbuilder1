@@ -72,17 +72,9 @@ dimensions:
     excludeNamePatterns:
       - ^FVA_
       - ^Root
-  sheetAliases:
-    UD3:
-      - UD3
-      - UD3 OUC
-      - UD3 OUC (2)
   preferredMetadataNames:
     Scenario: Scenarios
     Account: GLAccounts
-    UD4: ChannelPartner
-    UD5: CustomerType
-    UD8: Reporting
   blueprints:
     Scenario:
       defaultDimensionName: Scenarios

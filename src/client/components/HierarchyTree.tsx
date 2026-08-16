@@ -302,14 +302,9 @@ function TreeNode({
     : `Hierarchy member ${node.key}`;
   return (
     <div className="tree-node">
-      <button
-        type="button"
+      <div
         className={`tree-row ${match ? "match" : ""} ${isDropTarget ? "drop-target" : ""}`.trim()}
         draggable={Boolean(draggedKey || node.key)}
-        onClick={() => {
-          if (hasChildren) setOpen((current) => !current);
-          onNodeClick?.(node.key);
-        }}
         onDragStart={(event) => {
           event.dataTransfer.effectAllowed = "move";
           event.dataTransfer.setData("text/plain", node.key);
@@ -336,23 +331,36 @@ function TreeNode({
         role="treeitem"
         aria-level={level}
         aria-expanded={hasChildren ? open : undefined}
-        aria-label={toggleLabel}
         title={toggleLabel}
       >
         {hasChildren ? (
-          open ? (
-            <ChevronDown size={14} />
-          ) : (
-            <ChevronRight size={14} />
-          )
+          <button
+            type="button"
+            className="tree-toggle"
+            onClick={(event) => {
+              event.stopPropagation();
+              setOpen((current) => !current);
+            }}
+            aria-label={`${open ? "Collapse" : "Expand"} ${node.key}`}
+            aria-expanded={open}
+            tabIndex={-1}
+          >
+            {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
         ) : (
           <span className="tree-spacer" />
         )}
-        <span className="tree-member-label">{node.key}</span>
+        <button
+          type="button"
+          className="tree-member-label"
+          onClick={() => onNodeClick?.(node.key)}
+        >
+          {node.key}
+        </button>
         {node.issueCodes.map((issue) => (
           <em key={issue}>{issue}</em>
         ))}
-      </button>
+      </div>
       {open && hasChildren && (
         <div className="tree-children" role="group">
           {node.children.map((child) => (

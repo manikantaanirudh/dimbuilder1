@@ -155,50 +155,48 @@ export function HierarchyAnalyticsPanel({
           />
         </button>
 
-        {isExportOpen && (
-          <div
-            className="hierarchy-export-menu"
-            style={{
-              position: "absolute",
-              top: "calc(100% + 4px)",
-              left: 0,
-              right: 0,
-              zIndex: 60,
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm, 6px)",
-              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.14)",
-              padding: "4px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            }}
-          >
-            {exportOptions.map((opt) => (
-              <a
-                key={opt.label}
-                href={opt.href}
-                className="hierarchy-export-menu-item"
-                onClick={() => setIsExportOpen(false)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "6px 10px",
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  color: "var(--text)",
-                  textDecoration: "none",
-                  borderRadius: "4px",
-                  transition: "background 0.12s ease",
-                }}
-              >
-                <span>{opt.label}</span>
-                <Download size={12} style={{ color: "var(--muted)", opacity: 0.7 }} />
-              </a>
-            ))}
-          </div>
-        )}
+        <div
+          className="hierarchy-export-menu"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            zIndex: 60,
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm, 6px)",
+            boxShadow: "0 6px 16px rgba(0, 0, 0, 0.14)",
+            padding: "4px",
+            display: isExportOpen ? "flex" : "none",
+            flexDirection: "column",
+            gap: "2px",
+          }}
+        >
+          {exportOptions.map((opt) => (
+            <a
+              key={opt.label}
+              href={opt.href}
+              className="hierarchy-export-menu-item"
+              onClick={() => setIsExportOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 10px",
+                fontSize: "12px",
+                fontWeight: 500,
+                color: "var(--text)",
+                textDecoration: "none",
+                borderRadius: "4px",
+                transition: "background 0.12s ease",
+              }}
+            >
+              <span>{opt.label}</span>
+              <Download size={12} style={{ color: "var(--muted)", opacity: 0.7 }} />
+            </a>
+          ))}
+        </div>
       </div>
     </section>
   );

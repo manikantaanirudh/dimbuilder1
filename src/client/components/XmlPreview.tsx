@@ -123,8 +123,7 @@ export function XmlPreview({
                   if (downloadDisabled) event.preventDefault();
                 }}
                 tabIndex={downloadDisabled ? -1 : undefined}
-                target={downloadDisabled ? undefined : "_blank"}
-                rel={downloadDisabled ? undefined : "noreferrer"}
+                download
                 title={downloadTitle}
               >
                 <Download size={15} /> Download XML

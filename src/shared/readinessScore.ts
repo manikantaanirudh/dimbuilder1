@@ -1,4 +1,5 @@
 import type { DimensionType, Severity, ValidationIssue } from "./types";
+import { isExportBlockingValidationIssue } from "./validationRuleCatalog";
 
 export type ReadinessBand = "ready" | "ready_with_warnings" | "needs_review" | "not_ready";
 export type CategoryStatus = "ready" | "warning" | "attention" | "blocker";
@@ -80,8 +81,8 @@ const CATEGORY_DEFS: CategoryDef[] = [
     label: "Hierarchy health",
     weight: 0.15,
     codes: [
-      "HIERARCHY_MAX_DEPTH_EXCEEDED", "ORPHAN_MEMBER", "ROOT_MEMBER_MISSING",
-      "RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS", "INVALID_SORT_ORDER", "SORT_ORDER_ZERO", "SORT_ORDER_DUPLICATE"
+      "HIERARCHY_MAX_DEPTH_EXCEEDED", "ORPHAN_MEMBER",
+      "RELATIONSHIPS_WITH_NO_LOCAL_MEMBERS", "SORT_ORDER_ZERO", "SORT_ORDER_DUPLICATE"
     ]
   },
   {
@@ -135,7 +136,7 @@ export function computeReadinessScore(input: ReadinessInput): ReadinessReport {
   const totalWeight = categories.reduce((sum, c) => sum + c.weight, 0) || 1;
   const score = Math.round(categories.reduce((sum, c) => sum + c.score * c.weight, 0) / totalWeight);
 
-  const blockingErrors = input.issues.filter((i) => input.exportBlockedBySeverities.includes(i.severity));
+  const blockingErrors = input.issues.filter(isExportBlockingValidationIssue);
   const blockers: string[] = [];
   if (blockingErrors.length > 0) {
     blockers.push(`${blockingErrors.length} blocking validation issue(s) prevent export.`);

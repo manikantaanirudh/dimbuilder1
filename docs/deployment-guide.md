@@ -24,6 +24,14 @@ This runs:
 - `tsx watch src/server/index.ts`
 - `vite --host 127.0.0.1`
 
+For a background restart of both local services on Windows, use the repository script:
+
+```powershell
+scripts\restart-services.bat dev bg
+```
+
+The script clears API port `8787` and Vite port `5173`, then starts `npm run dev` from the current worktree.
+
 ## Docker
 
 A multi-stage Dockerfile is provided for production deployment.
@@ -158,12 +166,15 @@ For local use:
 
 Before shared deployment:
 
-- Enable Basic Auth (`auth.enabled: true`) and change default credentials.
+- Enable JWT authentication with `auth.enabled: true` and `auth.strategy: local` or `oidc`.
+- Set `JWT_SECRET`, `ADMIN_EMAIL`, and a non-default `ADMIN_PASSWORD` before first shared-host bootstrap.
+- Set `APP_MODE=shared` or `APP_MODE=production`; startup safety rejects missing auth or placeholder secrets in those modes.
 - Set `server.corsOrigins` to restrict allowed origins.
 - Add upload controls.
 - Add database backup and migration process.
 - Move static client serving behind a configured production server.
 - Use PostgreSQL (`DATABASE_URL`) for shared or production deployments; keep SQLite for single-user local use.
+- Keep experimental modules disabled unless their operational readiness has been reviewed; shared and production modes force them off unless `UNSAFE_ALLOW_EXPERIMENTAL=true` is explicitly set.
 
 ## Operational Smoke Test
 

@@ -38,6 +38,7 @@ import { UNKNOWN_XML_DATA_KEY } from "./xmlImport";
 import type { PropertyDefaultResolutionEntry } from "./effectiveProperties";
 import { validateOneStreamProfile } from "./oneStreamValidation";
 import type { OneStreamValidationProfileConfig } from "./appConfigTypes";
+import { resolveValidationSeverity } from "./validationRuleCatalog";
 
 export interface ValidationSeverityOptions {
   duplicateMemberSeverity: Severity;
@@ -79,8 +80,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
 
   function addIssue(params: Omit<ValidationIssue, "id" | "projectId" | "dimensionId" | "createdAt">): void {
     // Apply per-rule-code override if present
-    const overrideSeverity = input.ruleOverrides?.get(params.code);
-    const effectiveSeverity = overrideSeverity ?? params.severity;
+    const effectiveSeverity = resolveValidationSeverity(params.code, params.severity, input.ruleOverrides);
     if (effectiveSeverity === "off") return;
     issues.push({
       id: nanoid(),
@@ -216,26 +216,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
     }
   }
 
-  // Root member missing check
-  if (input.relationships.length > 0) {
-    const childKeys = new Set(input.relationships.map(r => r.childKey));
-    const parentKeys = new Set(input.relationships.map(r => r.parentKey));
-    const rootKeys = [...parentKeys].filter(k => !childKeys.has(k));
-    const hasRoot = rootKeys.some(k => k.toLowerCase() === "root" || input.members.some(m => m.memberKey === k));
-    if (rootKeys.length === 0 || (!hasRoot && !input.members.some(m => m.memberKey.toLowerCase() === "root"))) {
-      addIssue({
-        entityType: "dimension",
-        entityId: input.dimension.id,
-        severity: "warning",
-        code: "ROOT_MEMBER_MISSING",
-        message: `No root member found for dimension '${input.dimension.dimensionName}'. OneStream dimensions typically require a 'Root' member.`,
-        fieldName: "Members",
-        rowNumber: null
-      });
-    }
-  }
-
-  // Hierarchy max depth exceeded (OneStream max is typically 30)
+  // Hierarchy depth is a configurable consultant performance threshold, not a hard OneStream limit.
   if (input.relationships.length > 0) {
     const childrenByParent = new Map<string, string[]>();
     for (const rel of input.relationships) {
@@ -252,13 +233,14 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
       return 1 + Math.max(...children.map(c => measureDepth(c, visited)));
     }
     const maxDepth = Math.max(0, ...roots.map(r => measureDepth(r, new Set())));
-    if (maxDepth > 30) {
+    const maxHierarchyDepth = severities.oneStreamProfile?.maxHierarchyDepth ?? 30;
+    if (maxDepth > maxHierarchyDepth) {
       addIssue({
         entityType: "dimension",
         entityId: input.dimension.id,
         severity: "error",
         code: "HIERARCHY_MAX_DEPTH_EXCEEDED",
-        message: `Hierarchy depth is ${maxDepth} levels, exceeding the OneStream maximum of 30.`,
+        message: `Hierarchy depth is ${maxDepth} levels, exceeding the configured review threshold of ${maxHierarchyDepth}.`,
         fieldName: "Relationships",
         rowNumber: null
       });
@@ -324,7 +306,7 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
   }
 
   if (severities.oneStreamProfile?.enabled) {
-    issues.push(...validateOneStreamProfile({
+    const profileIssues = validateOneStreamProfile({
       project: input.project,
       dimension: input.dimension,
       members: input.members,
@@ -332,7 +314,18 @@ export function validateDimension(input: ValidateDimensionInput): ValidationIssu
       varyingPropertyValues: input.varyingPropertyValues,
       profile: severities.oneStreamProfile,
       propertyDefaults: input.propertyDefaults
-    }));
+    });
+    for (const issue of profileIssues) {
+      addIssue({
+        entityType: issue.entityType,
+        entityId: issue.entityId,
+        severity: issue.severity,
+        code: issue.code,
+        message: issue.message,
+        fieldName: issue.fieldName,
+        rowNumber: issue.rowNumber
+      });
+    }
   }
 
   return issues;

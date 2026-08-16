@@ -21,9 +21,11 @@
 
 ## Top 5 Things to BUILD Next
 
+> Historical backlog. `ROOT_MEMBER_MISSING` is retired by the OneStream 9.2 validation catalog; inherited/system Root and None states are valid and are not export-blocking errors.
+
 | # | Item | User | Risk | OS Corr | Prod | Demo | Effort | Total | Rationale |
 |---|------|------|------|---------|------|------|--------|-------|-----------|
-| 1 | **ROOT_MEMBER_MISSING validation rule** | 5 | 4 | 5 | 3 | 3 | 5 | **25** | Every dimension needs Root. Missing Root = OneStream import rejection. Simple string check. |
+| 1 | **Retired: ROOT_MEMBER_MISSING validation rule** | — | — | — | — | — | — | — | OneStream 9.2 does not support treating missing local Root as a platform import error. |
 | 2 | **SELF_REFERENCING_RELATIONSHIP validation** | 4 | 4 | 5 | 3 | 3 | 5 | **24** | parentKey===childKey is invalid, cycle detector may miss it, easy to implement. |
 | 3 | **MEMBER_NAME_LEADING_TRAILING_WHITESPACE validation** | 5 | 4 | 5 | 3 | 2 | 5 | **24** | Causes silent "member not found" failures in OneStream. Practitioners import this from Excel constantly. |
 | 4 | **Upload file type/size validation (multer filter)** | 2 | 5 | 1 | 5 | 1 | 5 | **19** | Prevents arbitrary file upload. 10 lines of code for meaningful security improvement. |
@@ -85,7 +87,7 @@
 
 | Item | User | Risk | OS Corr | Prod | Demo | Effort | Total |
 |------|------|------|---------|------|------|--------|-------|
-| ROOT_MEMBER_MISSING | 5 | 4 | 5 | 3 | 3 | 5 | **25** |
+| ROOT_MEMBER_MISSING (retired) | — | — | — | — | — | — | — |
 | SELF_REFERENCING_RELATIONSHIP | 4 | 4 | 5 | 3 | 3 | 5 | **24** |
 | MEMBER_NAME_LEADING_TRAILING_WHITESPACE | 5 | 4 | 5 | 3 | 2 | 5 | **24** |
 | DUPLICATE_MEMBER_CASE_INSENSITIVE | 4 | 3 | 5 | 2 | 2 | 5 | **21** |

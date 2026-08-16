@@ -8,7 +8,8 @@ import type { DimensionType } from "../../shared/types";
 import {
   commitCsvImport,
   createProject,
-  createProjectSnapshot,
+  createProjectVersion,
+  updateCurrentProjectVersion,
   deleteProject,
   inspectCsvImport,
   planRelationshipExport,
@@ -121,6 +122,7 @@ export function ImportModal({
   const [fileTarget, setFileTarget] = useState<"new" | "existing">("new");
   const [fileProjectId, setFileProjectId] = useState<string>("");
   const [fileProjectName, setFileProjectName] = useState("");
+  const [versionDescription, setVersionDescription] = useState("");
   const [csvTarget, setCsvTarget] = useState<"new" | "existing">("new");
   const [csvProjectId, setCsvProjectId] = useState<string>("");
   const [csvProjectName, setCsvProjectName] = useState("");
@@ -198,6 +200,7 @@ export function ImportModal({
     setFileTarget("new");
     setFileProjectId(selectedProjectId ?? "");
     setFileProjectName("");
+    setVersionDescription("");
     setCsvPreview(null);
     setCsvHeaders([]);
     setCsvMapping(null);
@@ -278,8 +281,8 @@ export function ImportModal({
     setIsImporting(true);
     try {
       const result = importMode === "xlsx"
-        ? await uploadWorkbook(file, defaultProjectName, targetId)
-        : await uploadXml(file, defaultProjectName, targetId);
+        ? await uploadWorkbook(file, defaultProjectName, targetId, versionDescription.trim() || undefined)
+        : await uploadXml(file, defaultProjectName, targetId, versionDescription.trim() || undefined);
       setImportedProject(result.project);
       setSummary(result.importSummary);
       const verText = result.project.versionLabel ? ` (${result.project.versionLabel})` : "";
@@ -369,10 +372,21 @@ export function ImportModal({
                       <option value="">Select a project</option>
                       {projects.map((project) => (
                         <option key={project.id} value={project.id}>
-                          {project.name} ({project.versionLabel ?? "v1"})
+                          {project.name}
                         </option>
                       ))}
                     </select>
+                  </label>
+                )}
+                {fileTarget === "existing" && (
+                  <label className="modal-field">
+                    <span>Version details (optional)</span>
+                    <input
+                      value={versionDescription}
+                      disabled={isImporting || isPreviewing}
+                      placeholder="Describe what this new version contains"
+                      onChange={(event) => setVersionDescription(event.target.value)}
+                    />
                   </label>
                 )}
               </div>
@@ -889,21 +903,23 @@ export function SaveAsModal({
   open,
   onClose,
   projectId,
+  activeVersionLabel,
   onSaved
 }: {
   open: boolean;
   onClose: () => void;
   projectId: string | null;
-  onSaved?: (name: string) => void;
+  activeVersionLabel?: string | null;
+  onSaved?: (message: string) => void;
 }) {
-  const [name, setName] = useState("");
+  const [mode, setMode] = useState<"new" | "current">("new");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setName("");
+      setMode("new");
       setDescription("");
       setStatus("");
       setSaving(false);
@@ -912,17 +928,18 @@ export function SaveAsModal({
 
   if (!open || !projectId) return null;
 
+  const currentLabel = activeVersionLabel || "the current version";
+
   async function handleSave() {
-    if (!projectId || !name.trim()) {
-      setStatus("Enter a snapshot name.");
-      return;
-    }
+    if (!projectId) return;
     setSaving(true);
     setStatus("Saving...");
     try {
-      const result = await createProjectSnapshot(projectId, { name: name.trim(), description: description.trim() });
-      setStatus(`Saved: ${result.name}`);
-      onSaved?.(result.name);
+      const result = mode === "new"
+        ? await createProjectVersion(projectId, { description: description.trim() })
+        : await updateCurrentProjectVersion(projectId, { description: description.trim() });
+      setStatus(result.message);
+      onSaved?.(result.message);
       onClose();
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "Save failed");
@@ -934,19 +951,36 @@ export function SaveAsModal({
   return (
     <div className="modal-backdrop">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="save-as-title">
-        <div className="modal-heading"><h2 id="save-as-title">Save As</h2></div>
+        <div className="modal-heading"><h2 id="save-as-title">Save Changes</h2></div>
+        <p style={{ margin: "0 0 12px", fontSize: "13px", color: "var(--muted)" }}>
+          Choose how to save your current changes.
+        </p>
         <div className="modal-field">
-          <label>Snapshot name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Pre-release v2" autoFocus />
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, background: mode === "current" ? "var(--surface-subtle)" : "transparent", marginBottom: 8 }}>
+            <input type="radio" name="save-as-mode" checked={mode === "current"} onChange={() => setMode("current")} style={{ marginTop: 3 }} />
+            <span>
+              <strong style={{ display: "block", fontSize: "13px" }}>Save changes in {currentLabel}</strong>
+              <span style={{ fontSize: "12px", color: "var(--muted)" }}>Overwrites {currentLabel} with the current working data.</span>
+            </span>
+          </label>
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, background: mode === "new" ? "var(--surface-subtle)" : "transparent" }}>
+            <input type="radio" name="save-as-mode" checked={mode === "new"} onChange={() => setMode("new")} style={{ marginTop: 3 }} />
+            <span>
+              <strong style={{ display: "block", fontSize: "13px" }}>Create a new version</strong>
+              <span style={{ fontSize: "12px", color: "var(--muted)" }}>Snapshots the current working data as the next version and makes it active.</span>
+            </span>
+          </label>
         </div>
         <div className="modal-field">
           <label>Description (optional)</label>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What changed in this version?" autoFocus />
         </div>
         {status && <div className="modal-status">{status}</div>}
         <div className="modal-actions">
           <ActionButton onClick={onClose}>Cancel</ActionButton>
-          <ActionButton variant="primary" disabled={saving || !name.trim()} onClick={() => void handleSave()}>Save Snapshot</ActionButton>
+          <ActionButton variant="primary" disabled={saving} onClick={() => void handleSave()}>
+            {mode === "new" ? "Create Version" : "Save Changes"}
+          </ActionButton>
         </div>
       </div>
     </div>

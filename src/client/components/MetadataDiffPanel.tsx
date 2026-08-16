@@ -251,6 +251,26 @@ function getRelChildKey(r: any): string {
   return String(r.childKey || r.childMemberKey || r.child || "").trim();
 }
 
+// Dimension ids are regenerated on every reseed/import, so they cannot be trusted as a stable
+// cross-version identity. Match by dimension name first (the stable, human-meaningful key shown
+// throughout the UI), falling back to id (useful when both snapshots come from live-state saves
+// that never regenerate ids), and only falling back to "same type" when there is exactly one
+// candidate of that type — never guess among multiple same-type dimensions (e.g. several
+// "Entity" dimensions), which previously caused unrelated dimensions to be diffed against each other.
+function findMatchingDimension(
+  candidates: DimensionRecord[],
+  target: DimensionRecord
+): DimensionRecord | undefined {
+  if (target.dimensionName) {
+    const byName = candidates.find((d) => d.dimensionName === target.dimensionName);
+    if (byName) return byName;
+  }
+  const byId = candidates.find((d) => d.id === target.id);
+  if (byId) return byId;
+  const sameType = candidates.filter((d) => d.dimensionType === target.dimensionType);
+  return sameType.length === 1 ? sameType[0] : undefined;
+}
+
 function computeVersionDiff(
   versionA: ProjectVersionRecord,
   versionB: ProjectVersionRecord,
@@ -268,13 +288,8 @@ function computeVersionDiff(
 
   let targetDimsB: DimensionRecord[] = [];
   if (currentDimension) {
-    const match = dimsB.find(
-      (d) =>
-        (currentDimension.dimensionName && d.dimensionName === currentDimension.dimensionName) ||
-        d.id === currentDimension.id ||
-        (d.dimensionType === currentDimension.dimensionType && d.dimensionName === currentDimension.dimensionName)
-    );
-    targetDimsB = match ? [match] : dimsB.filter((d) => d.dimensionType === currentDimension.dimensionType);
+    const match = findMatchingDimension(dimsB, currentDimension);
+    targetDimsB = match ? [match] : [];
   } else {
     targetDimsB = dimsB;
   }
@@ -282,47 +297,13 @@ function computeVersionDiff(
   const diffItems: VersionDiffItem[] = [];
 
   for (const dimB of targetDimsB) {
-    const dimA = dimsA.find(
-      (d) =>
-        (dimB.dimensionName && d.dimensionName === dimB.dimensionName) ||
-        d.dimensionType === dimB.dimensionType
-    );
+    const dimA = findMatchingDimension(dimsA, dimB);
 
-    let dimMemsA = dimA ? memsA.filter((m) => m.dimensionId === dimA.id) : [];
-    let dimMemsB = memsB.filter((m) => m.dimensionId === dimB.id);
+    const dimMemsA = dimA ? memsA.filter((m) => m.dimensionId === dimA.id) : [];
+    const dimMemsB = memsB.filter((m) => m.dimensionId === dimB.id);
 
-    if (dimA && dimMemsA.length === 0 && memsA.length > 0) {
-      const idxA = dimsA.indexOf(dimA);
-      const uniqueDimIdsA = Array.from(new Set(memsA.map((m) => m.dimensionId)));
-      if (idxA >= 0 && idxA < uniqueDimIdsA.length) {
-        dimMemsA = memsA.filter((m) => m.dimensionId === uniqueDimIdsA[idxA]);
-      }
-    }
-    if (dimMemsB.length === 0 && memsB.length > 0) {
-      const idxB = dimsB.indexOf(dimB);
-      const uniqueDimIdsB = Array.from(new Set(memsB.map((m) => m.dimensionId)));
-      if (idxB >= 0 && idxB < uniqueDimIdsB.length) {
-        dimMemsB = memsB.filter((m) => m.dimensionId === uniqueDimIdsB[idxB]);
-      }
-    }
-
-    let dimRelsA = dimA ? relsA.filter((r) => r.dimensionId === dimA.id) : [];
-    let dimRelsB = relsB.filter((r) => r.dimensionId === dimB.id);
-
-    if (dimA && dimRelsA.length === 0 && relsA.length > 0) {
-      const idxA = dimsA.indexOf(dimA);
-      const uniqueDimIdsA = Array.from(new Set(relsA.map((r) => r.dimensionId)));
-      if (idxA >= 0 && idxA < uniqueDimIdsA.length) {
-        dimRelsA = relsA.filter((r) => r.dimensionId === uniqueDimIdsA[idxA]);
-      }
-    }
-    if (dimRelsB.length === 0 && relsB.length > 0) {
-      const idxB = dimsB.indexOf(dimB);
-      const uniqueDimIdsB = Array.from(new Set(relsB.map((r) => r.dimensionId)));
-      if (idxB >= 0 && idxB < uniqueDimIdsB.length) {
-        dimRelsB = relsB.filter((r) => r.dimensionId === uniqueDimIdsB[idxB]);
-      }
-    }
+    const dimRelsA = dimA ? relsA.filter((r) => r.dimensionId === dimA.id) : [];
+    const dimRelsB = relsB.filter((r) => r.dimensionId === dimB.id);
 
     const mapA = new Map(dimMemsA.map((m) => [m.memberKey, m]));
     const mapB = new Map(dimMemsB.map((m) => [m.memberKey, m]));

@@ -5,13 +5,15 @@
 
 ---
 
+> Historical planning document. The OneStream 9.2 validation catalog supersedes older Root-member error assumptions in this backlog.
+
 ## Top 5 Priorities (Ranked by Pilot Readiness Impact)
 
 | # | Priority | Why |
 |---|----------|-----|
 | 1 | **Fix core workflow gaps** (member edit API, diff route) | Pilot users will hit these within the first 30 minutes of use. 2 of 16 workflow steps are broken. |
 | 2 | **Enable network-safe authentication** | The app ships with auth OFF and a placeholder JWT secret. Putting 5-10 users on a network without this is a security incident. |
-| 3 | **Add missing "easy win" validation rules** | ROOT_MEMBER_MISSING, SELF_REFERENCING_RELATIONSHIP, and leading/trailing whitespace — these catch real OneStream import failures that pilot users will encounter. |
+| 3 | **Add missing "easy win" validation rules** | SELF_REFERENCING_RELATIONSHIP and leading/trailing whitespace remain review items; local Root-member absence is not a OneStream platform error. |
 | 4 | **Fix the failing tests and add round-trip XML test** | 4 tests fail due to missing fixture. No import→export→compare test exists. These undermine confidence in the core export path. |
 | 5 | **Create pilot deployment guide and operator docs** | Pilot operators need a one-page checklist to configure auth, CORS, TLS proxy, backups. Without this, deployment will be ad-hoc and insecure. |
 
@@ -53,7 +55,7 @@
 
 **Acceptance Criteria:**
 - [ ] Workbook parser tests pass (fixture file restored or recreated)
-- [ ] ROOT_MEMBER_MISSING validation fires when no Root member exists
+- [ ] Do not emit a platform error when a local Root member is absent; inherited/system Root and None remain valid states
 - [ ] SELF_REFERENCING_RELATIONSHIP catches parent===child
 - [ ] MEMBER_NAME_LEADING_TRAILING_WHITESPACE catches silent matching failures
 - [ ] Validation results display in the UI with clear severity indicators
@@ -110,7 +112,7 @@
 - Keep endpoint unauthenticated (already correct)
 
 ### E5: Add 3 Easy Validation Rules (Story 3)
-- `ROOT_MEMBER_MISSING`: Check each dimension has at least one member with key matching configured root name (default "Root")
+- `ROOT_MEMBER_MISSING`: Retired; local Root absence is not a documented OneStream platform error
 - `SELF_REFERENCING_RELATIONSHIP`: Check parentKey !== childKey on all relationships
 - `MEMBER_NAME_LEADING_TRAILING_WHITESPACE`: Trim check on all memberKey values
 

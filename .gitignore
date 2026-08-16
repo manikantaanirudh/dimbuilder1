@@ -33,5 +33,3 @@ scripts/autoresearch/benchmark-cache.json
 /OpexAccount_Export_*.txt
 /parent-child.csv
 /snowflake.log
-scratch_debug.*
-scratch_http.*

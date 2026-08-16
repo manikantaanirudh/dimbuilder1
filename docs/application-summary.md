@@ -2,6 +2,8 @@
 
 SR Onestream Dim Builder is a local-first metadata workbench for building, validating, previewing, and exporting OneStream dimension metadata. The app is intentionally generic: it can create a blank project from central dimension blueprints in `config/dimbuilder.yaml`, and XLSX import remains an optional way to seed a project.
 
+The default runtime is intentionally conservative: local mode uses SQLite, authentication and AI are disabled, and optional platform modules are hidden and unmounted unless their `modules` flags are enabled. The repository also contains experimental platform routes for environments, connectors, cross-dimension analysis, templates, VCS, migration, API-platform, and tenancy workflows; those are not default local capabilities.
+
 ## Primary Goals
 
 - Create app-authored OneStream metadata projects without depending on an Excel workbook.
@@ -50,6 +52,8 @@ SR Onestream Dim Builder is a local-first metadata workbench for building, valid
 
 10. Export.
    The client calls export endpoints for XML, XLSX, members CSV, relationships CSV, JSON backup, or snapshots. XML export reads persisted project records and renders OneStream metadata XML.
+
+   The Project Overview and shared project navigation show only catalog-defined blocking errors. Warning and informational findings remain visible in Validation and Reports, where they can be reviewed without being presented as export blockers.
 
 11. Analyze hierarchy.
    The Hierarchy tab calls `/api/projects/:projectId/dimensions/:dimensionId/hierarchy/analytics`, displays max depth, leaf/parent, shared-member, and orphan counts, and links to deterministic CSV exports for levelized, paths, parent-child, shared, and orphan reports.

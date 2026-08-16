@@ -25,7 +25,7 @@ Config:
 - `export.xml.includeDimensionSourceAttributes`
 - `application.oneStreamVersionFallback`
 
-All export endpoints are guarded by `src/server/exportGuards.ts` before rendering or writing files. Stored validation issues with severities in `validation.exportBlockedBySeverities` return `409` unless validation bypass is enabled and explicitly requested with a reason. Rules with severity `"off"` are disabled and produce no issues, so they never contribute to export blocking.
+All export endpoints are guarded by `src/server/exportGuards.ts` before rendering or writing files. The guard consults `src/shared/validationRuleCatalog.ts`: only a registered locked hard-error rule with severity `"error"` returns `409`. Advisories and informational findings never block exports, regardless of their configured display severity. Rules with severity `"off"` produce no issues.
 
 XML export reads persisted project, dimensions, members, relationships, and varying property values. It works for blueprint-created projects, XLSX-seeded projects, and XML-imported projects.
 
@@ -189,7 +189,7 @@ The UI disables export when:
 
 - no project is open
 - all export formats are disabled
-- validation issues contain severities listed in `validation.exportBlockedBySeverities`
+- validation issues contain registered locked hard-error rules from the shared validation catalog
 
 The server also enforces the same validation gate for XML, JSON, member CSV, relationship CSV, XLSX, and snapshot exports. Blocking responses use HTTP `409` with issue counts by severity.
 

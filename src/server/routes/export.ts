@@ -68,6 +68,10 @@ export function createExportRouter(repos: Repositories, config: AppConfig): Rout
       };
       if (!previewOnly) {
         await repos.audit.record({ projectId: snapshot.project.id, action: "export.xml", entityType: "project", entityId: snapshot.project.id, after: { mode, baselineId, dimensionId, relationshipPlan: relationshipPlan?.summary } });
+        const dim = dimensionId ? snapshot.dimensions.find((d) => d.id === dimensionId) : null;
+        const dimSuffix = dim ? `_${dim.dimensionName.replace(/[^A-Za-z0-9_-]+/g, "_")}` : "";
+        const projectSlug = snapshot.project.name.replace(/[^A-Za-z0-9_-]+/g, "_");
+        res.setHeader("Content-Disposition", `attachment; filename="${projectSlug}${dimSuffix}.xml"`);
       }
       res.type("application/xml");
       for (const chunk of iterateProjectXmlChunks(snapshot, xmlOptions)) {

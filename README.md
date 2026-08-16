@@ -75,7 +75,8 @@ The app includes optional production-readiness features:
 
 | Feature | Status |
 |---------|--------|
-| HTTP Basic Authentication | Available, disabled by default |
+| JWT local credentials / OIDC authentication | Available, disabled by default |
+| Legacy HTTP Basic Authentication | Compatibility path for enabled `strategy: none` |
 | CORS origin restriction | Configurable via `server.corsOrigins` |
 | Rate limiting | 100 req/min general, 10 req/min import/export |
 | Request body validation | Zod schemas on mutation routes |

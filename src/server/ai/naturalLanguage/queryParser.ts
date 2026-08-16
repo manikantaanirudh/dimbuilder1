@@ -22,7 +22,7 @@ export interface NLQueryInput {
   context?: ProjectAIContext;
 }
 
-interface ParsedIntent {
+export interface ParsedIntent {
   type:
     | 'find' | 'count' | 'children' | 'missing_property' | 'property_filter' | 'orphans'
     | 'check_exists' | 'summary' | 'issues' | 'export_ready'
@@ -202,6 +202,10 @@ function executeIntent(
   relationships: DimensionRelationshipRecord[],
   context?: ProjectAIContext
 ): QueryExecutionResult {
+  if (['leaf_count', 'list_leaves', 'hierarchy_depth', 'hierarchy_summary', 'shared_members'].includes(intent.type)) {
+    return executeHierarchyIntent(intent, question, dimensions, members, relationships);
+  }
+
   switch (intent.type) {
     case 'summary': {
       if (!context) {
@@ -279,7 +283,7 @@ function executeIntent(
       return {
         intent: 'issues',
         answer: buildStructuredAnswer({
-          summary: `Found ${context.validation.totalIssues} validation issue(s) in "${context.projectName}".`,
+          summary: `Found ${context.validation.totalIssues} issue(s) in "${context.projectName}" (${context.validation.errors ?? 0} error(s), ${context.validation.warnings ?? 0} warning(s)).`,
           keyMetrics: [
             { label: "Total Issues", value: context.validation.totalIssues },
             { label: "Errors", value: context.validation.errors ?? 0 },
@@ -287,7 +291,7 @@ function executeIntent(
             { label: "Export Blocking", value: context.validation.blockingIssues }
           ],
           findings: context.topIssues.map(i => ({
-            severity: i.severity === 'error' ? 'Critical' : 'Warning',
+            severity: 'Warning' as const,
             text: `${i.code} (x${i.count}): ${i.message}`
           })),
           impact: context.validation.blockingIssues > 0
@@ -477,6 +481,150 @@ function executeIntent(
         answer: generateResponse({ matchedMembers: matchedKeys, intent: 'orphans', params: intent.params }),
         matchedMembers: matchedKeys,
         confidence: 0.9
+      };
+    }
+
+    case 'export_ready': {
+      if (!context) return unavailableContext('export_ready');
+      const blocking = context.validation.blockingIssues;
+      return {
+        intent: 'export_ready',
+        answer: blocking === 0
+          ? `The project is ready to export. No blocking validation issues were found.`
+          : `The project is not ready to export. ${blocking} issue(s) currently block export.${context.topIssues.length > 0 ? ` Top issues: ${context.topIssues.map((issue) => issue.code).join(", ")}.` : ""}`,
+        matchedMembers: [],
+        confidence: 1,
+        evidence: [
+          `Blocking issues: ${blocking}`,
+          `Total issues: ${context.validation.totalIssues}`,
+          `Export gate: ${blocking === 0 ? 'ready' : 'blocked'}`,
+          ...context.topIssues.map((issue) => `${issue.code} (x${issue.count}): ${issue.message}`)
+        ],
+        followUps: blocking === 0 ? ['Summarize my project'] : ['What is wrong with my project?', 'What should I fix first?']
+      };
+    }
+
+    case 'find': {
+      const pattern = intent.params.pattern || question;
+      const normalizedPattern = pattern.toLowerCase();
+      const matched = members.filter((member) =>
+        member.memberKey.toLowerCase().includes(normalizedPattern) ||
+        member.description.toLowerCase().includes(normalizedPattern)
+      );
+      const matchedKeys = matched.map((member) => member.memberKey);
+      return {
+        intent: 'find',
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'find', params: { pattern } }),
+        matchedMembers: matchedKeys,
+        confidence: 0.9
+      };
+    }
+
+    case 'list_members': {
+      const dimension = resolveDimensionToken(intent.params.dimension, dimensions);
+      const scoped = membersForDimension(dimension, members, relationships);
+      const matchedKeys = scoped.members.map((member) => member.memberKey).sort((a, b) => a.localeCompare(b));
+      return {
+        intent: 'list_members',
+        answer: generateResponse({ matchedMembers: matchedKeys, intent: 'list_members', params: { dimension: dimension?.dimensionName ?? intent.params.dimension } }),
+        matchedMembers: matchedKeys,
+        confidence: dimension ? 1 : 0.7,
+        evidence: dimension ? [`${matchedKeys.length} members in ${dimension.dimensionName}`] : undefined
+      };
+    }
+
+    case 'list_dimensions': {
+      const names = dimensions.map((dimension) => `${dimension.dimensionName} (${dimension.dimensionType})`);
+      return {
+        intent: 'list_dimensions',
+        answer: names.length > 0 ? `This project contains ${names.length} dimension(s): ${names.join(', ')}.` : 'This project has no dimensions yet.',
+        matchedMembers: [],
+        confidence: 1,
+        evidence: names
+      };
+    }
+
+    case 'member_details':
+      return executeMemberDetails(intent.params.memberKey, dimensions, members, relationships, 'member_details');
+
+    case 'relationship_count': {
+      const dimension = resolveDimensionToken(intent.params.dimension, dimensions);
+      const relationshipCount = dimension
+        ? relationships.filter((relationship) => relationship.dimensionId === dimension.id).length
+        : relationships.length;
+      return {
+        intent: 'relationship_count',
+        answer: `${relationshipCount} relationship(s)${dimension ? ` in ${dimension.dimensionName}` : ''}.`,
+        matchedMembers: [],
+        confidence: dimension || !intent.params.dimension ? 1 : 0.7,
+        evidence: [`${relationshipCount} relationship(s)`]
+      };
+    }
+
+    case 'inactive_members': {
+      const dimension = resolveDimensionToken(intent.params.dimension, dimensions);
+      const scoped = membersForDimension(dimension, members, relationships);
+      const inactive = scoped.members.filter((member) => !member.isActive).map((member) => member.memberKey);
+      return {
+        intent: 'inactive_members',
+        answer: inactive.length > 0 ? `${inactive.length} inactive member(s): ${inactive.join(', ')}` : 'No inactive members found.',
+        matchedMembers: inactive,
+        confidence: dimension || !intent.params.dimension ? 1 : 0.7
+      };
+    }
+
+    case 'root_members': {
+      const dimension = resolveDimensionToken(intent.params.dimension, dimensions);
+      const scoped = membersForDimension(dimension, members, relationships);
+      const childKeys = new Set(scoped.relationships.map((relationship) => relationship.childKey));
+      const roots = scoped.members.filter((member) => !childKeys.has(member.memberKey)).map((member) => member.memberKey);
+      return {
+        intent: 'root_members',
+        answer: roots.length > 0 ? `${roots.length} root member(s): ${roots.join(', ')}` : 'No root members found.',
+        matchedMembers: roots,
+        confidence: dimension || !intent.params.dimension ? 1 : 0.7
+      };
+    }
+
+    case 'empty_dimensions': {
+      if (!context) return unavailableContext('empty_dimensions');
+      const empty = context.dimensions.filter((dimension) => dimension.memberCount === 0);
+      return {
+        intent: 'empty_dimensions',
+        answer: empty.length > 0
+          ? `${empty.length} empty dimension(s): ${empty.map((dimension) => dimension.dimensionName).join(', ')}.`
+          : 'No empty dimensions found.',
+        matchedMembers: [],
+        confidence: 1,
+        evidence: empty.map((dimension) => dimension.dimensionName)
+      };
+    }
+
+    case 'coverage': {
+      if (!context) return unavailableContext('coverage');
+      return {
+        intent: 'coverage',
+        answer: `Overall metadata coverage is ${context.coverage.overallPercent}%.`,
+        matchedMembers: [],
+        confidence: 1,
+        evidence: context.coverage.dimensions.map((dimension) => `${dimension.dimensionName}: ${dimension.propertyCoverage}% properties, ${dimension.descriptionCoverage}% descriptions`)
+      };
+    }
+
+    case 'dimension_issues': {
+      if (!context) return unavailableContext('dimension_issues');
+      const requested = intent.params.dimension?.trim().toLowerCase();
+      const rows = requested
+        ? context.issuesByDimension.filter((row) => `${row.dimensionType} ${row.dimensionName}`.toLowerCase().includes(requested))
+        : context.issuesByDimension;
+      return {
+        intent: 'dimension_issues',
+        answer: rows.length > 0
+          ? rows.map((row) => `${row.dimensionName}: ${row.totalCount} issue(s)`).join('; ')
+          : 'No dimension-level validation issues found.',
+        matchedMembers: [],
+        confidence: 1,
+        evidence: rows.map((row) => `${row.dimensionName}: ${row.totalCount} total, ${row.errors} errors, ${row.warnings} warnings`)
       };
     }
 
@@ -677,4 +825,13 @@ function findDescendants(parentKey: string, relationships: DimensionRelationship
   }
 
   return descendants;
+}
+
+/** Classify without loading project data. Used by the core Project Query planner. */
+export function classifyNaturalLanguageQuery(question: string): { type: ParsedIntent["type"]; params: Record<string, string> } {
+  return parseIntent(question, []);
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

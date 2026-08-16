@@ -31,7 +31,7 @@ const ROLE_HIERARCHY: Record<ProjectRole, number> = {
  */
 export function requireProjectRole(repos: Repositories, minimumRole: ProjectRole) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const projectId = req.params.id;
+    const projectId = req.params.id ?? req.params.projectId;
     if (!projectId) return res.status(400).json({ error: "Project ID required" });
 
     const userId = req.user?.id ?? "anonymous";

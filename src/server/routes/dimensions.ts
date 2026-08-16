@@ -4,6 +4,7 @@ import { getDimensionSchema } from "../../shared/dimensionSchemas";
 import { parseExportLoadMode, planRelationshipLoadMode } from "../../shared/relationshipOperations";
 import { relationshipDefaultsToProperties, relationshipPropertiesToDefaults } from "../../shared/relationshipDefaults";
 import type { ProjectMetadataState } from "../../shared/types";
+import type { FilterCondition } from "../../shared/structuredSearch";
 import type { Repositories } from "../db/repositories";
 import { deleteDimension } from "../helpers/dimensionDelete";
 import { deleteMembersWithRelationships } from "../helpers/memberDelete";
@@ -21,6 +22,71 @@ export function createDimensionsRouter({ repos, config }: RouterDeps): Router {
 
   router.get("/dimensions", async (req, res) => {
     res.json(await repos.dimensions.listByProject((req.params as Record<string, string>).projectId));
+  });
+
+  router.get("/members/search", async (req, res) => {
+    const projectId = (req.params as Record<string, string>).projectId;
+    const q = String((req.query.q as string) ?? "").trim();
+    if (q.length < 2) {
+      return res.json({ results: [], hasMore: false });
+    }
+    const rawLimit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;
+    const rows = await repos.members.searchMembers(projectId, q, limit + 1);
+    const hasMore = rows.length > limit;
+    res.json({ results: hasMore ? rows.slice(0, limit) : rows, hasMore });
+  });
+
+  router.post("/structured-search", async (req, res) => {
+    const projectId = (req.params as Record<string, string>).projectId;
+    const rawConditions = Array.isArray(req.body?.conditions) ? req.body.conditions : [];
+    const conditions: FilterCondition[] = rawConditions
+      .filter((c: unknown): c is FilterCondition =>
+        !!c && typeof c === "object" &&
+        typeof (c as FilterCondition).fieldKey === "string" &&
+        typeof (c as FilterCondition).op === "string" &&
+        ((c as FilterCondition).target === "member" || (c as FilterCondition).target === "relationship"))
+      .map((c: FilterCondition) => ({ target: c.target, fieldKey: c.fieldKey, op: c.op, value: String(c.value ?? "") }));
+    if (conditions.length === 0) {
+      return res.json({ members: [], membersHasMore: false, relationships: [], relationshipsHasMore: false });
+    }
+    const rawLimit = Number.parseInt(String(req.body?.limit ?? "50"), 10);
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;
+
+    const memberConditions = conditions.filter((c) => c.target === "member");
+    const relationshipConditions = conditions.filter((c) => c.target === "relationship");
+
+    const members = memberConditions.length
+      ? await repos.members.structuredSearch(projectId, memberConditions, limit + 1)
+      : [];
+    const relationships = relationshipConditions.length
+      ? await repos.relationships.structuredSearch(projectId, relationshipConditions, limit + 1)
+      : [];
+
+    const membersHasMore = members.length > limit;
+    const relationshipsHasMore = relationships.length > limit;
+    res.json({
+      members: membersHasMore ? members.slice(0, limit) : members,
+      membersHasMore,
+      relationships: relationshipsHasMore ? relationships.slice(0, limit) : relationships,
+      relationshipsHasMore,
+    });
+  });
+
+  router.get("/field-values", async (req, res) => {
+    const projectId = (req.params as Record<string, string>).projectId;
+    const target = String(req.query.target ?? "member");
+    const field = String(req.query.field ?? "");
+    const prefix = String(req.query.q ?? "");
+    if (!field || (target !== "member" && target !== "relationship")) {
+      return res.json({ values: [] });
+    }
+    const rawLimit = Number.parseInt(String(req.query.limit ?? "20"), 10);
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 20;
+    const values = target === "member"
+      ? await repos.members.distinctFieldValues(projectId, field, prefix, limit)
+      : await repos.relationships.distinctFieldValues(projectId, field, prefix, limit);
+    res.json({ values });
   });
 
   router.patch("/dimensions/:dimensionId", async (req, res) => {

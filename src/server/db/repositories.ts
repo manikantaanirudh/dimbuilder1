@@ -1,5 +1,12 @@
 import { nanoid } from "nanoid";
 import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
+import {
+  evaluateCondition,
+  readConditionValue,
+  SPECIAL_FIELDS,
+  type FilterCondition,
+  type FilterOp,
+} from "../../shared/structuredSearch";
 import type { PropertyDefaultResolutionEntry } from "../../shared/effectiveProperties";
 import {
   toPropertyDefaultDisplayRow,
@@ -122,6 +129,8 @@ import type {
   DimensionRecord,
   DimensionRelationshipRecord,
   DimensionType,
+  MemberSearchResult,
+  RelationshipSearchResult,
   MetadataDiffItemRecord,
   MetadataDiffRunRecord,
   MetadataDiffStatus,
@@ -150,6 +159,18 @@ import type {
   AIConversation,
   AIMessage
 } from "../../shared/aiTypes";
+import type {
+  ProjectQueryEntry,
+  ProjectQueryFreshness,
+  ProjectQueryPlaybookRun,
+  ProjectQueryPlaybookStep,
+  ProjectQueryResult,
+  ProjectQuerySession,
+  ProjectQuerySessionSummary,
+  ProjectQueryScopeToken,
+  ProjectQueryTableRow,
+  ProjectQueryTemplate
+} from "../../shared/projectQuery";
 import type {
   CrossDimensionRule,
   CrossDimensionRuleType,
@@ -465,6 +486,35 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
         `, [projectId, activeMembers, memberKey]);
         return rows.map(mapMember);
       },
+      async searchMembers(projectId: string, query: string, limit = 50): Promise<MemberSearchResult[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const like = `%${query.trim().toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+        const rows = await client.query<{
+          member_id: string;
+          member_key: string;
+          description: string | null;
+          dimension_id: string;
+          dimension_type: string;
+          dimension_name: string;
+        }>(`
+          SELECT m.id AS member_id, m.member_key, m.description,
+                 m.dimension_id, d.dimension_type, d.dimension_name
+          FROM dimension_members m
+          JOIN dimensions d ON d.id = m.dimension_id
+          WHERE d.project_id = ? AND m.is_active = ?
+            AND (LOWER(m.member_key) LIKE ? ESCAPE '\\' OR LOWER(m.description) LIKE ? ESCAPE '\\')
+          ORDER BY d.sort_order, m.member_key, m.id
+          LIMIT ?
+        `, [projectId, activeMembers, like, like, limit]);
+        return rows.map((row) => ({
+          memberId: row.member_id,
+          memberKey: row.member_key,
+          description: row.description ?? null,
+          dimensionId: row.dimension_id,
+          dimensionType: row.dimension_type,
+          dimensionName: row.dimension_name,
+        }));
+      },
       async countByProject(projectId: string): Promise<number> {
         const activeMembers = booleanValue(client.dialect, true);
         const row = await client.queryOne<{ count: number | string }>(`
@@ -474,6 +524,83 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           WHERE d.project_id = ? AND m.is_active = ?
         `, [projectId, activeMembers]);
         return Number(row?.count ?? 0);
+      },
+      async structuredSearch(projectId: string, conditions: FilterCondition[], limit = 50): Promise<MemberSearchResult[]> {
+        if (conditions.length === 0) return [];
+        const activeMembers = booleanValue(client.dialect, true);
+        const where = ["d.project_id = ?", "m.is_active = ?"];
+        const params: unknown[] = [projectId, activeMembers];
+        for (const condition of conditions) {
+          const col = memberFieldColumn(condition.fieldKey);
+          if (col) {
+            const predicate = columnConditionPredicate(col, condition.op, condition.value, params);
+            if (predicate) where.push(predicate);
+          } else if (opAllowsBlobPrefilter(condition.op) && condition.value.trim()) {
+            where.push("LOWER(m.properties_json) LIKE ? ESCAPE '\\'");
+            params.push(`%${likeEscapeValue(condition.value)}%`);
+          }
+        }
+        const cap = structuredSearchCandidateCap(limit);
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT m.*, d.dimension_type, d.dimension_name
+          FROM dimension_members m
+          JOIN dimensions d ON d.id = m.dimension_id
+          WHERE ${where.join(" AND ")}
+          ORDER BY d.sort_order, m.member_key, m.id
+          LIMIT ?
+        `, [...params, cap]);
+        const out: MemberSearchResult[] = [];
+        for (const row of rows) {
+          const properties = parseJson<Record<string, unknown>>(String(row.properties_json ?? "{}"), {});
+          const columns = { member_key: row.member_key, description: row.description };
+          const matches = conditions.every((condition) =>
+            evaluateCondition(readConditionValue(condition.fieldKey, properties, columns), condition.op, condition.value),
+          );
+          if (!matches) continue;
+          out.push({
+            memberId: String(row.id),
+            memberKey: String(row.member_key),
+            description: row.description != null ? String(row.description) : null,
+            dimensionId: String(row.dimension_id),
+            dimensionType: String(row.dimension_type),
+            dimensionName: String(row.dimension_name),
+            properties,
+          });
+          if (out.length >= limit) break;
+        }
+        return out;
+      },
+      async distinctFieldValues(projectId: string, fieldKey: string, prefix = "", limit = 20): Promise<string[]> {
+        const activeMembers = booleanValue(client.dialect, true);
+        const col = memberFieldColumn(fieldKey);
+        if (col) {
+          const params: unknown[] = [projectId, activeMembers];
+          let prefixClause = "";
+          if (prefix.trim()) {
+            prefixClause = ` AND LOWER(${col}) LIKE ? ESCAPE '\\'`;
+            params.push(`${likeEscapeValue(prefix)}%`);
+          }
+          const rows = await client.query<{ value: string | null }>(`
+            SELECT DISTINCT ${col} AS value
+            FROM dimension_members m
+            JOIN dimensions d ON d.id = m.dimension_id
+            WHERE d.project_id = ? AND m.is_active = ?${prefixClause}
+            ORDER BY value
+            LIMIT ?
+          `, [...params, limit]);
+          return rows.map((r) => String(r.value ?? "")).filter((v) => v.length > 0);
+        }
+        // Property (display-name) field: capped scan of rows that contain the field key.
+        const cap = structuredSearchCandidateCap(limit);
+        const rows = await client.query<{ properties_json: string | null }>(`
+          SELECT m.properties_json
+          FROM dimension_members m
+          JOIN dimensions d ON d.id = m.dimension_id
+          WHERE d.project_id = ? AND m.is_active = ?
+            AND LOWER(m.properties_json) LIKE ? ESCAPE '\\'
+          LIMIT ?
+        `, [projectId, activeMembers, `%"${likeEscapeValue(fieldKey)}"%`, cap]);
+        return distinctFromPropertyRows(rows, fieldKey, prefix, limit);
       },
       async listAllByDimension(dimensionId: string): Promise<DimensionMemberRecord[]> {
         const activeMembers = booleanValue(client.dialect, true);
@@ -569,6 +696,85 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           ORDER BY d.sort_order, r.row_order
         `, [projectId]);
         return rows.map(mapRelationship);
+      },
+      async structuredSearch(projectId: string, conditions: FilterCondition[], limit = 50): Promise<RelationshipSearchResult[]> {
+        if (conditions.length === 0) return [];
+        const where = ["d.project_id = ?"];
+        const params: unknown[] = [projectId];
+        for (const condition of conditions) {
+          const col = relationshipFieldColumn(condition.fieldKey);
+          if (col) {
+            const predicate = columnConditionPredicate(col, condition.op, condition.value, params);
+            if (predicate) where.push(predicate);
+          } else if (opAllowsBlobPrefilter(condition.op) && condition.value.trim()) {
+            where.push("LOWER(r.properties_json) LIKE ? ESCAPE '\\'");
+            params.push(`%${likeEscapeValue(condition.value)}%`);
+          }
+        }
+        const cap = structuredSearchCandidateCap(limit);
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT r.*, d.dimension_type, d.dimension_name
+          FROM dimension_relationships r
+          JOIN dimensions d ON d.id = r.dimension_id
+          WHERE ${where.join(" AND ")}
+          ORDER BY d.sort_order, r.parent_key, r.child_key, r.id
+          LIMIT ?
+        `, [...params, cap]);
+        const out: RelationshipSearchResult[] = [];
+        for (const row of rows) {
+          const properties = parseJson<Record<string, unknown>>(String(row.properties_json ?? "{}"), {});
+          const columns = {
+            parent_key: row.parent_key,
+            child_key: row.child_key,
+            ownership_type: row.ownership_type,
+          };
+          const matches = conditions.every((condition) =>
+            evaluateCondition(readConditionValue(condition.fieldKey, properties, columns), condition.op, condition.value),
+          );
+          if (!matches) continue;
+          out.push({
+            relationshipId: String(row.id),
+            parentKey: String(row.parent_key),
+            childKey: String(row.child_key),
+            ownershipType: String(row.ownership_type ?? ""),
+            properties,
+            dimensionId: String(row.dimension_id),
+            dimensionType: String(row.dimension_type),
+            dimensionName: String(row.dimension_name),
+          });
+          if (out.length >= limit) break;
+        }
+        return out;
+      },
+      async distinctFieldValues(projectId: string, fieldKey: string, prefix = "", limit = 20): Promise<string[]> {
+        const col = relationshipFieldColumn(fieldKey);
+        if (col) {
+          const params: unknown[] = [projectId];
+          let prefixClause = "";
+          if (prefix.trim()) {
+            prefixClause = ` AND LOWER(${col}) LIKE ? ESCAPE '\\'`;
+            params.push(`${likeEscapeValue(prefix)}%`);
+          }
+          const rows = await client.query<{ value: string | null }>(`
+            SELECT DISTINCT ${col} AS value
+            FROM dimension_relationships r
+            JOIN dimensions d ON d.id = r.dimension_id
+            WHERE d.project_id = ?${prefixClause}
+            ORDER BY value
+            LIMIT ?
+          `, [...params, limit]);
+          return rows.map((r) => String(r.value ?? "")).filter((v) => v.length > 0);
+        }
+        const cap = structuredSearchCandidateCap(limit);
+        const rows = await client.query<{ properties_json: string | null }>(`
+          SELECT r.properties_json
+          FROM dimension_relationships r
+          JOIN dimensions d ON d.id = r.dimension_id
+          WHERE d.project_id = ?
+            AND LOWER(r.properties_json) LIKE ? ESCAPE '\\'
+          LIMIT ?
+        `, [projectId, `%"${likeEscapeValue(fieldKey)}"%`, cap]);
+        return distinctFromPropertyRows(rows, fieldKey, prefix, limit);
       },
       async listAllByDimension(dimensionId: string): Promise<DimensionRelationshipRecord[]> {
         const rows = await client.query<Record<string, unknown>>(`
@@ -1217,12 +1423,14 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
         versionLabel: string;
         sourceFileName: string;
         createdBy?: string;
+        description?: string;
         summary?: Record<string, unknown>;
         snapshot?: Record<string, unknown>;
       }): Promise<ProjectVersionRecord> {
         const id = nanoid();
         const seededAt = now();
         const createdBy = input.createdBy ?? "local-admin";
+        const description = input.description ?? "";
         const record: ProjectVersionRecord = {
           id,
           projectId: input.projectId,
@@ -1231,12 +1439,13 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           sourceFileName: input.sourceFileName,
           seededAt,
           createdBy,
+          description,
           summary: input.summary ?? {},
           snapshot: input.snapshot
         };
         await client.exec(`
-          INSERT INTO project_versions (id, project_id, version_number, version_label, source_file_name, seeded_at, created_by, summary_json, snapshot_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO project_versions (id, project_id, version_number, version_label, source_file_name, seeded_at, created_by, summary_json, snapshot_json, description)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
           id,
           input.projectId,
@@ -1246,9 +1455,37 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
           seededAt,
           createdBy,
           JSON.stringify(input.summary ?? {}),
-          JSON.stringify(input.snapshot ?? {})
+          JSON.stringify(input.snapshot ?? {}),
+          description
         ]);
         return record;
+      },
+      async updateSnapshot(projectId: string, versionNumber: number, input: {
+        snapshot: Record<string, unknown>;
+        summary?: Record<string, unknown>;
+        description?: string;
+      }): Promise<ProjectVersionRecord | null> {
+        const seededAt = now();
+        const sets = ["snapshot_json = ?", "seeded_at = ?"];
+        const values: unknown[] = [JSON.stringify(input.snapshot ?? {}), seededAt];
+        if (input.summary !== undefined) {
+          sets.push("summary_json = ?");
+          values.push(JSON.stringify(input.summary ?? {}));
+        }
+        if (input.description !== undefined) {
+          sets.push("description = ?");
+          values.push(input.description);
+        }
+        values.push(projectId, versionNumber);
+        await client.exec(
+          `UPDATE project_versions SET ${sets.join(", ")} WHERE project_id = ? AND version_number = ?`,
+          values
+        );
+        const row = await client.queryOne<Record<string, unknown>>(
+          "SELECT * FROM project_versions WHERE project_id = ? AND version_number = ?",
+          [projectId, versionNumber]
+        );
+        return row ? mapProjectVersion(row) : null;
       },
       async listByProject(projectId: string): Promise<ProjectVersionRecord[]> {
         const rows = await client.query<Record<string, unknown>>(`
@@ -2135,6 +2372,191 @@ function buildRepositories(dbOrClient: AppDatabase | DbClient) {
         }
       }
     },
+    validationSnapshots: {
+      async create(input: { projectId: string; projectUpdatedAt: string; issueCount: number; blockingCount: number; result: Record<string, unknown> }): Promise<{ id: string; projectId: string; projectUpdatedAt: string; capturedAt: string; issueCount: number; blockingCount: number; result: Record<string, unknown> }> {
+        const id = nanoid();
+        const capturedAt = now();
+        await client.exec("INSERT INTO validation_snapshots (id, project_id, project_updated_at, captured_at, issue_count, blocking_count, result_json) VALUES (?, ?, ?, ?, ?, ?, ?)", [id, input.projectId, input.projectUpdatedAt, capturedAt, input.issueCount, input.blockingCount, JSON.stringify(input.result)]);
+        return { id, projectId: input.projectId, projectUpdatedAt: input.projectUpdatedAt, capturedAt, issueCount: input.issueCount, blockingCount: input.blockingCount, result: input.result };
+      },
+      async latest(projectId: string): Promise<{ id: string; projectId: string; projectUpdatedAt: string; capturedAt: string; issueCount: number; blockingCount: number; result: Record<string, unknown> } | null> {
+        const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM validation_snapshots WHERE project_id = ? ORDER BY captured_at DESC LIMIT 1", [projectId]);
+        if (!row) return null;
+        return { id: String(row.id), projectId: String(row.project_id), projectUpdatedAt: String(row.project_updated_at), capturedAt: String(row.captured_at), issueCount: Number(row.issue_count ?? 0), blockingCount: Number(row.blocking_count ?? 0), result: parseJson(String(row.result_json ?? "{}"), {}) };
+      }
+    },
+    projectQueryRows: {
+      async replace(entryId: string, rows: ProjectQueryTableRow[]): Promise<void> {
+        await client.transaction(async (tx) => {
+          await tx.exec("DELETE FROM project_query_entry_rows WHERE entry_id = ?", [entryId]);
+          for (const [index, row] of rows.entries()) {
+            const searchText = Object.values(row).filter((value) => value !== null && value !== undefined).join(" ").toLowerCase();
+            await tx.exec("INSERT INTO project_query_entry_rows (id, entry_id, row_order, row_json, search_text) VALUES (?, ?, ?, ?, ?)", [nanoid(), entryId, index, JSON.stringify(row), searchText]);
+          }
+        });
+      },
+      async list(entryId: string, offset = 0, limit = 50, search = ""): Promise<{ rows: ProjectQueryTableRow[]; total: number }> {
+        const safeLimit = Math.max(1, Math.min(200, Math.trunc(limit)));
+        const safeOffset = Math.max(0, Math.trunc(offset));
+        const term = search.trim().toLowerCase();
+        const where = term ? " AND search_text LIKE ?" : "";
+        const params = term ? [`%${term}%`] : [];
+        const count = await client.queryOne<Record<string, unknown>>(`SELECT COUNT(*) AS count FROM project_query_entry_rows WHERE entry_id = ?${where}`, [entryId, ...params]);
+        const rows = await client.query<Record<string, unknown>>(`SELECT row_json FROM project_query_entry_rows WHERE entry_id = ?${where} ORDER BY row_order LIMIT ? OFFSET ?`, [entryId, ...params, safeLimit, safeOffset]);
+        return { rows: rows.map((row) => parseJson<ProjectQueryTableRow>(String(row.row_json ?? "{}"), {})), total: Number(count?.count ?? 0) };
+      }
+    },
+    projectQueryPlaybooks: {
+      async create(input: { projectId: string; userId: string; sessionId?: string; playbookId: string; definitionVersion: number; scope: ProjectQueryScopeToken[]; steps: Array<{ id: string; label: string }> }): Promise<ProjectQueryPlaybookRun> {
+        const id = nanoid();
+        const timestamp = now();
+        await client.transaction(async (tx) => {
+          await tx.exec("INSERT INTO project_query_playbook_runs (id, project_id, user_id, session_id, playbook_id, definition_version, status, scope_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [id, input.projectId, input.userId, input.sessionId ?? null, input.playbookId, input.definitionVersion, "running", JSON.stringify(input.scope), timestamp, timestamp]);
+          for (const [stepOrder, step] of input.steps.entries()) {
+            await tx.exec("INSERT INTO project_query_playbook_steps (id, run_id, step_id, step_order, label, status, result_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [nanoid(), id, step.id, stepOrder, step.label, "pending", null, timestamp, timestamp]);
+          }
+        });
+        return (await this.get(id, input.projectId, input.userId))!;
+      },
+      async get(id: string, projectId: string, userId: string): Promise<ProjectQueryPlaybookRun | null> {
+        const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM project_query_playbook_runs WHERE id = ? AND project_id = ? AND user_id = ?", [id, projectId, userId]);
+        if (!row) return null;
+        const steps = await client.query<Record<string, unknown>>("SELECT * FROM project_query_playbook_steps WHERE run_id = ? ORDER BY step_order", [id]);
+        return mapProjectQueryPlaybookRun(row, steps);
+      },
+      async list(projectId: string, userId: string): Promise<ProjectQueryPlaybookRun[]> {
+        const rows = await client.query<Record<string, unknown>>("SELECT * FROM project_query_playbook_runs WHERE project_id = ? AND user_id = ? ORDER BY updated_at DESC", [projectId, userId]);
+        const runs: ProjectQueryPlaybookRun[] = [];
+        for (const row of rows) {
+          const steps = await client.query<Record<string, unknown>>("SELECT * FROM project_query_playbook_steps WHERE run_id = ? ORDER BY step_order", [row.id]);
+          runs.push(mapProjectQueryPlaybookRun(row, steps));
+        }
+        return runs;
+      },
+      async updateStep(runId: string, projectId: string, userId: string, stepId: string, status: ProjectQueryPlaybookStep["status"], result?: ProjectQueryResult): Promise<ProjectQueryPlaybookRun | null> {
+        const timestamp = now();
+        await client.exec("UPDATE project_query_playbook_steps SET status = ?, result_json = ?, updated_at = ? WHERE run_id = ? AND step_id = ? AND EXISTS (SELECT 1 FROM project_query_playbook_runs WHERE id = run_id AND project_id = ? AND user_id = ?)", [status, result ? JSON.stringify(result) : null, timestamp, runId, stepId, projectId, userId]);
+        await client.exec("UPDATE project_query_playbook_runs SET updated_at = ? WHERE id = ? AND project_id = ? AND user_id = ?", [timestamp, runId, projectId, userId]);
+        return this.get(runId, projectId, userId);
+      },
+      async updateStatus(runId: string, projectId: string, userId: string, status: ProjectQueryPlaybookRun["status"]): Promise<ProjectQueryPlaybookRun | null> {
+        await client.exec("UPDATE project_query_playbook_runs SET status = ?, updated_at = ? WHERE id = ? AND project_id = ? AND user_id = ?", [status, now(), runId, projectId, userId]);
+        return this.get(runId, projectId, userId);
+      }
+    },
+    projectQueryTemplates: {
+      async create(input: { projectId: string; userId: string; name: string; category?: string; question: string; parameters?: string[]; scope?: ProjectQueryScopeToken[] }): Promise<ProjectQueryTemplate> {
+        const id = nanoid();
+        const timestamp = now();
+        await client.exec("INSERT INTO project_query_templates (id, project_id, user_id, name, category, question, parameters_json, scope_json, last_run_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [id, input.projectId, input.userId, input.name.trim(), input.category ?? "General", input.question, JSON.stringify(input.parameters ?? []), JSON.stringify(input.scope ?? []), null, timestamp, timestamp]);
+        return (await this.get(id, input.projectId, input.userId))!;
+      },
+      async list(projectId: string, userId: string): Promise<ProjectQueryTemplate[]> {
+        const rows = await client.query<Record<string, unknown>>("SELECT * FROM project_query_templates WHERE project_id = ? AND user_id = ? ORDER BY updated_at DESC", [projectId, userId]);
+        return rows.map(mapProjectQueryTemplate);
+      },
+      async get(id: string, projectId: string, userId: string): Promise<ProjectQueryTemplate | null> {
+        const row = await client.queryOne<Record<string, unknown>>("SELECT * FROM project_query_templates WHERE id = ? AND project_id = ? AND user_id = ?", [id, projectId, userId]);
+        return row ? mapProjectQueryTemplate(row) : null;
+      },
+      async update(id: string, projectId: string, userId: string, input: { name?: string; category?: string; question?: string; parameters?: string[]; scope?: ProjectQueryScopeToken[] }): Promise<ProjectQueryTemplate | null> {
+        const current = await this.get(id, projectId, userId);
+        if (!current) return null;
+        await client.exec("UPDATE project_query_templates SET name = ?, category = ?, question = ?, parameters_json = ?, scope_json = ?, updated_at = ? WHERE id = ? AND project_id = ? AND user_id = ?", [input.name?.trim() || current.name, input.category ?? current.category, input.question ?? current.question, JSON.stringify(input.parameters ?? current.parameters), JSON.stringify(input.scope ?? current.defaultScope), now(), id, projectId, userId]);
+        return this.get(id, projectId, userId);
+      },
+      async delete(id: string, projectId: string, userId: string): Promise<boolean> {
+        const result = await client.run("DELETE FROM project_query_templates WHERE id = ? AND project_id = ? AND user_id = ?", [id, projectId, userId]) as { changes?: number };
+        return Number(result?.changes ?? 0) > 0;
+      },
+      async markRun(id: string, projectId: string, userId: string): Promise<void> {
+        const timestamp = now();
+        await client.exec("UPDATE project_query_templates SET last_run_at = ?, updated_at = ? WHERE id = ? AND project_id = ? AND user_id = ?", [timestamp, timestamp, id, projectId, userId]);
+      }
+    },
+    projectQuerySessions: {
+      async purgeExpired(nowIso = now()): Promise<void> {
+        await client.exec("DELETE FROM project_query_sessions WHERE expires_at <= ?", [nowIso]);
+      },
+      async create(input: { projectId: string; userId: string; title?: string; legacyId?: string }): Promise<ProjectQuerySessionSummary> {
+        const timestamp = now();
+        const id = nanoid();
+        const expiresAt = new Date(Date.parse(timestamp) + 90 * 24 * 60 * 60 * 1000).toISOString();
+        const title = input.title?.trim() || "New Query Session";
+        await client.exec(`
+          INSERT INTO project_query_sessions (id, project_id, user_id, legacy_id, title, created_at, updated_at, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, input.projectId, input.userId, input.legacyId ?? null, title, timestamp, timestamp, expiresAt]);
+        return { id, projectId: input.projectId, userId: input.userId, title, entryCount: 0, createdAt: timestamp, updatedAt: timestamp, expiresAt };
+      },
+      async listByProject(projectId: string, userId: string, limit = 50, offset = 0): Promise<ProjectQuerySessionSummary[]> {
+        await this.purgeExpired();
+        const safeLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+        const safeOffset = Math.max(0, Math.trunc(offset));
+        const rows = await client.query<Record<string, unknown>>(`
+          SELECT s.*, COUNT(e.id) AS entry_count
+          FROM project_query_sessions s
+          LEFT JOIN project_query_entries e ON e.session_id = s.id
+          WHERE s.project_id = ? AND s.user_id = ?
+          GROUP BY s.id
+          ORDER BY s.updated_at DESC
+          LIMIT ? OFFSET ?
+        `, [projectId, userId, safeLimit, safeOffset]);
+        return rows.map(mapProjectQuerySessionSummary);
+      },
+      async findByLegacyId(projectId: string, userId: string, legacyId: string): Promise<ProjectQuerySessionSummary | null> {
+        await this.purgeExpired();
+        const row = await client.queryOne<Record<string, unknown>>(
+          "SELECT s.*, COUNT(e.id) AS entry_count FROM project_query_sessions s LEFT JOIN project_query_entries e ON e.session_id = s.id WHERE s.project_id = ? AND s.user_id = ? AND s.legacy_id = ? GROUP BY s.id",
+          [projectId, userId, legacyId]
+        );
+        return row ? mapProjectQuerySessionSummary(row) : null;
+      },
+      async get(id: string, projectId: string, userId: string): Promise<ProjectQuerySession | null> {
+        await this.purgeExpired();
+        const row = await client.queryOne<Record<string, unknown>>(
+          "SELECT * FROM project_query_sessions WHERE id = ? AND project_id = ? AND user_id = ?",
+          [id, projectId, userId]
+        );
+        if (!row) return null;
+        const entries = await client.query<Record<string, unknown>>(
+          "SELECT * FROM project_query_entries WHERE session_id = ? ORDER BY created_at ASC",
+          [id]
+        );
+        return { ...mapProjectQuerySessionSummary(row), entries: entries.map(mapProjectQueryEntry) };
+      },
+      async append(id: string, projectId: string, userId: string, question: string, result: ProjectQueryResult): Promise<ProjectQuerySession | null> {
+        const session = await this.get(id, projectId, userId);
+        if (!session) return null;
+        const timestamp = now();
+        const title = session.title === "New Query Session"
+          ? question.trim().slice(0, 60) + (question.trim().length > 60 ? "..." : "")
+          : session.title;
+        const expiresAt = new Date(Date.parse(timestamp) + 90 * 24 * 60 * 60 * 1000).toISOString();
+        const entryId = nanoid();
+        await client.transaction(async (tx) => {
+          await tx.exec("INSERT INTO project_query_entries (id, session_id, question, result_json, created_at) VALUES (?, ?, ?, ?, ?)", [entryId, id, question, JSON.stringify(result), timestamp]);
+          await tx.exec("UPDATE project_query_sessions SET title = ?, updated_at = ?, expires_at = ? WHERE id = ? AND project_id = ? AND user_id = ?", [title, timestamp, expiresAt, id, projectId, userId]);
+        });
+        if (result.table) {
+          await client.exec("DELETE FROM project_query_entry_rows WHERE entry_id = ?", [entryId]);
+          for (const [index, row] of result.table.rows.entries()) {
+            const searchText = Object.values(row).filter((value) => value !== null && value !== undefined).join(" ").toLowerCase();
+            await client.exec("INSERT INTO project_query_entry_rows (id, entry_id, row_order, row_json, search_text) VALUES (?, ?, ?, ?, ?)", [nanoid(), entryId, index, JSON.stringify(row), searchText]);
+          }
+        }
+        return this.get(id, projectId, userId);
+      },
+      async delete(id: string, projectId: string, userId: string): Promise<boolean> {
+        const existing = await client.queryOne<Record<string, unknown>>(
+          "SELECT id FROM project_query_sessions WHERE id = ? AND project_id = ? AND user_id = ?",
+          [id, projectId, userId]
+        );
+        if (!existing) return false;
+        await client.exec("DELETE FROM project_query_sessions WHERE id = ?", [id]);
+        return true;
+      }
+    },
     aiSuggestions: {
       async create(input: { projectId: string; dimensionId?: string; suggestionType: AISuggestionType; targetMemberKey?: string; suggestion: Record<string, unknown>; confidence: number }): Promise<AISuggestion>{
         const id = nanoid();
@@ -2978,6 +3400,7 @@ function mapProjectVersion(row: Record<string, unknown>): ProjectVersionRecord {
     sourceFileName: String(row.source_file_name ?? ''),
     seededAt: String(row.seeded_at ?? row.created_at ?? ''),
     createdBy: String(row.created_by ?? 'local-admin'),
+    description: String(row.description ?? ''),
     summary: parseJson(String(row.summary_json ?? '{}'), {}),
     snapshot: parseJson(String(row.snapshot_json ?? '{}'), {})
   };
@@ -2999,6 +3422,92 @@ function mapDimension(row: Record<string, unknown>): DimensionRecord {
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
   };
+}
+
+function structuredSearchCandidateCap(limit: number): number {
+  return Math.min(Math.max(limit * 20, 500), 5000);
+}
+
+function likeEscapeValue(value: string): string {
+  return value.trim().toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+/** Ops whose match value is a substring of the stored value, so a blob LIKE prefilter is sound. */
+function opAllowsBlobPrefilter(op: FilterOp): boolean {
+  return op === "contains" || op === "equals" || op === "startsWith" || op === "is";
+}
+
+/** Builds a SQL predicate for a column-backed condition; pushes params. Returns null if not pushable. */
+function columnConditionPredicate(
+  col: string,
+  op: FilterOp,
+  value: string,
+  params: unknown[],
+): string | null {
+  const lowered = value.trim().toLowerCase();
+  switch (op) {
+    case "contains":
+      params.push(`%${likeEscapeValue(value)}%`);
+      return `LOWER(${col}) LIKE ? ESCAPE '\\'`;
+    case "startsWith":
+      params.push(`${likeEscapeValue(value)}%`);
+      return `LOWER(${col}) LIKE ? ESCAPE '\\'`;
+    case "equals":
+    case "is":
+      params.push(lowered);
+      return `LOWER(${col}) = ?`;
+    case "isNot":
+      params.push(lowered);
+      return `LOWER(${col}) <> ?`;
+    default:
+      return null; // numeric/boolean ops on string columns fall through to app-side check
+  }
+}
+
+function memberFieldColumn(fieldKey: string): string | null {
+  if (fieldKey === SPECIAL_FIELDS.memberKey) return "m.member_key";
+  if (fieldKey === SPECIAL_FIELDS.description) return "m.description";
+  return null;
+}
+
+function relationshipFieldColumn(fieldKey: string): string | null {
+  if (fieldKey === SPECIAL_FIELDS.parentKey) return "r.parent_key";
+  if (fieldKey === SPECIAL_FIELDS.childKey) return "r.child_key";
+  if (fieldKey === SPECIAL_FIELDS.ownershipType) return "r.ownership_type";
+  return null;
+}
+
+/** Extracts the top distinct values for a property display-name key from scanned rows. */
+function distinctFromPropertyRows(
+  rows: Array<{ properties_json: string | null }>,
+  fieldKey: string,
+  prefix: string,
+  limit: number,
+): string[] {
+  const wanted = fieldKey.trim().toLowerCase();
+  const prefixLower = prefix.trim().toLowerCase();
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const props = parseJson<Record<string, unknown>>(String(row.properties_json ?? "{}"), {});
+    let value: unknown = fieldKey in props ? props[fieldKey] : undefined;
+    if (value === undefined) {
+      for (const [key, val] of Object.entries(props)) {
+        if (key.trim().toLowerCase() === wanted) {
+          value = val;
+          break;
+        }
+      }
+    }
+    if (value === undefined || value === null) continue;
+    const text = String(value).trim();
+    if (!text) continue;
+    if (prefixLower && !text.toLowerCase().startsWith(prefixLower)) continue;
+    counts.set(text, (counts.get(text) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([value]) => value);
 }
 
 function mapMember(row: Record<string, unknown>): DimensionMemberRecord {
@@ -3907,6 +4416,83 @@ function mapAIConversation(row: Record<string, unknown>): AIConversation {
     projectId: String(row.project_id),
     userId: String(row.user_id),
     messages: parseJson<AIMessage[]>(String(row.messages_json ?? "[]"), []),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at)
+  };
+}
+
+function mapProjectQuerySessionSummary(row: Record<string, unknown>): ProjectQuerySessionSummary {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    userId: String(row.user_id),
+    title: String(row.title ?? "New Query Session"),
+    entryCount: Number(row.entry_count ?? 0),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    expiresAt: String(row.expires_at)
+  };
+}
+
+function mapProjectQueryEntry(row: Record<string, unknown>): ProjectQueryEntry {
+  return {
+    id: String(row.id),
+    sessionId: String(row.session_id),
+    question: String(row.question),
+    result: parseJson<ProjectQueryResult>(String(row.result_json ?? "{}"), {
+      status: "unsupported",
+      matchQuality: "unsupported",
+      query: String(row.question),
+      intent: "unknown",
+      intentLabel: "Unsupported query",
+      summary: "Historical result unavailable.",
+      dataAsOf: null,
+      metrics: [],
+      findings: [],
+      evidence: [],
+      targets: [],
+      followUps: []
+    }),
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapProjectQueryPlaybookRun(row: Record<string, unknown>, stepRows: Record<string, unknown>[]): ProjectQueryPlaybookRun {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    userId: String(row.user_id),
+    sessionId: row.session_id ? String(row.session_id) : undefined,
+    playbookId: String(row.playbook_id) as ProjectQueryPlaybookRun["playbookId"],
+    definitionVersion: Number(row.definition_version ?? 1),
+    status: String(row.status) as ProjectQueryPlaybookRun["status"],
+    scope: parseJson<ProjectQueryScopeToken[]>(String(row.scope_json ?? "[]"), []),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    steps: stepRows.map((step) => ({
+      id: String(step.step_id),
+      runId: String(step.run_id),
+      stepOrder: Number(step.step_order ?? 0),
+      label: String(step.label),
+      status: String(step.status) as ProjectQueryPlaybookStep["status"],
+      result: step.result_json ? parseJson<ProjectQueryResult>(String(step.result_json), undefined as never) : undefined,
+      createdAt: String(step.created_at),
+      updatedAt: String(step.updated_at)
+    }))
+  };
+}
+
+function mapProjectQueryTemplate(row: Record<string, unknown>): ProjectQueryTemplate {
+  return {
+    id: String(row.id),
+    projectId: String(row.project_id),
+    userId: String(row.user_id),
+    name: String(row.name),
+    category: String(row.category ?? "General"),
+    question: String(row.question),
+    parameters: parseJson<string[]>(String(row.parameters_json ?? "[]"), []),
+    defaultScope: parseJson<ProjectQueryScopeToken[]>(String(row.scope_json ?? "[]"), []),
+    lastRunAt: row.last_run_at ? String(row.last_run_at) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at)
   };

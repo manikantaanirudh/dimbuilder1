@@ -6,7 +6,11 @@ The Express app mounts API routes under `/api`. `src/client/api/client.ts` remai
 
 ### Authentication
 
-When `auth.enabled` is true in config, all `/api/*` routes except `/api/health` require HTTP Basic Authentication. See `security-model.md` for details.
+When `auth.enabled` is false or `auth.strategy` is `none`, API requests use the synthetic local system identity. With `auth.strategy: local` or `oidc`, routes below `/api` require a Bearer access token; `/api/health` and the auth router's public endpoints retain their own behavior. Legacy Basic Auth is used only when authentication is enabled with `strategy: none` and legacy credentials configured. See `security-model.md` for details.
+
+### Module Gating
+
+Core project, import, validation, export, reporting, workflow, audit, schema, impact, and Project Query routes are mounted by default. Optional route groups are gated by `modules` in `config/dimbuilder.yaml`: legacy project assistant, environment management, platform extras, Tier-3/offline/API-platform, and Tier-4/tenancy. Project Query uses deterministic repository data and is independent of `ai.enabled`.
 
 ### Rate Limiting
 
@@ -35,6 +39,19 @@ Mutation routes validate request bodies with Zod schemas via `validateBody()` mi
 |---|---|---|
 | GET | `/api/health` | Returns `{ ok: true }`. Always unauthenticated. |
 
+## Authentication
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/auth/status` | Reports whether authentication is enabled, the selected strategy, and the OIDC authorize path when configured. |
+| POST | `/api/auth/register` | Registers the first local user as admin; later registrations require `auth.allowSelfRegistration`. |
+| POST | `/api/auth/login` | Validates email/password and returns access and refresh tokens. Failed attempts are rate-limited per email. |
+| POST | `/api/auth/refresh` | Returns a new access token for a valid refresh token/session. |
+| POST | `/api/auth/logout` | Revokes the current user's refresh session when a Bearer token is supplied. |
+| GET | `/api/auth/me` | Returns the authenticated user; requires a valid Bearer token when auth is enabled. |
+| GET | `/api/auth/oidc/authorize` | Starts OIDC login when `auth.strategy` is `oidc` and provider settings are configured. |
+| GET | `/api/auth/oidc/callback` | Completes the OIDC callback flow. |
+
 ## Config
 
 | Method | Path | Description |
@@ -52,6 +69,37 @@ PUT `/api/config` body:
 ```
 
 Returns `{ ok: true }` on success.
+
+## Project Query
+
+Project Query requires at least project viewer access. Questions are limited to 500 characters and results are deterministic snapshots derived from project data and saved validation results.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/projects/:projectId/query` | Execute a query and append the result to a private session. |
+| POST | `/api/projects/:projectId/query/interpret` | Classify a question and return deterministic filters, scope, and clarification choices without executing it. |
+| GET | `/api/projects/:projectId/query/suggestions` | Return categorized supported commands; optional `q` filters them. |
+| GET | `/api/projects/:projectId/query/sessions` | List the current user's sessions with pagination. |
+| GET | `/api/projects/:projectId/query/sessions/:sessionId` | Read one owned session and its result snapshots. |
+| POST | `/api/projects/:projectId/query/sessions` | Create a private query session. |
+| DELETE | `/api/projects/:projectId/query/sessions/:sessionId` | Delete an owned session and cascade its entries. |
+| POST | `/api/projects/:projectId/query/sessions/import` | Import valid legacy browser sessions once, deduplicated by legacy session ID. |
+| GET | `/api/projects/:projectId/query/entries/:entryId/rows` | Read immutable typed result rows with offset, limit, and search pagination. |
+| GET | `/api/projects/:projectId/query/playbooks` | List the four built-in versioned diagnostic playbooks. |
+| POST | `/api/projects/:projectId/query/playbooks/:playbookId/runs` | Start and execute a private diagnostic playbook run. |
+| GET | `/api/projects/:projectId/query/playbook-runs` | List the current user's playbook runs. |
+| GET | `/api/projects/:projectId/query/playbook-runs/:runId` | Read an owned playbook run and immutable step snapshots. |
+| POST | `/api/projects/:projectId/query/playbook-runs/:runId/rerun` | Create a fresh run using the same playbook and scope. |
+| POST | `/api/projects/:projectId/query/playbook-runs/:runId/steps/:stepId/rerun` | Rerun one owned playbook step against current project data. |
+| GET | `/api/projects/:projectId/query/playbook-runs/:runId/export?format=markdown|csv` | Export an immutable playbook snapshot. |
+| GET | `/api/projects/:projectId/query/templates` | List private pinned query templates. |
+| POST | `/api/projects/:projectId/query/templates` | Create a private parameterized query template. |
+| PATCH | `/api/projects/:projectId/query/templates/:templateId` | Update an owned query template. |
+| DELETE | `/api/projects/:projectId/query/templates/:templateId` | Delete an owned query template. |
+| POST | `/api/projects/:projectId/query/templates/:templateId/run` | Run a template and append the result to a session. |
+| GET | `/api/projects/:projectId/query/sessions/:sessionId/export?format=markdown|csv` | Export an immutable session snapshot. |
+
+Legacy `/ai/query`, `/ai/chat`, and `/assistant/query` endpoints remain compatibility adapters for one release and return `Deprecation` and `Sunset` headers.
 
 ## Blueprint Studio
 
@@ -503,8 +551,10 @@ Effective defaults are applied during XML export through `repos.propertyDefaults
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/projects/:projectId/validation-config` | Return the per-project validation rule overrides. Each override specifies a rule code and its project-level severity (including `"off"` to disable). |
-| POST | `/api/projects/:projectId/validation-config` | Create or update per-project validation rule overrides. |
+| GET | `/api/projects/:projectId/validation-rules` | Return the versioned shared catalog with effective severities, classification, lock/export state, target version, evidence links, and ignored legacy overrides. |
+| GET | `/api/projects/:projectId/validation-config` | Return the stored per-project overrides. |
+| PUT | `/api/projects/:projectId/validation-config` | Replace the complete per-project override set. Unknown codes, illegal severities, and locked rules return `400`. |
+| POST | `/api/projects/:projectId/validation-config` | Deprecated compatibility adapter for one release; uses replacement semantics and returns `Deprecation` and `Sunset` headers. |
 
 POST body:
 
@@ -517,7 +567,7 @@ POST body:
 }
 ```
 
-Setting severity to `"off"` disables the rule for the project. Overrides are stored in the `project_validation_overrides` table.
+Setting severity to `"off"` disables an advisory or informational rule for the project. Hard errors are locked. Overrides are stored in the `project_validation_overrides` table and apply only to the exact rule code.
 
 ## Validation
 
@@ -539,7 +589,7 @@ Body:
 }
 ```
 
-`profile` is optional. When omitted, validation uses the configured default: generic validation plus the OneStream profile when `validation.oneStreamProfile.enabled` is true. Use `"default"` to run generic validation only or `"onestream"` to force the OneStream design-quality profile for that run. `options` can override OneStream profile settings for the run.
+`profile` is optional. When omitted, validation uses the configured default: generic validation plus the OneStream profile when `validation.oneStreamProfile.enabled` is true. Use `"default"` to run generic validation only or `"onestream"` to force the OneStream design-quality profile for that run. `options` can override OneStream profile settings for the run. Validation snapshots include the catalog and target OneStream versions.
 
 ## Export
 
@@ -560,7 +610,7 @@ XML export query parameters:
 
 Validation blocking:
 
-All export endpoints check stored validation issues before producing files. If any issue severity is listed in `validation.exportBlockedBySeverities`, the server returns `409`:
+All export endpoints check stored validation issues before producing files. If a stored issue matches a registered locked hard-error rule in the validation catalog, the server returns `409`:
 
 ```json
 {

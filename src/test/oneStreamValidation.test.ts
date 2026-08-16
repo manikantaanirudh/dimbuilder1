@@ -103,7 +103,7 @@ describe("OneStream validation profile", () => {
       "MULTIPLE_PARENT_NOT_ALLOWED",
       "PARENT_MEMBER_ALLOW_INPUT_WARNING"
     ]));
-    expect(issues.find((issue) => issue.code === "MULTIPLE_PARENT_NOT_ALLOWED")?.severity).toBe("error");
+    expect(issues.find((issue) => issue.code === "MULTIPLE_PARENT_NOT_ALLOWED")?.severity).toBe("warning");
   });
 
   it("emits shared member info when the dimension allows multiple parents", () => {
@@ -338,7 +338,8 @@ describe("OneStream validation profile", () => {
     });
 
     const caseIssues = issues.filter((issue) => issue.code === "RESERVED_MEMBER_NAME_CASE_MISMATCH");
-    expect(caseIssues).toHaveLength(4);
+    expect(caseIssues).toHaveLength(1);
+    expect(issues.filter((issue) => issue.code === "RESERVED_MEMBER_NAME")).toHaveLength(3);
   });
 });
 

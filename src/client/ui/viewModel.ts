@@ -7,6 +7,7 @@ import {
   getDimensionDisplaySubtitle,
 } from "../../shared/dimensionDisplay";
 import { sortDimensionsByType } from "../../shared/dimensionTypeOrder";
+import { isExportBlockingValidationIssue } from "../../shared/validationRuleCatalog";
 import type {
   DimensionRecord,
   Severity,
@@ -100,6 +101,29 @@ export function buildIssueSummary(
   };
 }
 
+/**
+ * Presentation summary for the project overview and shared navigation.
+ * Advisory and informational findings remain available to diagnostic surfaces,
+ * but do not make the project appear blocked here.
+ */
+export function buildBlockingIssueSummary(
+  issues: ValidationIssue[],
+  dimensionId?: string,
+): IssueSummary {
+  const scopedIssues = dimensionId
+    ? issues.filter((issue) => issue.dimensionId === dimensionId)
+    : issues;
+  const blockingErrors = scopedIssues.filter(isExportBlockingValidationIssue).length;
+
+  return {
+    errors: blockingErrors,
+    warnings: 0,
+    infos: 0,
+    total: blockingErrors,
+    blocksExport: blockingErrors > 0,
+  };
+}
+
 export function getEnabledExportFormats(
   exportConfig: ExportConfig,
 ): ExportFormatLink[] {
@@ -152,7 +176,7 @@ export function getExportAvailability({
     };
   }
 
-  if (issues.some((issue) => blockedSeverities.includes(issue.severity))) {
+  if (issues.some(isExportBlockingValidationIssue)) {
     return {
       disabled: true,
       title: "Resolve blocking validation issues before exporting",
@@ -173,6 +197,8 @@ export function getWorkspaceTabs(
   const tabs: WorkspaceTabItem[] = [
     { label: "Overview" },
     { label: "Members" },
+    { label: "Relationships" },
+    { label: "Hierarchy" },
     { label: "Varying" },
     { label: "Property Defaults" },
     { label: "Bulk Update" },
@@ -258,14 +284,14 @@ export function buildDimensionNavItems(
   dimensions: DimensionRecord[],
   issues: ValidationIssue[],
   displayConfig: ClientAppConfig["dimensions"]["display"],
-  blockedSeverities: Severity[],
+  _blockedSeverities: Severity[],
 ): DimensionNavItem[] {
   return sortDimensionsByType(dimensions).map((dimension) => ({
     id: dimension.id,
     label: getDimensionDisplayLabel(dimension, displayConfig),
     subtitle: getDimensionDisplaySubtitle(dimension, displayConfig),
     dimension,
-    issueSummary: buildIssueSummary(issues, blockedSeverities, dimension.id),
+    issueSummary: buildBlockingIssueSummary(issues, dimension.id),
   }));
 }
 

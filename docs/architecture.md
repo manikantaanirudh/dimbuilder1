@@ -1,6 +1,6 @@
 # Architecture
 
-The application is a Vite React client backed by an Express API and SQLite persistence. Shared TypeScript modules hold the domain model, configuration types, validation rules, parsing logic, and exporters.
+The application is a Vite React client backed by an Express API and a runtime-selected SQLite or PostgreSQL database. Shared TypeScript modules hold the domain model, configuration types, validation rules, parsing logic, and exporters.
 
 ## Runtime Shape
 
@@ -10,6 +10,10 @@ React client
 Express server
   -> repositories
 SQLite database
+
+or, when `DATABASE_URL` is set:
+
+PostgreSQL database
 
 Shared modules
   -> config validation
@@ -43,7 +47,7 @@ The server lives under `src/server`.
 - `app.ts` creates the Express app, repositories, middleware pipeline, and route modules.
 - `logger.ts` exports a Pino structured logger (level controlled by `LOG_LEVEL` env var).
 - `schemas.ts` defines Zod schemas for request body validation.
-- `middleware/basicAuth.ts` implements optional HTTP Basic Authentication.
+- `middleware/authenticate.ts` implements JWT Bearer authentication for local/OIDC strategies; `middleware/basicAuth.ts` remains the legacy `strategy: none` compatibility path.
 - `middleware/rateLimiter.ts` provides general (100/min) and heavy-operation (10/min) rate limiters.
 - `middleware/requestLogger.ts` logs method, path, status, and duration for every request.
 - `middleware/validate.ts` validates request bodies against Zod schemas, returning structured errors on failure.
@@ -56,6 +60,8 @@ The server lives under `src/server`.
 - `projectBlueprints.ts` creates app-authored projects from YAML blueprints.
 - `metadataReference.ts` reads existing metadata XML to help align imports.
 
+`registerApiRoutes.ts` mounts core routes unconditionally and gates optional route groups using `modules`. The client applies the same policy in `src/client/ui/moduleNav.ts`; Vitest uses an explicit all-modules configuration for route coverage unless module gating is requested.
+
 ### Middleware Pipeline
 
 The Express middleware is applied in this order (`src/server/app.ts`):
@@ -64,7 +70,7 @@ The Express middleware is applied in this order (`src/server/app.ts`):
 2. JSON body parser (25 MB limit)
 3. Request logger (all routes)
 4. Health check (`/api/health` — unauthenticated)
-5. Basic Auth (all `/api/*` below health)
+5. Conditional authentication (legacy Basic Auth or JWT Bearer, all `/api/*` below health)
 6. General rate limiter (all `/api/*`)
 7. Heavy-operation rate limiter (`/api/import`, `/api/export`)
 8. Route handlers
@@ -87,9 +93,9 @@ Shared modules live under `src/shared`.
 
 ## Persistence
 
-SQLite is configured through `src/server/db/database.ts`, created with schema SQL from `src/server/db/schema.ts`, and accessed through `src/server/db/repositories.ts`.
+SQLite uses Node's built-in `node:sqlite` through `src/server/db/sqliteClient.ts`; PostgreSQL uses `pg` through `src/server/db/postgresClient.ts`. Both are accessed through `src/server/db/repositories.ts`. Startup applies the base schema, named migrations, and catalog/workflow/security seeds.
 
-The repository layer is intentionally synchronous because `better-sqlite3` is synchronous. `createRepositories().transaction()` wraps savepoints and rejects async callbacks or thenables to avoid partially completed transactions.
+The repository layer exposes an async interface over both database clients. `createRepositories().transaction()` wraps SQLite transactions/savepoints or PostgreSQL transactions and rejects async callbacks or thenables where the repository contract requires synchronous completion.
 
 ## Data Flow: Blank Project
 
