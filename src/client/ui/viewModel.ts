@@ -173,8 +173,6 @@ export function getWorkspaceTabs(
   const tabs: WorkspaceTabItem[] = [
     { label: "Overview" },
     { label: "Members" },
-    { label: "Relationships" },
-    { label: "Hierarchy" },
     { label: "Varying" },
     { label: "Property Defaults" },
     { label: "Bulk Update" },

@@ -42,6 +42,7 @@ export function EditableGrid({
   issueFilteredIds = null,
   issues = [],
   refreshSignal = 0,
+  selectedRow = null,
   onRefresh,
   onSelectRow,
 }: {
@@ -53,13 +54,28 @@ export function EditableGrid({
   issueFilteredIds?: Set<string> | null;
   issues?: ValidationIssue[];
   refreshSignal?: number;
+  selectedRow?: any | null;
   onRefresh?: () => void;
   onSelectRow?: (row: any | null) => void;
 }) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const schema = getDimensionSchema(dimension.dimensionType);
-  const columns =
-    kind === "members" ? schema.memberFields : schema.relationshipFields;
+  const columns = useMemo(() => {
+    if (kind === "members") {
+      const baseFields = [...schema.memberFields];
+      if (!baseFields.some((f) => f.name === "Parent")) {
+        const insertIdx = baseFields.findIndex((f) => f.name === "Description");
+        const parentField: FieldDefinition = { name: "Parent", kind: "text", required: false };
+        if (insertIdx !== -1) {
+          baseFields.splice(insertIdx + 1, 0, parentField);
+        } else {
+          baseFields.splice(1, 0, parentField);
+        }
+      }
+      return baseFields;
+    }
+    return schema.relationshipFields;
+  }, [kind, schema]);
   const effectivePageSize = useMemo(
     () => clampGridPageSize(pageSize),
     [pageSize],
@@ -144,30 +160,52 @@ export function EditableGrid({
   const loadPage = useCallback(
     async (nextOffset: number) => {
       setStatus("Loading rows...");
-      const result =
-        kind === "members"
-          ? await fetchMembers(
-              projectId,
-              dimension.id,
-              nextOffset,
-              effectivePageSize,
-            )
-          : await fetchRelationships(
-              projectId,
-              dimension.id,
-              nextOffset,
-              effectivePageSize,
-            );
-      recordsRef.current = result.rows;
-      confirmedRecordsRef.current = new Map(
-        result.rows.map((row) => [row.id, row]),
-      );
-      setRecords(result.rows);
-      setTotal(result.total);
-      setOffset(nextOffset);
-      setStatus(`${result.rows.length} of ${result.total} rows loaded`);
+      if (kind === "members") {
+        const [memberRes, relRes] = await Promise.all([
+          fetchMembers(projectId, dimension.id, nextOffset, effectivePageSize),
+          fetchRelationships(projectId, dimension.id, 0, 10000),
+        ]);
+        const relMap = new Map<string, string>();
+        relRes.rows.forEach((rel: any) => {
+          const childKey = rel.childKey || rel.Child || rel.childMemberKey;
+          const parentKey = rel.parentKey || rel.Parent || rel.parentMemberKey;
+          if (childKey && parentKey) {
+            relMap.set(childKey, parentKey);
+          }
+        });
+        const enrichedRows = memberRes.rows.map((row: any) => {
+          const mKey = row.memberKey || row[schema.memberKeyField] || row.Member || row.Entity;
+          return {
+            ...row,
+            Parent: row.Parent || relMap.get(mKey) || "",
+          };
+        });
+        recordsRef.current = enrichedRows;
+        confirmedRecordsRef.current = new Map(
+          enrichedRows.map((r: any) => [r.id, r]),
+        );
+        setRecords(enrichedRows);
+        setTotal(memberRes.total);
+        setOffset(nextOffset);
+        setStatus(`${enrichedRows.length} of ${memberRes.total} rows loaded`);
+      } else {
+        const result = await fetchRelationships(
+          projectId,
+          dimension.id,
+          nextOffset,
+          effectivePageSize,
+        );
+        recordsRef.current = result.rows;
+        confirmedRecordsRef.current = new Map(
+          result.rows.map((row) => [row.id, row]),
+        );
+        setRecords(result.rows);
+        setTotal(result.total);
+        setOffset(nextOffset);
+        setStatus(`${result.rows.length} of ${result.total} rows loaded`);
+      }
     },
-    [dimension.id, effectivePageSize, kind, projectId],
+    [dimension.id, effectivePageSize, kind, projectId, schema.memberKeyField],
   );
 
   const loadFilteredRecords = useCallback(
@@ -200,6 +238,21 @@ export function EditableGrid({
   useEffect(() => {
     recordsRef.current = records;
   }, [records]);
+
+  useEffect(() => {
+    if (selectedRow && selectedRow.id) {
+      setRecords((current) =>
+        current.map((r) => {
+          if (r.id === selectedRow.id) {
+            if (JSON.stringify(r) !== JSON.stringify(selectedRow)) {
+              return selectedRow;
+            }
+          }
+          return r;
+        })
+      );
+    }
+  }, [selectedRow]);
 
   useEffect(() => {
     const selectedRow = selectedId ? records.find((r) => r.id === selectedId) || null : null;
@@ -273,8 +326,8 @@ export function EditableGrid({
           confirmedRecordsRef.current.get(previousRecord.id) ?? previousRecord;
         const rollbackOptimisticRecord = (candidate: GridRecord) =>
           isLatestRowSave &&
-          candidate.id === previousRecord.id &&
-          shouldRollbackGridRecord(candidate, optimisticRecord)
+            candidate.id === previousRecord.id &&
+            shouldRollbackGridRecord(candidate, optimisticRecord)
             ? rollbackRecord
             : candidate;
         recordsRef.current = recordsRef.current.map(rollbackOptimisticRecord);
@@ -620,8 +673,14 @@ export function EditableGrid({
         </div>
       )}
       <div className="data-grid workbench-data-grid" ref={parentRef}>
-        <div className="grid-surface" style={{ minWidth: `${gridMinWidth}px` }}>
-          <div className="grid-header" style={{ gridTemplateColumns }}>
+        <div
+          className="grid-surface"
+          style={{ minWidth: `${gridMinWidth}px`, width: "max-content" }}
+        >
+          <div
+            className="grid-header"
+            style={{ gridTemplateColumns, minWidth: `${gridMinWidth}px`, width: "100%" }}
+          >
             <div className="grid-select-cell">
               <input
                 type="checkbox"
@@ -641,7 +700,12 @@ export function EditableGrid({
           </div>
           <div
             className="grid-body"
-            style={{ height: virtualizer.getTotalSize(), position: "relative" }}
+            style={{
+              height: virtualizer.getTotalSize(),
+              position: "relative",
+              minWidth: `${gridMinWidth}px`,
+              width: "100%",
+            }}
           >
             {virtualizer.getVirtualItems().map((item) => {
               const record = filteredRecords[item.index];
@@ -649,11 +713,11 @@ export function EditableGrid({
               const rowTooltip =
                 rowIssues.length > 0
                   ? rowIssues
-                      .map(
-                        (i) =>
-                          `[${i.severity.toUpperCase()}] ${i.code}: ${i.message}`,
-                      )
-                      .join("\n")
+                    .map(
+                      (i) =>
+                        `[${i.severity.toUpperCase()}] ${i.code}: ${i.message}`,
+                    )
+                    .join("\n")
                   : undefined;
               return (
                 <div
@@ -662,6 +726,8 @@ export function EditableGrid({
                   style={{
                     transform: `translateY(${item.start}px)`,
                     gridTemplateColumns,
+                    minWidth: `${gridMinWidth}px`,
+                    width: "100%",
                   }}
                   onClick={(event) => {
                     toggleRowSelection(
@@ -748,6 +814,7 @@ function GridCell({
   if (column.kind === "boolean") {
     return (
       <select
+        className="grid-cell-input"
         value={draft}
         aria-label={column.name}
         onChange={(event) => setDraft(event.currentTarget.value)}
@@ -761,6 +828,7 @@ function GridCell({
   }
   return (
     <input
+      className="grid-cell-input"
       type={column.kind === "number" ? "number" : "text"}
       aria-label={column.name}
       value={draft}

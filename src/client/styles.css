@@ -1127,6 +1127,281 @@ svg {
   padding: 0;
 }
 
+/* Layout rules for DimensionWorkspace & Full-Width Workbench */
+.workspace {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.workspace-page {
+  width: 100%;
+  display: flex;
+  gap: 16px;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.workspace-page-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.workspace-document {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.workspace-tablist {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  background: var(--surface, #ffffff);
+  z-index: 20;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.workspace-tablist button {
+  flex: 1 1 0%;
+  text-align: center;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-strong);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.workspace-tablist button:hover {
+  background: var(--surface-subtle);
+  color: var(--text);
+}
+
+.workspace-tablist button.active {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  border-bottom: 2px solid var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.workspace-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  gap: 12px;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.workspace-primary {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.workspace-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.members-workbench-right-rail {
+  height: 100%;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.static-readiness-rail {
+  flex: 0 0 290px !important;
+  width: 290px !important;
+  max-width: 290px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.static-readiness-rail .issue-panel,
+.static-readiness-rail .panel {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.details-rail,
+.details-rail-page {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  box-sizing: border-box !important;
+}
+
+.onestream-rel-properties {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.onestream-rel-properties .data-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.onestream-rel-properties .data-table td {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Unified Members Workbench Layout (Hierarchy Tree + Grid + Properties Inspector) */
+.unified-members-workbench {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: stretch !important;
+  height: calc(100vh - 210px) !important;
+  min-height: 560px !important;
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+}
+
+.members-tree-pane {
+  display: flex !important;
+  flex-direction: column !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md, 8px) !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+
+.members-grid-pane {
+  flex: 1 1 0% !important;
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+  flex-basis: 0% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.members-grid-pane .panel.grid-panel {
+  flex: 1 1 0% !important;
+  flex-grow: 1 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.members-grid-pane .data-grid {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.members-grid-pane .grid-surface {
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.members-grid-pane .grid-header,
+.members-grid-pane .grid-row {
+  width: 100% !important;
+}
+
+/* Resizer Handles for Hierarchy & Properties Panels */
+.panel-resizer-handle {
+  width: 10px;
+  margin: 0 -4px;
+  cursor: col-resize;
+  flex: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  user-select: none;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.panel-resizer-handle::after {
+  content: "";
+  width: 4px;
+  height: 42px;
+  border-radius: 4px;
+  background: #1e293b;
+  opacity: 0.9;
+  transition: opacity 0.15s ease, background 0.15s ease, height 0.15s ease, width 0.15s ease;
+}
+
+.panel-resizer-handle:hover::after,
+.panel-resizer-handle.dragging::after {
+  opacity: 1;
+  background: var(--primary, #3b82f6);
+  height: 56px;
+  width: 5px;
+}
+
+.panel-resizer-handle:hover,
+.panel-resizer-handle.dragging {
+  background: color-mix(in srgb, var(--primary, #3b82f6) 12%, transparent);
+}
+
+.members-tree-pane-header {
+  padding: 10px 14px;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.members-tree-pane-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+
 .blueprint-studio {
   min-width: 0;
   display: grid;
@@ -1289,30 +1564,34 @@ svg {
   --dimension-metric-col: 76px;
   --dimension-status-col: 120px;
   --dimension-action-col: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.dimension-list-header {
   display: grid;
   grid-template-columns:
     minmax(0, 1fr) var(--dimension-metric-col) var(--dimension-metric-col) var(--dimension-metric-col) minmax(var(--dimension-status-col), max-content) var(--dimension-action-col);
   column-gap: 20px;
-  row-gap: 8px;
   align-items: center;
-}
-
-.dimension-list-header,
-.dimension-row {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  align-items: center;
-  min-width: 0;
-}
-
-.dimension-list-header {
   padding: 0 12px 4px;
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.dimension-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) var(--dimension-metric-col) var(--dimension-metric-col) var(--dimension-metric-col) minmax(var(--dimension-status-col), max-content) var(--dimension-action-col);
+  column-gap: 20px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dimension-metric-head,
@@ -2164,10 +2443,42 @@ svg {
   font-weight: 800;
 }
 
+.grid-surface {
+  display: block;
+  min-width: 100%;
+  width: max-content;
+}
+
+.grid-body {
+  width: 100%;
+  min-width: 100%;
+}
+
+.grid-header,
+.grid-row {
+  display: grid;
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+.grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 36px;
+  color: var(--muted-strong);
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .grid-header div,
 .grid-cell,
 .grid-row input,
-.grid-row select {
+.grid-row select,
+.grid-cell-input {
   width: 100%;
   height: 36px;
   min-height: 36px;
@@ -2176,6 +2487,10 @@ svg {
   border-bottom: 1px solid var(--border);
   border-radius: 0;
   background: var(--surface);
+  color: var(--text);
+  padding: 0 8px;
+  font: inherit;
+  box-sizing: border-box;
 }
 
 .grid-header div {
@@ -2190,26 +2505,37 @@ svg {
 .grid-row {
   position: absolute;
   left: 0;
-  right: 0;
   height: 36px;
   min-height: 36px;
 }
 
 .grid-row:hover input,
-.grid-row:hover select {
+.grid-row:hover select,
+.grid-row:hover .grid-cell-input {
   background: var(--surface-subtle);
-}
-
-.grid-row.selected input,
-.grid-row.selected select {
-  background: transparent;
-  box-shadow: none;
 }
 
 .grid-row.selected,
 .grid-row.multi-selected {
-  background: var(--primary-soft);
-  box-shadow: inset 3px 0 0 var(--primary);
+  background-color: color-mix(in srgb, var(--primary, #3b82f6) 14%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--primary, #3b82f6) !important;
+}
+
+.grid-row.selected input,
+.grid-row.selected select,
+.grid-row.selected .grid-cell-input,
+.grid-row.selected .grid-cell,
+.grid-row.selected .grid-select-cell,
+.grid-row.selected > *,
+.grid-row.multi-selected input,
+.grid-row.multi-selected select,
+.grid-row.multi-selected .grid-cell-input,
+.grid-row.multi-selected .grid-cell,
+.grid-row.multi-selected .grid-select-cell,
+.grid-row.multi-selected > * {
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .grid-select-cell {
@@ -2688,29 +3014,30 @@ svg {
   outline-offset: -2px;
 }
 
-.hierarchy-export-actions {
-  display: flex;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
+.hierarchy-export-container {
+  width: 100%;
 }
 
-.hierarchy-export-link {
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-  font-size: 13px;
-  font-weight: 650;
-  text-decoration: none;
+.hierarchy-export-dropdown-btn:hover {
+  background: var(--surface-hover) !important;
+  border-color: var(--border-strong) !important;
 }
 
-.hierarchy-export-link:hover {
-  background: var(--surface-hover);
+.hierarchy-export-menu {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16) !important;
+}
+
+.hierarchy-export-menu-item {
+  color: var(--text) !important;
+  transition: background 0.12s ease !important;
+}
+
+.hierarchy-export-menu-item:hover {
+  background: color-mix(in srgb, var(--primary, #3b82f6) 12%, transparent) !important;
+  color: var(--primary) !important;
 }
 
 .tree,
