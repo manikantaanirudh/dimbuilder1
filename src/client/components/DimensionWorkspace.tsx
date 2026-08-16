@@ -106,11 +106,13 @@ export function DimensionWorkspace({
 
   const [treeWidth, setTreeWidth] = useState<number>(() => {
     const saved = localStorage.getItem("dimbuilder_hierarchy_tree_width");
-    return saved ? parseInt(saved, 10) : 310;
+    const parsed = saved ? parseInt(saved, 10) : 310;
+    return isNaN(parsed) || parsed < 180 ? 310 : parsed;
   });
   const [inspectorWidth, setInspectorWidth] = useState<number>(() => {
     const saved = localStorage.getItem("dimbuilder_inspector_width");
-    return saved ? parseInt(saved, 10) : 360;
+    const parsed = saved ? parseInt(saved, 10) : 360;
+    return isNaN(parsed) || parsed < 240 ? 360 : parsed;
   });
   const [isDraggingTree, setIsDraggingTree] = useState(false);
   const [isDraggingInspector, setIsDraggingInspector] = useState(false);
