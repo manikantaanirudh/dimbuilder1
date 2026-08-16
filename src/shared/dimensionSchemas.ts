@@ -8,7 +8,7 @@ const text = (name: string, required = false, aliases: string[] = []): FieldDefi
 });
 const bool = (name: string, aliases: string[] = []): FieldDefinition => ({ name, kind: "boolean", aliases });
 const num = (name: string, aliases: string[] = []): FieldDefinition => ({ name, kind: "number", aliases });
-const formula = (name: string): FieldDefinition => ({ name, kind: "formula" });
+const formula = (name: string, aliases: string[] = []): FieldDefinition => ({ name, kind: "formula", aliases });
 
 const udMemberFields = [
   text("Member", true),
